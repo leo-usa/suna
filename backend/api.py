@@ -109,7 +109,7 @@ async def log_requests_middleware(request: Request, call_next):
         raise
 
 # Define allowed origins based on environment
-allowed_origins = ["https://www.suna.so", "https://suna.so", "https://staging.suna.so", "https://suna-5y8e.onrender.com", "http://localhost:3000"]
+allowed_origins = ["https://www.suna.so", "https://suna.so", "https://staging.suna.so", "https://suna-5y8e.onrender.com", "https://suna.drpang.ai", "http://localhost:3000"]
 
 # Add staging-specific origins
 if config.ENV_MODE == EnvMode.STAGING:
