@@ -11,11 +11,11 @@ export const metadata: Metadata = {
   ],
   authors: [
     {
-      name: "Kortix AI Corp",
-      url: "https://kortix.ai",
+      name: "DrPang.AI",
+      url: "https://www.drpang.ai",
     },
   ],
-  creator: "Kortix AI Corp",
+  creator: "DrPang.AI",
   openGraph: {
     type: "website",
     locale: "en_US",

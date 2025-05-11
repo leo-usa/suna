@@ -324,7 +324,7 @@ export function HeroSection() {
         </div>
       </div>
       <div className="mb-10 max-w-4xl mx-auto">
-        <HeroVideoSection />
+        {/* <HeroVideoSection /> */}
       </div>
 
       {/* Auth Dialog */}

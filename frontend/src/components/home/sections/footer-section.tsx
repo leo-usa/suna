@@ -19,8 +19,8 @@ export function FooterSection() {
     setMounted(true);
   }, []);
 
-  const logoSrc = !mounted ? "/kortix-logo.svg" : 
-    (resolvedTheme === "dark" ? "/kortix-logo-white.svg" : "/kortix-logo.svg");
+  const logoSrc = !mounted ? "/drpang-logo.svg" : 
+    (resolvedTheme === "dark" ? "/drpang-logo-white.svg" : "/drpang-logo.svg");
 
   return (
     <footer id="footer" className="w-full pb-0">
@@ -29,7 +29,7 @@ export function FooterSection() {
           <Link href="/" className="flex items-center gap-2">
             <Image 
               src={logoSrc} 
-              alt="Kortix Logo" 
+              alt="DrPang.AI Logo" 
               width={122} 
               height={22} 
               priority
