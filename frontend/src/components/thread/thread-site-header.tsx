@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { FolderOpen, Link, PanelRightOpen, Check, X, Menu } from "lucide-react"
+import { FolderOpen, Link, PanelRightOpen, Check, X, Menu, Download } from "lucide-react"
 import { usePathname } from "next/navigation"
 import { toast } from "sonner"
 import {
@@ -17,6 +17,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { cn } from "@/lib/utils"
 import { useSidebar } from "@/components/ui/sidebar"
+import { createClient } from "@/lib/supabase/client"
 
 interface ThreadSiteHeaderProps {
   threadId: string
@@ -27,6 +28,8 @@ interface ThreadSiteHeaderProps {
   onProjectRenamed?: (newName: string) => void
   isMobileView?: boolean
 }
+
+const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || '';
 
 export function SiteHeader({ 
   threadId, 
@@ -225,6 +228,53 @@ export function SiteHeader({
               </TooltipTrigger>
               <TooltipContent>
                 <p>Toggle Computer Preview (CMD+I)</p>
+              </TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 cursor-pointer"
+                  aria-label="Download all project files"
+                  onClick={async () => {
+                    if (!projectId) return;
+                    try {
+                      const supabase = createClient();
+                      const { data: { session } } = await supabase.auth.getSession();
+                      if (!session?.access_token) {
+                        throw new Error('No access token available');
+                      }
+                      const res = await fetch(`${API_URL}/project/${projectId}/download-all`, {
+                        method: 'GET',
+                        headers: {
+                          'Accept': 'application/zip',
+                          'Authorization': `Bearer ${session.access_token}`,
+                        },
+                      });
+                      if (!res.ok) {
+                        throw new Error('Failed to download project files');
+                      }
+                      const blob = await res.blob();
+                      const url = window.URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = `project_${projectId}.zip`;
+                      document.body.appendChild(a);
+                      a.click();
+                      a.remove();
+                      window.URL.revokeObjectURL(url);
+                    } catch (err) {
+                      alert('Failed to download project files.');
+                    }
+                  }}
+                >
+                  <Download className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Download all project files. Please download your files promptly—files will be lost if the sandbox is deleted.</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
