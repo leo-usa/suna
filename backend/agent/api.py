@@ -19,7 +19,9 @@ from utils.auth_utils import get_current_user_id_from_jwt, get_user_id_from_stre
 from utils.logger import logger
 from services.billing import check_billing_status
 from sandbox.sandbox import create_sandbox, get_or_start_sandbox
+from sandbox.api import get_sandbox_by_id_safely
 from services.llm import make_llm_api_call
+from agent.utils import get_or_create_project_sandbox
 
 # Initialize shared resources
 router = APIRouter()
@@ -296,53 +298,6 @@ async def _cleanup_redis_instance_key(agent_run_id: str):
         logger.debug(f"Successfully cleaned up Redis key: {key}")
     except Exception as e:
         logger.warning(f"Failed to clean up Redis key {key}: {str(e)}")
-
-
-async def get_or_create_project_sandbox(client, project_id: str):
-    """Get or create a sandbox for a project."""
-    project = await client.table('projects').select('*').eq('project_id', project_id).execute()
-    if not project.data:
-        raise ValueError(f"Project {project_id} not found")
-    project_data = project.data[0]
-
-    if project_data.get('sandbox', {}).get('id'):
-        sandbox_id = project_data['sandbox']['id']
-        sandbox_pass = project_data['sandbox']['pass']
-        logger.info(f"Project {project_id} already has sandbox {sandbox_id}, retrieving it")
-        try:
-            sandbox = await get_or_start_sandbox(sandbox_id)
-            return sandbox, sandbox_id, sandbox_pass
-        except Exception as e:
-            logger.error(f"Failed to retrieve existing sandbox {sandbox_id}: {str(e)}. Creating a new one.")
-
-    logger.info(f"Creating new sandbox for project {project_id}")
-    sandbox_pass = str(uuid.uuid4())
-    sandbox = create_sandbox(sandbox_pass, project_id)
-    sandbox_id = sandbox.id
-    logger.info(f"Created new sandbox {sandbox_id}")
-
-    vnc_link = sandbox.get_preview_link(6080)
-    website_link = sandbox.get_preview_link(8080)
-    vnc_url = vnc_link.url if hasattr(vnc_link, 'url') else str(vnc_link).split("url='")[1].split("'")[0]
-    website_url = website_link.url if hasattr(website_link, 'url') else str(website_link).split("url='")[1].split("'")[0]
-    token = None
-    if hasattr(vnc_link, 'token'):
-        token = vnc_link.token
-    elif "token='" in str(vnc_link):
-        token = str(vnc_link).split("token='")[1].split("'")[0]
-
-    update_result = await client.table('projects').update({
-        'sandbox': {
-            'id': sandbox_id, 'pass': sandbox_pass, 'vnc_preview': vnc_url,
-            'sandbox_url': website_url, 'token': token
-        }
-    }).eq('project_id', project_id).execute()
-
-    if not update_result.data:
-        logger.error(f"Failed to update project {project_id} with new sandbox {sandbox_id}")
-        raise Exception("Database update failed")
-
-    return sandbox, sandbox_id, sandbox_pass
 
 @router.post("/thread/{thread_id}/agent/start")
 async def start_agent(
@@ -999,3 +954,53 @@ async def initiate_agent_with_files(
         logger.error(f"Error in agent initiation: {str(e)}\n{traceback.format_exc()}")
         # TODO: Clean up created project/thread if initiation fails mid-way
         raise HTTPException(status_code=500, detail=f"Failed to initiate agent session: {str(e)}")
+
+@router.get("/project/{project_id}/download-all")
+async def download_all_project_files(project_id: str, user_id: str = Depends(get_current_user_id_from_jwt)):
+    """Download all project files as a zip archive from the sandbox."""
+    try:
+        # Get Supabase client
+        client = await db.client
+        # Find the sandbox for the project
+        project = await client.table('projects').select('sandbox').eq('project_id', project_id).maybe_single().execute()
+        if not project.data or not project.data.get('sandbox'):
+            raise HTTPException(status_code=404, detail="Project or sandbox not found")
+        sandbox_info = project.data['sandbox']
+        sandbox_id = sandbox_info.get('id') or sandbox_info.get('sandbox_id')
+        if not sandbox_id:
+            raise HTTPException(status_code=404, detail="Sandbox ID not found for project")
+        # Get the sandbox object
+        sandbox = await get_sandbox_by_id_safely(client, sandbox_id)
+        # Ensure the 'default' session exists before running commands
+        try:
+            sandbox.process.create_session("default")
+        except Exception:
+            pass
+        # Zip the /workspace directory inside the sandbox
+        zip_path = "/tmp/project.zip"
+        try:
+            # Remove old zip if exists
+            try:
+                sandbox.process.execute_session_command("default", {"command": f"rm -f {zip_path}", "var_async": False})
+            except Exception:
+                pass
+            sandbox.process.execute_session_command("default", {"command": f"zip -r {zip_path} /workspace", "var_async": False})
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to zip workspace: {str(e)}")
+        # Download the zip file
+        try:
+            zip_bytes = sandbox.fs.download_file(zip_path)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to download zip: {str(e)}")
+        # Stream the zip file
+        return StreamingResponse(
+            iter([zip_bytes]),
+            media_type="application/zip",
+            headers={
+                "Content-Disposition": f"attachment; filename=project_{project_id}.zip"
+            }
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error downloading project files: {str(e)}")

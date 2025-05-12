@@ -9,7 +9,7 @@ from utils.logger import logger
 from utils.auth_utils import get_current_user_id_from_jwt, get_user_id_from_stream_auth, get_optional_user_id
 from sandbox.sandbox import get_or_start_sandbox
 from services.supabase import DBConnection
-from agent.api import get_or_create_project_sandbox
+from agent.utils import get_or_create_project_sandbox
 
 
 # Initialize shared resources
