@@ -34,7 +34,7 @@ import {
   TooltipContent,
   TooltipTrigger
 } from "@/components/ui/tooltip"
-import { getProjects, getThreads, Project } from "@/lib/api"
+import { getProjects, getThreads, Project, deleteProject } from "@/lib/api"
 import Link from "next/link"
 
 // Thread with associated project info for display in sidebar
@@ -51,6 +51,7 @@ export function NavAgents() {
   const [threads, setThreads] = useState<ThreadWithProject[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [loadingThreadId, setLoadingThreadId] = useState<string | null>(null)
+  const [deletingProjectId, setDeletingProjectId] = useState<string | null>(null)
   const pathname = usePathname()
   const router = useRouter()
 
@@ -293,9 +294,22 @@ export function NavAgents() {
                           </a>
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={async () => {
+                          if (window.confirm("Are you sure you want to delete this project and its sandbox? This cannot be undone.")) {
+                            setDeletingProjectId(thread.projectId);
+                            try {
+                              await deleteProject(thread.projectId);
+                              toast.success("Project deleted successfully");
+                              await loadThreadsWithProjects();
+                            } catch (err) {
+                              toast.error("Failed to delete project");
+                            } finally {
+                              setDeletingProjectId(null);
+                            }
+                          }
+                        }} disabled={deletingProjectId === thread.projectId}>
                           <Trash2 className="text-muted-foreground" />
-                          <span>Delete</span>
+                          <span>{deletingProjectId === thread.projectId ? "Deleting..." : "Delete"}</span>
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

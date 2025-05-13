@@ -1,5 +1,5 @@
-from fastapi import APIRouter, HTTPException, Depends, Request, Body, File, UploadFile, Form
-from fastapi.responses import StreamingResponse
+from fastapi import APIRouter, HTTPException, Depends, Request, Body, File, UploadFile, Form, status
+from fastapi.responses import StreamingResponse, Response
 import asyncio
 import json
 import traceback
@@ -1004,3 +1004,28 @@ async def download_all_project_files(project_id: str, user_id: str = Depends(get
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error downloading project files: {str(e)}")
+
+@router.delete("/project/{project_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_project(project_id: str, user_id: str = Depends(get_current_user_id_from_jwt)):
+    """Delete a project and its associated sandbox."""
+    client = await db.client
+    # Find the project
+    project_result = await client.table('projects').select('*').eq('project_id', project_id).maybe_single().execute()
+    if not project_result.data:
+        raise HTTPException(status_code=404, detail="Project not found")
+    project = project_result.data
+    # Check ownership
+    if project.get('account_id') != user_id:
+        raise HTTPException(status_code=403, detail="Not authorized to delete this project")
+    # Delete sandbox if exists
+    sandbox_info = project.get('sandbox')
+    sandbox_id = sandbox_info.get('id') if sandbox_info else None
+    if sandbox_id:
+        try:
+            from sandbox.sandbox import daytona
+            daytona.delete(sandbox_id)
+        except Exception as e:
+            logger.error(f"Failed to delete sandbox {sandbox_id}: {str(e)}")
+    # Delete the project (threads/messages should cascade)
+    await client.table('projects').delete().eq('project_id', project_id).execute()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
