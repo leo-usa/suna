@@ -320,12 +320,23 @@ export const updateProject = async (projectId: string, data: Partial<Project>): 
 
 export const deleteProject = async (projectId: string): Promise<void> => {
   const supabase = createClient();
-  const { error } = await supabase
-    .from('projects')
-    .delete()
-    .eq('project_id', projectId);
-  
-  if (error) throw error;
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.access_token) {
+    throw new Error('No access token available');
+  }
+  if (!API_URL) {
+    throw new Error('Backend URL is not configured. Set NEXT_PUBLIC_BACKEND_URL in your environment.');
+  }
+  const res = await fetch(`${API_URL}/project/${projectId}`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${session.access_token}`,
+    },
+  });
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(`Failed to delete project: ${errorText}`);
+  }
 };
 
 // Thread APIs

@@ -36,7 +36,7 @@ CREATE TABLE messages (
 -- Create agent_runs table
 CREATE TABLE agent_runs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    thread_id UUID NOT NULL REFERENCES threads(thread_id),
+    thread_id UUID NOT NULL REFERENCES threads(thread_id) ON DELETE CASCADE,
     status TEXT NOT NULL DEFAULT 'running',
     started_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
     completed_at TIMESTAMP WITH TIME ZONE,
