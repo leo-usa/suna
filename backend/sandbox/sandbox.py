@@ -1,5 +1,6 @@
 import os
 from typing import Optional
+import time
 
 from daytona_sdk import Daytona, DaytonaConfig, CreateSandboxParams, Sandbox, SessionExecuteRequest
 from daytona_api_client.models.workspace_state import WorkspaceState
@@ -87,16 +88,13 @@ def start_supervisord_session(sandbox: Sandbox):
         raise e
 
 def create_sandbox(password: str, project_id: str = None):
-    """Create a new sandbox with all required services configured and running."""
-    
+    """Create a new sandbox with all required services configured and running. Handles VM limit with LRU deletion."""
     logger.debug("Creating new Daytona sandbox environment")
     logger.debug("Configuring sandbox with browser-use image and environment variables")
-    
     labels = None
     if project_id:
         logger.debug(f"Using sandbox_id as label: {project_id}")
         labels = {'id': project_id}
-        
     params = CreateSandboxParams(
         image="adamcohenhillel/kortix-suna:0.0.20",
         public=True,
@@ -120,14 +118,66 @@ def create_sandbox(password: str, project_id: str = None):
             "disk": 5,
         }
     )
-    
-    # Create the sandbox
-    sandbox = daytona.create(params)
+    try:
+        sandboxes = daytona.list()  # List all sandboxes
+        # Filter for non-active sandboxes
+        non_active = [s for s in sandboxes if getattr(s.instance, 'state', None) in [WorkspaceState.ARCHIVED, WorkspaceState.STOPPED]]
+        # Log all candidates for deletion
+        for s in non_active:
+            logger.info(f"Non-active sandbox: id={getattr(s, 'id', s)}, created_at={getattr(s, 'created_at', getattr(s, 'instance', None) and getattr(s.instance, 'created_at', 'N/A'))}")
+        # Sort by last_used, then created_at, then fallback to 0
+        def get_sort_key(s):
+            return getattr(s, 'last_used', None) or getattr(s, 'created_at', getattr(s, 'instance', None) and getattr(s.instance, 'created_at', 0) or 0)
+        non_active.sort(key=get_sort_key)
+        oldest = non_active[0]
+        if isinstance(oldest, str):
+            logger.info(f"Fetching sandbox object for ID: {oldest}")
+            sandbox_obj = daytona.get_current_sandbox(oldest)
+            logger.info(f"Deleting oldest non-active sandbox: {oldest}")
+            daytona.delete(sandbox_obj)
+        else:
+            logger.info(f"Deleting oldest non-active sandbox: {oldest.id}")
+            daytona.delete(oldest)
+        # Wait for Daytona to free up the slot
+        time.sleep(3)
+        # Retry creation up to 2 times
+        for attempt in range(2):
+            try:
+                sandbox = daytona.create(params)
+                break
+            except Exception as e2:
+                if attempt == 1:
+                    raise
+                logger.warning("Retrying sandbox creation after waiting for quota to free up...")
+                time.sleep(2)
+    except Exception as e:
+        # Check if error is VM limit
+        if "limit" in str(e).lower() or "maximum" in str(e).lower():
+            logger.warning("Daytona VM limit reached. Attempting LRU deletion of non-active sandbox.")
+            sandboxes = daytona.list()  # List all sandboxes
+            # Filter for non-active sandboxes
+            non_active = [s for s in sandboxes if getattr(s.instance, 'state', None) in [WorkspaceState.ARCHIVED, WorkspaceState.STOPPED]]
+            if non_active:
+                # Sort by creation or last used time (if available)
+                non_active.sort(key=lambda s: getattr(s, 'created_at', getattr(s, 'instance', None) and getattr(s.instance, 'created_at', 0) or 0))
+                oldest = non_active[0]
+                if isinstance(oldest, str):
+                    logger.info(f"Fetching sandbox object for ID: {oldest}")
+                    sandbox_obj = daytona.get_current_sandbox(oldest)
+                    logger.info(f"Deleting oldest non-active sandbox: {oldest}")
+                    daytona.delete(sandbox_obj)
+                else:
+                    logger.info(f"Deleting oldest non-active sandbox: {oldest.id}")
+                    daytona.delete(oldest)
+                # Retry creation once
+                sandbox = daytona.create(params)
+            else:
+                logger.error("All sandboxes are active. Cannot create new sandbox.")
+                raise RuntimeError("All agents are busy. Please wait for a slot to become available.")
+        else:
+            raise e
     logger.debug(f"Sandbox created with ID: {sandbox.id}")
-    
-    # Start supervisord in a session for new sandbox
     start_supervisord_session(sandbox)
-    
     logger.debug(f"Sandbox environment successfully initialized")
     return sandbox
 
