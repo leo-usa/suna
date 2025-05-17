@@ -34,3 +34,22 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## 🌐 Multi-Language (i18n) Support
+
+Suna now supports multiple languages for a global user experience. The following languages are available:
+
+- English (en)
+- Deutsch (de)
+- Español (es)
+- Français (fr)
+- Italiano (it)
+- Português (BR) (pt-BR)
+- Português (PT) (pt-PT)
+- 简体中文 (zh)
+- 繁體中文 (zh-TW)
+- 日本語 (ja)
+- 한국어 (ko)
+- العربية (ar)
+
+All user-facing text is managed via translation files in `/locales/{lang}/common.json`. To add or edit translations, update the relevant JSON file. To add a new language, create a new folder in `/locales` and provide the necessary translations.

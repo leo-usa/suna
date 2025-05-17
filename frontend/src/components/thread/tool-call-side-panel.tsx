@@ -2,6 +2,7 @@
 
 import { Project } from "@/lib/api";
 import { getToolIcon } from "@/components/thread/utils";
+import { getToolTitle } from "./tool-views/utils";
 import React from "react";
 import { Slider } from "@/components/ui/slider";
 import { ApiMessageType } from '@/components/thread/types';
@@ -50,7 +51,8 @@ function getToolView(
   agentStatus?: string,
   currentIndex?: number,
   totalCalls?: number,
-  isStreaming?: boolean
+  isStreaming?: boolean,
+  dict?: Record<string, string>
 ) {
   if (!toolName) return null;
   
@@ -65,6 +67,7 @@ function getToolView(
           assistantTimestamp={assistantTimestamp}
           toolTimestamp={toolTimestamp}
           isSuccess={isSuccess}
+          dict={dict}
         />
       );
     case 'str-replace':
@@ -75,6 +78,7 @@ function getToolView(
           assistantTimestamp={assistantTimestamp}
           toolTimestamp={toolTimestamp}
           isSuccess={isSuccess}
+          dict={dict}
         />
       );
     case 'expose-port':
@@ -86,6 +90,7 @@ function getToolView(
           toolTimestamp={toolTimestamp}
           isSuccess={isSuccess}
           isStreaming={isStreaming}
+          dict={dict}
         />
       );
     case 'create-file':
@@ -100,6 +105,7 @@ function getToolView(
           isSuccess={isSuccess}
           name={normalizedToolName}
           project={project}
+          dict={dict}
         />
       );
     case 'browser-navigate':
@@ -120,6 +126,7 @@ function getToolView(
           toolTimestamp={toolTimestamp}
           isSuccess={isSuccess}
           project={project}
+          dict={dict}
         />
       );
     case 'web-search':
@@ -130,6 +137,7 @@ function getToolView(
           assistantTimestamp={assistantTimestamp}
           toolTimestamp={toolTimestamp}
           isSuccess={isSuccess}
+          dict={dict}
         />
       );
     case 'crawl-webpage':
@@ -140,6 +148,7 @@ function getToolView(
           assistantTimestamp={assistantTimestamp}
           toolTimestamp={toolTimestamp}
           isSuccess={isSuccess}
+          dict={dict}
         />
       );
     case 'scrape-webpage':
@@ -150,6 +159,7 @@ function getToolView(
           assistantTimestamp={assistantTimestamp}
           toolTimestamp={toolTimestamp}
           isSuccess={isSuccess}
+          dict={dict}
         />
       );
     case 'execute-data-provider-call':
@@ -163,6 +173,7 @@ function getToolView(
           toolTimestamp={toolTimestamp}
           isSuccess={isSuccess}
           isStreaming={isStreaming}
+          dict={dict}
         />
       );
     default:
@@ -181,6 +192,7 @@ function getToolView(
             toolTimestamp={toolTimestamp}
             isSuccess={isSuccess}
             project={project}
+            dict={dict}
           />
         );
       }
@@ -195,6 +207,7 @@ function getToolView(
           toolTimestamp={toolTimestamp}
           isSuccess={isSuccess}
           isStreaming={isStreaming}
+          dict={dict}
         />
       );
   }
@@ -211,6 +224,7 @@ interface ToolCallSidePanelProps {
   project?: Project;
   renderAssistantMessage?: (assistantContent?: string, toolContent?: string) => React.ReactNode;
   renderToolResult?: (toolContent?: string, isSuccess?: boolean) => React.ReactNode;
+  dict?: Record<string, string>;
 }
 
 export function ToolCallSidePanel({
@@ -223,7 +237,8 @@ export function ToolCallSidePanel({
   agentStatus,
   project,
   renderAssistantMessage,
-  renderToolResult
+  renderToolResult,
+  dict
 }: ToolCallSidePanelProps) {
   // Move hooks outside of conditional
   const [dots, setDots] = React.useState('');
@@ -291,6 +306,9 @@ export function ToolCallSidePanel({
     }
   }, [currentIndex, totalCalls, onNavigate]);
 
+  // Add local t function
+  const t = (key: string) => (dict && dict[key]) || key;
+
   if (!isOpen) return null;
   
   const renderContent = () => {
@@ -301,7 +319,7 @@ export function ToolCallSidePanel({
           <div className="pt-4 pl-4 pr-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-100">Suna's Computer</h2>
+                <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-100">{t('thread.sunas_computer')}</h2>
               </div>
               
               <Button 
@@ -317,7 +335,7 @@ export function ToolCallSidePanel({
           
           {/* Empty state message */}
           <div className="flex items-center justify-center flex-1 p-4">
-            <p className="text-sm text-zinc-500 dark:text-zinc-400 text-center">No tool call details available.</p>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 text-center">{t('thread.no_tool_call_details_available')}</p>
           </div>
         </div>
       );
@@ -335,7 +353,8 @@ export function ToolCallSidePanel({
       agentStatus,
       currentIndex,
       totalCalls,
-      isStreaming
+      isStreaming,
+      dict
     );
 
     if (!toolView) {
@@ -345,7 +364,7 @@ export function ToolCallSidePanel({
           <div className="pt-4 pl-4 pr-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-100">Suna's Computer</h2>
+                <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-100">{t('thread.sunas_computer')}</h2>
               </div>
               
               <Button 
@@ -361,7 +380,7 @@ export function ToolCallSidePanel({
           
           {/* Error state message */}
           <div className="flex items-center justify-center flex-1 p-4">
-            <p className="text-sm text-zinc-500 dark:text-zinc-400 text-center">Unable to display tool details.</p>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 text-center">{t('thread.unable_to_display_tool_details')}</p>
           </div>
         </div>
       );
@@ -372,7 +391,7 @@ export function ToolCallSidePanel({
         <div className="pt-4 pl-4 pr-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-100">Suna's Computer</h2>
+              <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-100">{t('thread.sunas_computer')}</h2>
             </div>
             
             {currentToolCall.toolResult?.content && !isStreaming && (
@@ -384,7 +403,8 @@ export function ToolCallSidePanel({
                   "text-sm text-zinc-700 dark:text-zinc-300",
                   isMobile && "hidden sm:inline" // Hide on small mobile
                 )}>
-                  {currentToolName}
+                  {/* Internationalize tool name */}
+                  {t('thread.' + currentToolName.replace(/-/g, '_')) || getToolTitle(currentToolName)}
                 </span>              
                 <div className={cn(
                   "px-2.5 py-0.5 rounded-full text-xs font-medium",
@@ -392,7 +412,7 @@ export function ToolCallSidePanel({
                     ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400" 
                     : "bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400"
                 )}>
-                  {isSuccess ? 'Success' : 'Failed'}
+                  {isSuccess ? t('thread.success') : t('thread.failed')}
                 </div>
                 
                 {/* Add close button */}
@@ -411,7 +431,7 @@ export function ToolCallSidePanel({
               <div className="flex items-center gap-2">
                 <div className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400 flex items-center gap-1.5">
                   <CircleDashed className="h-3 w-3 animate-spin" />
-                  <span>Running</span>
+                  <span>{t('thread.running')}</span>
                 </div>
                 
                 {/* Add close button */}
@@ -473,12 +493,12 @@ export function ToolCallSidePanel({
                   <CurrentToolIcon className="h-3 w-3 text-zinc-800 dark:text-zinc-300" />
                 </div>
                 <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300 truncate" title={currentToolName}>
-                  {currentToolName} {isStreaming && `(Running${dots})`}
+                  {currentToolName} {isStreaming && `(${t('thread.running')}${dots})`}
                 </span>
               </div>
 
               <span className="text-xs text-zinc-500 dark:text-zinc-400 flex-shrink-0">
-                Step {currentIndex + 1} of {totalCalls}
+                {t('thread.step')} {currentIndex + 1} {t('thread.of')} {totalCalls}
               </span>
             </div>
           )}
@@ -493,7 +513,7 @@ export function ToolCallSidePanel({
                 className="h-9 px-3"
               >
                 <ChevronLeft className="h-4 w-4 mr-1" />
-                <span>Previous</span>
+                <span>{t('thread.previous')}</span>
               </Button>
               
               <span className="text-xs text-zinc-500 dark:text-zinc-400">
@@ -507,7 +527,7 @@ export function ToolCallSidePanel({
                 disabled={currentIndex >= totalCalls - 1}
                 className="h-9 px-3"
               >
-                <span>Next</span>
+                <span>{t('thread.next')}</span>
                 <ChevronRight className="h-4 w-4 ml-1" />
               </Button>
             </div>

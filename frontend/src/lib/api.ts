@@ -1193,10 +1193,12 @@ export interface CreateCheckoutSessionRequest {
   price_id: string;
   success_url: string;
   cancel_url: string;
+  locale?: string;
 }
 
 export interface CreatePortalSessionRequest {
   return_url: string;
+  locale?: string;
 }
 
 export interface SubscriptionStatus {

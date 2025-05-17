@@ -38,8 +38,9 @@ export function SiteHeader({
   onViewFiles, 
   onToggleSidePanel,
   onProjectRenamed,
-  isMobileView
-}: ThreadSiteHeaderProps) {
+  isMobileView,
+  dict
+}: ThreadSiteHeaderProps & { dict?: Record<string, string> }) {
   const pathname = usePathname()
   const [isEditing, setIsEditing] = useState(false)
   const [editName, setEditName] = useState(projectName)
@@ -47,10 +48,12 @@ export function SiteHeader({
   const isMobile = useIsMobile() || isMobileView
   const { setOpenMobile } = useSidebar()
   
+  const t = (key: string) => (dict && dict[key]) || key;
+
   const copyCurrentUrl = () => {
     const url = window.location.origin + pathname
     navigator.clipboard.writeText(url)
-    toast.success("URL copied to clipboard")
+    toast.success(t('thread.url_copied_to_clipboard'))
   }
 
   const startEditing = () => {
@@ -77,7 +80,7 @@ export function SiteHeader({
     if (editName !== projectName) {
       try {
         if (!projectId) {
-          toast.error("Cannot rename: Project ID is missing")
+          toast.error(t('thread.cannot_rename_project_id_missing'))
           setEditName(projectName)
           setIsEditing(false)
           return
@@ -86,12 +89,12 @@ export function SiteHeader({
         const updatedProject = await updateProject(projectId, { name: editName })
         if (updatedProject) {
           onProjectRenamed?.(editName)
-          toast.success("Project renamed successfully")
+          toast.success(t('thread.project_renamed_success'))
         } else {
-          throw new Error("Failed to update project")
+          throw new Error(t('thread.failed_to_update_project'))
         }
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "Failed to rename project"
+        const errorMessage = error instanceof Error ? error.message : t('thread.failed_to_rename_project')
         console.error("Failed to rename project:", errorMessage)
         toast.error(errorMessage)
         setEditName(projectName)
@@ -161,7 +164,7 @@ export function SiteHeader({
           <div 
             className="text-base font-medium text-muted-foreground hover:text-foreground cursor-pointer flex items-center"
             onClick={startEditing}
-            title="Click to rename project"
+            title={t('thread.click_to_rename_project')}
           >
             {projectName}
           </div>
@@ -195,7 +198,7 @@ export function SiteHeader({
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>View Files in Task</p>
+                <p>{t('thread.view_files_in_task')}</p>
               </TooltipContent>
             </Tooltip>
 
@@ -211,7 +214,7 @@ export function SiteHeader({
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Copy Link</p>
+                <p>{t('thread.copy_link')}</p>
               </TooltipContent>
             </Tooltip>
 
@@ -227,7 +230,7 @@ export function SiteHeader({
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Toggle Computer Preview (CMD+I)</p>
+                <p>{t('thread.toggle_computer_preview_cmd_i')}</p>
               </TooltipContent>
             </Tooltip>
 
@@ -237,14 +240,14 @@ export function SiteHeader({
                   variant="ghost"
                   size="icon"
                   className="h-9 w-9 cursor-pointer"
-                  aria-label="Download all project files"
+                  aria-label={t('thread.download_all_project_files')}
                   onClick={async () => {
                     if (!projectId) return;
                     try {
                       const supabase = createClient();
                       const { data: { session } } = await supabase.auth.getSession();
                       if (!session?.access_token) {
-                        throw new Error('No access token available');
+                        throw new Error(t('thread.no_access_token_available'));
                       }
                       const res = await fetch(`${API_URL}/project/${projectId}/download-all`, {
                         method: 'GET',
@@ -254,7 +257,7 @@ export function SiteHeader({
                         },
                       });
                       if (!res.ok) {
-                        throw new Error('Failed to download project files');
+                        throw new Error(t('thread.failed_to_download_project_files'));
                       }
                       const blob = await res.blob();
                       const url = window.URL.createObjectURL(blob);
@@ -266,7 +269,7 @@ export function SiteHeader({
                       a.remove();
                       window.URL.revokeObjectURL(url);
                     } catch (err) {
-                      alert('Failed to download project files.');
+                      alert(t('thread.failed_to_download_project_files'));
                     }
                   }}
                 >
@@ -274,7 +277,7 @@ export function SiteHeader({
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Download all project files. Please download your files promptly—files will be lost if the sandbox is deleted.</p>
+                <p>{t('thread.download_all_project_files_please_download_your_files_promptly_files_will_be_lost_if_the_sandbox_is_deleted')}</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>

@@ -13,6 +13,7 @@ from utils.config import config, EnvMode
 from services.supabase import DBConnection
 from utils.auth_utils import get_current_user_id_from_jwt
 from pydantic import BaseModel, Field
+import time
 
 # Initialize Stripe
 stripe.api_key = config.STRIPE_SECRET_KEY
@@ -36,9 +37,11 @@ class CreateCheckoutSessionRequest(BaseModel):
     price_id: str
     success_url: str
     cancel_url: str
+    locale: Optional[str] = None
 
 class CreatePortalSessionRequest(BaseModel):
     return_url: str
+    locale: Optional[str] = None
 
 class SubscriptionStatus(BaseModel):
     status: str # e.g., 'active', 'trialing', 'past_due', 'scheduled_downgrade', 'no_subscription'
@@ -367,7 +370,7 @@ async def create_checkout_session(
                              # If no schedule, the current subscription state defines the current phase
                             current_phase = {
                                 'items': existing_subscription['items']['data'], # Use original items data
-                                'start_date': existing_subscription['current_period_start'], # Use sub start if no schedule
+                                'start_date': existing_subscription['items']['data'][0]['current_period_start'], # Use item start
                                 # Add other relevant fields if needed for create/modify
                             }
 
@@ -395,29 +398,26 @@ async def create_checkout_session(
 
                         current_phase_update_data = {
                             'items': current_phase_items_for_api,
-                            'start_date': current_phase['start_date'], # Preserve original start date
-                            'end_date': current_period_end_ts, # End this phase at period end
+                            'start_date': current_phase['start_date'],
+                            'end_date': current_period_end_ts,
                             'proration_behavior': 'none'
-                            # Include other necessary fields from current_phase if modifying?
-                            # e.g., 'billing_cycle_anchor', 'collection_method'? Usually inherited.
                         }
                         
                         # Define the new (downgrade) phase
                         new_downgrade_phase_data = {
                             'items': [{'price': request.price_id, 'quantity': 1}],
-                            'start_date': current_period_end_ts, # Start immediately after current phase ends
+                            'start_date': current_period_end_ts,
                             'proration_behavior': 'none'
-                            # iterations defaults to 1, meaning it runs for one billing cycle
-                            # then schedule ends based on end_behavior
                         }
                         
                         # Update or Create Schedule
                         if schedule_id:
-                             # Update existing schedule, replacing all future phases
-                            # print(f"Updating existing schedule {schedule_id}")
+                             # Update existing schedule, replacing all future phases (original working code)
                             logger.info(f"Updating existing schedule {schedule_id} for subscription {subscription_id}")
-                            logger.debug(f"Current phase data: {current_phase_update_data}")
-                            logger.debug(f"New phase data: {new_downgrade_phase_data}")
+                            logger.debug(f"Current phase: {current_phase}")
+                            logger.debug(f"Current phase items: {current_phase_items_for_api}")
+                            logger.debug(f"Current period end ts: {current_period_end_ts}")
+                            logger.debug(f"New price id: {request.price_id}")
                             updated_schedule = stripe.SubscriptionSchedule.modify(
                                 schedule_id,
                                 phases=[current_phase_update_data, new_downgrade_phase_data],
@@ -425,52 +425,41 @@ async def create_checkout_session(
                             )
                             logger.info(f"Successfully updated schedule {updated_schedule['id']}")
                         else:
-                             # Create a new schedule using the defined phases
-                            print(f"Creating new schedule for subscription {subscription_id}")
+                             # Create a new schedule using the defined phases (original working code)
                             logger.info(f"Creating new schedule for subscription {subscription_id}")
-                            # Deep debug logging - write subscription details to help diagnose issues
-                            logger.debug(f"Subscription details: {subscription_id}, current_period_end_ts: {current_period_end_ts}")
-                            logger.debug(f"Current price: {current_price_id}, New price: {request.price_id}")
-                            
-                            try:
-                                updated_schedule = stripe.SubscriptionSchedule.create(
-                                    from_subscription=subscription_id,
-                                    phases=[
-                                        {
-                                            'start_date': current_phase['start_date'],
-                                            'end_date': current_period_end_ts,
-                                            'proration_behavior': 'none',
-                                            'items': [
-                                                {
-                                                    'price': current_price_id,
-                                                    'quantity': 1
-                                                }
-                                            ]
-                                        },
-                                        {
-                                            'start_date': current_period_end_ts,
-                                            'proration_behavior': 'none',
-                                            'items': [
-                                                {
-                                                    'price': request.price_id,
-                                                    'quantity': 1
-                                                }
-                                            ]
-                                        }
-                                    ],
-                                    end_behavior='release'
-                                )
-                                # Don't try to link the schedule - that's handled by from_subscription
-                                logger.info(f"Created new schedule {updated_schedule['id']} from subscription {subscription_id}")
-                                # print(f"Created new schedule {updated_schedule['id']} from subscription {subscription_id}")
-                                
-                                # Verify the schedule was created correctly
-                                fetched_schedule = stripe.SubscriptionSchedule.retrieve(updated_schedule['id'])
-                                logger.info(f"Schedule verification - Status: {fetched_schedule.get('status')}, Phase Count: {len(fetched_schedule.get('phases', []))}")
-                                logger.debug(f"Schedule details: {fetched_schedule}")
-                            except Exception as schedule_error:
-                                logger.exception(f"Failed to create schedule: {str(schedule_error)}")
-                                raise schedule_error  # Re-raise to be caught by the outer try-except
+                            current_phase_start = existing_subscription['current_period_start']
+                            updated_schedule = stripe.SubscriptionSchedule.create(
+                                from_subscription=subscription_id,
+                                phases=[
+                                    {
+                                        'start_date': current_phase_start,
+                                        'end_date': current_period_end_ts,
+                                        'proration_behavior': 'none',
+                                        'items': [
+                                            {
+                                                'price': current_price_id,
+                                                'quantity': 1
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        'start_date': current_period_end_ts,
+                                        'proration_behavior': 'none',
+                                        'items': [
+                                            {
+                                                'price': request.price_id,
+                                                'quantity': 1
+                                            }
+                                        ]
+                                    }
+                                ],
+                                end_behavior='release'
+                            )
+                            logger.info(f"Created new schedule {updated_schedule['id']} from subscription {subscription_id}")
+                            # Verify the schedule was created correctly
+                            fetched_schedule = stripe.SubscriptionSchedule.retrieve(updated_schedule['id'])
+                            logger.info(f"Schedule verification - Status: {fetched_schedule.get('status')}, Phase Count: {len(fetched_schedule.get('phases', []))}")
+                            logger.debug(f"Schedule details: {fetched_schedule}")
                         
                         return {
                             "subscription_id": subscription_id,
@@ -496,13 +485,14 @@ async def create_checkout_session(
             session = stripe.checkout.Session.create(
                 customer=customer_id,
                 payment_method_types=['card'],
-                    line_items=[{'price': request.price_id, 'quantity': 1}],
+                line_items=[{'price': request.price_id, 'quantity': 1}],
                 mode='subscription',
                 success_url=request.success_url,
                 cancel_url=request.cancel_url,
+                locale=request.locale or 'auto',
                 metadata={
-                        'user_id': current_user_id,
-                        'product_id': product_id
+                    'user_id': current_user_id,
+                    'product_id': product_id
                 }
             )
             return {"session_id": session['id'], "url": session['url'], "status": "new"}
@@ -607,6 +597,9 @@ async def create_portal_session(
         # Add configuration_id if we found or created one with subscription_update enabled
         if active_config:
             portal_params["configuration"] = active_config['id']
+        
+        if request.locale:
+            portal_params["locale"] = request.locale
         
         # Create the session
         session = stripe.billing_portal.Session.create(**portal_params)

@@ -1,0 +1,19 @@
+{
+  "welcome": "Benvenuto su Suna",
+  "login": "Accedi",
+  "logout": "Disconnetti",
+  "signup": "Registrati",
+  "dashboard": "Cruscotto",
+  "settings": "Impostazioni",
+  "language": "Lingua",
+  "profile": "Profilo",
+  "save": "Salva",
+  "cancel": "Annulla",
+  "delete": "Elimina",
+  "confirm": "Conferma",
+  "search": "Cerca",
+  "loading": "Caricamento...",
+  "error": "Si è verificato un errore. Per favore riprova.",
+  "not_found": "Pagina non trovata",
+  "home": "Home"
+} 

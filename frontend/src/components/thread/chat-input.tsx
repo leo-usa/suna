@@ -43,6 +43,7 @@ interface ChatInputProps {
   onFileBrowse?: () => void;
   sandboxId?: string;
   hideAttachments?: boolean;
+  dict?: Record<string, string>;
 }
 
 interface UploadedFile {
@@ -69,7 +70,8 @@ export const ChatInput = forwardRef<ChatInputHandles, ChatInputProps>(({
   onChange: controlledOnChange,
   onFileBrowse,
   sandboxId,
-  hideAttachments = false
+  hideAttachments = false,
+  dict
 }, ref) => {
   const isControlled = controlledValue !== undefined && controlledOnChange !== undefined;
   
@@ -340,6 +342,9 @@ export const ChatInput = forwardRef<ChatInputHandles, ChatInputProps>(({
     { id: "gemini-flash-2.5", label: "Gemini Flash 2.5" }
   ];
 
+  // Add local t function
+  const t = (key: string) => (dict && dict[key]) || key;
+
   return (
     <div className="mx-auto w-full max-w-3xl px-4 py-4">
       <AnimatePresence>
@@ -483,7 +488,7 @@ export const ChatInput = forwardRef<ChatInputHandles, ChatInputProps>(({
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="top">
-                  <p>Attach files</p>
+                  <p>{t('thread.attach_files')}</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -526,7 +531,7 @@ export const ChatInput = forwardRef<ChatInputHandles, ChatInputProps>(({
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="top">
-                <p>{isAgentRunning ? 'Stop agent' : 'Send message'}</p>
+                <p>{isAgentRunning ? t('thread.stop_agent') : t('thread.send_message')}</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -541,7 +546,7 @@ export const ChatInput = forwardRef<ChatInputHandles, ChatInputProps>(({
         >
           <div className="text-xs text-muted-foreground flex items-center gap-2">
             <Loader2 className="h-3 w-3 animate-spin" />
-            <span>Kortix Suna is working...</span>
+            <span>{t('thread.agent_working')}</span>
           </div>
         </motion.div>
       )}

@@ -17,7 +17,12 @@ interface UseCase {
   url: string;
 }
 
-export function UseCasesSection() {
+interface UseCasesSectionProps {
+  dict: Record<string, string>;
+}
+
+export function UseCasesSection({ dict }: UseCasesSectionProps) {
+  const t = (key: string) => dict[key] || key;
   // Get featured use cases from siteConfig and limit to 8
   const featuredUseCases: UseCase[] = (siteConfig.useCases || [])
     .filter((useCase: UseCase) => useCase.featured);
@@ -29,10 +34,10 @@ export function UseCasesSection() {
     >
       <SectionHeader>
         <h2 className="text-3xl md:text-4xl font-medium tracking-tighter text-center text-balance">
-          See Suna in action
+          {t('see_suna_in_action')}
         </h2>
         <p className="text-muted-foreground text-center text-balance font-medium">
-          Explore real-world examples of how Suna completes complex tasks autonomously
+          {t('explore_real_world_examples')}
         </p>
       </SectionHeader>
 
@@ -50,10 +55,10 @@ export function UseCasesSection() {
                       {useCase.icon}
                     </svg>
                   </div>
-                  <h3 className="text-lg font-medium line-clamp-1">{useCase.title}</h3>
+                  <h3 className="text-lg font-medium line-clamp-1">{t(useCase.title)}</h3>
                 </div>
                 <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">
-                  {useCase.description}
+                  {t(useCase.description)}
                 </p>
               </div>
               
@@ -64,7 +69,7 @@ export function UseCasesSection() {
                   <div className="relative w-full h-full overflow-hidden">
                     <img 
                       src={useCase.image || `https://placehold.co/800x400/f5f5f5/666666?text=Suna+${useCase.title.split(' ').join('+')}`}
-                      alt={`Suna ${useCase.title}`}
+                      alt={`Suna ${t(useCase.title)}`}
                       className="w-full h-full object-cover"
                     />
                     <a

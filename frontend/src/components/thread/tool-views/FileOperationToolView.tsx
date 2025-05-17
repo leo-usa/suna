@@ -87,10 +87,16 @@ export function FileOperationToolView({
   isSuccess = true,
   isStreaming = false,
   name,
-  project
-}: ToolViewProps) {
+  project,
+  dict,
+  currentIndex,
+  totalCalls
+}: ToolViewProps & { dict?: Record<string, string> }) {
   const { resolvedTheme } = useTheme();
   const isDarkTheme = resolvedTheme === 'dark';
+
+  // Add local t function
+  const t = (key: string) => (dict && dict[key]) || key;
 
   // Determine operation type from content or name
   const getOperationType = (): FileOperation => {
@@ -168,15 +174,18 @@ export function FileOperationToolView({
   const configs = {
     create: {
       icon: FolderPlus,
-      successMessage: "File created successfully"
+      successMessage: t('thread.file_created_successfully'),
+      label: t('thread.create_file')
     },
     rewrite: {
       icon: Replace,
-      successMessage: "File rewritten successfully"
+      successMessage: t('thread.file_rewritten_successfully'),
+      label: t('thread.rewrite_file')
     },
     delete: {
       icon: FileX,
-      successMessage: "File deleted successfully"
+      successMessage: t('thread.file_deleted_successfully'),
+      label: t('thread.delete_file')
     }
   };
 
@@ -192,13 +201,11 @@ export function FileOperationToolView({
             {/* IDE Header */}
             <div className="flex items-center p-2 bg-zinc-100 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 justify-between border-b border-zinc-200 dark:border-zinc-800">
               <div className="flex items-center">
-                {isMarkdown ?
-                  <FileCode className="h-4 w-4 mr-2 text-zinc-600 dark:text-zinc-400" /> :
-                  isCsv ?
-                  <FileSpreadsheet className="h-4 w-4 mr-2 text-zinc-600 dark:text-zinc-400" /> :
-                  <FileSymlink className="h-4 w-4 mr-2 text-zinc-600 dark:text-zinc-400" />
-                }
-                <span className="text-xs font-medium">{fileName}</span>
+                <Icon className="h-4 w-4 mr-2 text-zinc-600 dark:text-zinc-400" />
+                <span className="text-xs font-medium">{config.label}</span>
+                {isSuccess && (
+                  <span className="ml-2 text-emerald-600 dark:text-emerald-400 font-semibold">{t('thread.success')}</span>
+                )}
               </div>
 
               <div className="flex items-center gap-2">
@@ -215,7 +222,7 @@ export function FileOperationToolView({
                       )}
                     >
                       <Code className="h-3 w-3" />
-                      <span>Code</span>
+                      <span>{t('thread.code')}</span>
                     </button>
                     <button
                       onClick={() => setViewMode('preview')}
@@ -227,7 +234,7 @@ export function FileOperationToolView({
                       )}
                     >
                       <Eye className="h-3 w-3" />
-                      <span>Preview</span>
+                      <span>{t('thread.preview')}</span>
                     </button>
                   </div>
                 )}
@@ -244,7 +251,7 @@ export function FileOperationToolView({
                       )}
                     >
                       <Code className="h-3 w-3" />
-                      <span>Code</span>
+                      <span>{t('thread.code')}</span>
                     </button>
                     <button
                       onClick={() => setViewMode('preview')}
@@ -256,7 +263,7 @@ export function FileOperationToolView({
                       )}
                     >
                       <Eye className="h-3 w-3" />
-                      <span>Preview</span>
+                      <span>{t('thread.preview')}</span>
                     </button>
                   </div>
                 )}
@@ -273,7 +280,7 @@ export function FileOperationToolView({
                       )}
                     >
                       <Code className="h-3 w-3" />
-                      <span>Code</span>
+                      <span>{t('thread.code')}</span>
                     </button>
                     <button
                       onClick={() => setViewMode('preview')}
@@ -285,7 +292,7 @@ export function FileOperationToolView({
                       )}
                     >
                       <Eye className="h-3 w-3" />
-                      <span>Preview</span>
+                      <span>{t('thread.preview')}</span>
                     </button>
                   </div>
                 )}
@@ -384,8 +391,11 @@ export function FileOperationToolView({
             {/* IDE Header */}
             <div className="flex items-center p-2 bg-zinc-100 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 justify-between border-b border-zinc-200 dark:border-zinc-800">
               <div className="flex items-center">
-                <FileSymlink className="h-4 w-4 mr-2 text-zinc-600 dark:text-zinc-400" />
-                <span className="text-xs font-medium">{fileName || 'file.txt'}</span>
+                <Icon className="h-4 w-4 mr-2 text-zinc-600 dark:text-zinc-400" />
+                <span className="text-xs font-medium">{config.label}</span>
+                {isSuccess && (
+                  <span className="ml-2 text-emerald-600 dark:text-emerald-400 font-semibold">{t('thread.success')}</span>
+                )}
               </div>
               <span className="text-xs text-zinc-500 dark:text-zinc-400 bg-zinc-200 dark:bg-zinc-800 px-2 py-0.5 rounded">
                 {fileType || 'Text'}
@@ -412,7 +422,7 @@ export function FileOperationToolView({
           <div className="border border-zinc-200 dark:border-zinc-800 rounded-md overflow-hidden h-full flex flex-col">
             <div className="p-6 flex-1 flex flex-col items-center justify-center bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
               <div className="w-14 h-14 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center mb-4">
-                <FileX className="h-7 w-7 text-red-600 dark:text-red-400" />
+                <Icon className="h-7 w-7 text-red-600 dark:text-red-400" />
               </div>
               <h3 className="text-lg font-medium mb-4 text-red-600 dark:text-red-400">File Deleted</h3>
               <div className="bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-md p-4 w-full max-w-md text-center mb-2">
@@ -445,7 +455,7 @@ export function FileOperationToolView({
           <div className="border border-zinc-200 dark:border-zinc-800 rounded-md overflow-hidden h-full flex flex-col">
             <div className="p-6 flex-1 flex flex-col items-center justify-center bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
               <div className="w-14 h-14 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center mb-4">
-                <FileX className="h-7 w-7 text-red-600 dark:text-red-400" />
+                <Icon className="h-7 w-7 text-red-600 dark:text-red-400" />
               </div>
               <h3 className="text-lg font-medium mb-4 text-red-600 dark:text-red-400">File Deleted</h3>
               <div className="bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-md p-4 w-full max-w-md text-center mb-2">
@@ -468,7 +478,7 @@ export function FileOperationToolView({
                 <AlertTriangle className="h-3.5 w-3.5 text-red-500" />
               )}
               <span>
-                {isSuccess ? config.successMessage : `Failed to ${operation} file`}
+                {isSuccess ? config.successMessage : t('thread.failed_to_' + operation + '_file')}
               </span>
             </div>
           )}
@@ -476,7 +486,14 @@ export function FileOperationToolView({
           {isStreaming && (
             <div className="flex items-center gap-2">
               <CircleDashed className="h-3.5 w-3.5 text-blue-500 animate-spin" />
-              <span>Processing file operation...</span>
+              <span>{t('thread.processing_file_operation')}</span>
+            </div>
+          )}
+
+          {/* Step indicator (if available) */}
+          {typeof currentIndex === 'number' && typeof totalCalls === 'number' && (
+            <div className="text-xs">
+              {t('thread.step')} {currentIndex + 1} {t('thread.of')} {totalCalls}
             </div>
           )}
 

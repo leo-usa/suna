@@ -12,6 +12,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import { useAuth } from "@/components/AuthProvider";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 const INITIAL_WIDTH = "70rem";
 const MAX_WIDTH = "800px";
@@ -53,7 +54,7 @@ const drawerMenuVariants = {
   visible: { opacity: 1 },
 };
 
-export function Navbar() {
+export function Navbar({ dict, locale }: { dict: Record<string, string>, locale: string }) {
   const { scrollY } = useScroll();
   const [hasScrolled, setHasScrolled] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -61,6 +62,8 @@ export function Navbar() {
   const { theme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const { user } = useAuth();
+
+  const t = (key: string) => dict[key] || key;
 
   useEffect(() => {
     setMounted(true);
@@ -134,37 +137,30 @@ export function Navbar() {
               />
             </Link>
 
-            <NavMenu />
+            <NavMenu dict={dict} />
 
             <div className="flex flex-row items-center gap-1 md:gap-3 shrink-0">
               <div className="flex items-center space-x-3">
-
-                {/* <Link
-                  href="https://github.com/kortix-ai/suna"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hidden md:flex items-center justify-center h-8 px-3 text-sm font-normal tracking-wide rounded-full text-primary hover:text-primary/80 transition-colors"
-                  aria-label="GitHub"
-                >
-                  <Github className="size-[18px]" />
-                </Link> */}
                 {user ? (
                   <Link
                     className="bg-secondary h-8 hidden md:flex items-center justify-center text-sm font-normal tracking-wide rounded-full text-primary-foreground dark:text-secondary-foreground w-fit px-4 shadow-[inset_0_1px_2px_rgba(255,255,255,0.25),0_3px_3px_-1.5px_rgba(16,24,40,0.06),0_1px_1px_rgba(16,24,40,0.08)] border border-white/[0.12]"
-                    href="/dashboard"
+                    href={`/${locale}/dashboard`}
                   >
-                    Dashboard
+                    {t("nav.dashboard")}
                   </Link>
                 ) : (
                   <Link
                     className="bg-secondary h-8 hidden md:flex items-center justify-center text-sm font-normal tracking-wide rounded-full text-primary-foreground dark:text-secondary-foreground w-fit px-4 shadow-[inset_0_1px_2px_rgba(255,255,255,0.25),0_3px_3px_-1.5px_rgba(16,24,40,0.06),0_1px_1px_rgba(16,24,40,0.08)] border border-white/[0.12]"
-                    href="/auth"
+                    href={`/${locale}/auth`}
                   >
-                    Hire Suna
+                    {t('hire_suna')}
                   </Link>
                 )}
               </div>
               <ThemeToggle />
+              <div className="ml-2">
+                <LanguageSwitcher locale={locale} />
+              </div>
               <button
                 className="md:hidden border border-border size-8 rounded-md cursor-pointer flex items-center justify-center"
                 onClick={toggleDrawer}
@@ -260,17 +256,17 @@ export function Navbar() {
                 <div className="flex flex-col gap-2">
                   {user ? (
                     <Link
-                      href="/dashboard"
+                      href={`/${locale}/dashboard`}
                       className="bg-secondary h-8 flex items-center justify-center text-sm font-normal tracking-wide rounded-full text-primary-foreground dark:text-secondary-foreground w-full px-4 shadow-[inset_0_1px_2px_rgba(255,255,255,0.25),0_3px_3px_-1.5px_rgba(16,24,40,0.06),0_1px_1px_rgba(16,24,40,0.08)] border border-white/[0.12] hover:bg-secondary/80 transition-all ease-out active:scale-95"
                     >
                       Dashboard
                     </Link>
                   ) : (
                     <Link
-                      href="/auth"
+                      href={`/${locale}/auth`}
                       className="bg-secondary h-8 flex items-center justify-center text-sm font-normal tracking-wide rounded-full text-primary-foreground dark:text-secondary-foreground w-full px-4 shadow-[inset_0_1px_2px_rgba(255,255,255,0.25),0_3px_3px_-1.5px_rgba(16,24,40,0.06),0_1px_1px_rgba(16,24,40,0.08)] border border-white/[0.12] hover:bg-secondary/80 transition-all ease-out active:scale-95"
                     >
-                      Hire Suna
+                      {t('hire_suna')}
                     </Link>
                   )}
                   <div className="flex justify-between">

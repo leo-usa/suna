@@ -1,0 +1,19 @@
+{
+  "welcome": "Willkommen bei Suna",
+  "login": "Anmelden",
+  "logout": "Abmelden",
+  "signup": "Registrieren",
+  "dashboard": "Dashboard",
+  "settings": "Einstellungen",
+  "language": "Sprache",
+  "profile": "Profil",
+  "save": "Speichern",
+  "cancel": "Abbrechen",
+  "delete": "Löschen",
+  "confirm": "Bestätigen",
+  "search": "Suchen",
+  "loading": "Lädt...",
+  "error": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
+  "not_found": "Seite nicht gefunden",
+  "home": "Startseite"
+} 

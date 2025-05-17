@@ -36,6 +36,7 @@ interface UpgradePlan {
 }
 
 export interface PricingTier {
+  key: string;
   name: string;
   price: string;
   description: string;
@@ -68,10 +69,10 @@ export const siteConfig = {
   },
   nav: {
     links: [
-      { id: 1, name: "Home", href: "#hero" },
-      { id: 2, name: "Use Cases", href: "#use-cases" },
-      { id: 3, name: "Open Source", href: "#open-source" },
-      { id: 4, name: "Pricing", href: "#pricing" },
+      { id: 1, name: "nav.home", href: "#hero" },
+      { id: 2, name: "nav.use_cases", href: "#use-cases" },
+      { id: 3, name: "nav.open_source", href: "#open-source" },
+      { id: 4, title: "nav.pricing", href: "#pricing" },
     ],
   },
   hero: {
@@ -97,45 +98,48 @@ export const siteConfig = {
   },
   cloudPricingItems: [
     {
-      name: "Free",
+      key: "free",
+      name: "pricing.free.name",
       price: "$0",
-      description: "Get started with",
-      buttonText: "Hire Suna",
+      description: "pricing.free.description",
+      buttonText: "pricing.free.button",
       buttonColor: "bg-secondary text-white",
       isPopular: false,
-      hours: "10 min",
+      hours: "pricing.free.hours",
       features: [
-        "Public Projects",
+        "pricing.free.feature.public_projects",
       ],
       stripePriceId: config.SUBSCRIPTION_TIERS.FREE.priceId,
       upgradePlans: [],
     },
     {
-      name: "Pro",
+      key: "pro",
+      name: "pricing.pro.name",
       price: "$20",
-      description: "Everything in Free, plus:",
-      buttonText: "Hire Suna",
+      description: "pricing.pro.description",
+      buttonText: "pricing.pro.button",
       buttonColor: "bg-primary text-white dark:text-black",
       isPopular: true,
-      hours: "2 hours",
+      hours: "pricing.pro.hours",
       features: [
-        "2 hours",
-        "Private projects",
-        "Team functionality (coming soon)",
+        "pricing.pro.feature.hours",
+        "pricing.pro.feature.private_projects",
+        "pricing.pro.feature.team_functionality",
       ],
       stripePriceId: config.SUBSCRIPTION_TIERS.TIER_2_20.priceId,
       upgradePlans: [],
     },
     {
-      name: "Custom",
+      key: "custom",
+      name: "pricing.custom.name",
       price: "$50",
-      description: "Everything in Pro, plus:",
-      buttonText: "Hire Suna",
+      description: "pricing.custom.description",
+      buttonText: "pricing.custom.button",
       buttonColor: "bg-secondary text-white",
       isPopular: false,
-      hours: "6 hours",
+      hours: "pricing.custom.hours",
       features: [
-        "Unlimited seats",
+        "pricing.custom.feature.unlimited_seats",
       ],
       upgradePlans: [
         { hours: "6 hours", price: "$50", stripePriceId: config.SUBSCRIPTION_TIERS.TIER_6_50.priceId },
@@ -1082,35 +1086,35 @@ export const siteConfig = {
   },
   footerLinks: [
     {
-      title: "Suna",
+      title: "footer.suna",
       links: [
-        { id: 1, title: "About", url: "https://www.drpang.ai" },
-        { id: 3, title: "Contact", url: "mailto:hey@drpang.ai" },
-        { id: 4, title: "Careers", url: "https://www.drpang.ai/careers" },
+        { id: 1, title: "footer.about", url: "https://www.drpang.ai" },
+        { id: 3, title: "footer.contact", url: "mailto:hey@drpang.ai" },
+        { id: 4, title: "footer.careers", url: "https://www.drpang.ai/careers" },
       ],
     },
     {
-      title: "Resources",
+      title: "footer.resources",
       links: [
-        { id: 5, title: "Documentation", url: "https://github.com/DrPang-ai/Suna" },
-        { id: 7, title: "Discord", url: "https://discord.gg/Py6pCBUUPw" },
-        { id: 8, title: "GitHub", url: "https://github.com/DrPang-ai/Suna" },
+        { id: 5, title: "footer.documentation", url: "https://github.com/DrPang-ai/Suna" },
+        { id: 7, title: "footer.discord", url: "https://discord.gg/Py6pCBUUPw" },
+        { id: 8, title: "footer.github", url: "https://github.com/DrPang-ai/Suna" },
       ],
     },
     {
-      title: "Legal",
+      title: "footer.legal",
       links: [
-        { id: 9, title: "Privacy Policy", url: "https://suna.so/legal?tab=privacy" },
-        { id: 10, title: "Terms of Service", url: "https://suna.so/legal?tab=terms" },
-        { id: 11, title: "License Apache 2.0", url: "https://github.com/DrPang-ai/Suna/blob/main/LICENSE" },
+        { id: 9, title: "footer.privacy_policy", url: "https://suna.so/legal?tab=privacy" },
+        { id: 10, title: "footer.terms_of_service", url: "https://suna.so/legal?tab=terms" },
+        { id: 11, title: "footer.license_apache", url: "https://github.com/DrPang-ai/Suna/blob/main/LICENSE" },
       ],
     },
   ],
   useCases: [
     {
       id: "competitor-analysis",
-      title: "Competitor Analysis",
-      description: "Analyze the market for my next company in the healthcare industry, located in the UK. Give me the major players, their market size, strengths, and weaknesses, and add their website URLs. Once done, generate a PDF report.",
+      title: "use_case.competitor_analysis.title",
+      description: "use_case.competitor_analysis.description",
       category: "research",
       featured: true,
       icon: (
@@ -1125,8 +1129,8 @@ export const siteConfig = {
     },
     {
       id: "vc-list",
-      title: "VC List",
-      description: "Give me the list of the most important VC Funds in the United States based on Assets Under Management. Give me website URLs, and if possible an email to reach them out.",
+      title: "use_case.vc_list.title",
+      description: "use_case.vc_list.description",
       category: "finance",
       featured: true,
       icon: (
@@ -1140,8 +1144,8 @@ export const siteConfig = {
     },
     {
       id: "candidate-search",
-      title: "Looking for Candidates",
-      description: "Go on LinkedIn, and find me 10 profiles available - they are not working right now - for a junior software engineer position, who are located in Munich, Germany. They should have at least one bachelor's degree in Computer Science or anything related to it, and 1-year of experience in any field/role.",
+      title: "use_case.candidate_search.title",
+      description: "use_case.candidate_search.description",
       category: "recruitment",
       featured: true,
       icon: (
@@ -1156,8 +1160,8 @@ export const siteConfig = {
     },
     {
       id: "company-trip",
-      title: "Planning Company Trip",
-      description: "Generate me a route plan for my company. We should go to California. We'll be in 8 people. Compose the trip from the departure (Paris, France) to the activities we can do considering that the trip will be 7 days long - departure on the 21st of Apr 2025.",
+      title: "use_case.company_trip.title",
+      description: "use_case.company_trip.description",
       category: "travel",
       featured: true,
       icon: (
@@ -1173,8 +1177,8 @@ export const siteConfig = {
     },
     {
       id: "excel-spreadsheet",
-      title: "Working on Excel",
-      description: "My company asked me to set up an Excel spreadsheet with all the information about Italian lottery games (Lotto, 10eLotto, and Million Day). Based on that, generate and send me a spreadsheet with all the basic information (public ones).",
+      title: "use_case.excel_spreadsheet.title",
+      description: "use_case.excel_spreadsheet.description",
       category: "data",
       featured: true,
       icon: (
@@ -1189,8 +1193,8 @@ export const siteConfig = {
     },
     {
       id: "speaker-prospecting",
-      title: "Automate Event Speaker Prospecting",
-      description: "Find 20 AI ethics speakers from Europe who've spoken at conferences in the past year. Scrapes conference sites, cross-references LinkedIn and YouTube, and outputs contact info + talk summaries.",
+      title: "use_case.speaker_prospecting.title",
+      description: "use_case.speaker_prospecting.description",
       category: "research",
       featured: true,
       icon: (
@@ -1205,8 +1209,8 @@ export const siteConfig = {
     },
     {
       id: "scientific-papers",
-      title: "Summarize and Cross-Reference Scientific Papers",
-      description: "Research and compare scientific papers talking about Alcohol effects on our bodies during the last 5 years. Generate a report about the most important scientific papers talking about the topic I wrote before.",
+      title: "use_case.scientific_papers.title",
+      description: "use_case.scientific_papers.description",
       category: "research",
       featured: true,
       icon: (
@@ -1221,8 +1225,8 @@ export const siteConfig = {
     },
     {
       id: "lead-generation",
-      title: "Research + First Contact Draft",
-      description: "Research my potential customers (B2B) on LinkedIn. They should be in the clean tech industry. Find their websites and their email addresses. After that, based on the company profile, generate a personalized first contact email.",
+      title: "use_case.lead_generation.title",
+      description: "use_case.lead_generation.description",
       category: "sales",
       featured: true,
       icon: (
@@ -1237,8 +1241,8 @@ export const siteConfig = {
     },
     {
       id: "seo-analysis",
-      title: "SEO Analysis",
-      description: "Based on my website suna.so, generate an SEO report analysis, find top-ranking pages by keyword clusters, and identify topics I'm missing.",
+      title: "use_case.seo_analysis.title",
+      description: "use_case.seo_analysis.description",
       category: "marketing",
       featured: true,
       icon: (
@@ -1254,8 +1258,8 @@ export const siteConfig = {
     },
     {
       id: "personal-trip",
-      title: "Generate a Personal Trip",
-      description: "Generate a personal trip to London, with departure from Bangkok on the 1st of May. The trip will last 10 days. Find an accommodation in the center of London, with a rating on Google reviews of at least 4.5.",
+      title: "use_case.personal_trip.title",
+      description: "use_case.personal_trip.description",
       category: "travel",
       featured: true,
       icon: (
@@ -1271,8 +1275,8 @@ export const siteConfig = {
     },
     {
       id: "funded-startups",
-      title: "Recently Funded Startups",
-      description: "Go on Crunchbase, Dealroom, and TechCrunch, filter by Series A funding rounds in the SaaS Finance Space, and build a report with company data, founders, and contact info for outbound sales.",
+      title: "use_case.funded_startups.title",
+      description: "use_case.funded_startups.description",
       category: "finance",
       featured: true,
       icon: (
@@ -1286,8 +1290,8 @@ export const siteConfig = {
     },
     {
       id: "scrape-forums",
-      title: "Scrape Forum Discussions",
-      description: "I need to find the best beauty centers in Rome, but I want to find them by using open forums that speak about this topic. Go on Google, and scrape the forums by looking for beauty center discussions located in Rome.",
+      title: "use_case.scrape_forums.title",
+      description: "use_case.scrape_forums.description",
       category: "research",
       featured: true,
       icon: (

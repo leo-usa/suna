@@ -26,9 +26,7 @@ import {
 } from "@/components/ui/tooltip"
 import { useIsMobile } from "@/hooks/use-mobile"
 
-export function SidebarLeft({
-  ...props
-}: React.ComponentProps<typeof Sidebar>) {
+export function SidebarLeft({ dict, locale, ...props }: React.ComponentProps<typeof Sidebar> & { dict: Record<string, string>, locale: string }) {
   const { state, setOpen, setOpenMobile } = useSidebar()
   const isMobile = useIsMobile()
   const [user, setUser] = useState<{
@@ -40,6 +38,8 @@ export function SidebarLeft({
     email: "loading@example.com",
     avatar: ""
   })
+
+  const t = (key: string) => (dict && dict[key]) || key;
 
   // Fetch user data
   useEffect(() => {
@@ -83,7 +83,7 @@ export function SidebarLeft({
     <Sidebar collapsible="icon" className="border-r-0 bg-background/95 backdrop-blur-sm [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']" {...props}>
       <SidebarHeader className="px-2 py-2">
         <div className="flex h-[40px] items-center px-1 relative">
-          <Link href="/dashboard">
+          <Link href={`/${locale}/dashboard`}>
             <KortixLogo />
           </Link>
           {state !== "collapsed" && (
@@ -97,7 +97,7 @@ export function SidebarLeft({
                 <TooltipTrigger asChild>
                   <SidebarTrigger className="h-8 w-8" />
                 </TooltipTrigger>
-                <TooltipContent>Toggle sidebar (CMD+B)</TooltipContent>
+                <TooltipContent>{t('sidebar.toggle')}</TooltipContent>
               </Tooltip>
             )}
             {isMobile && (
@@ -110,18 +110,18 @@ export function SidebarLeft({
                     <Menu className="h-4 w-4" />
                   </button>
                 </TooltipTrigger>
-                <TooltipContent>Open menu</TooltipContent>
+                <TooltipContent>{t('sidebar.open_menu')}</TooltipContent>
               </Tooltip>
             )}
           </div>
         </div>
       </SidebarHeader>
       <SidebarContent className="[&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
-        <NavAgents />
+        <NavAgents dict={dict} />
       </SidebarContent>
       {state !== "collapsed" && (
         <div className="px-3 py-2">
-          <CTACard />
+          <CTACard dict={dict} />
         </div>
       )}
       <SidebarFooter>
@@ -131,11 +131,11 @@ export function SidebarLeft({
               <TooltipTrigger asChild>
                 <SidebarTrigger className="h-8 w-8" />
               </TooltipTrigger>
-              <TooltipContent>Expand sidebar (CMD+B)</TooltipContent>
+              <TooltipContent>{t('sidebar.expand')}</TooltipContent>
             </Tooltip>
           </div>
         )}        
-        <NavUserWithTeams user={user} />
+        <NavUserWithTeams user={user} dict={dict} locale={locale} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

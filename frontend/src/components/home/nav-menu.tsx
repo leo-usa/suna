@@ -11,13 +11,19 @@ interface NavItem {
 
 const navs: NavItem[] = siteConfig.nav.links;
 
-export function NavMenu() {
+interface NavMenuProps {
+  dict: Record<string, string>;
+}
+
+export function NavMenu({ dict }: NavMenuProps) {
   const ref = useRef<HTMLUListElement>(null);
   const [left, setLeft] = useState(0);
   const [width, setWidth] = useState(0);
   const [isReady, setIsReady] = useState(false);
   const [activeSection, setActiveSection] = useState("hero");
   const [isManualScroll, setIsManualScroll] = useState(false);
+
+  const t = (key: string) => dict[key] || key;
 
   React.useEffect(() => {
     // Initialize with first nav item
@@ -127,7 +133,7 @@ export function NavMenu() {
             } tracking-tight`}
           >
             <a href={item.href} onClick={(e) => handleClick(e, item)}>
-              {item.name}
+              {t(item.name)}
             </a>
           </li>
         ))}

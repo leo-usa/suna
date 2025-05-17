@@ -1,0 +1,19 @@
+{
+  "welcome": "Bem-vindo ao Suna",
+  "login": "Entrar",
+  "logout": "Sair",
+  "signup": "Cadastrar-se",
+  "dashboard": "Painel de controle",
+  "settings": "Configurações",
+  "language": "Idioma",
+  "profile": "Perfil",
+  "save": "Salvar",
+  "cancel": "Cancelar",
+  "delete": "Excluir",
+  "confirm": "Confirmar",
+  "search": "Pesquisar",
+  "loading": "Carregando...",
+  "error": "Ocorreu um erro. Por favor, tente novamente.",
+  "not_found": "Página não encontrada",
+  "home": "Início"
+} 

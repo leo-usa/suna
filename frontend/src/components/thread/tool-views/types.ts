@@ -13,6 +13,7 @@ export interface ToolViewProps {
   agentStatus?: string;
   currentIndex?: number;
   totalCalls?: number;
+  dict?: Record<string, string>;
 }
 
 export interface BrowserToolViewProps extends ToolViewProps {

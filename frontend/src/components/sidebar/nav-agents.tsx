@@ -46,7 +46,7 @@ type ThreadWithProject = {
   updatedAt: string;
 }
 
-export function NavAgents() {
+export function NavAgents({ dict }: { dict: Record<string, string> }) {
   const { isMobile, state } = useSidebar()
   const [threads, setThreads] = useState<ThreadWithProject[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -54,6 +54,11 @@ export function NavAgents() {
   const [deletingProjectId, setDeletingProjectId] = useState<string | null>(null)
   const pathname = usePathname()
   const router = useRouter()
+
+  // Extract locale from pathname (assumes /[locale]/...)
+  const locale = pathname?.split("/")[1] || "en";
+
+  const t = (key: string) => (dict && dict[key]) || key;
 
   // Helper to sort threads by updated_at (most recent first)
   const sortThreads = (threadsList: ThreadWithProject[]): ThreadWithProject[] => {
@@ -111,7 +116,7 @@ export function NavAgents() {
           threadId: thread.thread_id,
           projectId: projectId,
           projectName: project.name || 'Unnamed Project',
-          url: `/agents/${thread.thread_id}`,
+          url: `/${locale}/agents/${thread.thread_id}`,
           updatedAt: thread.updated_at || project.updated_at || new Date().toISOString()
         });
       }
@@ -185,7 +190,7 @@ export function NavAgents() {
   return (
     <SidebarGroup>
       <div className="flex justify-between items-center">
-        <SidebarGroupLabel>Agents</SidebarGroupLabel>
+        <SidebarGroupLabel>{t('sidebar.agents')}</SidebarGroupLabel>
         {state !== "collapsed" ? (
           <Tooltip>
             <TooltipTrigger asChild>
@@ -194,10 +199,10 @@ export function NavAgents() {
                 className="text-muted-foreground hover:text-foreground h-8 w-8 flex items-center justify-center rounded-md"
               >
                 <Plus className="h-4 w-4" />
-                <span className="sr-only">New Agent</span>
+                <span className="sr-only">{t('sidebar.new_agent')}</span>
               </Link>
             </TooltipTrigger>
-            <TooltipContent>New Agent</TooltipContent>
+            <TooltipContent>{t('sidebar.new_agent')}</TooltipContent>
           </Tooltip>
         ) : null}
       </div>
@@ -210,11 +215,11 @@ export function NavAgents() {
                 <SidebarMenuButton asChild>
                   <Link href="/dashboard" className="flex items-center">
                     <Plus className="h-4 w-4" />
-                    <span>New Agent</span>
+                    <span>{t('sidebar.new_agent')}</span>
                   </Link>
                 </SidebarMenuButton>
               </TooltipTrigger>
-              <TooltipContent>New Agent</TooltipContent>
+              <TooltipContent>{t('sidebar.new_agent')}</TooltipContent>
             </Tooltip>
           </SidebarMenuItem>
         )}
@@ -282,34 +287,34 @@ export function NavAgents() {
                       >
                         <DropdownMenuItem onClick={() => {
                           navigator.clipboard.writeText(window.location.origin + thread.url)
-                          toast.success("Link copied to clipboard")
+                          toast.success(t('sidebar.link_copied'))
                         }}>
                           <LinkIcon className="text-muted-foreground" />
-                          <span>Copy Link</span>
+                          <span>{t('sidebar.copy_link')}</span>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
                           <a href={thread.url} target="_blank" rel="noopener noreferrer">
                             <ArrowUpRight className="text-muted-foreground" />
-                            <span>Open in New Tab</span>
+                            <span>{t('sidebar.open_in_new_tab')}</span>
                           </a>
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={async () => {
-                          if (window.confirm("Are you sure you want to delete this project and its sandbox? This cannot be undone.")) {
+                          if (window.confirm(t('sidebar.delete_confirm'))) {
                             setDeletingProjectId(thread.projectId);
                             try {
                               await deleteProject(thread.projectId);
-                              toast.success("Project deleted successfully");
+                              toast.success(t('sidebar.project_deleted'));
                               await loadThreadsWithProjects();
                             } catch (err) {
-                              toast.error("Failed to delete project");
+                              toast.error(t('sidebar.delete_failed'));
                             } finally {
                               setDeletingProjectId(null);
                             }
                           }
                         }} disabled={deletingProjectId === thread.projectId}>
                           <Trash2 className="text-muted-foreground" />
-                          <span>{deletingProjectId === thread.projectId ? "Deleting..." : "Delete"}</span>
+                          <span>{deletingProjectId === thread.projectId ? t('sidebar.deleting') : t('sidebar.delete')}</span>
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -323,7 +328,7 @@ export function NavAgents() {
           <SidebarMenuItem>
             <SidebarMenuButton className="text-sidebar-foreground/70">
               <MessagesSquare className="h-4 w-4" />
-              <span>No agents yet</span>
+              <span>{t('sidebar.no_agents')}</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         )}

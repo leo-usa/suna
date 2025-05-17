@@ -12,11 +12,13 @@ export function WebScrapeToolView({
   assistantTimestamp,
   toolTimestamp,
   isSuccess = true,
-  isStreaming = false
-}: ToolViewProps) {
+  isStreaming = false,
+  dict
+}: ToolViewProps & { dict?: Record<string, string> }) {
   const url = extractCrawlUrl(assistantContent);
   const webpageContent = extractWebpageContent(toolContent);
-  const toolTitle = getToolTitle(name);
+  const t = (key: string) => (dict && dict[key]) || key;
+  const toolTitle = t('thread.web_scrape');
   
   if (!url) {
     return (
@@ -64,7 +66,7 @@ export function WebScrapeToolView({
                   isSuccess ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"
                 )}>
                   <span className="h-1.5 w-1.5 rounded-full mr-1.5 bg-current"></span>
-                  {isSuccess ? 'Success' : 'Failed'}
+                  {isSuccess ? t('thread.success') : t('thread.failed')}
                 </span>
                 
                 <a 
@@ -74,7 +76,7 @@ export function WebScrapeToolView({
                   className="flex items-center gap-1.5 py-1 px-2 text-xs text-zinc-700 dark:text-zinc-300 bg-zinc-200 dark:bg-zinc-800 hover:bg-zinc-300 dark:hover:bg-zinc-700 rounded transition-colors"
                 >
                   <ExternalLink className="h-3.5 w-3.5 text-zinc-500 flex-shrink-0" />
-                  <span>Open URL</span>
+                  <span>{t('thread.open_url')}</span>
                 </a>
               </div>
             )}
@@ -90,18 +92,21 @@ export function WebScrapeToolView({
             <div className="flex-1 bg-white dark:bg-zinc-950 flex items-center justify-center">
               <div className="text-center p-6">
                 <CircleDashed className="h-8 w-8 mx-auto mb-3 text-blue-500 animate-spin" />
-                <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Scraping webpage...</p>
-                <p className="text-xs mt-1 text-zinc-500 dark:text-zinc-400">Fetching content from {domain}</p>
+                <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{t('thread.scraping_webpage')}</p>
+                <p className="text-xs mt-1 text-zinc-500 dark:text-zinc-400">{
+                  // For now, just append the domain to the translation string
+                  t('thread.fetching_content_from') + ' ' + domain
+                }</p>
               </div>
             </div>
           ) : (
             <div className="flex-1 overflow-auto bg-white dark:bg-zinc-950 font-mono text-sm">
               {webpageContent ? (
                 <div className="p-3">
-                  <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2">Page Content</div>
+                  <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2">{t('thread.page_content')}</div>
                   <div className="bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-md">
                     <pre className="p-3 text-xs overflow-auto whitespace-pre-wrap text-zinc-800 dark:text-zinc-300 font-mono">
-                      {webpageContent.text || "No content extracted"}
+                      {webpageContent.text || t('thread.no_content_extracted')}
                     </pre>
                   </div>                  
                 </div>
@@ -109,8 +114,8 @@ export function WebScrapeToolView({
                 <div className="p-6 h-full flex items-center justify-center">
                   <div className="text-center">
                     <Globe className="h-6 w-6 mx-auto mb-2 text-zinc-400 dark:text-zinc-500" />
-                    <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">No content extracted</p>
-                    <p className="text-xs mt-1 text-zinc-500 dark:text-zinc-400">The webpage might be restricted or empty</p>
+                    <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{t('thread.no_content_extracted')}</p>
+                    <p className="text-xs mt-1 text-zinc-500 dark:text-zinc-400">{t('thread.webpage_might_be_restricted_or_empty')}</p>
                   </div>
                 </div>
               )}
@@ -130,7 +135,7 @@ export function WebScrapeToolView({
                 <AlertTriangle className="h-3.5 w-3.5 text-red-500" />
               )}
               <span>
-                {isSuccess ? `${toolTitle} completed successfully` : `${toolTitle} operation failed`}
+                {isSuccess ? t('thread.web_scrape_completed_successfully') : t('thread.web_scrape_operation_failed')}
               </span>
             </div>
           )}
@@ -138,7 +143,7 @@ export function WebScrapeToolView({
           {isStreaming && (
             <div className="flex items-center gap-2">
               <CircleDashed className="h-3.5 w-3.5 text-blue-500 animate-spin" />
-              <span>Executing {toolTitle.toLowerCase()}...</span>
+              <span>{t('thread.executing_web_scrape')}</span>
             </div>
           )}
           

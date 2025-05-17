@@ -36,7 +36,12 @@ const BlurredDialogOverlay = () => (
 // Constant for localStorage key to ensure consistency
 const PENDING_PROMPT_KEY = 'pendingAgentPrompt';
 
-export function HeroSection() {
+interface HeroSectionProps {
+  dict: Record<string, string>;
+}
+
+export function HeroSection({ dict }: HeroSectionProps) {
+  const t = (key: string) => dict[key] || key;
   const { hero } = siteConfig;
   const tablet = useMediaQuery("(max-width: 1024px)");
   const [mounted, setMounted] = useState(false);
@@ -258,11 +263,7 @@ export function HeroSection() {
         <div className="absolute inset-x-1/4 top-0 h-[600px] md:h-[800px] -z-20 bg-background rounded-b-xl"></div>
         
         <div className="relative z-10 pt-32 max-w-3xl mx-auto h-full w-full flex flex-col gap-10 items-center justify-center">
-                    {/* <p className="border border-border bg-accent rounded-full text-sm h-8 px-3 flex items-center gap-2">
-            {hero.badgeIcon}
-            {hero.badge}
-          </p> */}
-
+          {/*
           <Link 
             href={hero.githubUrl} 
             target="_blank" 
@@ -270,19 +271,20 @@ export function HeroSection() {
             className="group border border-border/50 bg-background hover:bg-accent/20 hover:border-secondary/40 rounded-full text-sm h-8 px-3 flex items-center gap-2 transition-all duration-300 shadow-sm hover:shadow-md hover:scale-105 hover:-translate-y-0.5"
           >
             {hero.badgeIcon}
-            <span className="font-medium text-muted-foreground text-xs tracking-wide group-hover:text-primary transition-colors duration-300">{hero.badge}</span>
+            <span className="font-medium text-muted-foreground text-xs tracking-wide group-hover:text-primary transition-colors duration-300">{t('hero_badge')}</span>
             <span className="inline-flex items-center justify-center size-3.5 rounded-full bg-muted/30 group-hover:bg-secondary/30 transition-colors duration-300">
               <svg width="8" height="8" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-muted-foreground group-hover:text-primary">
                 <path d="M7 17L17 7M17 7H8M17 7V16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </span>
           </Link>
+          */}
           <div className="flex flex-col items-center justify-center gap-5">
             <h1 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-medium tracking-tighter text-balance text-center">
-              <span className="text-secondary">Suna</span><span className="text-primary">, your AI Employee.</span>
+              <span className="text-secondary">Suna</span><span className="text-primary">, {t('hero_title')}</span>
             </h1>
             <p className="text-base md:text-lg text-center text-muted-foreground font-medium text-balance leading-relaxed tracking-tight">
-              {hero.description}
+              {t('hero_description')}
             </p>
           </div>
           <div className="flex items-center w-full max-w-xl gap-2 flex-wrap justify-center">
@@ -295,7 +297,7 @@ export function HeroSection() {
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    placeholder={hero.inputPlaceholder}
+                    placeholder={t('hero_input_placeholder')}
                     className="flex-1 h-12 md:h-14 rounded-full px-2 bg-transparent focus:outline-none text-sm md:text-base py-2"
                     disabled={isSubmitting}
                   />
@@ -333,7 +335,7 @@ export function HeroSection() {
         <DialogContent className="sm:max-w-md rounded-xl bg-[#F3F4F6] dark:bg-[#F9FAFB]/[0.02] border border-border">
           <DialogHeader>
             <div className="flex items-center justify-between">
-              <DialogTitle className="text-xl font-medium">Sign in to continue</DialogTitle>
+              <DialogTitle className="text-xl font-medium">{t('sign_in_to_continue')}</DialogTitle>
               {/* <button 
                 onClick={() => setAuthDialogOpen(false)}
                 className="rounded-full p-1 hover:bg-muted transition-colors"
@@ -342,7 +344,7 @@ export function HeroSection() {
               </button> */}
             </div>
             <DialogDescription className="text-muted-foreground">
-              Sign in or create an account to talk with Suna
+              {t('sign_in_or_create_account')}
             </DialogDescription>
           </DialogHeader>
           
@@ -366,7 +368,7 @@ export function HeroSection() {
             </div>
             <div className="relative flex justify-center text-sm">
               <span className="px-2 bg-[#F3F4F6] dark:bg-[#F9FAFB]/[0.02] text-muted-foreground">
-                or continue with email
+                {t('or_continue_with_email')}
               </span>
             </div>
           </div>
@@ -378,7 +380,7 @@ export function HeroSection() {
                 id="email"
                 name="email"
                 type="email"
-                placeholder="Email address"
+                placeholder={t('email_address')}
                 className="h-12 rounded-full bg-background border-border"
                 required
               />
@@ -389,7 +391,7 @@ export function HeroSection() {
                 id="password"
                 name="password"
                 type="password"
-                placeholder="Password"
+                placeholder={t('password')}
                 className="h-12 rounded-full bg-background border-border"
                 required
               />
@@ -399,9 +401,9 @@ export function HeroSection() {
               <SubmitButton
                 formAction={handleSignIn}
                 className="w-full h-12 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-md"
-                pendingText="Signing in..."
+                pendingText={t('signing_in')}
               >
-                Sign in
+                {t('sign_in')}
               </SubmitButton>
               
               <Link
@@ -409,7 +411,7 @@ export function HeroSection() {
                 className="flex h-12 items-center justify-center w-full text-center rounded-full border border-border bg-background hover:bg-accent/20 transition-all"
                 onClick={() => setAuthDialogOpen(false)}
               >
-                Create new account
+                {t('create_new_account')}
               </Link>
             </div>
 
@@ -419,30 +421,32 @@ export function HeroSection() {
                 className="text-sm text-primary hover:underline"
                 onClick={() => setAuthDialogOpen(false)}
               >
-                More sign in options
+                {t('more_sign_in_options')}
               </Link>
             </div>
           </form>
 
           <div className="mt-4 text-center text-xs text-muted-foreground">
-            By continuing, you agree to our{' '}
+            {t('by_continuing_you_agree')}{' '}
             <Link href="/terms" className="text-primary hover:underline">
-              Terms of Service
+              {t('terms_of_service')}
             </Link>{' '}
-            and{' '}<Link href="/privacy" className="text-primary hover:underline">Privacy Policy</Link>
+            {t('and')}{' '}<Link href="/privacy" className="text-primary hover:underline">{t('privacy_policy')}</Link>
           </div>
         </DialogContent>
       </Dialog>
 
       {/* Add Billing Error Alert here */}
-      <BillingErrorAlert 
-        message={billingError?.message}
-        currentUsage={billingError?.currentUsage}
-        limit={billingError?.limit}
-        accountId={personalAccount?.account_id}
-        onDismiss={clearBillingError}
-        isOpen={!!billingError}
-      />
+      {user && (
+        <BillingErrorAlert 
+          message={billingError?.message}
+          currentUsage={billingError?.currentUsage}
+          limit={billingError?.limit}
+          accountId={personalAccount?.account_id}
+          onDismiss={clearBillingError}
+          isOpen={!!billingError}
+        />
+      )}
     </section>
   );
 }

@@ -12,11 +12,15 @@ export function StrReplaceToolView({
   assistantTimestamp,
   toolTimestamp,
   isSuccess = true,
-  isStreaming = false
-}: ToolViewProps) {
+  isStreaming = false,
+  dict
+}: ToolViewProps & { dict?: Record<string, string> }) {
   const filePath = extractFilePath(assistantContent);
   const { oldStr, newStr } = extractStrReplaceContent(assistantContent);
   const toolTitle = getToolTitle(name);
+  
+  // Add local t function
+  const t = (key: string) => (dict && dict[key]) || key;
   
   if (!oldStr || !newStr) {
     return (
@@ -98,7 +102,7 @@ export function StrReplaceToolView({
             <div className="flex-1 bg-white dark:bg-zinc-950 flex items-center justify-center">
               <div className="text-center p-6">
                 <CircleDashed className="h-8 w-8 mx-auto mb-3 text-blue-500 animate-spin" />
-                <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Processing string replacement...</p>
+                <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{t('thread.processing_string_replacement')}</p>
                 {filePath && (
                   <p className="text-xs mt-1 text-zinc-500 dark:text-zinc-400 font-mono">{filePath}</p>
                 )}
@@ -134,7 +138,7 @@ export function StrReplaceToolView({
                 <AlertTriangle className="h-3.5 w-3.5 text-red-500" />
               )}
               <span>
-                {isSuccess ? 'Replacement applied successfully' : 'Replacement failed'}
+                {isSuccess ? t('thread.replacement_applied_successfully') : t('thread.replacement_failed')}
               </span>
             </div>
           )}
@@ -142,7 +146,7 @@ export function StrReplaceToolView({
           {isStreaming && (
             <div className="flex items-center gap-2">
               <CircleDashed className="h-3.5 w-3.5 text-blue-500 animate-spin" />
-              <span>Processing string replacement...</span>
+              <span>{t('thread.processing_string_replacement')}</span>
             </div>
           )}
           

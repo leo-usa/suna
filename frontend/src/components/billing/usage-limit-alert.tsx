@@ -2,7 +2,7 @@
 
 import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 
 interface BillingErrorAlertProps {
   message?: string;
@@ -11,6 +11,7 @@ interface BillingErrorAlertProps {
   accountId?: string | null;
   onDismiss: () => void;
   isOpen: boolean;
+  dict: Record<string, string>;
 }
 
 export function BillingErrorAlert({
@@ -19,9 +20,13 @@ export function BillingErrorAlert({
   limit,
   accountId,
   onDismiss,
-  isOpen
+  isOpen,
+  dict
 }: BillingErrorAlertProps) {
   const router = useRouter();
+  const params = useParams();
+  const locale = params.locale as string;
+  const t = (key: string) => dict[key] || key;
 
   if (!isOpen) return null;
 
@@ -33,7 +38,7 @@ export function BillingErrorAlert({
             <AlertTriangle className="h-5 w-5 text-destructive" />
           </div>
           <div className="flex-1">
-            <h3 className="text-sm font-medium text-destructive mb-1">Usage Limit Reached</h3>
+            <h3 className="text-sm font-medium text-destructive mb-1">{t('billing.usage_limit_reached')}</h3>
             <p className="text-sm text-muted-foreground mb-3">{message}</p>
             <div className="flex gap-2">
               <Button
@@ -42,14 +47,14 @@ export function BillingErrorAlert({
                 onClick={onDismiss}
                 className="text-xs"
               >
-                Dismiss
+                {t('dismiss')}
               </Button>
               <Button
                 size="sm"
-                onClick={() => router.push(`/settings/billing?accountId=${accountId}`)}
+                onClick={() => router.push(`/${locale}/settings/billing?accountId=${accountId}`)}
                 className="text-xs"
               >
-                Upgrade Plan
+                {t('billing.upgrade_plan')}
               </Button>
             </div>
           </div>

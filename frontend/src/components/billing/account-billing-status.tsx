@@ -7,18 +7,25 @@ import { isLocalMode } from "@/lib/config";
 import { getSubscription, createPortalSession, SubscriptionStatus } from "@/lib/api";
 import { useAuth } from "@/components/AuthProvider";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useRouter, useParams } from "next/navigation";
+import { toast } from "sonner";
 
 type Props = {
     accountId: string;
     returnUrl: string;
+    dict: Record<string, string>;
 }
 
-export default function AccountBillingStatus({ accountId, returnUrl }: Props) {
+export default function AccountBillingStatus({ accountId, returnUrl, dict }: Props) {
     const { session, isLoading: authLoading } = useAuth();
     const [subscriptionData, setSubscriptionData] = useState<SubscriptionStatus | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isManaging, setIsManaging] = useState(false);
+    const params = useParams();
+    const locale = params.locale as string || 'en';
+
+    const t = (key: string) => (dict && dict[key]) || key;
 
     useEffect(() => {
         async function fetchSubscription() {
@@ -40,15 +47,17 @@ export default function AccountBillingStatus({ accountId, returnUrl }: Props) {
     }, [session, authLoading]);
 
     const handleManageSubscription = async () => {
+        setIsLoading(true);
         try {
-            setIsManaging(true);
-            const { url } = await createPortalSession({ return_url: returnUrl });
+            const { url } = await createPortalSession({
+                return_url: typeof window !== 'undefined' ? window.location.href : '/',
+                locale: locale,
+            });
             window.location.href = url;
-        } catch (err) {
-            console.error('Failed to create portal session:', err);
-            setError(err instanceof Error ? err.message : 'Failed to create portal session');
+        } catch (error) {
+            toast.error(t('billing.failed_to_load_account'));
         } finally {
-            setIsManaging(false);
+            setIsLoading(false);
         }
     };
 
@@ -56,13 +65,12 @@ export default function AccountBillingStatus({ accountId, returnUrl }: Props) {
     if (isLocalMode()) {
         return (
             <div className="rounded-xl border shadow-sm bg-card p-6">
-                <h2 className="text-xl font-semibold mb-4">Billing Status</h2>
                 <div className="p-4 mb-4 bg-muted/30 border border-border rounded-lg text-center">
                     <p className="text-sm text-muted-foreground">
-                        Running in local development mode - billing features are disabled
+                        {t('billing.local_mode_disabled')}
                     </p>
                     <p className="text-xs text-muted-foreground mt-2">
-                        Agent usage limits are not enforced in this environment
+                        {t('billing.local_mode_limits')}
                     </p>
                 </div>
             </div>
@@ -73,7 +81,6 @@ export default function AccountBillingStatus({ accountId, returnUrl }: Props) {
     if (isLoading || authLoading) {
         return (
             <div className="rounded-xl border shadow-sm bg-card p-6">
-                <h2 className="text-xl font-semibold mb-4">Billing Status</h2>
                 <div className="space-y-4">
                     <Skeleton className="h-20 w-full" />
                     <Skeleton className="h-40 w-full" />
@@ -87,10 +94,9 @@ export default function AccountBillingStatus({ accountId, returnUrl }: Props) {
     if (error) {
         return (
             <div className="rounded-xl border shadow-sm bg-card p-6">
-                <h2 className="text-xl font-semibold mb-4">Billing Status</h2>
                 <div className="p-4 mb-4 bg-destructive/10 border border-destructive/20 rounded-lg text-center">
                     <p className="text-sm text-destructive">
-                        Error loading billing status: {error}
+                        {t('billing.error_loading_status')}: {error}
                     </p>
                 </div>
             </div>
@@ -102,35 +108,30 @@ export default function AccountBillingStatus({ accountId, returnUrl }: Props) {
     };
     
     const planName = isPlan('free') 
-        ? "Free" 
+        ? t('pricing.free.name')
         : isPlan('base')
-            ? "Pro"
+            ? t('pricing.pro.name')
             : isPlan('extra')
-                ? "Enterprise"
-                : "Unknown";
+                ? t('pricing.custom.name')
+                : t('unknown');
 
     return (
         <div className="rounded-xl border shadow-sm bg-card p-6">
-            <h2 className="text-xl font-semibold mb-4">Billing Status</h2>
-            
             {subscriptionData ? (
                 <>
                     <div className="mb-6">
                         <div className="rounded-lg border bg-background p-4 grid grid-cols-1 md:grid-cols-2 gap-4">                            
                             <div className="flex justify-between items-center">
-                                <span className="text-sm font-medium text-foreground/90">Agent Usage This Month</span>
+                                <span className="text-sm font-medium text-foreground/90">{t('billing.agent_usage_this_month')}</span>
                                 <span className="text-sm font-medium text-card-title">
-                                    {subscriptionData.current_usage?.toFixed(2) || '0'} / {subscriptionData.minutes_limit || '0'} minutes
+                                    {subscriptionData.current_usage?.toFixed(2) || '0'} / {subscriptionData.minutes_limit || '0'} {t('billing.minutes')}
                                 </span>
                             </div>
                         </div>
                     </div>
 
                     {/* Plans Comparison */}
-                    <PricingSection
-                        returnUrl={returnUrl}
-                        showTitleAndTabs={false}
-                    />
+                    <PricingSection dict={dict} />
 
                     {/* Manage Subscription Button */}
                     <Button
@@ -138,7 +139,7 @@ export default function AccountBillingStatus({ accountId, returnUrl }: Props) {
                         disabled={isManaging}
                         className="w-full bg-primary text-white hover:bg-primary/90 shadow-md hover:shadow-lg transition-all"
                     >
-                        {isManaging ? "Loading..." : "Manage Subscription"}
+                        {isManaging ? t('loading') : t('billing.manage_subscription')}
                     </Button>
                 </>
             ) : (
@@ -146,24 +147,21 @@ export default function AccountBillingStatus({ accountId, returnUrl }: Props) {
                     <div className="mb-6">
                         <div className="rounded-lg border bg-background p-4 gap-4">
                             <div className="flex justify-between items-center">
-                                <span className="text-sm font-medium text-foreground/90">Current Plan</span>
-                                <span className="text-sm font-medium text-card-title">Free</span>
+                                <span className="text-sm font-medium text-foreground/90">{t('billing.current_plan')}</span>
+                                <span className="text-sm font-medium text-card-title">{t('pricing.free.name')}</span>
                             </div>
                             
                             <div className="flex justify-between items-center">
-                                <span className="text-sm font-medium text-foreground/90">Agent Usage This Month</span>
+                                <span className="text-sm font-medium text-foreground/90">{t('billing.agent_usage_this_month')}</span>
                                 <span className="text-sm font-medium text-card-title">
-                                    {subscriptionData?.current_usage?.toFixed(2) || '0'} / {subscriptionData?.minutes_limit || '0'} minutes
+                                    {subscriptionData?.current_usage?.toFixed(2) || '0'} / {subscriptionData?.minutes_limit || '0'} {t('billing.minutes')}
                                 </span>
                             </div>
                         </div>
                     </div>
 
                     {/* Plans Comparison */}
-                    <PricingSection
-                        returnUrl={returnUrl}
-                        showTitleAndTabs={false}
-                    />
+                    <PricingSection dict={dict} />
 
                     {/* Manage Subscription Button */}
                     <Button
@@ -171,7 +169,7 @@ export default function AccountBillingStatus({ accountId, returnUrl }: Props) {
                         disabled={isManaging}
                         className="w-full bg-primary text-white hover:bg-primary/90 shadow-md hover:shadow-lg transition-all"
                     >
-                        {isManaging ? "Loading..." : "Manage Subscription"}
+                        {isManaging ? t('loading') : t('billing.manage_subscription')}
                     </Button>
                 </>
             )}

@@ -34,6 +34,7 @@ interface FileViewerModalProps {
   sandboxId: string;
   initialFilePath?: string | null;
   project?: Project;
+  dict?: Record<string, string>;
 }
 
 export function FileViewerModal({ 
@@ -41,7 +42,8 @@ export function FileViewerModal({
   onOpenChange,
   sandboxId,
   initialFilePath,
-  project
+  project,
+  dict
 }: FileViewerModalProps) {
   // File navigation state
   const [currentPath, setCurrentPath] = useState("/workspace");
@@ -651,12 +653,15 @@ export function FileViewerModal({
     }
   }, [initialPathProcessed, isLoadingFiles, files, selectedFilePath, initialFilePath, normalizePath, currentPath, openFile]);
 
+  // Add local t function
+  const t = (key: string) => (dict && dict[key]) || key;
+
   // --- Render --- //
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[90vw] md:max-w-[1200px] w-[95vw] h-[90vh] max-h-[900px] flex flex-col p-0 gap-0 overflow-hidden">
         <DialogHeader className="px-4 py-2 border-b flex-shrink-0">
-          <DialogTitle className="text-lg font-semibold">Workspace Files</DialogTitle>
+          <DialogTitle className="text-lg font-semibold">{t('thread.workspace_files')}</DialogTitle>
         </DialogHeader>
         
         {/* Navigation Bar */}
@@ -666,7 +671,7 @@ export function FileViewerModal({
             size="icon"
             onClick={navigateHome}
             className="h-8 w-8"
-            title="Go to home directory"
+            title={t('thread.go_to_home_directory')}
           >
             <Home className="h-4 w-4" />
           </Button>
@@ -678,7 +683,7 @@ export function FileViewerModal({
               className="h-7 px-2 text-sm font-medium min-w-fit flex-shrink-0"
               onClick={navigateHome}
             >
-              home
+              {t('thread.home')}
             </Button>
             
             {currentPath !== '/workspace' && (
@@ -802,13 +807,13 @@ export function FileViewerModal({
               {isLoadingContent ? (
                 <div className="h-full w-full flex flex-col items-center justify-center">
                   <Loader className="h-8 w-8 animate-spin text-primary mb-3" />
-                  <p className="text-sm text-muted-foreground">Loading file...</p>
+                  <p className="text-sm text-muted-foreground">{t('thread.loading_file')}</p>
                 </div>
               ) : contentError ? (
                 <div className="h-full w-full flex items-center justify-center p-4">
                   <div className="max-w-md p-6 text-center border rounded-lg bg-muted/10">
                     <AlertTriangle className="h-10 w-10 text-orange-500 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium mb-2">Error Loading File</h3>
+                    <h3 className="text-lg font-medium mb-2">{t('thread.error_loading_file')}</h3>
                     <p className="text-sm text-muted-foreground mb-4">{contentError}</p>
                     <div className="flex justify-center gap-3">
                       <Button 
@@ -824,7 +829,7 @@ export function FileViewerModal({
                           } as FileInfo);
                         }}
                       >
-                        Retry
+                        {t('thread.retry')}
                       </Button>
                       <Button
                         variant="outline"
@@ -832,7 +837,7 @@ export function FileViewerModal({
                           clearSelectedFile();
                         }}
                       >
-                        Back to Files
+                        {t('thread.back_to_files')}
                       </Button>
                     </div>
                   </div>
@@ -861,7 +866,7 @@ export function FileViewerModal({
               ) : files.length === 0 ? (
                 <div className="h-full w-full flex flex-col items-center justify-center">
                   <Folder className="h-12 w-12 mb-2 text-muted-foreground opacity-30" />
-                  <p className="text-sm text-muted-foreground">Directory is empty</p>
+                  <p className="text-sm text-muted-foreground">{t('thread.directory_is_empty')}</p>
                 </div>
               ) : (
                 <ScrollArea className="h-full w-full p-2">

@@ -12,9 +12,10 @@ interface FileBrowserProps {
   sandboxId: string;
   onSelectFile?: (path: string, content: string) => void;
   trigger?: React.ReactNode;
+  dict?: Record<string, string>;
 }
 
-export function FileBrowser({ sandboxId, onSelectFile, trigger }: FileBrowserProps) {
+export function FileBrowser({ sandboxId, onSelectFile, trigger, dict }: FileBrowserProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [currentPath, setCurrentPath] = useState("");
   const [files, setFiles] = useState<FileInfo[]>([]);
@@ -105,14 +106,17 @@ export function FileBrowser({ sandboxId, onSelectFile, trigger }: FileBrowserPro
     }
   };
   
+  // Add local t function
+  const t = (key: string) => (dict && dict[key]) || key;
+  
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        {trigger || <Button variant="outline">Browse Files</Button>}
+        {trigger || <Button variant="outline">{t('thread.browse_files')}</Button>}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[800px] max-h-[80vh] overflow-hidden flex flex-col">
         <DialogHeader>
-          <DialogTitle>Sandbox Files</DialogTitle>
+          <DialogTitle>{t('thread.sandbox_files')}</DialogTitle>
         </DialogHeader>
         
         {/* Breadcrumbs */}
@@ -124,7 +128,7 @@ export function FileBrowser({ sandboxId, onSelectFile, trigger }: FileBrowserPro
             onClick={() => navigateToBreadcrumb(-1)}
           >
             <Folder className="h-4 w-4 mr-1" />
-            root
+            {t('thread.root')}
           </Button>
           {breadcrumbs.map((part, index) => (
             <div key={index} className="flex items-center">
@@ -153,7 +157,7 @@ export function FileBrowser({ sandboxId, onSelectFile, trigger }: FileBrowserPro
             ) : files.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
                 <Coffee className="h-8 w-8 mb-2" />
-                <p>No files found</p>
+                <p>{t('thread.no_files_found')}</p>
               </div>
             ) : (
               <div className="p-2">
@@ -192,7 +196,7 @@ export function FileBrowser({ sandboxId, onSelectFile, trigger }: FileBrowserPro
           {/* File preview */}
           <div className="border rounded-md overflow-hidden flex flex-col">
             <div className="p-2 bg-muted text-sm font-medium border-b">
-              {selectedFile ? selectedFile.split('/').pop() : "File Preview"}
+              {selectedFile ? selectedFile.split('/').pop() : t('thread.file_preview')}
             </div>
             <div className="p-2 overflow-y-auto flex-1 h-[360px]">
               {isLoading && selectedFile ? (
@@ -206,7 +210,7 @@ export function FileBrowser({ sandboxId, onSelectFile, trigger }: FileBrowserPro
               ) : (
                 <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
                   <File className="h-8 w-8 mb-2" />
-                  <p>Select a file to preview</p>
+                  <p>{t('thread.select_file_to_preview')}</p>
                 </div>
               )}
             </div>
@@ -215,7 +219,7 @@ export function FileBrowser({ sandboxId, onSelectFile, trigger }: FileBrowserPro
         
         {selectedFile && fileContent && onSelectFile && (
           <div className="flex justify-end pt-2">
-            <Button onClick={handleSelectFile}>Select File</Button>
+            <Button onClick={handleSelectFile}>{t('thread.select_file')}</Button>
           </div>
         )}
       </DialogContent>

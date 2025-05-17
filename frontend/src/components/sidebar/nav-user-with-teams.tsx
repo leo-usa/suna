@@ -55,12 +55,16 @@ import { useTheme } from "next-themes"
 
 export function NavUserWithTeams({
   user,
+  dict,
+  locale,
 }: {
   user: {
     name: string
     email: string
     avatar: string
   }
+  dict: Record<string, string>
+  locale: string
 }) {
   const router = useRouter()
   const { isMobile } = useSidebar()
@@ -138,7 +142,7 @@ export function NavUserWithTeams({
   const handleLogout = async () => {
     const supabase = createClient()
     await supabase.auth.signOut()
-    router.push("/auth")
+    window.location.href = `/${locale}/auth`;
   }
 
   const getInitials = (name: string) => {
@@ -148,6 +152,8 @@ export function NavUserWithTeams({
       .toUpperCase()
       .substring(0, 2)
   }
+
+  const t = (key: string) => (dict && dict[key]) || key;
 
   if (!activeTeam) {
     return null
@@ -198,7 +204,7 @@ export function NavUserWithTeams({
               {personalAccount && (
                 <>
                   <DropdownMenuLabel className="text-muted-foreground text-xs">
-                    Personal Account
+                    {t('sidebar.personal_account')}
                   </DropdownMenuLabel>
                   <DropdownMenuItem
                     key={personalAccount.account_id}
@@ -224,11 +230,11 @@ export function NavUserWithTeams({
               {teamAccounts?.length > 0 && (
                 <>
                   <DropdownMenuLabel className="text-muted-foreground text-xs mt-2">
-                    Teams
+                    {t('sidebar.teams')}
                   </DropdownMenuLabel>
                   {teamAccounts.map((team, index) => (
                     <DropdownMenuItem
-                      key={team.account_id}
+                      key={team.account_id || index}
                       onClick={() => handleTeamSelect({
                         name: team.name,
                         logo: AudioWaveform,
@@ -268,9 +274,9 @@ export function NavUserWithTeams({
               {/* User Settings Section */}
               <DropdownMenuGroup>
                 <DropdownMenuItem asChild>
-                  <Link href="/settings/billing">
+                  <Link href={`/${locale}/settings/billing`}>
                     <CreditCard className="mr-2 h-4 w-4" />
-                    Billing
+                    {t('sidebar.billing')}
                   </Link>
                 </DropdownMenuItem>
                 {/* <DropdownMenuItem asChild>
@@ -283,14 +289,14 @@ export function NavUserWithTeams({
                   <div className="flex items-center gap-2">
                     <Sun className="mr-2 h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
                     <Moon className="absolute mr-2 h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-                    <span>Theme</span>
+                    <span>{t('sidebar.theme')}</span>
                   </div>
                 </DropdownMenuItem>
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout}>
                 <LogOut className="mr-2 h-4 w-4" />
-                Log out
+                {t('sidebar.logout')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -299,9 +305,9 @@ export function NavUserWithTeams({
       
       <DialogContent className="sm:max-w-[425px] border-subtle dark:border-white/10 bg-card-bg dark:bg-background-secondary rounded-2xl shadow-custom">
         <DialogHeader>
-          <DialogTitle className="text-foreground">Create a new team</DialogTitle>
+          <DialogTitle className="text-foreground">{t('sidebar.create_team_title')}</DialogTitle>
           <DialogDescription className="text-foreground/70">
-            Create a team to collaborate with others.
+            {t('sidebar.create_team_desc')}
           </DialogDescription>
         </DialogHeader>
         <NewTeamForm />
