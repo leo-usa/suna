@@ -37,8 +37,7 @@ export async function generateMetadata(props: { params: { locale: string } }): P
 }
 
 export default async function LocaleLayout(props: { children: React.ReactNode; params: { locale: string } }) {
-  const { children } = props;
-  const params = await props.params;
+  const { children, params } = props;
   const dict = await getDictionary(params.locale);
   const t = (key: string) => dict[key] || key;
 

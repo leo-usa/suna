@@ -8,8 +8,7 @@ import { PricingSection } from "@/components/home/sections/pricing-section";
 import { UseCasesSection } from "@/components/home/sections/use-cases-section";
 
 export default async function Home({ params }: { params: { locale: string } }) {
-  const paramsAwaited = await params;
-  const dict = await getDictionary(paramsAwaited.locale);
+  const dict = await getDictionary(params.locale);
   return (
     <main className="flex flex-col items-center justify-center min-h-screen w-full">
       <div className="w-full divide-y divide-border">
