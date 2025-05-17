@@ -11,7 +11,7 @@ import {
   Loader2,
 } from "lucide-react"
 import { toast } from "sonner"
-import { usePathname, useRouter } from "next/navigation"
+import { usePathname, useRouter, useParams } from "next/navigation"
 
 import {
   DropdownMenu,
@@ -54,9 +54,8 @@ export function NavAgents({ dict }: { dict: Record<string, string> }) {
   const [deletingProjectId, setDeletingProjectId] = useState<string | null>(null)
   const pathname = usePathname()
   const router = useRouter()
-
-  // Extract locale from pathname (assumes /[locale]/...)
-  const locale = pathname?.split("/")[1] || "en";
+  const params = useParams()
+  const locale = params.locale as string
 
   const t = (key: string) => (dict && dict[key]) || key;
 
@@ -195,7 +194,7 @@ export function NavAgents({ dict }: { dict: Record<string, string> }) {
           <Tooltip>
             <TooltipTrigger asChild>
               <Link 
-                href="/dashboard" 
+                href={`/${locale}/dashboard`} 
                 className="text-muted-foreground hover:text-foreground h-8 w-8 flex items-center justify-center rounded-md"
               >
                 <Plus className="h-4 w-4" />
@@ -213,7 +212,7 @@ export function NavAgents({ dict }: { dict: Record<string, string> }) {
             <Tooltip>
               <TooltipTrigger asChild>
                 <SidebarMenuButton asChild>
-                  <Link href="/dashboard" className="flex items-center">
+                  <Link href={`/${locale}/dashboard`} className="flex items-center">
                     <Plus className="h-4 w-4" />
                     <span>{t('sidebar.new_agent')}</span>
                   </Link>

@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { Skeleton } from "@/components/ui/skeleton";
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { Menu } from "lucide-react";
 import { ChatInput, ChatInputHandles } from '@/components/thread/chat-input';
 import { initiateAgent, createThread, addUserMessage, startAgent, createProject, BillingError } from "@/lib/api";
@@ -24,6 +24,8 @@ export default function DashboardContent({ dict }: { dict: Record<string, string
   const [autoSubmit, setAutoSubmit] = useState(false);
   const { billingError, handleBillingError, clearBillingError } = useBillingError();
   const router = useRouter();
+  const params = useParams();
+  const locale = params.locale as string;
   const isMobile = useIsMobile();
   const { setOpenMobile } = useSidebar();
   const { data: accounts } = useAccounts();
@@ -49,7 +51,7 @@ export default function DashboardContent({ dict }: { dict: Record<string, string
         }
         const result = await initiateAgent(formData);
         if (result.thread_id) {
-          router.push(`/agents/${result.thread_id}`);
+          router.push(`/${locale}/agents/${result.thread_id}`);
         }
       } else {
         const projectName = await generateThreadName(message);
@@ -57,7 +59,7 @@ export default function DashboardContent({ dict }: { dict: Record<string, string
         const thread = await createThread(newProject.id);
         await addUserMessage(thread.thread_id, message);
         await startAgent(thread.thread_id, options);
-        router.push(`/agents/${thread.thread_id}`);
+        router.push(`/${locale}/agents/${thread.thread_id}`);
       }
     } catch (error: any) {
       if (error instanceof BillingError) {

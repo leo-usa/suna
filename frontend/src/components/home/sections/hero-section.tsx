@@ -7,7 +7,7 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 import { useState, useEffect, useRef, FormEvent } from "react";
 import { useScroll } from "motion/react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import { createProject, createThread, addUserMessage, startAgent, BillingError } from "@/lib/api";
 import { generateThreadName } from "@/lib/actions/threads";
@@ -59,6 +59,9 @@ export function HeroSection({ dict }: HeroSectionProps) {
   // Auth dialog state
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
+
+  const params = useParams();
+  const locale = params.locale as string;
 
   useEffect(() => {
     setMounted(true);
@@ -131,7 +134,7 @@ export function HeroSection({ dict }: HeroSectionProps) {
       });
       
       // 5. Navigate to the new agent's thread page
-      router.push(`/agents/${thread.thread_id}`);
+      router.push(`/${locale}/agents/${thread.thread_id}`);
       // Clear input on success
       setInputValue("");
     } catch (error: any) {
