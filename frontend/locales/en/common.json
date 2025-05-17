@@ -315,5 +315,8 @@
   "pricing.downgrade_pending": "Downgrade Pending",
   "pricing.change_scheduled": "Change Scheduled",
   "pricing.per_month": "/month",
-  "pricing.current_plan": "Current Plan"
+  "pricing.current_plan": "Current Plan",
+  "thread.export_pdf": "Export as PDF",
+  "thread.portrait": "Portrait",
+  "thread.landscape": "Landscape"
 } 

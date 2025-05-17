@@ -11,9 +11,8 @@ type AccountParams = {
   accountSlug: string;
 };
 
-export default function TeamSettingsPage({ params }: { params: Promise<AccountParams> }) {
-    const unwrappedParams = React.use(params);
-    const { accountSlug } = unwrappedParams;
+export default function TeamSettingsPage({ params }: { params: AccountParams }) {
+    const { accountSlug } = params;
     
     // Use an effect to load team account data
     const [teamAccount, setTeamAccount] = React.useState<any>(null);

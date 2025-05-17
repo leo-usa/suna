@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getProjects, getThreads, type Project } from "@/lib/api";
+import { useParams } from 'next/navigation';
 
 // Define the Agent type that combines project and thread data
 interface Agent {
@@ -22,6 +23,8 @@ export default function AgentsPage() {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const params = useParams();
+  const locale = params.locale as string;
 
   useEffect(() => {
     async function loadAgents() {
@@ -82,7 +85,7 @@ export default function AgentsPage() {
           </p>
         </div>
         <Button asChild>
-          <Link href="/agents/new">
+          <Link href={`/${locale}/agents/new`}>
             <PlusCircle className="mr-2 h-4 w-4" />
             New Agent
           </Link>
@@ -112,7 +115,7 @@ export default function AgentsPage() {
             Create your first agent to start automating tasks and getting help from AI.
           </p>
           <Button asChild>
-            <Link href="/agents/new">
+            <Link href={`/${locale}/agents/new`}>
               <PlusCircle className="mr-2 h-4 w-4" />
               Create your first agent
             </Link>
@@ -135,8 +138,8 @@ export default function AgentsPage() {
                     <Link
                       href={
                         agent.threadId
-                          ? `/agents/${agent.threadId}`
-                          : `/dashboard`
+                          ? `/${locale}/agents/${agent.threadId}`
+                          : `/${locale}/dashboard`
                       }
                     >
                       Continue Conversation

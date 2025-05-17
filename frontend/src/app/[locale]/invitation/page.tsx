@@ -8,20 +8,14 @@ type InvitationSearchParams = {
   token?: string;
 };
 
-export default function AcceptInvitationPage({ 
-  searchParams 
-}: { 
-  searchParams: Promise<InvitationSearchParams>
-}) {
-    const unwrappedSearchParams = React.use(searchParams);
-    
-    if (!unwrappedSearchParams.token) {
+export default function InvitationPage({ searchParams }: { searchParams: InvitationSearchParams }) {
+    if (!searchParams.token) {
        redirect("/");
     }
 
     return (
         <div className="max-w-md mx-auto w-full my-12">
-            <AcceptTeamInvitation token={unwrappedSearchParams.token} />
+            <AcceptTeamInvitation token={searchParams.token} />
         </div>
     )
 }

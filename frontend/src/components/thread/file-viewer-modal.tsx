@@ -731,7 +731,7 @@ export function FileViewerModal({
                   ) : (
                     <Download className="h-4 w-4" />
                   )}
-                  <span className="hidden sm:inline">Download</span>
+                  <span className="hidden sm:inline">{t('thread.download')}</span>
                 </Button>
                 
                 {/* Replace the Export as PDF button with a dropdown */}
@@ -749,7 +749,7 @@ export function FileViewerModal({
                         ) : (
                           <FileText className="h-4 w-4" />
                         )}
-                        <span className="hidden sm:inline">Export as PDF</span>
+                        <span className="hidden sm:inline">{t('thread.export_pdf')}</span>
                         <ChevronDown className="h-3 w-3 ml-1" />
                       </Button>
                     </DropdownMenuTrigger>
@@ -758,13 +758,13 @@ export function FileViewerModal({
                         onClick={() => handleExportPdf('portrait')}
                         className="flex items-center gap-2 cursor-pointer"
                       >
-                        <span className="rotate-90">⬌</span> Portrait
+                        <span className="rotate-90">⬌</span> {t('thread.portrait')}
                       </DropdownMenuItem>
                       <DropdownMenuItem 
                         onClick={() => handleExportPdf('landscape')}
                         className="flex items-center gap-2 cursor-pointer"
                       >
-                        <span>⬌</span> Landscape
+                        <span>⬌</span> {t('thread.landscape')}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -785,7 +785,7 @@ export function FileViewerModal({
                 ) : (
                   <Upload className="h-4 w-4" />
                 )}
-                <span className="hidden sm:inline">Upload</span>
+                <span className="hidden sm:inline">{t('thread.upload')}</span>
               </Button>
             )}
             

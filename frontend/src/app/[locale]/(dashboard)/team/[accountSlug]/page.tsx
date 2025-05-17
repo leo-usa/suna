@@ -7,14 +7,9 @@ type AccountParams = {
   accountSlug: string;
 };
 
-export default function AccountRedirect({ 
-  params 
-}: { 
-  params: Promise<AccountParams> 
-}) {
-  const unwrappedParams = React.use(params);
-  const { accountSlug } = unwrappedParams;
+export default function TeamAccountPage({ params }: { params: AccountParams }) {
+  const { accountSlug } = params;
   
   // Redirect to the settings page
   redirect(`/${accountSlug}/settings`);
-} 
+}

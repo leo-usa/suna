@@ -9,15 +9,8 @@ type LayoutParams = {
   accountSlug: string;
 };
 
-export default function TeamSettingsLayout({
-  children, 
-  params
-}: {
-  children: React.ReactNode, 
-  params: Promise<LayoutParams>
-}) {
-    const unwrappedParams = React.use(params);
-    const { accountSlug } = unwrappedParams;
+export default function Layout({ children, params }: { children: React.ReactNode, params: LayoutParams }) {
+    const { accountSlug } = params;
     const pathname = usePathname();
     const items = [
         { name: "Account", href: `/${accountSlug}/settings` },

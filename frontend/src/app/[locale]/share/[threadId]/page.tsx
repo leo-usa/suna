@@ -179,9 +179,8 @@ function renderMarkdownContent(content: string, handleToolClick: (assistantMessa
   return contentParts;
 }
 
-export default function ThreadPage({ params }: { params: Promise<ThreadParams> }) {
-  const unwrappedParams = React.use(params);
-  const threadId = unwrappedParams.threadId;
+export default function ThreadPage({ params }: { params: ThreadParams }) {
+  const threadId = params.threadId;
   
   const router = useRouter();
   const [messages, setMessages] = useState<UnifiedMessage[]>([]);

@@ -315,5 +315,8 @@
   "pricing.downgrade_pending": "降级待处理",
   "pricing.change_scheduled": "更改计划",
   "pricing.per_month": "/月",
-  "pricing.current_plan": "当前方案"
+  "pricing.current_plan": "当前方案",
+  "thread.export_pdf": "导出为 PDF",
+  "thread.portrait": "纵向",
+  "thread.landscape": "横向"
 } 

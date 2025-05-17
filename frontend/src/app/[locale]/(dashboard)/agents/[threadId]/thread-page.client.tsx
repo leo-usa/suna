@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
   ArrowDown, CheckCircle, CircleDashed, AlertTriangle, Info, File, ChevronRight
@@ -198,9 +198,9 @@ function renderAttachments(attachments: string[], fileViewerHandler?: (filePath?
   );
 }
 
-export function ThreadPage({ params, dict }: { params: Promise<ThreadParams>, dict: Record<string, string> }) {
-  const unwrappedParams = React.use(params);
-  const threadId = unwrappedParams.threadId;
+export function ThreadPage({ dict }: { dict: Record<string, string> }) {
+  const params = useParams();
+  const threadId = params.threadId as string;
   const isMobile = useIsMobile();
   
   const router = useRouter();
@@ -1572,6 +1572,7 @@ export function ThreadPage({ params, dict }: { params: Promise<ThreadParams>, di
         accountId={billingData.accountId}
         onDismiss={() => setShowBillingAlert(false)}
         isOpen={showBillingAlert}
+        dict={dict}
       />
     </div>
   );
