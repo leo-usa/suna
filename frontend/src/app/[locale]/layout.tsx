@@ -27,7 +27,7 @@ export const viewport: Viewport = {
 };
 
 export async function generateMetadata(props: { params: { locale: string } }): Promise<Metadata> {
-  const params = await props.params;
+  const { params } = props;
   const dict = await getDictionary(params.locale);
   return {
     title: dict["welcome"] || siteConfig.name,
