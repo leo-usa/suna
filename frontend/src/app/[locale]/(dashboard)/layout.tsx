@@ -11,11 +11,10 @@ interface DashboardLayoutProps {
 }
 
 export default async function DashboardLayout({ children, params }: DashboardLayoutProps) {
-  const paramsAwaited = await params;
-  const dict = await getDictionary(paramsAwaited.locale);
+  const dict = await getDictionary(params.locale);
   return (
     <SidebarProvider>
-      <SidebarLeft dict={dict} locale={paramsAwaited.locale} />
+      <SidebarLeft dict={dict} locale={params.locale} />
       <SidebarInset>
         <div className="bg-background">
           {children}
