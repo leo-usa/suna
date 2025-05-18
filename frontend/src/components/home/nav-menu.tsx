@@ -3,6 +3,7 @@
 import { siteConfig } from "@/lib/home";
 import { motion } from "motion/react";
 import React, { useRef, useState } from "react";
+import { useTranslation } from 'react-i18next';
 
 interface NavItem {
   name: string;
@@ -18,6 +19,7 @@ export function NavMenu() {
   const [isReady, setIsReady] = useState(false);
   const [activeSection, setActiveSection] = useState("hero");
   const [isManualScroll, setIsManualScroll] = useState(false);
+  const { t } = useTranslation();
 
   React.useEffect(() => {
     // Initialize with first nav item
@@ -127,7 +129,7 @@ export function NavMenu() {
             } tracking-tight`}
           >
             <a href={item.href} onClick={(e) => handleClick(e, item)}>
-              {item.name}
+              {t(`nav.${item.name}`, item.name)}
             </a>
           </li>
         ))}

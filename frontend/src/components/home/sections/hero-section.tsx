@@ -27,6 +27,7 @@ import { useBillingError } from "@/hooks/useBillingError";
 import { useAccounts } from "@/hooks/use-accounts";
 import { isLocalMode, config } from "@/lib/config";
 import { toast } from "sonner";
+import { useTranslation } from 'react-i18next';
 
 // Custom dialog overlay with blur effect
 const BlurredDialogOverlay = () => (
@@ -54,6 +55,8 @@ export function HeroSection() {
   // Auth dialog state
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
+
+  const { t } = useTranslation();
 
   useEffect(() => {
     setMounted(true);
@@ -258,31 +261,12 @@ export function HeroSection() {
         <div className="absolute inset-x-1/4 top-0 h-[600px] md:h-[800px] -z-20 bg-background rounded-b-xl"></div>
         
         <div className="relative z-10 pt-32 max-w-3xl mx-auto h-full w-full flex flex-col gap-10 items-center justify-center">
-                    {/* <p className="border border-border bg-accent rounded-full text-sm h-8 px-3 flex items-center gap-2">
-            {hero.badgeIcon}
-            {hero.badge}
-          </p> */}
-
-          <Link 
-            href={hero.githubUrl} 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="group border border-border/50 bg-background hover:bg-accent/20 hover:border-secondary/40 rounded-full text-sm h-8 px-3 flex items-center gap-2 transition-all duration-300 shadow-sm hover:shadow-md hover:scale-105 hover:-translate-y-0.5"
-          >
-            {hero.badgeIcon}
-            <span className="font-medium text-muted-foreground text-xs tracking-wide group-hover:text-primary transition-colors duration-300">{hero.badge}</span>
-            <span className="inline-flex items-center justify-center size-3.5 rounded-full bg-muted/30 group-hover:bg-secondary/30 transition-colors duration-300">
-              <svg width="8" height="8" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-muted-foreground group-hover:text-primary">
-                <path d="M7 17L17 7M17 7H8M17 7V16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </span>
-          </Link>
           <div className="flex flex-col items-center justify-center gap-5">
             <h1 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-medium tracking-tighter text-balance text-center">
-              <span className="text-secondary">Suna</span><span className="text-primary">, your AI Employee.</span>
+              {t('hero.title')}
             </h1>
             <p className="text-base md:text-lg text-center text-muted-foreground font-medium text-balance leading-relaxed tracking-tight">
-              {hero.description}
+              {t('hero.subtitle')}
             </p>
           </div>
           <div className="flex items-center w-full max-w-xl gap-2 flex-wrap justify-center">
@@ -295,7 +279,7 @@ export function HeroSection() {
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    placeholder={hero.inputPlaceholder}
+                    placeholder={t('hero.cta')}
                     className="flex-1 h-12 md:h-14 rounded-full px-2 bg-transparent focus:outline-none text-sm md:text-base py-2"
                     disabled={isSubmitting}
                   />
