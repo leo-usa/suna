@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { getSubscription, createCheckoutSession, SubscriptionStatus, CreateCheckoutSessionResponse } from "@/lib/api";
 import { toast } from "sonner";
 import { isLocalMode } from "@/lib/config";
+import { useTranslation } from 'react-i18next';
 
 // Constants
 const DEFAULT_SELECTED_PLAN = "6 hours";
@@ -67,6 +68,7 @@ interface PricingTierProps {
 
 // Components
 function PricingTabs({ activeTab, setActiveTab, className }: PricingTabsProps) {
+  const { t } = useTranslation();
   return (
     <div
       className={cn(
@@ -104,7 +106,7 @@ function PricingTabs({ activeTab, setActiveTab, className }: PricingTabsProps) {
               activeTab === tab ? "text-primary" : "text-muted-foreground",
             )}
           >
-            {tab === "cloud" ? "Cloud" : "Self-hosted"}
+            {tab === "cloud" ? t('pricing.tabs.cloud') : t('pricing.tabs.selfHosted')}
           </span>
         </button>
       ))}
@@ -162,6 +164,7 @@ function PricingTier({
 }: PricingTierProps) {
   const [localSelectedPlan, setLocalSelectedPlan] = useState(selectedPlan || DEFAULT_SELECTED_PLAN);
   const hasInitialized = useRef(false);
+  const { t } = useTranslation();
 
   // Auto-select the correct plan only on initial load
   useEffect(() => {
@@ -320,7 +323,7 @@ function PricingTier({
   );
   const isPlanLoading = isLoading[tierPriceId];
 
-  let buttonText = isAuthenticated ? "Select Plan" : "Hire Suna";
+  let buttonText = isAuthenticated ? t('pricing.selectPlan') : t('pricing.hireSuna');
   let buttonDisabled = isPlanLoading;
   let buttonVariant: ButtonVariant = null;
   let ringClass = "";
@@ -329,35 +332,35 @@ function PricingTier({
 
   if (isAuthenticated) {
     if (isCurrentActivePlan) {
-      buttonText = "Current Plan";
+      buttonText = t('pricing.currentPlan');
       buttonDisabled = true;
       buttonVariant = "secondary";
       ringClass = isCompact ? "ring-1 ring-primary" : "ring-2 ring-primary";
       buttonClassName = "bg-primary/5 hover:bg-primary/10 text-primary";
       statusBadge = (
         <span className="bg-primary/10 text-primary text-[10px] font-medium px-1.5 py-0.5 rounded-full">
-          Current
+          {t('pricing.current')}
         </span>
       );
     } else if (isScheduledTargetPlan) {
-      buttonText = "Scheduled";
+      buttonText = t('pricing.scheduled');
       buttonDisabled = true;
       buttonVariant = "outline";
       ringClass = isCompact ? "ring-1 ring-yellow-500" : "ring-2 ring-yellow-500";
       buttonClassName = "bg-yellow-500/5 hover:bg-yellow-500/10 text-yellow-600 border-yellow-500/20";
       statusBadge = (
         <span className="bg-yellow-500/10 text-yellow-600 text-[10px] font-medium px-1.5 py-0.5 rounded-full">
-          Scheduled
+          {t('pricing.scheduled')}
         </span>
       );
     } else if (isScheduled && currentSubscription?.price_id === tierPriceId) {
-      buttonText = "Change Scheduled";
+      buttonText = t('pricing.changeScheduled');
       buttonVariant = "secondary";
       ringClass = isCompact ? "ring-1 ring-primary" : "ring-2 ring-primary";
       buttonClassName = "bg-primary/5 hover:bg-primary/10 text-primary";
       statusBadge = (
         <span className="bg-yellow-500/10 text-yellow-600 text-[10px] font-medium px-1.5 py-0.5 rounded-full">
-          Downgrade Pending
+          {t('pricing.downgradePending')}
         </span>
       );
     } else {
@@ -385,12 +388,12 @@ function PricingTier({
       const targetAmount = selectedPriceString === '$0' ? 0 : parseFloat(selectedPriceString.replace(/[^\d.]/g, '') || '0') * 100;
       
       if (currentAmount === 0 && targetAmount === 0 && currentSubscription?.status !== 'no_subscription') {
-        buttonText = "Select Plan";
+        buttonText = t('pricing.selectPlan');
         buttonDisabled = true;
         buttonVariant = "secondary";
         buttonClassName = "bg-primary/5 hover:bg-primary/10 text-primary";
       } else {
-        buttonText = targetAmount > currentAmount ? "Upgrade" : "Downgrade";
+        buttonText = targetAmount > currentAmount ? t('pricing.upgrade') : t('pricing.downgrade');
         buttonVariant = tier.buttonColor as ButtonVariant;
         buttonClassName = targetAmount > currentAmount 
           ? "bg-primary hover:bg-primary/90 text-primary-foreground" 
@@ -399,7 +402,7 @@ function PricingTier({
     }
 
     if (isPlanLoading) {
-      buttonText = "Loading...";
+      buttonText = t('pricing.loading');
       buttonClassName = "opacity-70 cursor-not-allowed";
     }
   } else {
@@ -409,8 +412,6 @@ function PricingTier({
       ? "bg-primary hover:bg-primary/90 text-white" 
       : "bg-secondary hover:bg-secondary/90 text-white";
   }
-
-
 
   return (
     <div
@@ -424,10 +425,10 @@ function PricingTier({
     >
       <div className="flex flex-col gap-4 p-4">
         <p className="text-sm flex items-center gap-2">
-          {tier.name}
+          {t(`pricing.tiers.${tier.name}`)}
           {tier.isPopular && (
             <span className="bg-gradient-to-b from-secondary/50 from-[1.92%] to-secondary to-[100%] text-white h-6 inline-flex w-fit items-center justify-center px-2 rounded-full text-sm shadow-[0px_6px_6px_-3px_rgba(0,0,0,0.08),0px_3px_3px_-1.5px_rgba(0,0,0,0.08),0px_1px_1px_-0.5px_rgba(0,0,0,0.08),0px_0px_0px_1px_rgba(255,255,255,0.12)_inset,0px_1px_0px_0px_rgba(255,255,255,0.12)_inset]">
-              Popular
+              {t('pricing.popular')}
             </span>
           )}
           {isAuthenticated && statusBadge}
@@ -439,40 +440,43 @@ function PricingTier({
             <PriceDisplay price={tier.price} />
           )}
           <span className="ml-2">
-            {tier.price !== "$0" ? "/month" : ""}
+            {tier.price !== "$0" ? t('pricing.perMonth') : ""}
           </span>
         </div>
-        <p className="text-sm mt-2">{tier.description}</p>
+        <p className="text-sm mt-2">{t(`pricing.tiers.${tier.name}Desc`, { defaultValue: tier.description })}</p>
         
         {tier.name === "Custom" && tier.upgradePlans ? (
           <div className="w-full space-y-2">
-            <p className="text-xs font-medium text-muted-foreground">Customize your monthly usage</p>
+            <p className="text-xs font-medium text-muted-foreground">{t('pricing.customizeUsage')}</p>
             <Select
               value={localSelectedPlan}
               onValueChange={handlePlanSelect}
             >
               <SelectTrigger className="w-full bg-white dark:bg-background">
-                <SelectValue placeholder="Select a plan" />
+                <SelectValue placeholder={t('pricing.selectAPlan')} />
               </SelectTrigger>
               <SelectContent>
-                {tier.upgradePlans.map((plan) => (
-                  <SelectItem 
-                    key={plan.hours} 
-                    value={plan.hours}
-                    className={localSelectedPlan === plan.hours ? "font-medium bg-primary/5" : ""}
-                  >
-                    {plan.hours} - {plan.price}
-                  </SelectItem>
-                ))}
+                {tier.upgradePlans.map((plan) => {
+                  const [hours, price] = plan.hours.split(' - ');
+                  return (
+                    <SelectItem 
+                      key={plan.hours} 
+                      value={plan.hours}
+                      className={localSelectedPlan === plan.hours ? "font-medium bg-primary/5" : ""}
+                    >
+                      {t('pricing.features.' + hours, { defaultValue: hours })} - {price}
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
             <div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-primary/10 border-primary/20 text-primary w-fit">
-              {localSelectedPlan}/month
+              {t('pricing.features.' + getDisplayedHours(tier), { defaultValue: getDisplayedHours(tier) })}
             </div>
           </div>
         ) : (
           <div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-primary/10 border-primary/20 text-primary w-fit">
-            {getDisplayedHours(tier)}/month
+            {t('pricing.features.' + getDisplayedHours(tier), { defaultValue: getDisplayedHours(tier) })}
           </div>
         )}
       </div>
@@ -485,7 +489,7 @@ function PricingTier({
                 <div className="size-5 rounded-full border border-primary/20 flex items-center justify-center">
                   <CheckIcon className="size-3 text-primary" />
                 </div>
-                <span className="text-sm">{feature}</span>
+                <span className="text-sm">{t(`pricing.features.${feature}`, { defaultValue: feature })}</span>
               </li>
             ))}
           </ul>
@@ -527,6 +531,7 @@ export function PricingSection({
   const [isLoading, setIsLoading] = useState<Record<string, boolean>>({});
   const [isFetchingPlan, setIsFetchingPlan] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { t } = useTranslation();
 
   const fetchCurrentPlan = async () => {
     setIsFetchingPlan(true);
@@ -581,7 +586,7 @@ export function PricingSection({
     return (
       <div className="p-4 bg-muted/30 border border-border rounded-lg text-center">
         <p className="text-sm text-muted-foreground">
-          Running in local development mode - billing features are disabled
+          {t('pricing.localMode')}
         </p>
       </div>
     );
@@ -596,10 +601,10 @@ export function PricingSection({
         <>
           <SectionHeader>
             <h2 className="text-3xl md:text-4xl font-medium tracking-tighter text-center text-balance">
-              Choose the right plan for your needs
+              {t('pricing.title')}
             </h2>
             <p className="text-muted-foreground text-center text-balance font-medium">
-              Start with our free plan or upgrade to a premium plan for more usage hours
+              {t('pricing.subtitle')}
             </p>
           </SectionHeader>
           <div className="relative w-full h-full">

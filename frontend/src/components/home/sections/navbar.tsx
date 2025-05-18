@@ -5,13 +5,14 @@ import { NavMenu } from "@/components/home/nav-menu";
 import { ThemeToggle } from "@/components/home/theme-toggle";
 import { siteConfig } from "@/lib/home";
 import { cn } from "@/lib/utils";
-import { Menu, X, Github } from "lucide-react";
+import { Menu, X, Github, Globe } from "lucide-react";
 import { AnimatePresence, motion, useScroll } from "motion/react";
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import { useAuth } from "@/components/AuthProvider";
+import { useTranslation } from 'react-i18next';
 
 const INITIAL_WIDTH = "70rem";
 const MAX_WIDTH = "800px";
@@ -53,6 +54,40 @@ const drawerMenuVariants = {
   visible: { opacity: 1 },
 };
 
+const LANGUAGES = [
+  { code: 'en', label: 'English' },
+  { code: 'de', label: 'Deutsch' },
+  { code: 'es', label: 'Español' },
+  { code: 'fr', label: 'Français' },
+  { code: 'it', label: 'Italiano' },
+  { code: 'pt-BR', label: 'Português (BR)' },
+  { code: 'pt-PT', label: 'Português (PT)' },
+  { code: 'zh-CN', label: '简体中文' },
+  { code: 'zh-TW', label: '繁體中文' },
+  { code: 'ja', label: '日本語' },
+  { code: 'ko', label: '한국어' },
+  { code: 'ar', label: 'العربية' },
+];
+
+function LanguageSwitcher() {
+  const { i18n } = useTranslation();
+  return (
+    <div className="flex items-center ml-2">
+      <Globe className="w-4 h-4 mr-2" />
+      <select
+        value={i18n.language}
+        onChange={e => i18n.changeLanguage(e.target.value)}
+        className="h-8 rounded-full border border-border bg-background px-2 text-sm font-normal text-primary dark:text-secondary-foreground focus:outline-none focus:ring-2 focus:ring-secondary/40 transition-colors"
+        style={{ minWidth: 90 }}
+      >
+        {LANGUAGES.map(lang => (
+          <option key={lang.code} value={lang.code}>{lang.label}</option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
 export function Navbar() {
   const { scrollY } = useScroll();
   const [hasScrolled, setHasScrolled] = useState(false);
@@ -61,6 +96,7 @@ export function Navbar() {
   const { theme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const { user } = useAuth();
+  const { t } = useTranslation();
 
   useEffect(() => {
     setMounted(true);
@@ -153,16 +189,17 @@ export function Navbar() {
                     className="bg-secondary h-8 hidden md:flex items-center justify-center text-sm font-normal tracking-wide rounded-full text-primary-foreground dark:text-secondary-foreground w-fit px-4 shadow-[inset_0_1px_2px_rgba(255,255,255,0.25),0_3px_3px_-1.5px_rgba(16,24,40,0.06),0_1px_1px_rgba(16,24,40,0.08)] border border-white/[0.12]"
                     href="/dashboard"
                   >
-                    Dashboard
+                    {t('nav.Dashboard', 'Dashboard')}
                   </Link>
                 ) : (
                   <Link
                     className="bg-secondary h-8 hidden md:flex items-center justify-center text-sm font-normal tracking-wide rounded-full text-primary-foreground dark:text-secondary-foreground w-fit px-4 shadow-[inset_0_1px_2px_rgba(255,255,255,0.25),0_3px_3px_-1.5px_rgba(16,24,40,0.06),0_1px_1px_rgba(16,24,40,0.08)] border border-white/[0.12]"
                     href="/auth"
                   >
-                    Hire Suna
+                    {t('cta.button', 'Hire Suna')}
                   </Link>
                 )}
+                <LanguageSwitcher />
               </div>
               <ThemeToggle />
               <button
@@ -263,17 +300,18 @@ export function Navbar() {
                       href="/dashboard"
                       className="bg-secondary h-8 flex items-center justify-center text-sm font-normal tracking-wide rounded-full text-primary-foreground dark:text-secondary-foreground w-full px-4 shadow-[inset_0_1px_2px_rgba(255,255,255,0.25),0_3px_3px_-1.5px_rgba(16,24,40,0.06),0_1px_1px_rgba(16,24,40,0.08)] border border-white/[0.12] hover:bg-secondary/80 transition-all ease-out active:scale-95"
                     >
-                      Dashboard
+                      {t('nav.Dashboard', 'Dashboard')}
                     </Link>
                   ) : (
                     <Link
                       href="/auth"
                       className="bg-secondary h-8 flex items-center justify-center text-sm font-normal tracking-wide rounded-full text-primary-foreground dark:text-secondary-foreground w-full px-4 shadow-[inset_0_1px_2px_rgba(255,255,255,0.25),0_3px_3px_-1.5px_rgba(16,24,40,0.06),0_1px_1px_rgba(16,24,40,0.08)] border border-white/[0.12] hover:bg-secondary/80 transition-all ease-out active:scale-95"
                     >
-                      Hire Suna
+                      {t('cta.button', 'Hire Suna')}
                     </Link>
                   )}
                   <div className="flex justify-between">
+                    <LanguageSwitcher />
                     <ThemeToggle />
                   </div>
                 </div>

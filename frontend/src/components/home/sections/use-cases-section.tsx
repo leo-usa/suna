@@ -5,6 +5,7 @@ import { siteConfig } from "@/lib/home";
 import { cn } from "@/lib/utils";
 import { motion } from "motion/react";
 import { ArrowRight } from "lucide-react";
+import { useTranslation } from 'react-i18next';
 
 interface UseCase {
   id: string;
@@ -18,6 +19,7 @@ interface UseCase {
 }
 
 export function UseCasesSection() {
+  const { t } = useTranslation();
   // Get featured use cases from siteConfig and limit to 8
   const featuredUseCases: UseCase[] = (siteConfig.useCases || [])
     .filter((useCase: UseCase) => useCase.featured);
@@ -29,10 +31,10 @@ export function UseCasesSection() {
     >
       <SectionHeader>
         <h2 className="text-3xl md:text-4xl font-medium tracking-tighter text-center text-balance">
-          See Suna in action
+          {t('useCases.title')}
         </h2>
         <p className="text-muted-foreground text-center text-balance font-medium">
-          Explore real-world examples of how Suna completes complex tasks autonomously
+          {t('useCases.subtitle')}
         </p>
       </SectionHeader>
 
@@ -50,11 +52,9 @@ export function UseCasesSection() {
                       {useCase.icon}
                     </svg>
                   </div>
-                  <h3 className="text-lg font-medium line-clamp-1">{useCase.title}</h3>
+                  <h3 className="text-lg font-medium line-clamp-1">{t(`useCases.${useCase.id}.title`, useCase.title)}</h3>
                 </div>
-                <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">
-                  {useCase.description}
-                </p>
+                <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">{t(`useCases.${useCase.id}.description`, useCase.description)}</p>
               </div>
               
               <div className="mt-auto">
@@ -74,7 +74,7 @@ export function UseCasesSection() {
                       className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 hover:opacity-100 transition-opacity flex items-end justify-start p-4 group"
                     >
                       <span className="flex items-center gap-2 text-sm text-white font-medium">
-                        Watch replay 
+                        {t('useCases.watchReplay')}
                         <ArrowRight className="size-4 transform group-hover:translate-x-1 transition-transform" />
                       </span>
                     </a>
@@ -87,7 +87,7 @@ export function UseCasesSection() {
         
         {featuredUseCases.length === 0 && (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <p className="text-muted-foreground">No use cases available yet.</p>
+            <p className="text-muted-foreground">{t('useCases.none')}</p>
           </div>
         )}
       </div>
