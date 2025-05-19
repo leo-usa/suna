@@ -56,6 +56,14 @@ class SubscriptionStatus(BaseModel):
     scheduled_price_id: Optional[str] = None # Added scheduled price ID
     scheduled_change_date: Optional[datetime] = None
 
+class CreateCreditSessionRequest(BaseModel):
+    price_id: Optional[str] = None
+    amount_minutes: Optional[int] = None
+    payment_method: str  # 'alipay', 'wechat_pay', or 'card'
+    success_url: str
+    cancel_url: str
+    locale: Optional[str] = None
+
 # Helper functions
 async def get_stripe_customer_id(client, user_id: str) -> Optional[str]:
     """Get the Stripe customer ID for a user."""
@@ -199,10 +207,39 @@ async def calculate_monthly_usage(client, user_id: str) -> float:
     
     return total_seconds / 60  # Convert to minutes
 
+async def get_user_credits(client, user_id: str) -> float:
+    """Get the user's available prepaid credit minutes."""
+    credits_result = await client.table('billing_credits') \
+        .select('balance_minutes') \
+        .eq('account_id', user_id) \
+        .execute()
+    if credits_result.data and len(credits_result.data) > 0:
+        return float(credits_result.data[0]['balance_minutes'])
+    return 0.0
+
+async def deduct_user_credits(client, user_id: str, minutes: float) -> bool:
+    """Deduct minutes from user's credits. Returns True if successful, False if insufficient."""
+    credits_result = await client.table('billing_credits') \
+        .select('id, balance_minutes') \
+        .eq('account_id', user_id) \
+        .execute()
+    if credits_result.data and len(credits_result.data) > 0:
+        row = credits_result.data[0]
+        current = float(row['balance_minutes'])
+        if current >= minutes:
+            new_balance = current - minutes
+            now = datetime.now(timezone.utc).isoformat()
+            await client.table('billing_credits').update({
+                'balance_minutes': new_balance,
+                'last_updated': now
+            }).eq('id', row['id']).execute()
+            return True
+    return False
+
 async def check_billing_status(client, user_id: str) -> Tuple[bool, str, Optional[Dict]]:
     """
     Check if a user can run agents based on their subscription and usage.
-    
+    Fallback to prepaid credits if no subscription or subscription minutes are exhausted.
     Returns:
         Tuple[bool, str, Optional[Dict]]: (can_run, message, subscription_info)
     """
@@ -242,10 +279,20 @@ async def check_billing_status(client, user_id: str) -> Tuple[bool, str, Optiona
     current_usage = await calculate_monthly_usage(client, user_id)
     
     # Check if within limits
-    if current_usage >= tier_info['minutes']:
-        return False, f"Monthly limit of {tier_info['minutes']} minutes reached. Please upgrade your plan or wait until next month.", subscription
+    if current_usage < tier_info['minutes']:
+        return True, "OK", subscription
     
-    return True, "OK", subscription
+    # If over subscription minutes, check credits
+    credits = await get_user_credits(client, user_id)
+    if credits > 0:
+        return True, f"Using prepaid credits: {credits:.2f} minutes left.", {
+            "plan_name": "prepaid",
+            "minutes_limit": credits,
+            "current_usage": 0,
+            "price_id": None
+        }
+    
+    return False, f"Monthly limit of {tier_info['minutes']} minutes reached and no prepaid credits available. Please upgrade your plan or top up credits.", subscription
 
 # API endpoints
 @router.post("/create-checkout-session")
@@ -750,9 +797,153 @@ async def stripe_webhook(request: Request):
         if event.type in ['customer.subscription.created', 'customer.subscription.updated', 'customer.subscription.deleted']:
             # We don't need to do anything here as we'll query Stripe directly
             pass
+        elif event.type == 'checkout.session.completed':
+            session = event['data']['object']
+            mode = session.get('mode')
+            metadata = session.get('metadata', {})
+            # Only handle one-time payment for credits
+            if mode == 'payment' and metadata.get('minutes') and metadata.get('user_id'):
+                user_id = metadata['user_id']
+                minutes = int(metadata['minutes'])
+                source = metadata.get('source', 'stripe')
+                transaction_id = session['id']
+                logger.info(f"Crediting {minutes} minutes to user {user_id} from {source} (txn {transaction_id})")
+                try:
+                    db = DBConnection()
+                    client = await db.client
+                    # Upsert: if row exists, increment; else insert
+                    credits_result = await client.table('billing_credits') \
+                        .select('id, balance_minutes') \
+                        .eq('account_id', user_id) \
+                        .execute()
+                    now = datetime.now(timezone.utc).isoformat()
+                    if credits_result.data and len(credits_result.data) > 0:
+                        # Update existing
+                        row = credits_result.data[0]
+                        new_balance = float(row['balance_minutes']) + minutes
+                        await client.table('billing_credits').update({
+                            'balance_minutes': new_balance,
+                            'last_updated': now,
+                            'source': source,
+                            'transaction_id': transaction_id
+                        }).eq('id', row['id']).execute()
+                    else:
+                        # Insert new
+                        await client.table('billing_credits').insert({
+                            'account_id': user_id,
+                            'balance_minutes': minutes,
+                            'last_updated': now,
+                            'source': source,
+                            'transaction_id': transaction_id
+                        }).execute()
+                    logger.info(f"Successfully credited {minutes} minutes to user {user_id}")
+                except Exception as db_exc:
+                    logger.error(f"Failed to credit minutes to user {user_id}: {db_exc}")
         
         return {"status": "success"}
         
     except Exception as e:
         logger.error(f"Error processing webhook: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/create-credit-session")
+async def create_credit_session(
+    request: CreateCreditSessionRequest,
+    current_user_id: str = Depends(get_current_user_id_from_jwt)
+):
+    """Create a Stripe Checkout session for prepay credits (AliPay/WeChat Pay/Card)."""
+    try:
+        db = DBConnection()
+        client = await db.client
+
+        # Get user email from auth.users
+        user_result = await client.auth.admin.get_user_by_id(current_user_id)
+        if not user_result:
+            raise HTTPException(status_code=404, detail="User not found")
+        email = user_result.user.email
+
+        # Get or create Stripe customer
+        customer_id = await get_stripe_customer_id(client, current_user_id)
+        if not customer_id:
+            customer_id = await create_stripe_customer(client, current_user_id, email)
+
+        payment_method_types = []
+        if request.payment_method == 'alipay':
+            payment_method_types = ['alipay']
+        elif request.payment_method == 'wechat_pay':
+            payment_method_types = ['wechat_pay']
+        else:
+            payment_method_types = ['card']
+
+        # --- New: Use price_id if provided ---
+        if request.price_id:
+            session_kwargs = dict(
+                customer=customer_id,
+                payment_method_types=payment_method_types,
+                line_items=[{
+                    'price': request.price_id,
+                    'quantity': 1,
+                }],
+                mode='payment',
+                success_url=request.success_url,
+                cancel_url=request.cancel_url,
+                metadata={
+                    'user_id': current_user_id,
+                    'source': request.payment_method
+                }
+            )
+            if request.locale:
+                session_kwargs['locale'] = request.locale
+            if request.payment_method == 'wechat_pay':
+                session_kwargs['payment_method_options'] = {'wechat_pay': {'client': 'web'}}
+            session = stripe.checkout.Session.create(**session_kwargs)
+            return {"session_id": session['id'], "url": session['url'], "status": "created"}
+
+        # --- Fallback: old amount_minutes logic ---
+        CREDIT_UNIT_PRICE_CENTS = 100  # $1 per unit (e.g., 6 minutes)
+        MINUTES_PER_UNIT = 6
+        quantity = max(1, (request.amount_minutes or 0) // MINUTES_PER_UNIT)
+        total_minutes = quantity * MINUTES_PER_UNIT
+        session_kwargs = dict(
+            customer=customer_id,
+            payment_method_types=payment_method_types,
+            line_items=[{
+                'price_data': {
+                    'currency': 'usd',
+                    'product_data': {
+                        'name': f'Prepaid Credits ({total_minutes} minutes)',
+                    },
+                    'unit_amount': CREDIT_UNIT_PRICE_CENTS,
+                },
+                'quantity': quantity,
+            }],
+            mode='payment',
+            success_url=request.success_url,
+            cancel_url=request.cancel_url,
+            metadata={
+                'user_id': current_user_id,
+                'minutes': total_minutes,
+                'source': request.payment_method
+            }
+        )
+        if request.payment_method == 'wechat_pay':
+            session_kwargs['payment_method_options'] = {'wechat_pay': {'client': 'web'}}
+        if request.locale:
+            session_kwargs['locale'] = request.locale
+        session = stripe.checkout.Session.create(**session_kwargs)
+        return {"session_id": session['id'], "url": session['url'], "status": "created"}
+    except Exception as e:
+        logger.exception(f"Error creating credit session: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error creating credit session: {str(e)}")
+
+@router.get("/credits")
+async def get_credits(current_user_id: str = Depends(get_current_user_id_from_jwt)):
+    """Get the current user's prepaid credit balance (in minutes)."""
+    try:
+        db = DBConnection()
+        client = await db.client
+        credits = await get_user_credits(client, current_user_id)
+        return {"balance_minutes": credits}
+    except Exception as e:
+        logger.error(f"Error fetching credits for user {current_user_id}: {e}")
+        raise HTTPException(status_code=500, detail="Error fetching credits")

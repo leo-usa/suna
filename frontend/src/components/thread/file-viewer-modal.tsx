@@ -190,7 +190,7 @@ export function FileViewerModal({
     loadingFileRef.current = file.path;
     
     try {
-      // Fetch content
+      // Fetch content (ensure file.path is encoded)
       const content = await getSandboxFileContent(sandboxId, file.path);
       console.log(`[FILE VIEWER] Received content for ${file.path} (${typeof content})`);
       
