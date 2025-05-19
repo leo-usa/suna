@@ -3,6 +3,7 @@ import { Terminal, CheckCircle, AlertTriangle, CircleDashed } from "lucide-react
 import { ToolViewProps } from "./types";
 import { extractCommand, extractCommandOutput, extractExitCode, formatTimestamp, getToolTitle } from "./utils";
 import { cn } from "@/lib/utils";
+import { useTranslation } from 'react-i18next';
 
 export function CommandToolView({ 
   name = "execute-command",
@@ -13,6 +14,7 @@ export function CommandToolView({
   isSuccess = true,
   isStreaming = false
 }: ToolViewProps) {
+  const { t } = useTranslation();
   // Extract command with improved XML parsing
   const rawCommand = React.useMemo(() => {
     if (!assistantContent) return null;
@@ -102,7 +104,7 @@ export function CommandToolView({
           <div className="flex items-center p-2 bg-zinc-100 dark:bg-zinc-900 justify-between border-b border-zinc-200 dark:border-zinc-800">
             <div className="flex items-center">
               <Terminal className="h-4 w-4 mr-2 text-zinc-600 dark:text-zinc-400" />
-              <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Terminal</span>
+              <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300">{t('command.terminal', 'Terminal')}</span>
             </div>
             {exitCode !== null && !isStreaming && (
               <span className={cn(
@@ -110,7 +112,7 @@ export function CommandToolView({
                 isSuccess ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"
               )}>
                 <span className="h-1.5 w-1.5 rounded-full mr-1.5 bg-current"></span>
-                Exit: {exitCode}
+                {t('command.exit', 'Exit')}: {exitCode}
               </span>
             )}
           </div>
@@ -155,11 +157,11 @@ export function CommandToolView({
                 <div className="space-y-2">
                   <div className="flex items-start">
                     <span className="text-emerald-400 shrink-0 mr-2">suna@computer:~$</span>
-                    <span className="text-zinc-300">{command || 'running command...'}</span>
+                    <span className="text-zinc-300">{command || t('command.running', 'running command...')}</span>
                   </div>
                   <div className="flex items-center gap-2 text-zinc-400">
                     <CircleDashed className="h-3 w-3 animate-spin text-blue-400" />
-                    <span>Command execution in progress...</span>
+                    <span>{t('command.inProgress', 'Command execution in progress...')}</span>
                   </div>
                 </div>
               )}
@@ -180,8 +182,8 @@ export function CommandToolView({
               )}
               <span>
                 {isSuccess 
-                  ? `Command completed successfully${exitCode !== null ? ` (exit code: ${exitCode})` : ''}` 
-                  : `Command failed${exitCode !== null ? ` with exit code ${exitCode}` : ''}`}
+                  ? t('command.completed', 'Command completed successfully', { exitCode })
+                  : t('command.failed', 'Command failed', { exitCode })}
               </span>
             </div>
           )}
@@ -189,7 +191,7 @@ export function CommandToolView({
           {isStreaming && (
             <div className="flex items-center gap-2">
               <CircleDashed className="h-3.5 w-3.5 text-blue-500 animate-spin" />
-              <span>Executing command...</span>
+              <span>{t('command.executing', 'Executing command...')}</span>
             </div>
           )}
           

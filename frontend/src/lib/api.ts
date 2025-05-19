@@ -1197,6 +1197,7 @@ export interface CreateCheckoutSessionRequest {
 
 export interface CreatePortalSessionRequest {
   return_url: string;
+  locale?: string;
 }
 
 export interface SubscriptionStatus {

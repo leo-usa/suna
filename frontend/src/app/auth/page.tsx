@@ -12,6 +12,7 @@ import { signIn, signUp, forgotPassword } from "./actions";
 import { useSearchParams, useRouter } from "next/navigation";
 import { ArrowLeft, X, CheckCircle, AlertCircle, MailCheck, Loader2 } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
+import { useTranslation } from 'react-i18next';
 
 import {
   Dialog,
@@ -36,6 +37,8 @@ function LoginContent() {
   const [isScrolling, setIsScrolling] = useState(false);
   const scrollTimeout = useRef<NodeJS.Timeout | null>(null);
   const { scrollY } = useScroll();
+  
+  const { t } = useTranslation();
   
   // Redirect if user is already logged in, checking isLoading state
   useEffect(() => {
@@ -259,13 +262,13 @@ function LoginContent() {
                       href="/"
                       className="flex h-12 items-center justify-center w-full text-center rounded-full border border-border bg-background hover:bg-accent/20 transition-all"
                     >
-                      Return to home
+                      {t('auth.returnToHome', 'Return to home')}
                     </Link>
                     <button
                       onClick={resetRegistrationSuccess}
                       className="flex h-12 items-center justify-center w-full text-center rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-md"
                     >
-                      Back to sign in
+                      {t('auth.backToSignIn', 'Back to sign in')}
                     </button>
                   </div>
                 </div>
@@ -339,14 +342,14 @@ function LoginContent() {
                 className="group border border-border/50 bg-background hover:bg-accent/20 rounded-full text-sm h-8 px-3 flex items-center gap-2 transition-all duration-200 shadow-sm mb-6"
               >
                 <ArrowLeft className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium text-muted-foreground text-xs tracking-wide">Back to home</span>
+                <span className="font-medium text-muted-foreground text-xs tracking-wide">{t('auth.backToHome', 'Back to home')}</span>
               </Link>
               
               <h1 className="text-3xl md:text-4xl lg:text-5xl font-medium tracking-tighter text-center text-balance text-primary">
-                {isSignUp ? "Join Suna" : "Welcome back"}
+                {isSignUp ? t('auth.joinSuna', 'Join Suna') : t('auth.welcomeBack', 'Welcome back')}
               </h1>
-              <p className="text-base md:text-lg text-center text-muted-foreground font-medium text-balance leading-relaxed tracking-tight mt-2 mb-6">
-                {isSignUp ? "Create your account and start building with AI" : "Sign in to your account to continue"}
+              <p className="text-base md:text-lg text-center text-muted-foreground font-medium text-balance leading-relaxed tracking-tight max-w-md mb-2">
+                {isSignUp ? t('auth.createAccountAndStart', 'Create your account and start building with AI') : t('auth.signInToContinue', 'Sign in to your account to continue')}
               </p>
             </div>
           </div>
@@ -374,7 +377,7 @@ function LoginContent() {
                 </div>
                 <div className="relative flex justify-center text-sm">
                   <span className="px-2 bg-[#F3F4F6] dark:bg-[#F9FAFB]/[0.02] text-muted-foreground">
-                    or continue with email
+                    {t('auth.orContinueWithEmail', 'or continue with email')}
                   </span>
                 </div>
               </div>
@@ -386,7 +389,7 @@ function LoginContent() {
                     id="email"
                     name="email"
                     type="email"
-                    placeholder="Email address"
+                    placeholder={t('auth.emailAddress', 'Email address')}
                     className="h-12 rounded-full bg-background border-border"
                     required
                   />
@@ -397,7 +400,7 @@ function LoginContent() {
                     id="password"
                     name="password"
                     type="password"
-                    placeholder="Password"
+                    placeholder={t('auth.password', 'Password')}
                     className="h-12 rounded-full bg-background border-border"
                     required
                   />
@@ -409,7 +412,7 @@ function LoginContent() {
                       id="confirmPassword"
                       name="confirmPassword"
                       type="password"
-                      placeholder="Confirm password"
+                      placeholder={t('auth.confirmPassword', 'Confirm password')}
                       className="h-12 rounded-full bg-background border-border"
                       required
                     />
@@ -422,16 +425,16 @@ function LoginContent() {
                       <SubmitButton
                         formAction={handleSignIn}
                         className="w-full h-12 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-md"
-                        pendingText="Signing in..."
+                        pendingText={t('auth.signingIn', 'Signing in...')}
                       >
-                        Sign in
+                        {t('auth.signIn', 'Sign in')}
                       </SubmitButton>
                       
                       <Link
                         href={`/auth?mode=signup${returnUrl ? `&returnUrl=${returnUrl}` : ''}`}
                         className="flex h-12 items-center justify-center w-full text-center rounded-full border border-border bg-background hover:bg-accent/20 transition-all"
                       >
-                        Create new account
+                        {t('auth.createNewAccount', 'Create new account')}
                       </Link>
                     </>
                   ) : (
@@ -439,16 +442,16 @@ function LoginContent() {
                       <SubmitButton
                         formAction={handleSignUp}
                         className="w-full h-12 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-md"
-                        pendingText="Creating account..."
+                        pendingText={t('auth.creatingAccount', 'Creating account...')}
                       >
-                        Sign up
+                        {t('auth.signUp', 'Sign up')}
                       </SubmitButton>
                       
                       <Link
                         href={`/auth${returnUrl ? `?returnUrl=${returnUrl}` : ''}`}
                         className="flex h-12 items-center justify-center w-full text-center rounded-full border border-border bg-background hover:bg-accent/20 transition-all"
                       >
-                        Back to sign in
+                        {t('auth.backToSignIn', 'Back to sign in')}
                       </Link>
                     </>
                   )}
@@ -461,18 +464,18 @@ function LoginContent() {
                       onClick={() => setForgotPasswordOpen(true)}
                       className="text-sm text-primary hover:underline"
                     >
-                      Forgot password?
+                      {t('auth.forgotPassword', 'Forgot password?')}
                     </button>
                   </div>
                 )}
               </form>
 
               <div className="mt-8 text-center text-xs text-muted-foreground">
-                By continuing, you agree to our{' '}
+                {t('auth.byContinuing', 'By continuing, you agree to our')}{' '}
                 <Link href="/terms" className="text-primary hover:underline">
-                  Terms of Service
+                  {t('auth.termsOfService', 'Terms of Service')}
                 </Link>{' '}
-                and{' '}<Link href="/privacy" className="text-primary hover:underline">Privacy Policy</Link>
+                {t('common.and', 'and')}{' '}<Link href="/privacy" className="text-primary hover:underline">{t('auth.privacyPolicy', 'Privacy Policy')}</Link>
               </div>
             </div>
           </div>
@@ -484,7 +487,7 @@ function LoginContent() {
         <DialogContent className="sm:max-w-md rounded-xl bg-[#F3F4F6] dark:bg-[#F9FAFB]/[0.02] border border-border">
           <DialogHeader>
             <div className="flex items-center justify-between">
-              <DialogTitle className="text-xl font-medium">Reset Password</DialogTitle>
+              <DialogTitle className="text-xl font-medium">{t('auth.resetPassword', 'Reset Password')}</DialogTitle>
               <button 
                 onClick={() => setForgotPasswordOpen(false)}
                 className="rounded-full p-1 hover:bg-muted transition-colors"
@@ -493,7 +496,7 @@ function LoginContent() {
               </button>
             </div>
             <DialogDescription className="text-muted-foreground">
-              Enter your email address and we'll send you a link to reset your password.
+              {t('auth.enterEmailToReset', "Enter your email address and we'll send you a link to reset your password.")}
             </DialogDescription>
           </DialogHeader>
           
@@ -501,7 +504,7 @@ function LoginContent() {
             <Input
               id="forgot-password-email"
               type="email"
-              placeholder="Email address"
+              placeholder={t('auth.emailAddress', 'Email address')}
               value={forgotPasswordEmail}
               onChange={(e) => setForgotPasswordEmail(e.target.value)}
               className="h-12 rounded-full bg-background border-border"
@@ -528,14 +531,14 @@ function LoginContent() {
                 type="submit"
                 className="h-12 px-6 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-md"
               >
-                Send Reset Link
+                {t('auth.sendResetLink', 'Send Reset Link')}
               </button>
               <button
                 type="button"
                 onClick={() => setForgotPasswordOpen(false)}
                 className="h-12 px-6 rounded-full border border-border bg-background hover:bg-accent/20 transition-all"
               >
-                Cancel
+                {t('auth.cancel', 'Cancel')}
               </button>
             </DialogFooter>
           </form>

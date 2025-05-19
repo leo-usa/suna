@@ -5,6 +5,7 @@ import { getToolIcon } from "../utils";
 import { CircleDashed, CheckCircle, AlertTriangle } from "lucide-react";
 import { Markdown } from "@/components/ui/markdown";
 import { cn } from "@/lib/utils";
+import { useTranslation } from 'react-i18next';
 
 export function GenericToolView({ 
   name = 'unknown', 
@@ -15,6 +16,7 @@ export function GenericToolView({
   assistantTimestamp, 
   toolTimestamp 
 }: ToolViewProps) {
+  const { t } = useTranslation();
   console.log('GenericToolView:', { 
     name, 
     assistantContent, 
@@ -53,7 +55,7 @@ export function GenericToolView({
         {assistantContent && !isStreaming && (
           <div className="space-y-1.5">
             <div className="flex justify-between items-center">
-              <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Input</div>
+              <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{t('toolView.input', 'Input')}</div>
               {assistantTimestamp && (
                 <div className="text-xs text-zinc-500 dark:text-zinc-400">{formatTimestamp(assistantTimestamp)}</div>
               )}
@@ -69,7 +71,7 @@ export function GenericToolView({
           <div className="space-y-1.5 mt-4">
             <div className="flex justify-between items-center">
               <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
-                {isStreaming ? "Processing" : "Output"}
+                {isStreaming ? t('toolView.processing', 'Processing') : t('toolView.output', 'Output')}
               </div>
               {toolTimestamp && !isStreaming && (
                 <div className="text-xs text-zinc-500 dark:text-zinc-400">{formatTimestamp(toolTimestamp)}</div>
@@ -86,7 +88,7 @@ export function GenericToolView({
               {isStreaming ? (
                 <div className="flex items-center gap-2 text-xs font-medium text-blue-700 dark:text-blue-400">
                   <CircleDashed className="h-3 w-3 animate-spin" />
-                  <span>Executing {toolTitle.toLowerCase()}...</span>
+                  <span>{t('toolView.executing', 'Executing')} {toolTitle.toLowerCase()}...</span>
                 </div>
               ) : (
                 <Markdown className="text-xs text-zinc-800 dark:text-zinc-300">{formattedToolContent}</Markdown>
@@ -107,7 +109,7 @@ export function GenericToolView({
                 <AlertTriangle className="h-3.5 w-3.5 text-red-500" />
               )}
               <span>
-                {isSuccess ? 'Completed successfully' : 'Execution failed'}
+                {isSuccess ? t('toolView.completed', 'Completed successfully') : t('toolView.failed', 'Execution failed')}
               </span>
             </div>
           )}
@@ -115,7 +117,7 @@ export function GenericToolView({
           {isStreaming && (
             <div className="flex items-center gap-2">
               <CircleDashed className="h-3.5 w-3.5 text-blue-500 animate-spin" />
-              <span>Processing...</span>
+              <span>{t('toolView.processing', 'Processing...')}</span>
             </div>
           )}
           

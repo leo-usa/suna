@@ -24,6 +24,7 @@ import { listSandboxFiles, getSandboxFileContent, type FileInfo, Project } from 
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { useTranslation } from 'react-i18next';
 
 // Define API_URL
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || '';
@@ -43,6 +44,7 @@ export function FileViewerModal({
   initialFilePath,
   project
 }: FileViewerModalProps) {
+  const { t } = useTranslation();
   // File navigation state
   const [currentPath, setCurrentPath] = useState("/workspace");
   const [files, setFiles] = useState<FileInfo[]>([]);
@@ -656,7 +658,7 @@ export function FileViewerModal({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[90vw] md:max-w-[1200px] w-[95vw] h-[90vh] max-h-[900px] flex flex-col p-0 gap-0 overflow-hidden">
         <DialogHeader className="px-4 py-2 border-b flex-shrink-0">
-          <DialogTitle className="text-lg font-semibold">Workspace Files</DialogTitle>
+          <DialogTitle className="text-lg font-semibold">{t('fileViewer.workspaceFiles', 'Workspace Files')}</DialogTitle>
         </DialogHeader>
         
         {/* Navigation Bar */}
@@ -666,7 +668,7 @@ export function FileViewerModal({
             size="icon"
             onClick={navigateHome}
             className="h-8 w-8"
-            title="Go to home directory"
+            title={t('fileViewer.goHome', 'Go to home directory')}
           >
             <Home className="h-4 w-4" />
           </Button>
@@ -678,7 +680,7 @@ export function FileViewerModal({
               className="h-7 px-2 text-sm font-medium min-w-fit flex-shrink-0"
               onClick={navigateHome}
             >
-              home
+              {t('fileViewer.home', 'home')}
             </Button>
             
             {currentPath !== '/workspace' && (
@@ -726,7 +728,7 @@ export function FileViewerModal({
                   ) : (
                     <Download className="h-4 w-4" />
                   )}
-                  <span className="hidden sm:inline">Download</span>
+                  <span className="hidden sm:inline">{t('fileViewer.download', 'Download')}</span>
                 </Button>
                 
                 {/* Replace the Export as PDF button with a dropdown */}
@@ -744,7 +746,7 @@ export function FileViewerModal({
                         ) : (
                           <FileText className="h-4 w-4" />
                         )}
-                        <span className="hidden sm:inline">Export as PDF</span>
+                        <span className="hidden sm:inline">{t('fileViewer.exportPdf', 'Export as PDF')}</span>
                         <ChevronDown className="h-3 w-3 ml-1" />
                       </Button>
                     </DropdownMenuTrigger>
@@ -753,13 +755,13 @@ export function FileViewerModal({
                         onClick={() => handleExportPdf('portrait')}
                         className="flex items-center gap-2 cursor-pointer"
                       >
-                        <span className="rotate-90">⬌</span> Portrait
+                        <span className="rotate-90">⬌</span> {t('fileViewer.portrait', 'Portrait')}
                       </DropdownMenuItem>
                       <DropdownMenuItem 
                         onClick={() => handleExportPdf('landscape')}
                         className="flex items-center gap-2 cursor-pointer"
                       >
-                        <span>⬌</span> Landscape
+                        <span>⬌</span> {t('fileViewer.landscape', 'Landscape')}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -780,7 +782,7 @@ export function FileViewerModal({
                 ) : (
                   <Upload className="h-4 w-4" />
                 )}
-                <span className="hidden sm:inline">Upload</span>
+                <span className="hidden sm:inline">{t('fileViewer.upload', 'Upload')}</span>
               </Button>
             )}
             
@@ -802,13 +804,13 @@ export function FileViewerModal({
               {isLoadingContent ? (
                 <div className="h-full w-full flex flex-col items-center justify-center">
                   <Loader className="h-8 w-8 animate-spin text-primary mb-3" />
-                  <p className="text-sm text-muted-foreground">Loading file...</p>
+                  <p className="text-sm text-muted-foreground">{t('fileViewer.loadingFile', 'Loading file...')}</p>
                 </div>
               ) : contentError ? (
                 <div className="h-full w-full flex items-center justify-center p-4">
                   <div className="max-w-md p-6 text-center border rounded-lg bg-muted/10">
                     <AlertTriangle className="h-10 w-10 text-orange-500 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium mb-2">Error Loading File</h3>
+                    <h3 className="text-lg font-medium mb-2">{t('fileViewer.errorLoading', 'Error Loading File')}</h3>
                     <p className="text-sm text-muted-foreground mb-4">{contentError}</p>
                     <div className="flex justify-center gap-3">
                       <Button 
@@ -824,7 +826,7 @@ export function FileViewerModal({
                           } as FileInfo);
                         }}
                       >
-                        Retry
+                        {t('fileViewer.retry', 'Retry')}
                       </Button>
                       <Button
                         variant="outline"
@@ -832,7 +834,7 @@ export function FileViewerModal({
                           clearSelectedFile();
                         }}
                       >
-                        Back to Files
+                        {t('fileViewer.backToFiles', 'Back to Files')}
                       </Button>
                     </div>
                   </div>
@@ -861,7 +863,7 @@ export function FileViewerModal({
               ) : files.length === 0 ? (
                 <div className="h-full w-full flex flex-col items-center justify-center">
                   <Folder className="h-12 w-12 mb-2 text-muted-foreground opacity-30" />
-                  <p className="text-sm text-muted-foreground">Directory is empty</p>
+                  <p className="text-sm text-muted-foreground">{t('fileViewer.dirEmpty', 'Directory is empty')}</p>
                 </div>
               ) : (
                 <ScrollArea className="h-full w-full p-2">

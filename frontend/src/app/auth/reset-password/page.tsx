@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 import { useState, useEffect, Suspense } from "react";
 import { AlertCircle, ArrowLeft, CheckCircle } from "lucide-react";
+import { useTranslation } from 'react-i18next';
 
 import { Input } from "@/components/ui/input";
 import { SubmitButton } from "@/components/ui/submit-button";
@@ -14,6 +15,7 @@ function ResetPasswordContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const code = searchParams.get("code");
+  const { t } = useTranslation();
   
   const [resetSuccess, setResetSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -56,11 +58,11 @@ function ResetPasswordContent() {
                   </div>
                   
                   <h1 className="text-3xl md:text-4xl lg:text-5xl font-medium tracking-tighter text-center text-balance text-primary mb-4">
-                    Password Reset Complete
+                    {t('authReset.passwordResetComplete', 'Password Reset Complete')}
                   </h1>
                   
                   <p className="text-base md:text-lg text-center text-muted-foreground font-medium text-balance leading-relaxed tracking-tight max-w-md mb-6">
-                    Your password has been successfully updated. You can now sign in with your new password.
+                    {t('authReset.success', 'Your password has been successfully updated. You can now sign in with your new password.')}
                   </p>
                   
                   <div className="flex flex-col sm:flex-row gap-4 w-full max-w-sm">
@@ -68,7 +70,7 @@ function ResetPasswordContent() {
                       href="/auth"
                       className="flex h-12 items-center justify-center w-full text-center rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-md"
                     >
-                      Go to sign in
+                      {t('authReset.goToSignIn', 'Go to sign in')}
                     </Link>
                   </div>
                 </div>
@@ -94,14 +96,14 @@ function ResetPasswordContent() {
                 className="group border border-border/50 bg-background hover:bg-accent/20 rounded-full text-sm h-8 px-3 flex items-center gap-2 transition-all duration-200 shadow-sm mb-6"
               >
                 <ArrowLeft className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium text-muted-foreground text-xs tracking-wide">Back to sign in</span>
+                <span className="font-medium text-muted-foreground text-xs tracking-wide">{t('authReset.backToSignIn', 'Back to sign in')}</span>
               </Link>
               
               <h1 className="text-3xl md:text-4xl lg:text-5xl font-medium tracking-tighter text-center text-balance text-primary">
-                Reset Password
+                {t('authReset.resetPassword', 'Reset Password')}
               </h1>
               <p className="text-base md:text-lg text-center text-muted-foreground font-medium text-balance leading-relaxed tracking-tight mt-2 mb-6">
-                Create a new password for your account
+                {t('authReset.createNewPassword', 'Create a new password for your account')}
               </p>
             </div>
           </div>
@@ -123,7 +125,7 @@ function ResetPasswordContent() {
                       id="password"
                       name="password"
                       type="password"
-                      placeholder="New password"
+                      placeholder={t('authReset.newPassword', 'New password')}
                       className="h-12 rounded-full bg-background border-border"
                       required
                     />
@@ -134,7 +136,7 @@ function ResetPasswordContent() {
                       id="confirmPassword"
                       name="confirmPassword"
                       type="password"
-                      placeholder="Confirm new password"
+                      placeholder={t('authReset.confirmNewPassword', 'Confirm new password')}
                       className="h-12 rounded-full bg-background border-border"
                       required
                     />
@@ -144,9 +146,9 @@ function ResetPasswordContent() {
                     <SubmitButton
                       formAction={handleResetPassword}
                       className="w-full h-12 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-md"
-                      pendingText="Updating password..."
+                      pendingText={t('authReset.updatingPassword', 'Updating password...')}
                     >
-                      Reset Password
+                      {t('authReset.resetPassword', 'Reset Password')}
                     </SubmitButton>
                   </div>
                 </form>
@@ -158,7 +160,7 @@ function ResetPasswordContent() {
                     href="/auth"
                     className="flex h-12 px-6 items-center justify-center text-center rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-md"
                   >
-                    Return to sign in
+                    {t('authReset.returnToSignIn', 'Return to sign in')}
                   </Link>
                 </div>
               )}

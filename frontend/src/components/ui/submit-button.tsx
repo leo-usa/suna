@@ -6,6 +6,7 @@ import { type ComponentProps } from "react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "./alert";
 import { AlertTriangle } from "lucide-react";
+import { useTranslation } from 'react-i18next';
 
 type Props = Omit<ComponentProps<typeof Button>, 'formAction'> & {
   pendingText?: string;
@@ -17,10 +18,10 @@ const initialState = {
   message: "",
 };
 
-export function SubmitButton({ children, formAction, errorMessage, pendingText = "Submitting...", ...props }: Props) {
+export function SubmitButton({ children, formAction, errorMessage, pendingText, ...props }: Props) {
+  const { t } = useTranslation();
   const { pending, action } = useFormStatus();
   const [state, internalFormAction] = useActionState(formAction, initialState);
-
 
   const isPending = pending && action === internalFormAction;
 
@@ -36,7 +37,7 @@ export function SubmitButton({ children, formAction, errorMessage, pendingText =
       )}
       <div>
         <Button {...props} type="submit" aria-disabled={pending} formAction={internalFormAction}>
-          {isPending ? pendingText : children}
+          {isPending ? (pendingText || t('submitButton.submitting', 'Submitting...')) : children}
         </Button>
       </div>
     </div>

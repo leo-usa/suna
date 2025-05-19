@@ -12,6 +12,7 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 import { usePathname, useRouter } from "next/navigation"
+import { useTranslation } from 'react-i18next'
 
 import {
   DropdownMenu,
@@ -48,6 +49,7 @@ type ThreadWithProject = {
 
 export function NavAgents() {
   const { isMobile, state } = useSidebar()
+  const { t } = useTranslation();
   const [threads, setThreads] = useState<ThreadWithProject[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [loadingThreadId, setLoadingThreadId] = useState<string | null>(null)
@@ -185,7 +187,7 @@ export function NavAgents() {
   return (
     <SidebarGroup>
       <div className="flex justify-between items-center">
-        <SidebarGroupLabel>Agents</SidebarGroupLabel>
+        <SidebarGroupLabel>{t('sidebar.agents', '智能体')}</SidebarGroupLabel>
         {state !== "collapsed" ? (
           <Tooltip>
             <TooltipTrigger asChild>
@@ -194,10 +196,10 @@ export function NavAgents() {
                 className="text-muted-foreground hover:text-foreground h-8 w-8 flex items-center justify-center rounded-md"
               >
                 <Plus className="h-4 w-4" />
-                <span className="sr-only">New Agent</span>
+                <span className="sr-only">{t('sidebar.newAgent', '新建智能体')}</span>
               </Link>
             </TooltipTrigger>
-            <TooltipContent>New Agent</TooltipContent>
+            <TooltipContent>{t('sidebar.tooltipNewAgent', '新建智能体')}</TooltipContent>
           </Tooltip>
         ) : null}
       </div>
@@ -210,11 +212,11 @@ export function NavAgents() {
                 <SidebarMenuButton asChild>
                   <Link href="/dashboard" className="flex items-center">
                     <Plus className="h-4 w-4" />
-                    <span>New Agent</span>
+                    <span>{t('sidebar.newAgent', '新建智能体')}</span>
                   </Link>
                 </SidebarMenuButton>
               </TooltipTrigger>
-              <TooltipContent>New Agent</TooltipContent>
+              <TooltipContent>{t('sidebar.tooltipNewAgent', '新建智能体')}</TooltipContent>
             </Tooltip>
           </SidebarMenuItem>
         )}
@@ -272,7 +274,7 @@ export function NavAgents() {
                       <DropdownMenuTrigger asChild>
                         <SidebarMenuAction showOnHover>
                           <MoreHorizontal />
-                          <span className="sr-only">More</span>
+                          <span className="sr-only">{t('sidebar.more', 'More')}</span>
                         </SidebarMenuAction>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent
@@ -282,34 +284,34 @@ export function NavAgents() {
                       >
                         <DropdownMenuItem onClick={() => {
                           navigator.clipboard.writeText(window.location.origin + thread.url)
-                          toast.success("Link copied to clipboard")
+                          toast.success(t('sidebar.copyLinkSuccess', 'Link copied to clipboard'))
                         }}>
                           <LinkIcon className="text-muted-foreground" />
-                          <span>Copy Link</span>
+                          <span>{t('sidebar.copyLink', 'Copy Link')}</span>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
                           <a href={thread.url} target="_blank" rel="noopener noreferrer">
                             <ArrowUpRight className="text-muted-foreground" />
-                            <span>Open in New Tab</span>
+                            <span>{t('sidebar.openInNewTab', 'Open in New Tab')}</span>
                           </a>
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={async () => {
-                          if (window.confirm("Are you sure you want to delete this project and its sandbox? This cannot be undone.")) {
+                          if (window.confirm(t('sidebar.deleteConfirm', 'Are you sure you want to delete this project and its sandbox? This cannot be undone.'))) {
                             setDeletingProjectId(thread.projectId);
                             try {
                               await deleteProject(thread.projectId);
-                              toast.success("Project deleted successfully");
+                              toast.success(t('sidebar.deleteSuccess', 'Project deleted successfully'));
                               await loadThreadsWithProjects();
                             } catch (err) {
-                              toast.error("Failed to delete project");
+                              toast.error(t('sidebar.deleteError', 'Failed to delete project'));
                             } finally {
                               setDeletingProjectId(null);
                             }
                           }
                         }} disabled={deletingProjectId === thread.projectId}>
                           <Trash2 className="text-muted-foreground" />
-                          <span>{deletingProjectId === thread.projectId ? "Deleting..." : "Delete"}</span>
+                          <span>{deletingProjectId === thread.projectId ? t('sidebar.deleting', 'Deleting...') : t('sidebar.delete', 'Delete')}</span>
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

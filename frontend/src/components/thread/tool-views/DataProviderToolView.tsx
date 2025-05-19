@@ -4,6 +4,7 @@ import { formatTimestamp, getToolTitle } from "./utils";
 import { getToolIcon } from "../utils";
 import { CircleDashed, CheckCircle, AlertTriangle, Network, Database } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from 'react-i18next';
 
 export function DataProviderToolView({ 
   name = 'unknown', 
@@ -14,6 +15,7 @@ export function DataProviderToolView({
   assistantTimestamp, 
   toolTimestamp 
 }: ToolViewProps) {
+  const { t } = useTranslation();
   const toolTitle = getToolTitle(name);
   const Icon = getToolIcon(name) || Network;
   
@@ -104,7 +106,7 @@ export function DataProviderToolView({
                 isSuccess ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"
               )}>
                 <span className="h-1.5 w-1.5 rounded-full mr-1.5 bg-current"></span>
-                {isSuccess ? 'Success' : 'Failed'}
+                {isSuccess ? t('dataProvider.success', 'Success') : t('dataProvider.failed', 'Failed')}
               </span>
             )}
           </div>
@@ -125,7 +127,7 @@ export function DataProviderToolView({
                 {/* Request section - show payload if available */}
                 {extractRequest?.payload && (
                   <div className="mb-4">
-                    <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2">Request Payload</div>
+                    <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2">{t('dataProvider.requestPayload', 'Request Payload')}</div>
                     <div className="bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-md">
                       <pre className="p-3 text-xs overflow-auto whitespace-pre-wrap text-zinc-800 dark:text-zinc-300 font-mono">
                         {typeof extractRequest.payload === 'object' 
@@ -139,7 +141,7 @@ export function DataProviderToolView({
                 {/* Response section */}
                 {parsedResponse && (
                   <div>
-                    <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2">Response Data</div>
+                    <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2">{t('dataProvider.responseData', 'Response Data')}</div>
                     <div className="bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-md">
                       <pre className="p-3 text-xs overflow-auto whitespace-pre-wrap text-zinc-800 dark:text-zinc-300 font-mono">
                         {parsedResponse}
@@ -151,7 +153,7 @@ export function DataProviderToolView({
                 {/* Show raw data if parsed content isn't available */}
                 {!extractRequest?.payload && !parsedResponse && assistantContent && (
                   <div className="mb-4">
-                    <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2">Raw Request</div>
+                    <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2">{t('dataProvider.rawRequest', 'Raw Request')}</div>
                     <div className="bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-md">
                       <pre className="p-3 text-xs overflow-auto whitespace-pre-wrap text-zinc-800 dark:text-zinc-300 font-mono">
                         {assistantContent}
@@ -162,7 +164,7 @@ export function DataProviderToolView({
                 
                 {!parsedResponse && toolContent && (
                   <div>
-                    <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2">Raw Response</div>
+                    <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2">{t('dataProvider.rawResponse', 'Raw Response')}</div>
                     <div className="bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-md">
                       <pre className="p-3 text-xs overflow-auto whitespace-pre-wrap text-zinc-800 dark:text-zinc-300 font-mono">
                         {toolContent}
@@ -177,7 +179,7 @@ export function DataProviderToolView({
               <div className="text-center p-6">
                 <CircleDashed className="h-8 w-8 mx-auto mb-3 text-blue-500 animate-spin" />
                 <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                  Processing {name.toLowerCase()} operation...
+                  {t('dataProvider.processing', 'Processing {{tool}} operation...', { tool: name.toLowerCase() })}
                 </p>
                 {extractRequest?.service && extractRequest?.route && (
                   <p className="text-xs mt-1 text-zinc-500 dark:text-zinc-400 font-mono">
@@ -202,8 +204,8 @@ export function DataProviderToolView({
               )}
               <span>
                 {isSuccess 
-                  ? `${toolTitle} completed successfully` 
-                  : `${toolTitle} operation failed`}
+                  ? t('dataProvider.completed', '{{tool}} completed successfully', { tool: toolTitle })
+                  : t('dataProvider.failedOperation', '{{tool}} operation failed', { tool: toolTitle })}
               </span>
             </div>
           )}
@@ -211,7 +213,9 @@ export function DataProviderToolView({
           {isStreaming && (
             <div className="flex items-center gap-2">
               <CircleDashed className="h-3.5 w-3.5 text-blue-500 animate-spin" />
-              <span>Executing {toolTitle.toLowerCase()}...</span>
+              <span>
+                {t('dataProvider.processing', 'Processing {{tool}} operation...', { tool: name.toLowerCase() })}
+              </span>
             </div>
           )}
           

@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 
 import { UnifiedMessage, ParsedContent, ParsedMetadata, ThreadParams } from '@/components/thread/types';
 import { getToolIcon, extractPrimaryParam, safeJsonParse } from '@/components/thread/utils';
+import { useTranslation } from 'react-i18next';
 
 // Define the set of tags whose raw XML should be hidden during streaming
 const HIDE_STREAMING_XML_TAGS = new Set([
@@ -180,6 +181,7 @@ function renderMarkdownContent(content: string, handleToolClick: (assistantMessa
 }
 
 export default function ThreadPage({ params }: { params: Promise<ThreadParams> }) {
+  const { t } = useTranslation();
   const unwrappedParams = React.use(params);
   const threadId = unwrappedParams.threadId;
   
@@ -1379,16 +1381,16 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
           <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <div className="flex h-14 items-center gap-4 px-4">
               <div className="flex-1">
-                <span className="text-foreground font-medium">Shared Conversation</span>
+                <span className="text-foreground font-medium">{t('share.conversationTitle', 'Shared Conversation')}</span>
               </div>
             </div>
           </div>
           <div className="flex flex-1 items-center justify-center p-4">
             <div className="flex w-full max-w-md flex-col items-center gap-4 rounded-lg border bg-card p-6 text-center">
-              <h2 className="text-lg font-semibold text-destructive">Error</h2>
+              <h2 className="text-lg font-semibold text-destructive">{t('share.error', 'Error')}</h2>
               <p className="text-sm text-muted-foreground">{error}</p>
               <Button variant="outline" onClick={() => router.push(`/`)}>
-                Back to Home
+                {t('share.backToHome', 'Back to Home')}
               </Button>
             </div>
           </div>
@@ -1408,7 +1410,7 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
                 <div className="flex items-center justify-center w-6 h-6 rounded-md overflow-hidden bg-primary/10">
                   <Image src="/kortix-symbol.svg" alt="Kortix" width={16} height={16} className="object-contain"/>
                 </div>
-                <span className="font-medium text-foreground">{projectName || 'Shared Conversation'}</span>
+                <span className="font-medium text-foreground">{projectName || t('share.conversationTitle', 'Shared Conversation')}</span>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -1417,7 +1419,7 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
                 size="icon"
                 onClick={() => handleOpenFileViewer()}
                 className="h-8 w-8"
-                aria-label="View Files"
+                aria-label={t('share.viewFiles', 'View Files')}
               >
                 <File className="h-4 w-4" />
               </Button>
@@ -1426,7 +1428,7 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
                 size="icon"
                 onClick={togglePlayback}
                 className="h-8 w-8"
-                aria-label={isPlaying ? "Pause Replay" : "Play Replay"}
+                aria-label={isPlaying ? t('share.pauseReplay', 'Pause Replay') : t('share.playReplay', 'Play Replay')}
               >
                 {isPlaying ? 
                   <Pause className="h-4 w-4" /> : 
@@ -1438,7 +1440,7 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
                 size="icon"
                 onClick={resetPlayback}
                 className="h-8 w-8"
-                aria-label="Restart Replay"
+                aria-label={t('share.restartReplay', 'Restart Replay')}
               >
                 <ArrowDown className="h-4 w-4 rotate-90" />
               </Button>
@@ -1447,7 +1449,7 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
                 size="icon"
                 onClick={toggleSidePanel}
                 className={cn("h-8 w-8", isSidePanelOpen && "text-primary")}
-                aria-label="Toggle Tool Panel"
+                aria-label={isSidePanelOpen ? t('share.closeToolPanel', 'Close Tool Panel') : t('share.openToolPanel', 'Open Tool Panel')}
               >
                 <Info className="h-4 w-4" />
               </Button>
@@ -1469,9 +1471,9 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
                   <div className="rounded-full bg-primary/10 backdrop-blur-sm w-12 h-12 mx-auto flex items-center justify-center mb-4">
                     <Play className="h-5 w-5 text-primary" />
                   </div>
-                  <h3 className="text-lg font-medium mb-2 text-white">Watch this agent in action</h3>
+                  <h3 className="text-lg font-medium mb-2 text-white">{t('share.watchAgentInAction', 'Watch this agent in action')}</h3>
                   <p className="text-sm text-white/80 mb-4">
-                    This is a shared view-only agent run. Click play to replay the entire conversation with realistic timing.
+                    {t('share.thisIsAPublicViewOnly', 'This is a shared view-only agent run. Click play to replay the entire conversation with realistic timing.')}
                   </p>
                   <Button 
                     onClick={togglePlayback} 
@@ -1480,7 +1482,7 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
                     variant="outline"
                   >
                     <Play className="h-4 w-4 mr-2" /> 
-                    Start Playback
+                    {t('share.startPlayback', 'Start Playback')}
                   </Button>
                 </div>
               </div>
@@ -1666,7 +1668,7 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
                         <div className="inline-flex items-center gap-1.5 py-1.5 px-3 text-xs font-medium text-primary bg-primary/10 rounded-md border border-primary/20">
                           <CircleDashed className="h-3.5 w-3.5 text-primary flex-shrink-0 animate-spin animation-duration-2000" />
                           <span className="font-mono text-xs text-primary">
-                            {currentToolCall.name || 'Using Tool'}
+                            {currentToolCall.name || t('share.usingTool', 'Using Tool')}
                           </span>
                         </div>
                       </div>
@@ -1750,7 +1752,7 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
                 }}
                 className="text-xs"
               >
-                Skip to end
+                {t('share.skipToEnd', 'Skip to end')}
               </Button>
             </div>
           </div>

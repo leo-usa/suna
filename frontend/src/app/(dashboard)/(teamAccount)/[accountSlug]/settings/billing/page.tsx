@@ -4,6 +4,7 @@ import React from 'react';
 import {createClient} from "@/lib/supabase/server";
 import AccountBillingStatus from "@/components/billing/account-billing-status";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { useTranslation } from 'react-i18next';
 
 const returnUrl = process.env.NEXT_PUBLIC_URL as string;
 
@@ -12,6 +13,7 @@ type AccountParams = {
 };
 
 export default function TeamBillingPage({ params }: { params: Promise<AccountParams> }) {
+    const { t } = useTranslation();
     const unwrappedParams = React.use(params);
     const { accountSlug } = unwrappedParams;
     
@@ -39,21 +41,21 @@ export default function TeamBillingPage({ params }: { params: Promise<AccountPar
     if (error) {
         return (
             <Alert variant="destructive" className="border-red-300 dark:border-red-800 rounded-xl">
-                <AlertTitle>Error</AlertTitle>
+                <AlertTitle>{t('teamBilling.error', 'Error')}</AlertTitle>
                 <AlertDescription>{error}</AlertDescription>
             </Alert>
         );
     }
     
     if (!teamAccount) {
-        return <div>Loading...</div>;
+        return <div>{t('teamBilling.loading', 'Loading...')}</div>;
     }
 
     if (teamAccount.account_role !== 'owner') {
         return (
             <Alert variant="destructive" className="border-red-300 dark:border-red-800 rounded-xl">
-                <AlertTitle>Access Denied</AlertTitle>
-                <AlertDescription>You do not have permission to access this page.</AlertDescription>
+                <AlertTitle>{t('teamBilling.accessDenied', 'Access Denied')}</AlertTitle>
+                <AlertDescription>{t('teamBilling.noPermission', 'You do not have permission to access this page.')}</AlertDescription>
             </Alert>
         )
     }
@@ -61,9 +63,9 @@ export default function TeamBillingPage({ params }: { params: Promise<AccountPar
     return (
         <div className="space-y-6">
             <div>
-                <h3 className="text-lg font-medium text-card-title">Team Billing</h3>
+                <h3 className="text-lg font-medium text-card-title">{t('teamBilling.title', 'Team Billing')}</h3>
                 <p className="text-sm text-foreground/70">
-                    Manage your team's subscription and billing details.
+                    {t('teamBilling.manage', "Manage your team's subscription and billing details.")}
                 </p>
             </div>
             

@@ -18,6 +18,7 @@ import { useIsMobile } from "@/hooks/use-mobile"
 import { cn } from "@/lib/utils"
 import { useSidebar } from "@/components/ui/sidebar"
 import { createClient } from "@/lib/supabase/client"
+import { useTranslation } from 'react-i18next'
 
 interface ThreadSiteHeaderProps {
   threadId: string
@@ -46,6 +47,7 @@ export function SiteHeader({
   const inputRef = useRef<HTMLInputElement>(null)
   const isMobile = useIsMobile() || isMobileView
   const { setOpenMobile } = useSidebar()
+  const { t } = useTranslation();
   
   const copyCurrentUrl = () => {
     const url = window.location.origin + pathname
@@ -195,7 +197,7 @@ export function SiteHeader({
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>View Files in Task</p>
+                <p>{t('threadHeader.viewFiles', 'View Files in Task')}</p>
               </TooltipContent>
             </Tooltip>
 
@@ -211,7 +213,7 @@ export function SiteHeader({
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Copy Link</p>
+                <p>{t('threadHeader.copyLink', 'Copy Link')}</p>
               </TooltipContent>
             </Tooltip>
 
@@ -227,7 +229,7 @@ export function SiteHeader({
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Toggle Computer Preview (CMD+I)</p>
+                <p>{t('threadHeader.toggleComputer', 'Toggle Computer Preview (CMD+I)')}</p>
               </TooltipContent>
             </Tooltip>
 
@@ -274,7 +276,7 @@ export function SiteHeader({
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Download all project files. Please download your files promptly—files will be lost if the sandbox is deleted.</p>
+                <p>{t('threadHeader.downloadAll', 'Download all project files. Please download your files promptly—files will be lost if the sandbox is deleted.')}</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>

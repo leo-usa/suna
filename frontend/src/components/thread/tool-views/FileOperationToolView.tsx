@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
 import { CodeBlockCode } from "@/components/ui/code-block";
 import { constructHtmlPreviewUrl } from "@/lib/utils/url";
+import { useTranslation } from 'react-i18next';
 
 
 // Type for operation type
@@ -89,6 +90,7 @@ export function FileOperationToolView({
   name,
   project
 }: ToolViewProps) {
+  const { t } = useTranslation();
   const { resolvedTheme } = useTheme();
   const isDarkTheme = resolvedTheme === 'dark';
 
@@ -168,15 +170,15 @@ export function FileOperationToolView({
   const configs = {
     create: {
       icon: FolderPlus,
-      successMessage: "File created successfully"
+      successMessage: t('fileOperation.created', 'File created successfully')
     },
     rewrite: {
       icon: Replace,
-      successMessage: "File rewritten successfully"
+      successMessage: t('fileOperation.rewritten', 'File rewritten successfully')
     },
     delete: {
       icon: FileX,
-      successMessage: "File deleted successfully"
+      successMessage: t('fileOperation.deleted', 'File deleted successfully')
     }
   };
 
@@ -215,7 +217,7 @@ export function FileOperationToolView({
                       )}
                     >
                       <Code className="h-3 w-3" />
-                      <span>Code</span>
+                      <span>{t('fileOperation.code', 'Code')}</span>
                     </button>
                     <button
                       onClick={() => setViewMode('preview')}
@@ -227,7 +229,7 @@ export function FileOperationToolView({
                       )}
                     >
                       <Eye className="h-3 w-3" />
-                      <span>Preview</span>
+                      <span>{t('fileOperation.preview', 'Preview')}</span>
                     </button>
                   </div>
                 )}
@@ -244,7 +246,7 @@ export function FileOperationToolView({
                       )}
                     >
                       <Code className="h-3 w-3" />
-                      <span>Code</span>
+                      <span>{t('fileOperation.code', 'Code')}</span>
                     </button>
                     <button
                       onClick={() => setViewMode('preview')}
@@ -256,7 +258,7 @@ export function FileOperationToolView({
                       )}
                     >
                       <Eye className="h-3 w-3" />
-                      <span>Preview</span>
+                      <span>{t('fileOperation.preview', 'Preview')}</span>
                     </button>
                   </div>
                 )}
@@ -273,7 +275,7 @@ export function FileOperationToolView({
                       )}
                     >
                       <Code className="h-3 w-3" />
-                      <span>Code</span>
+                      <span>{t('fileOperation.code', 'Code')}</span>
                     </button>
                     <button
                       onClick={() => setViewMode('preview')}
@@ -285,7 +287,7 @@ export function FileOperationToolView({
                       )}
                     >
                       <Eye className="h-3 w-3" />
-                      <span>Preview</span>
+                      <span>{t('fileOperation.preview', 'Preview')}</span>
                     </button>
                   </div>
                 )}
@@ -371,7 +373,7 @@ export function FileOperationToolView({
                   className="flex items-center gap-1.5 py-1 px-2 text-xs text-zinc-700 dark:text-zinc-300 bg-zinc-200 dark:bg-zinc-800 hover:bg-zinc-300 dark:hover:bg-zinc-700 rounded transition-colors"
                 >
                   <ExternalLink className="h-3.5 w-3.5 text-zinc-500 flex-shrink-0" />
-                  <span>Open in Browser</span>
+                  <span>{t('fileOperation.openInBrowser', 'Open in Browser')}</span>
                 </a>
               </div>
             )}
@@ -397,10 +399,10 @@ export function FileOperationToolView({
               <div className="text-center">
                 <CircleDashed className="h-8 w-8 mx-auto mb-3 text-blue-500 animate-spin" />
                 <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                  {operation === "create" ? "Creating file..." : "Rewriting file..."}
+                  {operation === "create" ? t('fileOperation.creating', 'Creating file...') : t('fileOperation.rewriting', 'Rewriting file...')}
                 </p>
                 <p className="text-xs mt-1 text-zinc-500 dark:text-zinc-400">
-                  {processedFilePath || "Processing file operation"}
+                  {processedFilePath || t('fileOperation.processing', 'Processing file operation')}
                 </p>
               </div>
             </div>
@@ -414,11 +416,15 @@ export function FileOperationToolView({
               <div className="w-14 h-14 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center mb-4">
                 <FileX className="h-7 w-7 text-red-600 dark:text-red-400" />
               </div>
-              <h3 className="text-lg font-medium mb-4 text-red-600 dark:text-red-400">File Deleted</h3>
+              <h3 className="text-lg font-medium mb-4 text-red-600 dark:text-red-400">
+                {t('fileOperation.fileDeleted', 'File Deleted')}
+              </h3>
               <div className="bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-md p-4 w-full max-w-md text-center mb-2">
                 <code className="text-sm font-mono text-zinc-700 dark:text-zinc-300 break-all">{processedFilePath}</code>
               </div>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-2">This file has been permanently removed</p>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-2">
+                {t('fileOperation.permanentlyRemoved', 'This file has been permanently removed')}
+              </p>
             </div>
           </div>
         )}
@@ -429,7 +435,9 @@ export function FileOperationToolView({
             <div className="p-6 flex-1 flex flex-col items-center justify-center bg-white dark:bg-zinc-950">
               <div className="text-center">
                 <CircleDashed className="h-8 w-8 mx-auto mb-3 text-blue-500 animate-spin" />
-                <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Deleting file...</p>
+                <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                  {t('fileOperation.deleting', 'Deleting file...')}
+                </p>
                 {processedFilePath && (
                   <p className="text-xs mt-2 font-mono text-zinc-500 dark:text-zinc-400 break-all">
                     {processedFilePath}
@@ -447,11 +455,17 @@ export function FileOperationToolView({
               <div className="w-14 h-14 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center mb-4">
                 <FileX className="h-7 w-7 text-red-600 dark:text-red-400" />
               </div>
-              <h3 className="text-lg font-medium mb-4 text-red-600 dark:text-red-400">File Deleted</h3>
+              <h3 className="text-lg font-medium mb-4 text-red-600 dark:text-red-400">
+                {t('fileOperation.fileDeleted', 'File Deleted')}
+              </h3>
               <div className="bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-md p-4 w-full max-w-md text-center mb-2">
-                <p className="text-sm text-zinc-700 dark:text-zinc-300">Unknown file path</p>
+                <p className="text-sm text-zinc-700 dark:text-zinc-300">
+                  {t('fileOperation.unknownFilePath', 'Unknown file path')}
+                </p>
               </div>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-2">A file has been deleted but the path could not be determined</p>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-2">
+                {t('fileOperation.deletedButUnknown', 'A file has been deleted but the path could not be determined')}
+              </p>
             </div>
           </div>
         )}
@@ -468,7 +482,7 @@ export function FileOperationToolView({
                 <AlertTriangle className="h-3.5 w-3.5 text-red-500" />
               )}
               <span>
-                {isSuccess ? config.successMessage : `Failed to ${operation} file`}
+                {isSuccess ? config.successMessage : t('fileOperation.failed', 'Failed to {operation} file', { operation })}
               </span>
             </div>
           )}
@@ -476,7 +490,7 @@ export function FileOperationToolView({
           {isStreaming && (
             <div className="flex items-center gap-2">
               <CircleDashed className="h-3.5 w-3.5 text-blue-500 animate-spin" />
-              <span>Processing file operation...</span>
+              <span>{t('fileOperation.processing', 'Processing file operation...')}</span>
             </div>
           )}
 
