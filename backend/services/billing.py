@@ -39,6 +39,7 @@ class CreateCheckoutSessionRequest(BaseModel):
 
 class CreatePortalSessionRequest(BaseModel):
     return_url: str
+    locale: Optional[str] = None
 
 class SubscriptionStatus(BaseModel):
     status: str # e.g., 'active', 'trialing', 'past_due', 'scheduled_downgrade', 'no_subscription'
@@ -607,7 +608,9 @@ async def create_portal_session(
         # Add configuration_id if we found or created one with subscription_update enabled
         if active_config:
             portal_params["configuration"] = active_config['id']
-        
+        # Pass locale if provided
+        if request.locale:
+            portal_params["locale"] = request.locale
         # Create the session
         session = stripe.billing_portal.Session.create(**portal_params)
         
