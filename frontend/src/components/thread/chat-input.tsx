@@ -23,6 +23,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/utils";
+import { useTranslation } from 'react-i18next';
 
 // Define API_URL
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || '';
@@ -71,6 +72,7 @@ export const ChatInput = forwardRef<ChatInputHandles, ChatInputProps>(({
   sandboxId,
   hideAttachments = false
 }, ref) => {
+  const { t } = useTranslation();
   const isControlled = controlledValue !== undefined && controlledOnChange !== undefined;
   
   const [uncontrolledValue, setUncontrolledValue] = useState('');
@@ -405,7 +407,7 @@ export const ChatInput = forwardRef<ChatInputHandles, ChatInputProps>(({
             value={value}
             onChange={handleChange}
             onKeyDown={handleKeyDown}
-            placeholder={placeholder}
+            placeholder={t('chatInput.placeholder', 'Describe what you need help with...')}
             className={cn(
               "min-h-[24px] max-h-[200px] py-0 px-0 text-sm resize-none border-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent w-full dark:bg-black",
               isDraggingOver ? "opacity-40" : ""
@@ -483,7 +485,7 @@ export const ChatInput = forwardRef<ChatInputHandles, ChatInputProps>(({
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="top">
-                  <p>Attach files</p>
+                  <p>{t('chatInput.attachFile', 'Attach file')}</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -526,7 +528,7 @@ export const ChatInput = forwardRef<ChatInputHandles, ChatInputProps>(({
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="top">
-                <p>{isAgentRunning ? 'Stop agent' : 'Send message'}</p>
+                <p>{t('chatInput.stop', 'Stop')}</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -541,7 +543,7 @@ export const ChatInput = forwardRef<ChatInputHandles, ChatInputProps>(({
         >
           <div className="text-xs text-muted-foreground flex items-center gap-2">
             <Loader2 className="h-3 w-3 animate-spin" />
-            <span>Kortix Suna is working...</span>
+            <span>{t('chatInput.working', 'Kortix Suna is working...')}</span>
           </div>
         </motion.div>
       )}

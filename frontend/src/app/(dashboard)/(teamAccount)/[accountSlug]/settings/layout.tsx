@@ -4,6 +4,7 @@ import React from 'react';
 import {Separator} from "@/components/ui/separator";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslation } from 'react-i18next';
 
 type LayoutParams = {
   accountSlug: string;
@@ -19,10 +20,11 @@ export default function TeamSettingsLayout({
     const unwrappedParams = React.use(params);
     const { accountSlug } = unwrappedParams;
     const pathname = usePathname();
+    const { t } = useTranslation();
     const items = [
-        { name: "Account", href: `/${accountSlug}/settings` },
-        { name: "Members", href: `/${accountSlug}/settings/members` },
-        { name: "Billing", href: `/${accountSlug}/settings/billing` },
+        { name: t('teamSettings.account', 'Account'), href: `/${accountSlug}/settings` },
+        { name: t('teamSettings.members', 'Members'), href: `/${accountSlug}/settings/members` },
+        { name: t('teamSettings.billing', 'Billing'), href: `/${accountSlug}/settings/billing` },
     ]
     return (
         <div className="space-y-6 w-full">

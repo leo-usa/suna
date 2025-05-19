@@ -14,6 +14,7 @@ import { useRouter } from "next/navigation"
 import { Loader2 } from "lucide-react"
 import { checkApiHealth } from "@/lib/api"
 import { MaintenancePage } from "@/components/maintenance/maintenance-page"
+import { useI18nReady } from '@/hooks/useI18nReady'
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -22,6 +23,7 @@ interface DashboardLayoutProps {
 export default function DashboardLayout({
   children,
 }: DashboardLayoutProps) {
+  const i18nReady = useI18nReady()
   // const [showPricingAlert, setShowPricingAlert] = useState(false)
   const [showMaintenanceAlert, setShowMaintenanceAlert] = useState(false)
   const [isApiHealthy, setIsApiHealthy] = useState(true)
@@ -62,6 +64,8 @@ export default function DashboardLayout({
       router.push('/auth')
     }
   }, [user, isLoading, router])
+
+  if (!i18nReady) return null
 
   // Show loading state while checking auth or health
   if (isLoading || isCheckingHealth) {

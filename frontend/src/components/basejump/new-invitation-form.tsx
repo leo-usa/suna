@@ -5,6 +5,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectGroup, SelectL
 import { createInvitation } from "@/lib/actions/invitations";
 import { useFormState } from "react-dom";
 import fullInvitationUrl from "@/lib/full-invitation-url";
+import { useTranslation } from 'react-i18next';
 
 type Props = {
     accountId: string
@@ -27,7 +28,7 @@ const initialState = {
 };
 
 export default function NewInvitationForm({ accountId }: Props) {
-
+    const { t } = useTranslation();
     const [state, formAction] = useFormState(createInvitation, initialState)
 
     return (
@@ -41,44 +42,38 @@ export default function NewInvitationForm({ accountId }: Props) {
                     <input type="hidden" name="accountId" value={accountId} />
                     <div className="flex flex-col gap-y-2">
                         <Label htmlFor="invitationType">
-                            Invitation Type
+                            {t('teamInvitations.typeLabel', 'Invitation Type')}
                         </Label>
                         <Select defaultValue="one_time" name="invitationType">
                             <SelectTrigger>
-                                <SelectValue placeholder="Invitation type" />
+                                <SelectValue placeholder={t('teamInvitations.typePlaceholder', 'Invitation type')} />
                             </SelectTrigger>
                             <SelectContent>
-                                {invitationOptions.map((option) => (
-                                    <SelectItem key={option.value} value={option.value}>
-                                        {option.label}
-                                    </SelectItem>
-                                ))}
+                                <SelectItem value="24_hour">{t('teamInvitations.type.24hour', '24 Hour')}</SelectItem>
+                                <SelectItem value="one_time">{t('teamInvitations.type.oneTime', 'One time use')}</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
                     <div className="flex flex-col gap-y-2">
                         <Label htmlFor="accountRole">
-                            Team Role
+                            {t('teamInvitations.roleLabel', 'Team Role')}
                         </Label>
                         <Select defaultValue="member" name="accountRole">
                             <SelectTrigger>
-                                <SelectValue placeholder="Member type" />
+                                <SelectValue placeholder={t('teamInvitations.rolePlaceholder', 'Member type')} />
                             </SelectTrigger>
                             <SelectContent>
-                                {memberOptions.map((option) => (
-                                    <SelectItem key={option.value} value={option.value}>
-                                        {option.label}
-                                    </SelectItem>
-                                ))}
+                                <SelectItem value="owner">{t('teamInvitations.role.owner', 'Owner')}</SelectItem>
+                                <SelectItem value="member">{t('teamInvitations.role.member', 'Member')}</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
                     <SubmitButton
                         formAction={async (prevState: any, formData: FormData) => formAction(formData)}
                         errorMessage={state?.message}
-                        pendingText="Creating..."
+                        pendingText={t('teamInvitations.creating', 'Creating...')}
                     >
-                        Create invitation
+                        {t('teamInvitations.create', 'Create invitation')}
                     </SubmitButton>
                 </>
             )}

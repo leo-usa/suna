@@ -16,6 +16,7 @@ import { BillingErrorAlert } from "@/components/billing/usage-limit-alert";
 import { useAccounts } from "@/hooks/use-accounts";
 import { isLocalMode, config } from "@/lib/config";
 import { toast } from "sonner";
+import { useTranslation } from 'react-i18next';
 
 // Constant for localStorage key to ensure consistency
 const PENDING_PROMPT_KEY = 'pendingAgentPrompt';
@@ -31,6 +32,7 @@ function DashboardContent() {
   const { data: accounts } = useAccounts();
   const personalAccount = accounts?.find(account => account.personal_account);
   const chatInputRef = useRef<ChatInputHandles>(null);
+  const { t } = useTranslation();
 
   const handleSubmit = async (message: string, options?: { model_name?: string; enable_thinking?: boolean }) => {
     if ((!message.trim() && !(chatInputRef.current?.getPendingFiles().length)) || isSubmitting) return;
@@ -163,25 +165,25 @@ function DashboardContent() {
                 onClick={() => setOpenMobile(true)}
               >
                 <Menu className="h-4 w-4" />
-                <span className="sr-only">Open menu</span>
+                <span className="sr-only">{t('dashboard.openMenu', 'Open menu')}</span>
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Open menu</TooltipContent>
+            <TooltipContent>{t('dashboard.openMenu', 'Open menu')}</TooltipContent>
           </Tooltip>
         </div>
       )}
 
       <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[560px] max-w-[90%]">
         <div className="text-center mb-10">
-          <h1 className="text-4xl font-medium text-foreground mb-2">Hey </h1>
-          <h2 className="text-2xl text-muted-foreground">What would you like Suna to do today?</h2>
+          <h1 className="text-4xl font-medium text-foreground mb-2">{t('dashboard.greeting', 'Hey')}</h1>
+          <h2 className="text-2xl text-muted-foreground">{t('dashboard.subtitle', 'What would you like Suna to do today?')}</h2>
         </div>
         
         <ChatInput 
           ref={chatInputRef}
           onSubmit={handleSubmit} 
           loading={isSubmitting}
-          placeholder="Describe what you need help with..."
+          placeholder={t('dashboard.inputPlaceholder', 'Describe what you need help with...')}
           value={inputValue}
           onChange={setInputValue}
           hideAttachments={false}

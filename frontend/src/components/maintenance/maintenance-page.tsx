@@ -6,8 +6,10 @@ import { checkApiHealth } from "@/lib/api"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { useTranslation } from 'react-i18next'
 
 export function MaintenancePage() {
+  const { t } = useTranslation();
   const [isCheckingHealth, setIsCheckingHealth] = useState(true)
   const [lastChecked, setLastChecked] = useState<Date | null>(null)
 
@@ -45,17 +47,17 @@ export function MaintenancePage() {
           </div>
           
           <h1 className="text-3xl font-bold tracking-tight">
-            System Maintenance
+            {t('maintenance.title', 'System Maintenance')}
           </h1>
           
           <p className="text-muted-foreground">
-            We're currently performing maintenance on our systems. Our team is working to get everything back up and running as soon as possible.
+            {t('maintenance.description', "We're currently performing maintenance on our systems. Our team is working to get everything back up and running as soon as possible.")}
           </p>
 
           <Alert className="mt-6">
-            <AlertTitle>Agent Executions Stopped</AlertTitle>
+            <AlertTitle>{t('maintenance.agentStoppedTitle', 'Agent Executions Stopped')}</AlertTitle>
             <AlertDescription>
-              Any running agent executions have been stopped during maintenance. You'll need to manually continue these executions once the system is back online.
+              {t('maintenance.agentStoppedDescription', "Any running agent executions have been stopped during maintenance. You'll need to manually continue these executions once the system is back online.")}
             </AlertDescription>
           </Alert>
         </div>
@@ -70,12 +72,12 @@ export function MaintenancePage() {
               "mr-2 h-4 w-4",
               isCheckingHealth && "animate-spin"
             )} />
-            {isCheckingHealth ? "Checking..." : "Check Again"}
+            {isCheckingHealth ? t('maintenance.checking', 'Checking...') : t('maintenance.checkAgain', 'Check Again')}
           </Button>
 
           {lastChecked && (
             <p className="text-sm text-muted-foreground">
-              Last checked: {lastChecked.toLocaleTimeString()}
+              {t('maintenance.lastChecked', 'Last checked:')} {lastChecked.toLocaleTimeString()}
             </p>
           )}
         </div>

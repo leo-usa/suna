@@ -4,6 +4,7 @@ import { formatTimestamp } from "./utils";
 import { ExternalLink, CheckCircle, AlertTriangle } from "lucide-react";
 import { Markdown } from "@/components/ui/markdown";
 import { cn } from "@/lib/utils";
+import { useTranslation } from 'react-i18next';
 
 export function ExposePortToolView({ 
   name = 'expose-port', 
@@ -14,6 +15,7 @@ export function ExposePortToolView({
   assistantTimestamp, 
   toolTimestamp 
 }: ToolViewProps) {
+  const { t } = useTranslation();
   console.log('ExposePortToolView:', { 
     name, 
     assistantContent, 
@@ -74,7 +76,7 @@ export function ExposePortToolView({
     return (
       <div className="flex flex-col h-full p-4">
         <div className="text-xs text-zinc-500 dark:text-zinc-400">
-          No port exposure information available
+          {t('exposePort.noInfo', 'No port exposure information available')}
         </div>
       </div>
     );
@@ -87,14 +89,14 @@ export function ExposePortToolView({
         {portNumber && !isStreaming && (
           <div className="space-y-1.5">
             <div className="flex justify-between items-center">
-              <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Port to Expose</div>
+              <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{t('exposePort.portToExpose', 'Port to Expose')}</div>
               {assistantTimestamp && (
                 <div className="text-xs text-zinc-500 dark:text-zinc-400">{formatTimestamp(assistantTimestamp)}</div>
               )}
             </div>
             <div className="rounded-md border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 p-3">
               <div className="flex items-center gap-2">
-                <div className="text-xs font-medium text-zinc-800 dark:text-zinc-300">Port</div>
+                <div className="text-xs font-medium text-zinc-800 dark:text-zinc-300">{t('exposePort.port', 'Port')}</div>
                 <div className="px-2 py-1 rounded-md bg-zinc-100 dark:bg-zinc-800 text-xs font-mono text-zinc-800 dark:text-zinc-300">
                   {portNumber}
                 </div>
@@ -108,7 +110,7 @@ export function ExposePortToolView({
           <div className="space-y-1.5 mt-4">
             <div className="flex justify-between items-center">
               <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
-                {isStreaming ? "Processing" : "Exposed URL"}
+                {isStreaming ? t('exposePort.processing', 'Processing') : t('exposePort.exposedUrl', 'Exposed URL')}
               </div>
               {toolTimestamp && !isStreaming && (
                 <div className="text-xs text-zinc-500 dark:text-zinc-400">{formatTimestamp(toolTimestamp)}</div>
@@ -124,7 +126,7 @@ export function ExposePortToolView({
             )}>
               {isStreaming ? (
                 <div className="flex items-center gap-2 text-xs font-medium text-blue-700 dark:text-blue-400">
-                  <span>Exposing port {portNumber}...</span>
+                  <span>{t('exposePort.exposing', 'Exposing port {{port}}...', { port: portNumber })}</span>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -140,7 +142,7 @@ export function ExposePortToolView({
                     </a>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="text-xs text-zinc-600 dark:text-zinc-400">Port</div>
+                    <div className="text-xs text-zinc-600 dark:text-zinc-400">{t('exposePort.port', 'Port')}</div>
                     <div className="px-2 py-1 rounded-md bg-zinc-100 dark:bg-zinc-800 text-xs font-mono text-zinc-800 dark:text-zinc-300">
                       {toolResult.port}
                     </div>
@@ -149,7 +151,7 @@ export function ExposePortToolView({
                     {toolResult.message}
                   </div>
                   <div className="text-xs text-amber-600 dark:text-amber-400 italic">
-                    Note: This URL might only be temporarily available and could expire after some time.
+                    {t('exposePort.note', 'Note: This URL might only be temporarily available and could expire after some time.')}
                   </div>
                 </div>
               )}
@@ -169,14 +171,14 @@ export function ExposePortToolView({
                 <AlertTriangle className="h-3.5 w-3.5 text-red-500" />
               )}
               <span>
-                {isSuccess ? 'Port exposed successfully' : 'Failed to expose port'}
+                {isSuccess ? t('exposePort.success', 'Port exposed successfully') : t('exposePort.failed', 'Failed to expose port')}
               </span>
             </div>
           )}
           
           {isStreaming && (
             <div className="flex items-center gap-2">
-              <span>Exposing port...</span>
+              <span>{t('exposePort.exposing', 'Exposing port...')}</span>
             </div>
           )}
           

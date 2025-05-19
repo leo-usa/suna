@@ -9,6 +9,8 @@ import { CircleDashed, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from 'react-i18next';
+import { useI18nReady } from '@/hooks/useI18nReady';
 
 // Import tool view components from the tool-views directory
 import { CommandToolView } from "./tool-views/CommandToolView";
@@ -225,7 +227,8 @@ export function ToolCallSidePanel({
   renderAssistantMessage,
   renderToolResult
 }: ToolCallSidePanelProps) {
-  // Move hooks outside of conditional
+  const { t } = useTranslation();
+  const i18nReady = useI18nReady();
   const [dots, setDots] = React.useState('');
   const currentToolCall = toolCalls[currentIndex];
   const totalCalls = toolCalls.length;
@@ -234,7 +237,7 @@ export function ToolCallSidePanel({
   const isStreaming = currentToolCall?.toolResult?.content === "STREAMING";
   const isSuccess = currentToolCall?.toolResult?.isSuccess ?? true;
   const isMobile = useIsMobile();
-  
+
   // Add keyboard shortcut for CMD+I to close panel
   React.useEffect(() => {
     if (!isOpen) return;
@@ -291,6 +294,8 @@ export function ToolCallSidePanel({
     }
   }, [currentIndex, totalCalls, onNavigate]);
 
+  if (!i18nReady) return null;
+
   if (!isOpen) return null;
   
   const renderContent = () => {
@@ -301,7 +306,7 @@ export function ToolCallSidePanel({
           <div className="pt-4 pl-4 pr-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-100">Suna's Computer</h2>
+                <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-100">{t('rightPanel.title', "Suna's Computer")}</h2>
               </div>
               
               <Button 
@@ -345,7 +350,7 @@ export function ToolCallSidePanel({
           <div className="pt-4 pl-4 pr-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-100">Suna's Computer</h2>
+                <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-100">{t('rightPanel.title', "Suna's Computer")}</h2>
               </div>
               
               <Button 
@@ -361,7 +366,7 @@ export function ToolCallSidePanel({
           
           {/* Error state message */}
           <div className="flex items-center justify-center flex-1 p-4">
-            <p className="text-sm text-zinc-500 dark:text-zinc-400 text-center">Unable to display tool details.</p>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 text-center">{t('rightPanel.unableToDisplay', 'Unable to display tool details.')}</p>
           </div>
         </div>
       );
@@ -372,7 +377,7 @@ export function ToolCallSidePanel({
         <div className="pt-4 pl-4 pr-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-100">Suna's Computer</h2>
+              <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-100">{t('rightPanel.title', "Suna's Computer")}</h2>
             </div>
             
             {currentToolCall.toolResult?.content && !isStreaming && (
@@ -384,7 +389,7 @@ export function ToolCallSidePanel({
                   "text-sm text-zinc-700 dark:text-zinc-300",
                   isMobile && "hidden sm:inline" // Hide on small mobile
                 )}>
-                  {currentToolName}
+                  {t(`rightPanel.${currentToolName.replace(/-/g, '')}`, currentToolName)}
                 </span>              
                 <div className={cn(
                   "px-2.5 py-0.5 rounded-full text-xs font-medium",
@@ -392,7 +397,7 @@ export function ToolCallSidePanel({
                     ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400" 
                     : "bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400"
                 )}>
-                  {isSuccess ? 'Success' : 'Failed'}
+                  {isSuccess ? t('rightPanel.success', 'Success') : t('rightPanel.failed', 'Failed')}
                 </div>
                 
                 {/* Add close button */}
@@ -473,12 +478,12 @@ export function ToolCallSidePanel({
                   <CurrentToolIcon className="h-3 w-3 text-zinc-800 dark:text-zinc-300" />
                 </div>
                 <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300 truncate" title={currentToolName}>
-                  {currentToolName} {isStreaming && `(Running${dots})`}
+                  {t(`rightPanel.${currentToolName.replace(/-/g, '')}`, currentToolName)} {isStreaming && `(Running${dots})`}
                 </span>
               </div>
 
               <span className="text-xs text-zinc-500 dark:text-zinc-400 flex-shrink-0">
-                Step {currentIndex + 1} of {totalCalls}
+                {t('rightPanel.stepOf', { current: currentIndex + 1, total: totalCalls })}
               </span>
             </div>
           )}

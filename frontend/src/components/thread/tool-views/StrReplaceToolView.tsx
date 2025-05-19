@@ -4,6 +4,7 @@ import { ToolViewProps } from "./types";
 import { extractFilePath, extractStrReplaceContent, formatTimestamp, getToolTitle } from "./utils";
 import { GenericToolView } from "./GenericToolView";
 import { cn } from "@/lib/utils";
+import { useTranslation } from 'react-i18next';
 
 export function StrReplaceToolView({ 
   name = "str-replace",
@@ -14,6 +15,7 @@ export function StrReplaceToolView({
   isSuccess = true,
   isStreaming = false
 }: ToolViewProps) {
+  const { t } = useTranslation();
   const filePath = extractFilePath(assistantContent);
   const { oldStr, newStr } = extractStrReplaceContent(assistantContent);
   const toolTitle = getToolTitle(name);
@@ -86,19 +88,19 @@ export function StrReplaceToolView({
           <div className="flex items-center p-2 bg-zinc-100 dark:bg-zinc-900 justify-between border-b border-zinc-200 dark:border-zinc-800">
             <div className="flex items-center">
               <FileDiff className="h-4 w-4 mr-2 text-zinc-600 dark:text-zinc-400" />
-              <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300">String Replacement</span>
+              <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300">{t('strReplace.title', 'String Replacement')}</span>
             </div>
           </div>
           
           <div className="px-3 py-2 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 flex items-center">
-            <code className="text-xs font-mono text-zinc-700 dark:text-zinc-300">{filePath || 'Unknown file'}</code>
+            <code className="text-xs font-mono text-zinc-700 dark:text-zinc-300">{filePath || t('strReplace.unknownFile', 'Unknown file')}</code>
           </div>
           
           {isStreaming ? (
             <div className="flex-1 bg-white dark:bg-zinc-950 flex items-center justify-center">
               <div className="text-center p-6">
                 <CircleDashed className="h-8 w-8 mx-auto mb-3 text-blue-500 animate-spin" />
-                <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Processing string replacement...</p>
+                <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{t('strReplace.processing', 'Processing string replacement...')}</p>
                 {filePath && (
                   <p className="text-xs mt-1 text-zinc-500 dark:text-zinc-400 font-mono">{filePath}</p>
                 )}
@@ -134,7 +136,7 @@ export function StrReplaceToolView({
                 <AlertTriangle className="h-3.5 w-3.5 text-red-500" />
               )}
               <span>
-                {isSuccess ? 'Replacement applied successfully' : 'Replacement failed'}
+                {isSuccess ? t('strReplace.completed', 'Replacement applied successfully') : t('strReplace.failed', 'Replacement failed')}
               </span>
             </div>
           )}
@@ -142,7 +144,7 @@ export function StrReplaceToolView({
           {isStreaming && (
             <div className="flex items-center gap-2">
               <CircleDashed className="h-3.5 w-3.5 text-blue-500 animate-spin" />
-              <span>Processing string replacement...</span>
+              <span>{t('strReplace.processing', 'Processing string replacement...')}</span>
             </div>
           )}
           

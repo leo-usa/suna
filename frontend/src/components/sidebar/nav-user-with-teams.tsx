@@ -20,6 +20,7 @@ import {
 } from "lucide-react"
 import { useAccounts } from "@/hooks/use-accounts"
 import NewTeamForm from "@/components/basejump/new-team-form"
+import { useTranslation } from 'react-i18next'
 
 import {
   Avatar,
@@ -67,6 +68,7 @@ export function NavUserWithTeams({
   const { data: accounts } = useAccounts()
   const [showNewTeamDialog, setShowNewTeamDialog] = React.useState(false)
   const { theme, setTheme } = useTheme()
+  const { t } = useTranslation()
   
   // Prepare personal account and team accounts
   const personalAccount = React.useMemo(() => accounts?.find(account => account.personal_account), [accounts])
@@ -198,7 +200,7 @@ export function NavUserWithTeams({
               {personalAccount && (
                 <>
                   <DropdownMenuLabel className="text-muted-foreground text-xs">
-                    Personal Account
+                    {t('userMenu.personalAccount', 'Personal Account')}
                   </DropdownMenuLabel>
                   <DropdownMenuItem
                     key={personalAccount.account_id}
@@ -224,7 +226,7 @@ export function NavUserWithTeams({
               {teamAccounts?.length > 0 && (
                 <>
                   <DropdownMenuLabel className="text-muted-foreground text-xs mt-2">
-                    Teams
+                    {t('userMenu.teams', 'Teams')}
                   </DropdownMenuLabel>
                   {teamAccounts.map((team, index) => (
                     <DropdownMenuItem
@@ -260,7 +262,7 @@ export function NavUserWithTeams({
                   <div className="bg-background flex size-6 items-center justify-center rounded-md border">
                     <Plus className="size-4" />
                   </div>
-                  <div className="text-muted-foreground font-medium">Add team</div>
+                  <div className="text-muted-foreground font-medium">{t('userMenu.addTeam', 'Add team')}</div>
                 </DropdownMenuItem>
               </DialogTrigger> */}
               <DropdownMenuSeparator />
@@ -270,27 +272,27 @@ export function NavUserWithTeams({
                 <DropdownMenuItem asChild>
                   <Link href="/settings/billing">
                     <CreditCard className="mr-2 h-4 w-4" />
-                    Billing
+                    {t('userMenu.billing', 'Billing')}
                   </Link>
                 </DropdownMenuItem>
                 {/* <DropdownMenuItem asChild>
                   <Link href="/settings">
                     <Settings className="mr-2 h-4 w-4" />
-                    Settings
+                    {t('userMenu.settings', 'Settings')}
                   </Link>
                 </DropdownMenuItem> */}
                 <DropdownMenuItem onClick={() => setTheme(theme === "light" ? "dark" : "light")}>
                   <div className="flex items-center gap-2">
                     <Sun className="mr-2 h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
                     <Moon className="absolute mr-2 h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-                    <span>Theme</span>
+                    <span>{t('userMenu.theme', 'Theme')}</span>
                   </div>
                 </DropdownMenuItem>
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout}>
                 <LogOut className="mr-2 h-4 w-4" />
-                Log out
+                {t('userMenu.logout', 'Log out')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -299,9 +301,9 @@ export function NavUserWithTeams({
       
       <DialogContent className="sm:max-w-[425px] border-subtle dark:border-white/10 bg-card-bg dark:bg-background-secondary rounded-2xl shadow-custom">
         <DialogHeader>
-          <DialogTitle className="text-foreground">Create a new team</DialogTitle>
+          <DialogTitle className="text-foreground">{t('userMenu.createTeam', 'Create a new team')}</DialogTitle>
           <DialogDescription className="text-foreground/70">
-            Create a team to collaborate with others.
+            {t('userMenu.createTeamDesc', 'Create a team to collaborate with others.')}
           </DialogDescription>
         </DialogHeader>
         <NewTeamForm />

@@ -21,7 +21,7 @@ import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { BillingErrorAlert } from '@/components/billing/usage-limit-alert';
 import { isLocalMode } from "@/lib/config";
-
+import { useTranslation } from 'react-i18next';
 
 import { UnifiedMessage, ParsedContent, ParsedMetadata, ThreadParams } from '@/components/thread/types';
 import { getToolIcon, extractPrimaryParam, safeJsonParse } from '@/components/thread/utils';
@@ -244,6 +244,8 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
   const agentRunsCheckedRef = useRef(false);
   const previousAgentStatus = useRef<typeof agentStatus>('idle');
 
+  const { t } = useTranslation();
+
   const handleProjectRenamed = useCallback((newName: string) => {
     setProjectName(newName);
   }, []);
@@ -390,9 +392,9 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
     console.error(`[PAGE] Stream hook error: ${errorMessage}`);
     if (!errorMessage.toLowerCase().includes('not found') && 
         !errorMessage.toLowerCase().includes('agent run is not running')) {
-        toast.error(`Stream Error: ${errorMessage}`);
+        toast.error(t('agentDetail.streamError', errorMessage));
     }
-  }, []);
+  }, [t]);
   
   const handleStreamClose = useCallback(() => {
       console.log(`[PAGE] Stream hook closed with final status: ${agentStatus}`);
@@ -564,7 +566,7 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
         if (isMounted) {
           const errorMessage = err instanceof Error ? err.message : 'Failed to load thread';
           setError(errorMessage);
-          toast.error(errorMessage);
+          toast.error(t('agentDetail.loadError', errorMessage));
         }
       } finally {
         if (isMounted) setIsLoading(false);
@@ -576,7 +578,7 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
     return () => {
       isMounted = false;
     };
-  }, [threadId]);
+  }, [threadId, t]);
 
   const handleSubmitMessage = useCallback(async (message: string, options?: { model_name?: string; enable_thinking?: boolean }) => {
     if (!message.trim()) return;
@@ -653,7 +655,7 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
     } finally {
       setIsSending(false);
     }
-  }, [threadId, project?.account_id]); // Ensure project.account_id is a dependency
+  }, [threadId, project?.account_id, t]); // Ensure project.account_id is a dependency
 
   const handleStopAgent = useCallback(async () => {
     console.log(`[PAGE] Requesting agent stop via hook.`);
@@ -858,7 +860,7 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
     
     if (!clickedAssistantMessageId) {
       console.warn("Clicked assistant message ID is null. Cannot open side panel.");
-      toast.warning("Cannot view details: Assistant message ID is missing.");
+      toast.warning(t('agentDetail.cannotViewDetails', 'Cannot view details: Assistant message ID is missing.'));
       return;
     }
 
@@ -900,11 +902,11 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
       setIsSidePanelOpen(true); // Explicitly open the panel
     } else {
       console.warn(`[PAGE] Could not find matching tool call in toolCalls array for assistant message ID: ${clickedAssistantMessageId}`);
-      toast.info("Could not find details for this tool call.");
+      toast.info(t('agentDetail.couldNotFindDetails', 'Could not find details for this tool call.'));
       // Optionally, still open the panel but maybe at the last index or show a message?
       // setIsSidePanelOpen(true);
     }
-  }, [messages, toolCalls]); // Add toolCalls as a dependency
+  }, [messages, toolCalls, t]); // Add toolCalls as a dependency
 
   // Handle streaming tool calls
   const handleStreamingToolCall = useCallback((toolCall: StreamingToolCall | null) => {
@@ -1266,7 +1268,7 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
           <div className="mx-auto max-w-3xl">
             {messages.length === 0 && !streamingTextContent && !streamingToolCall && agentStatus === 'idle' ? (
               <div className="flex h-full items-center justify-center">
-                <div className="text-center text-muted-foreground">Send a message to start.</div>
+                <div className="text-center text-muted-foreground">{t('agentDetail.sendAMessage', 'Send a message to start.')}</div>
               </div>
             ) : (
               <div className="space-y-8">
@@ -1516,7 +1518,7 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
             value={newMessage}
             onChange={setNewMessage}
             onSubmit={handleSubmitMessage}
-            placeholder="Ask Suna anything..."
+            placeholder={t('agentDetail.inputPlaceholder', 'Type your message...')}
             loading={isSending}
             disabled={isSending || agentStatus === 'running' || agentStatus === 'connecting'}
             isAgentRunning={agentStatus === 'running' || agentStatus === 'connecting'}

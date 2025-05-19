@@ -25,6 +25,7 @@ import {
   TooltipTrigger
 } from "@/components/ui/tooltip"
 import { useIsMobile } from "@/hooks/use-mobile"
+import { useI18nReady } from '@/hooks/useI18nReady'
 
 export function SidebarLeft({
   ...props
@@ -40,6 +41,7 @@ export function SidebarLeft({
     email: "loading@example.com",
     avatar: ""
   })
+  const i18nReady = useI18nReady()
 
   // Fetch user data
   useEffect(() => {
@@ -78,6 +80,8 @@ export function SidebarLeft({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [state, setOpen]);
+
+  if (!i18nReady) return null;
 
   return (
     <Sidebar collapsible="icon" className="border-r-0 bg-background/95 backdrop-blur-sm [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']" {...props}>

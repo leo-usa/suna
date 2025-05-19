@@ -3,6 +3,7 @@ import { Search, CircleDashed, CheckCircle, AlertTriangle, ExternalLink } from "
 import { ToolViewProps } from "./types";
 import { extractSearchQuery, extractSearchResults, cleanUrl, formatTimestamp, getToolTitle } from "./utils";
 import { cn } from "@/lib/utils";
+import { useTranslation } from 'react-i18next';
 
 export function WebSearchToolView({ 
   name = "web-search",
@@ -13,6 +14,7 @@ export function WebSearchToolView({
   isSuccess = true,
   isStreaming = false
 }: ToolViewProps) {
+  const { t } = useTranslation();
   const query = extractSearchQuery(assistantContent);
   const searchResults = extractSearchResults(toolContent);
   const toolTitle = getToolTitle(name);
@@ -33,13 +35,13 @@ export function WebSearchToolView({
                 isSuccess ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"
               )}>
                 <span className="h-1.5 w-1.5 rounded-full mr-1.5 bg-current"></span>
-                {isSuccess ? 'Success' : 'Failed'}
+                {isSuccess ? t('webSearch.success', 'Success') : t('webSearch.failed', 'Failed')}
               </span>
             )}
           </div>
           
           <div className="px-3 py-2 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900">
-            <code className="text-xs font-mono text-zinc-700 dark:text-zinc-300">{query || 'Unknown query'}</code>
+            <code className="text-xs font-mono text-zinc-700 dark:text-zinc-300">{query || t('webSearch.unknownQuery', 'Unknown query')}</code>
           </div>
           
           <div className="flex-1 overflow-auto bg-white dark:bg-zinc-950 font-mono text-sm">
@@ -47,14 +49,14 @@ export function WebSearchToolView({
               <div className="flex-1 flex items-center justify-center">
                 <div className="text-center p-6">
                   <CircleDashed className="h-8 w-8 mx-auto mb-3 text-blue-500 animate-spin" />
-                  <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Searching the web...</p>
-                  <p className="text-xs mt-1 text-zinc-500 dark:text-zinc-400">This might take a moment</p>
+                  <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{t('webSearch.searching', 'Searching the web...')}</p>
+                  <p className="text-xs mt-1 text-zinc-500 dark:text-zinc-400">{t('webSearch.mightTakeAMoment', 'This might take a moment')}</p>
                 </div>
               </div>
             ) : searchResults.length > 0 ? (
               <div className="p-3">
                 <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-3">
-                  Found {searchResults.length} results
+                  {t('webSearch.foundResults', 'Found {{count}} results', { count: searchResults.length })}
                 </div>
                 <div className="divide-y divide-zinc-100 dark:divide-zinc-800 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-md">
                   {searchResults.map((result, idx) => (
@@ -85,8 +87,8 @@ export function WebSearchToolView({
             ) : (
               <div className="p-6 text-center flex-1 flex flex-col items-center justify-center h-full">
                 <Search className="h-6 w-6 mx-auto mb-2 text-zinc-400 dark:text-zinc-500" />
-                <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">No results found</p>
-                <p className="text-xs mt-1 text-zinc-500 dark:text-zinc-400">Try refining your search query</p>
+                <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{t('webSearch.noResults', 'No results found')}</p>
+                <p className="text-xs mt-1 text-zinc-500 dark:text-zinc-400">{t('webSearch.tryRefining', 'Try refining your search query')}</p>
               </div>
             )}
           </div>
@@ -103,7 +105,9 @@ export function WebSearchToolView({
                 <AlertTriangle className="h-3.5 w-3.5 text-red-500" />
               )}
               <span>
-                {isSuccess ? `${toolTitle} completed successfully` : `${toolTitle} operation failed`}
+                {isSuccess 
+                  ? t('webSearch.completed', '{{tool}} completed successfully', { tool: toolTitle }) 
+                  : t('webSearch.failedOperation', '{{tool}} operation failed', { tool: toolTitle })}
               </span>
             </div>
           )}
@@ -111,7 +115,7 @@ export function WebSearchToolView({
           {isStreaming && (
             <div className="flex items-center gap-2">
               <CircleDashed className="h-3.5 w-3.5 text-blue-500 animate-spin" />
-              <span>Executing {toolTitle.toLowerCase()}...</span>
+              <span>{t('webSearch.executing', 'Executing')} {toolTitle.toLowerCase()}...</span>
             </div>
           )}
           
