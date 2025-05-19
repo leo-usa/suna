@@ -1,5 +1,6 @@
 import os
 from typing import List, Optional
+from urllib.parse import unquote, quote
 
 from fastapi import FastAPI, UploadFile, File, HTTPException, APIRouter, Form, Depends, Request
 from fastapi.responses import Response, JSONResponse
@@ -189,6 +190,7 @@ async def list_files(
     user_id: Optional[str] = Depends(get_optional_user_id)
 ):
     """List files and directories at the specified path"""
+    path = unquote(path)
     logger.info(f"Received list files request for sandbox {sandbox_id}, path: {path}, user_id: {user_id}")
     client = await db.client
     
@@ -231,6 +233,7 @@ async def read_file(
     user_id: Optional[str] = Depends(get_optional_user_id)
 ):
     """Read a file from the sandbox"""
+    path = unquote(path)
     logger.info(f"Received file read request for sandbox {sandbox_id}, path: {path}, user_id: {user_id}")
     client = await db.client
     
@@ -247,10 +250,11 @@ async def read_file(
         # Return a Response object with the content directly
         filename = os.path.basename(path)
         logger.info(f"Successfully read file {filename} from sandbox {sandbox_id}")
+        filename_header = f"attachment; filename*=UTF-8''{quote(filename)}"
         return Response(
             content=content,
             media_type="application/octet-stream",
-            headers={"Content-Disposition": f"attachment; filename={filename}"}
+            headers={"Content-Disposition": filename_header}
         )
     except Exception as e:
         logger.error(f"Error reading file in sandbox {sandbox_id}: {str(e)}")
