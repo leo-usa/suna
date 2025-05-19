@@ -1388,3 +1388,42 @@ export const checkBillingStatus = async (): Promise<BillingStatusResponse> => {
   }
 };
 
+// Get user's prepaid credit balance (in minutes)
+export const getCreditBalance = async (): Promise<number> => {
+  const supabase = createClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.access_token) throw new Error('No access token available');
+  const response = await fetch(`${API_URL}/billing/credits`, {
+    headers: { 'Authorization': `Bearer ${session.access_token}` },
+  });
+  if (!response.ok) throw new Error('Failed to fetch credit balance');
+  const data = await response.json();
+  return data.balance_minutes ?? 0;
+};
+
+export const createCreditSession = async (params: {
+  price_id?: string;
+  amount_minutes?: number;
+  payment_method: 'alipay' | 'wechat_pay' | 'card';
+  success_url: string;
+  cancel_url: string;
+  locale?: string;
+}): Promise<{ url?: string; session_id?: string; status?: string }> => {
+  const supabase = createClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.access_token) throw new Error('No access token available');
+  const response = await fetch(`${API_URL}/billing/create-credit-session`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify(params),
+  });
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => 'No error details available');
+    throw new Error(`Failed to create credit session: ${errorText}`);
+  }
+  return response.json();
+};
+

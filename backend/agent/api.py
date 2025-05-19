@@ -15,9 +15,9 @@ from agentpress.thread_manager import ThreadManager
 from services.supabase import DBConnection
 from services import redis
 from agent.run import run_agent
-from utils.auth_utils import get_current_user_id_from_jwt, get_user_id_from_stream_auth, verify_thread_access
+from utils.auth_utils import get_current_user_id_from_jwt, get_user_id_from_stream_auth, verify_thread_access, get_account_id_from_thread
 from utils.logger import logger
-from services.billing import check_billing_status
+from services.billing import check_billing_status, get_user_credits, deduct_user_credits
 from sandbox.sandbox import create_sandbox, get_or_start_sandbox
 from sandbox.api import get_sandbox_by_id_safely
 from services.llm import make_llm_api_call
@@ -694,6 +694,38 @@ async def run_agent_background(
 
         # Update DB status
         await update_agent_run_status(client, agent_run_id, final_status, error=error_message, responses=all_responses)
+
+        # --- Deduct prepaid credits if needed ---
+        if final_status == "completed":
+            try:
+                # Get account_id from thread
+                account_id = await get_account_id_from_thread(client, thread_id)
+                # Check billing status to see if user is on credits
+                can_run, billing_message, subscription = await check_billing_status(client, account_id)
+                # If plan_name is 'prepaid' (from billing.py), deduct minutes
+                if subscription and subscription.get("plan_name") == "prepaid":
+                    # Calculate run duration in minutes
+                    started_at = None
+                    completed_at = None
+                    # Fetch agent_run row for timestamps
+                    agent_run_row = await client.table('agent_runs').select('started_at', 'completed_at').eq('id', agent_run_id).maybe_single().execute()
+                    if agent_run_row.data:
+                        started_at = agent_run_row.data.get('started_at')
+                        completed_at = agent_run_row.data.get('completed_at')
+                    if started_at and completed_at:
+                        from datetime import datetime
+                        from dateutil import parser
+                        start_dt = parser.isoparse(started_at)
+                        end_dt = parser.isoparse(completed_at)
+                        run_minutes = max(0.1, (end_dt - start_dt).total_seconds() / 60)
+                        # Deduct from credits
+                        success = await deduct_user_credits(client, account_id, run_minutes)
+                        if success:
+                            logger.info(f"Deducted {run_minutes:.2f} minutes from prepaid credits for user {account_id} after agent run {agent_run_id}")
+                        else:
+                            logger.error(f"Failed to deduct {run_minutes:.2f} minutes from credits for user {account_id} (insufficient balance?) after agent run {agent_run_id}")
+            except Exception as e:
+                logger.error(f"Error deducting prepaid credits for agent run {agent_run_id}: {e}")
 
         # Publish final control signal (END_STREAM or ERROR)
         control_signal = "END_STREAM" if final_status == "completed" else "ERROR" if final_status == "failed" else "STOP"
