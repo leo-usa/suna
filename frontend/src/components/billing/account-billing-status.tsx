@@ -186,6 +186,7 @@ export default function AccountBillingStatus({ accountId, returnUrl }: Props) {
                 </TabsList>
                 <TabsContent value="subscription">
                     <h2 className="text-xl font-semibold mb-4">{t('billing.subscription', 'Subscription')}</h2>
+                    <p className="text-sm text-muted-foreground mb-4">{t('billing.subscriptionUpgradeInfo')}</p>
                     <div className="mb-6">
                         <div className="rounded-lg border bg-background p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="flex justify-between items-center">
