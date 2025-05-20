@@ -1090,14 +1090,6 @@ export const siteConfig = {
       ],
     },
     {
-      title: "Resources",
-      links: [
-        { id: 5, title: "Documentation", url: "https://github.com/DrPang-ai/Suna" },
-        { id: 7, title: "Discord", url: "https://discord.gg/Py6pCBUUPw" },
-        { id: 8, title: "GitHub", url: "https://github.com/DrPang-ai/Suna" },
-      ],
-    },
-    {
       title: "Legal",
       links: [
         { id: 9, title: "Privacy Policy", url: "https://suna.so/legal?tab=privacy" },

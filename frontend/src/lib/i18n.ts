@@ -5,13 +5,13 @@ const resources = {
   en: {
     translation: {
       hero: {
-        title: 'Less structure, more intelligence.',
+        title: 'Dobby, your AI Employee.',
         subtitle: 'AI agents that turn your thoughts into actions.',
         cta: 'Get Started'
       },
       useCases: {
         title: 'Use Cases',
-        subtitle: 'See what Suna can do for you.',
+        subtitle: 'See what Dobby can do for you.',
         watchReplay: 'Watch Replay',
         none: 'No use cases available.'
       },
@@ -37,11 +37,10 @@ const resources = {
         subtext: 'No credit card required.'
       },
       footer: {
-        description: 'Suna is your open source AI employee. Built by DrPang.AI.',
+        description: 'Dobby is your AI employee. Provided by DrPang.AI.',
         links: {
           Product: 'Product',
           Pricing: 'Pricing',
-          Docs: 'Docs',
           Blog: 'Blog',
           Company: 'Company',
           About: 'About',
@@ -150,7 +149,7 @@ const resources = {
       },
       useCases: {
         title: 'Use Cases',
-        subtitle: 'See what Suna can do for you.',
+        subtitle: 'See what Dobby can do for you.',
         watchReplay: 'Watch Replay',
         none: 'No use cases available.'
       },
@@ -257,7 +256,7 @@ const resources = {
       },
       useCases: {
         title: 'Use Cases',
-        subtitle: 'See what Suna can do for you.',
+        subtitle: 'See what Dobby can do for you.',
         watchReplay: 'Watch Replay',
         none: 'No use cases available.'
       },
@@ -376,7 +375,7 @@ const resources = {
       },
       useCases: {
         title: 'Use Cases',
-        subtitle: 'See what Suna can do for you.',
+        subtitle: 'See what Dobby can do for you.',
         watchReplay: 'Watch Replay',
         none: 'No use cases available.'
       },
@@ -483,7 +482,7 @@ const resources = {
       },
       useCases: {
         title: 'Use Cases',
-        subtitle: 'See what Suna can do for you.',
+        subtitle: 'See what Dobby can do for you.',
         watchReplay: 'Watch Replay',
         none: 'No use cases available.'
       },
@@ -590,7 +589,7 @@ const resources = {
       },
       useCases: {
         title: 'Use Cases',
-        subtitle: 'See what Suna can do for you.',
+        subtitle: 'See what Dobby can do for you.',
         watchReplay: 'Watch Replay',
         none: 'No use cases available.'
       },
@@ -764,7 +763,7 @@ const resources = {
       },
       useCases: {
         title: 'Use Cases',
-        subtitle: 'See what Suna can do for you.',
+        subtitle: 'See what Dobby can do for you.',
         watchReplay: 'Watch Replay',
         none: 'No use cases available.'
       },
@@ -865,7 +864,7 @@ const resources = {
   'zh-CN': {
     translation: {
       hero: {
-        title: '更少结构，更多智能。',
+        title: 'Dobby, 你的AI打工狗',
         subtitle: '让AI代理将你的想法变为行动。',
         cta: '立即开始'
       },
@@ -948,19 +947,18 @@ const resources = {
         subtext: '无需信用卡。'
       },
       footer: {
-        description: 'Suna 是你的开源 AI 员工，由 DrPang.AI 构建。',
+        description: 'Dobby是你的AI打工狗，由庞博士提供',
         links: {
-          Suna: 'Suna',
-          Resources: '资源',
-          Documentation: '文档',
-          Discord: 'Discord 社区',
-          GitHub: 'GitHub',
-          'Privacy Policy': '隐私政策',
-          'Terms of Service': '服务条款',
-          'License Apache 2.0': 'Apache 2.0 许可证',
-          About: '关于',
-          Contact: '联系',
-          Careers: '招聘',
+          Suna: 'Dobby',
+          Pricing: 'Pricing',
+          Blog: 'Blog',
+          Company: 'Company',
+          About: 'About',
+          Careers: 'Careers',
+          Contact: 'Contact',
+          Legal: 'Legal',
+          Privacy: 'Privacy',
+          Terms: 'Terms',
         },
         about: '关于',
         contact: '联系',
@@ -1367,7 +1365,7 @@ const resources = {
       },
       useCases: {
         title: 'Use Cases',
-        subtitle: 'See what Suna can do for you.',
+        subtitle: 'See what Dobby can do for you.',
         watchReplay: 'Watch Replay',
         none: 'No use cases available.'
       },
@@ -1474,7 +1472,7 @@ const resources = {
       },
       useCases: {
         title: 'Use Cases',
-        subtitle: 'See what Suna can do for you.',
+        subtitle: 'See what Dobby can do for you.',
         watchReplay: 'Watch Replay',
         none: 'No use cases available.'
       },
@@ -1581,7 +1579,7 @@ const resources = {
       },
       useCases: {
         title: 'Use Cases',
-        subtitle: 'See what Suna can do for you.',
+        subtitle: 'See what Dobby can do for you.',
         watchReplay: 'Watch Replay',
         none: 'No use cases available.'
       },
@@ -1688,7 +1686,7 @@ const resources = {
       },
       useCases: {
         title: 'Use Cases',
-        subtitle: 'See what Suna can do for you.',
+        subtitle: 'See what Dobby can do for you.',
         watchReplay: 'Watch Replay',
         none: 'No use cases available.'
       },
