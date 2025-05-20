@@ -33,7 +33,7 @@ const resources = {
       },
       cta: {
         title: 'Ready to get started?',
-        button: 'Hire Suna',
+        button: 'Hire Dobby',
         subtext: 'No credit card required.'
       },
       footer: {
@@ -171,7 +171,7 @@ const resources = {
       },
       cta: {
         title: 'Ready to get started?',
-        button: 'Hire Suna',
+        button: 'Hire Dobby',
         subtext: 'No credit card required.'
       },
       footer: {
@@ -278,7 +278,7 @@ const resources = {
       },
       cta: {
         title: 'Ready to get started?',
-        button: 'Hire Suna',
+        button: 'Hire Dobby',
         subtext: 'No credit card required.'
       },
       footer: {
@@ -397,7 +397,7 @@ const resources = {
       },
       cta: {
         title: 'Ready to get started?',
-        button: 'Hire Suna',
+        button: 'Hire Dobby',
         subtext: 'No credit card required.'
       },
       footer: {
@@ -504,7 +504,7 @@ const resources = {
       },
       cta: {
         title: 'Ready to get started?',
-        button: 'Hire Suna',
+        button: 'Hire Dobby',
         subtext: 'No credit card required.'
       },
       footer: {
@@ -611,7 +611,7 @@ const resources = {
       },
       cta: {
         title: 'Ready to get started?',
-        button: 'Hire Suna',
+        button: 'Hire Dobby',
         subtext: 'No credit card required.'
       },
       footer: {
@@ -785,7 +785,7 @@ const resources = {
       },
       cta: {
         title: 'Ready to get started?',
-        button: 'Hire Suna',
+        button: 'Hire Dobby',
         subtext: 'No credit card required.'
       },
       footer: {
@@ -943,7 +943,7 @@ const resources = {
       },
       cta: {
         title: '准备好开始了吗？',
-        button: '雇佣 Suna',
+        button: '雇佣 Dobby',
         subtext: '无需信用卡。'
       },
       footer: {
@@ -1387,7 +1387,7 @@ const resources = {
       },
       cta: {
         title: 'Ready to get started?',
-        button: 'Hire Suna',
+        button: 'Hire Dobby',
         subtext: 'No credit card required.'
       },
       footer: {
@@ -1494,7 +1494,7 @@ const resources = {
       },
       cta: {
         title: 'Ready to get started?',
-        button: 'Hire Suna',
+        button: 'Hire Dobby',
         subtext: 'No credit card required.'
       },
       footer: {
@@ -1601,7 +1601,7 @@ const resources = {
       },
       cta: {
         title: 'Ready to get started?',
-        button: 'Hire Suna',
+        button: 'Hire Dobby',
         subtext: 'No credit card required.'
       },
       footer: {
@@ -1708,7 +1708,7 @@ const resources = {
       },
       cta: {
         title: 'Ready to get started?',
-        button: 'Hire Suna',
+        button: 'Hire Dobby',
         subtext: 'No credit card required.'
       },
       footer: {
