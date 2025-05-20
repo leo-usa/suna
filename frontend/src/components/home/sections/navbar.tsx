@@ -71,6 +71,10 @@ const LANGUAGES = [
 
 function LanguageSwitcher() {
   const { i18n } = useTranslation();
+  // Debug: log the language in localStorage on render
+  if (typeof window !== 'undefined') {
+    console.log('[Home] localStorage.i18nextLng:', localStorage.getItem('i18nextLng'));
+  }
   return (
     <div className="flex items-center ml-2">
       <Globe className="w-4 h-4 mr-2" />
@@ -81,8 +85,9 @@ function LanguageSwitcher() {
           i18n.changeLanguage(lang);
           // Set cookie for SSR and client sync
           document.cookie = `i18next=${lang}; path=/; max-age=31536000`;
-          // Dispatch global event for language sync
+          // Set localStorage for client sync
           if (typeof window !== 'undefined') {
+            localStorage.setItem('i18nextLng', lang);
             window.dispatchEvent(new CustomEvent('languageChanged', { detail: lang }));
           }
         }}
