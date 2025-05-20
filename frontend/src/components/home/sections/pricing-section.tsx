@@ -397,7 +397,7 @@ function PricingTier({
         buttonVariant = tier.buttonColor as ButtonVariant;
         buttonClassName = targetAmount > currentAmount 
           ? "bg-primary hover:bg-primary/90 text-primary-foreground" 
-          : "bg-primary/5 hover:bg-primary/10 text-primary";
+          : "bg-primary/5 hover:bg-primary/10 text-primary-foreground";
       }
     }
 
@@ -424,7 +424,7 @@ function PricingTier({
       )}
     >
       <div className="flex flex-col gap-4 p-4">
-        <p className="text-sm flex items-center gap-2">
+        <p className={`text-sm flex items-center gap-2 ${tier.isPopular ? 'text-primary-foreground' : 'text-foreground'}`}>
           {t(`pricing.tiers.${tier.name}`)}
           {tier.isPopular && (
             <span className="bg-gradient-to-b from-secondary/50 from-[1.92%] to-secondary to-[100%] text-white h-6 inline-flex w-fit items-center justify-center px-2 rounded-full text-sm shadow-[0px_6px_6px_-3px_rgba(0,0,0,0.08),0px_3px_3px_-1.5px_rgba(0,0,0,0.08),0px_1px_1px_-0.5px_rgba(0,0,0,0.08),0px_0px_0px_1px_rgba(255,255,255,0.12)_inset,0px_1px_0px_0px_rgba(255,255,255,0.12)_inset]">
@@ -433,7 +433,7 @@ function PricingTier({
           )}
           {isAuthenticated && statusBadge}
         </p>
-        <div className="flex items-baseline mt-2">
+        <div className={`flex items-baseline mt-2 ${tier.isPopular ? 'text-primary-foreground' : 'text-foreground'}`}>
           {tier.name === "Custom" ? (
             <CustomPriceDisplay price={getPriceValue(tier, localSelectedPlan)} />
           ) : (
@@ -443,7 +443,7 @@ function PricingTier({
             {tier.price !== "$0" ? t('pricing.perMonth') : ""}
           </span>
         </div>
-        <p className="text-sm mt-2">{t(`pricing.tiers.${tier.name}Desc`, { defaultValue: tier.description })}</p>
+        <p className={`text-sm mt-2 ${tier.isPopular ? 'text-primary-foreground' : 'text-foreground'}`}>{t(`pricing.tiers.${tier.name}Desc`, { defaultValue: tier.description })}</p>
         
         {tier.name === "Custom" && tier.upgradePlans ? (
           <div className="w-full space-y-2">
@@ -485,7 +485,7 @@ function PricingTier({
         {tier.features && tier.features.length > 0 && (
           <ul className="space-y-3">
             {tier.features.map((feature) => (
-              <li key={feature} className="flex items-center gap-2">
+              <li key={feature} className={`flex items-center gap-2 ${tier.isPopular ? 'text-primary-foreground' : 'text-foreground'}`}>
                 <div className="size-5 rounded-full border border-primary/20 flex items-center justify-center">
                   <CheckIcon className="size-3 text-primary" />
                 </div>
