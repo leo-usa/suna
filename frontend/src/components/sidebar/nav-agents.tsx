@@ -50,6 +50,10 @@ type ThreadWithProject = {
 export function NavAgents() {
   const { isMobile, state } = useSidebar()
   const { t, i18n } = useTranslation();
+  // Debug: log the language in localStorage on render
+  if (typeof window !== 'undefined') {
+    console.log('[Agent] localStorage.i18nextLng:', localStorage.getItem('i18nextLng'));
+  }
   // Debug: log the current language on every render
   console.log('[NavAgents] Current language:', i18n.language);
   const [threads, setThreads] = useState<ThreadWithProject[]>([])
