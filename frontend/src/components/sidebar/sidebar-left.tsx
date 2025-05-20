@@ -87,7 +87,7 @@ export function SidebarLeft({
     <Sidebar collapsible="icon" className="border-r-0 bg-background/95 backdrop-blur-sm [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']" {...props}>
       <SidebarHeader className="px-2 py-2">
         <div className="flex h-[40px] items-center px-1 relative">
-          <Link href="/dashboard">
+          <Link href="/">
             <KortixLogo />
           </Link>
           {state !== "collapsed" && (

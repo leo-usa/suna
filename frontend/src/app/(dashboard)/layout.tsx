@@ -15,6 +15,8 @@ import { Loader2 } from "lucide-react"
 import { checkApiHealth } from "@/lib/api"
 import { MaintenancePage } from "@/components/maintenance/maintenance-page"
 import { useI18nReady } from '@/hooks/useI18nReady'
+import ClientI18nSync from '@/components/ClientI18nSync'
+import { useTranslation } from 'react-i18next';
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -24,6 +26,7 @@ export default function DashboardLayout({
   children,
 }: DashboardLayoutProps) {
   const i18nReady = useI18nReady()
+  const { i18n } = useTranslation();
   // const [showPricingAlert, setShowPricingAlert] = useState(false)
   const [showMaintenanceAlert, setShowMaintenanceAlert] = useState(false)
   const [isApiHealthy, setIsApiHealthy] = useState(true)
@@ -87,26 +90,29 @@ export default function DashboardLayout({
   }
 
   return (
-    <SidebarProvider>
-      <SidebarLeft />
-      <SidebarInset>
-        <div className="bg-background">
-          {children}
-        </div>
-      </SidebarInset>
-      
-      {/* <PricingAlert 
-        open={showPricingAlert} 
-        onOpenChange={setShowPricingAlert}
-        closeable={false}
-        accountId={personalAccount?.account_id}
-        /> */}
-      
-      <MaintenanceAlert
-        open={showMaintenanceAlert}
-        onOpenChange={setShowMaintenanceAlert}
-        closeable={true}
-      />
-    </SidebarProvider>
+    <div key={i18n.language}>
+      <ClientI18nSync />
+      <SidebarProvider>
+        <SidebarLeft />
+        <SidebarInset>
+          <div className="bg-background">
+            {children}
+          </div>
+        </SidebarInset>
+        
+        {/* <PricingAlert 
+          open={showPricingAlert} 
+          onOpenChange={setShowPricingAlert}
+          closeable={false}
+          accountId={personalAccount?.account_id}
+          /> */}
+        
+        <MaintenanceAlert
+          open={showMaintenanceAlert}
+          onOpenChange={setShowMaintenanceAlert}
+          closeable={true}
+        />
+      </SidebarProvider>
+    </div>
   )
 }

@@ -76,7 +76,16 @@ function LanguageSwitcher() {
       <Globe className="w-4 h-4 mr-2" />
       <select
         value={i18n.language}
-        onChange={e => i18n.changeLanguage(e.target.value)}
+        onChange={e => {
+          const lang = e.target.value;
+          i18n.changeLanguage(lang);
+          // Set cookie for SSR and client sync
+          document.cookie = `i18next=${lang}; path=/; max-age=31536000`;
+          // Dispatch global event for language sync
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('languageChanged', { detail: lang }));
+          }
+        }}
         className="h-8 rounded-full border border-border bg-background px-2 text-sm font-normal text-primary dark:text-secondary-foreground focus:outline-none focus:ring-2 focus:ring-secondary/40 transition-colors"
         style={{ minWidth: 90 }}
       >
