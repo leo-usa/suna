@@ -118,6 +118,25 @@ const resources = {
         loading: 'Loading...',
         subscription: 'Subscription',
         prepaidTab: 'Prepaid (WeChat & AliPay supported)',
+        topUp: 'Top Up Credits',
+        prepaidCredits: 'Prepaid Credits',
+        selectAmount: 'Select Credit Package',
+        selectPayment: 'Select Payment Method',
+        cancel: 'Cancel',
+        payNow: 'Pay Now',
+        chooseAmount: 'Please select a credit package and payment method',
+        '1hour': '1 hour',
+        '5hours': '5 hours',
+        '10hours': '10 hours',
+        alipay: 'AliPay',
+        wechatpay: 'WeChat Pay',
+        card: 'Credit/Debit Card',
+        errorRedirect: 'Failed to redirect to payment page',
+      },
+      sidebar: {
+        agents: 'Agents',
+        newAgent: 'New Agent',
+        tooltipNewAgent: 'Create a new agent',
       },
     }
   },
@@ -1766,22 +1785,36 @@ const resources = {
   }
 };
 
-// Get language from localStorage if available, otherwise default to 'en'
-let lng = 'en';
-if (typeof window !== 'undefined') {
-  lng = localStorage.getItem('i18nextLng') || 'en';
+function getCookieLang() {
+  if (typeof document !== 'undefined') {
+    // Client: read cookie
+    const match = document.cookie.match(/(?:^|; )i18next=([^;]*)/);
+    if (match) return decodeURIComponent(match[1]);
+  }
+  return undefined;
 }
 
-i18n
-  // .use(LanguageDetector) // Removed
-  .use(initReactI18next)
-  .init({
-    resources,
-    lng,
-    fallbackLng: 'en',
-    interpolation: {
-      escapeValue: false
-    }
-  });
+let initialized = false;
+
+export function initI18n(langFromHeader?: string) {
+  if (initialized) return i18n;
+  let lng = langFromHeader || getCookieLang() || 'en';
+  if (typeof window !== 'undefined') {
+    // Fallback to localStorage if cookie not set
+    lng = getCookieLang() || localStorage.getItem('i18nextLng') || 'en';
+  }
+  i18n
+    .use(initReactI18next)
+    .init({
+      resources,
+      lng,
+      fallbackLng: 'en',
+      interpolation: {
+        escapeValue: false
+      }
+    });
+  initialized = true;
+  return i18n;
+}
 
 export default i18n; 
