@@ -52,9 +52,9 @@ export function UseCasesSection() {
                       {useCase.icon}
                     </svg>
                   </div>
-                  <h3 className="text-lg font-medium line-clamp-1">{t(`useCases.${useCase.id}.title`, useCase.title)}</h3>
+                  <h3 className="text-lg font-medium line-clamp-1 text-primary-foreground">{t(`useCases.${useCase.id}.title`, useCase.title)}</h3>
                 </div>
-                <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">{t(`useCases.${useCase.id}.description`, useCase.description)}</p>
+                <p className="text-sm text-primary-foreground leading-relaxed line-clamp-3">{t(`useCases.${useCase.id}.description`, useCase.description)}</p>
               </div>
               
               <div className="mt-auto">
@@ -63,21 +63,10 @@ export function UseCasesSection() {
                 <div className="w-full h-[160px] bg-accent/10">
                   <div className="relative w-full h-full overflow-hidden">
                     <img 
-                      src={useCase.image || `https://placehold.co/800x400/f5f5f5/666666?text=Suna+${useCase.title.split(' ').join('+')}`}
-                      alt={`Suna ${useCase.title}`}
+                      src={useCase.image || `https://placehold.co/800x400/f5f5f5/666666?text=Dobby+${useCase.title.split(' ').join('+')}`}
+                      alt={`Dobby ${useCase.title}`}
                       className="w-full h-full object-cover"
                     />
-                    <a
-                      href={useCase.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 hover:opacity-100 transition-opacity flex items-end justify-start p-4 group"
-                    >
-                      <span className="flex items-center gap-2 text-sm text-white font-medium">
-                        {t('useCases.watchReplay')}
-                        <ArrowRight className="size-4 transform group-hover:translate-x-1 transition-transform" />
-                      </span>
-                    </a>
                   </div>
                 </div>
               </div>
