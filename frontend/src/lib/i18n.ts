@@ -132,6 +132,7 @@ const resources = {
         wechatpay: 'WeChat Pay',
         card: 'Credit/Debit Card',
         errorRedirect: 'Failed to redirect to payment page',
+        subscriptionUpgradeInfo: 'When you upgrade, you only pay the difference.',
       },
       sidebar: {
         agents: 'Agents',
@@ -710,6 +711,7 @@ const resources = {
         wechatpay: '微信支付',
         card: '信用卡/借记卡',
         errorRedirect: '跳转到支付页面失败',
+        subscriptionUpgradeInfo: '升级时，您只需支付差价。',
       },
       authReset: {
         passwordResetComplete: '密码重置完成',
@@ -1324,6 +1326,7 @@ const resources = {
         wechatpay: '微信支付',
         card: '信用卡/借记卡',
         errorRedirect: '跳转到支付页面失败',
+        subscriptionUpgradeInfo: '升级时，您只需支付差价。',
       },
       auth: {
         welcomeBack: '欢迎回来',
