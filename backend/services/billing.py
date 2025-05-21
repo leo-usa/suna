@@ -243,55 +243,37 @@ async def check_billing_status(client, user_id: str) -> Tuple[bool, str, Optiona
     Returns:
         Tuple[bool, str, Optional[Dict]]: (can_run, message, subscription_info)
     """
-    if config.ENV_MODE == EnvMode.LOCAL:
-        logger.info("Running in local development mode - billing checks are disabled")
-        return True, "Local development mode - billing disabled", {
-            "price_id": "local_dev",
-            "plan_name": "Local Development",
-            "minutes_limit": "no limit"
-        }
-    
-    # Get current subscription
+    logger.debug(f"[DEBUG] Checking billing status for user_id={user_id}")
     subscription = await get_user_subscription(user_id)
-    # print("Current subscription:", subscription)
-    
-    # If no subscription, they can use free tier
     if not subscription:
-        subscription = {
-            'price_id': config.STRIPE_FREE_TIER_ID,  # Free tier
-            'plan_name': 'free'
-        }
-    
-    # Extract price ID from subscription items
+        logger.debug(f"[DEBUG] No subscription found for user_id={user_id}")
+        return False, "No active subscription found.", None
+    # Get price_id from subscription, or use free tier
     price_id = None
     if subscription.get('items') and subscription['items'].get('data') and len(subscription['items']['data']) > 0:
         price_id = subscription['items']['data'][0]['price']['id']
     else:
-        price_id = subscription.get('price_id', config.STRIPE_FREE_TIER_ID)
-    
-    # Get tier info - default to free tier if not found
-    tier_info = SUBSCRIPTION_TIERS.get(price_id)
-    if not tier_info:
-        logger.warning(f"Unknown subscription tier: {price_id}, defaulting to free tier")
-        tier_info = SUBSCRIPTION_TIERS[config.STRIPE_FREE_TIER_ID]
-    
-    # Calculate current month's usage
+        price_id = config.STRIPE_FREE_TIER_ID  # Use your configured free tier price_id
+
+    tier_info = SUBSCRIPTION_TIERS.get(price_id, SUBSCRIPTION_TIERS[config.STRIPE_FREE_TIER_ID])
     current_usage = await calculate_monthly_usage(client, user_id)
-    
+    logger.debug(f"[DEBUG] User {user_id} current_usage={current_usage}, tier_limit={tier_info['minutes']}")
     # Check if within limits
     if current_usage < tier_info['minutes']:
+        logger.debug(f"[DEBUG] User {user_id} is within subscription minutes limit.")
         return True, "OK", subscription
-    
-    # If over subscription minutes, check credits
-    credits = await get_user_credits(client, user_id)
-    if credits > 0:
-        return True, f"Using prepaid credits: {credits:.2f} minutes left.", {
-            "plan_name": "prepaid",
-            "minutes_limit": credits,
-            "current_usage": 0,
-            "price_id": None
-        }
-    
+    # --- Commented out credit fallback for debugging ---
+    # credits = await get_user_credits(client, user_id)
+    # logger.debug(f"[DEBUG] User {user_id} credits={credits}")
+    # if credits > 0:
+    #     logger.debug(f"[DEBUG] User {user_id} can use prepaid credits: {credits:.2f} minutes left.")
+    #     return True, f"Using prepaid credits: {credits:.2f} minutes left.", {
+    #         "plan_name": "prepaid",
+    #         "minutes_limit": credits,
+    #         "current_usage": 0,
+    #         "price_id": None
+    #     }
+    logger.debug(f"[DEBUG] User {user_id} exceeded subscription minutes and has no prepaid credits.")
     return False, f"Monthly limit of {tier_info['minutes']} minutes reached and no prepaid credits available. Please upgrade your plan or top up credits.", subscription
 
 # API endpoints
