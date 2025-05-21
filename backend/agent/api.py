@@ -10,6 +10,7 @@ import jwt
 from pydantic import BaseModel
 import tempfile
 import os
+from dateutil import parser
 
 from agentpress.thread_manager import ThreadManager
 from services.supabase import DBConnection
@@ -596,204 +597,211 @@ async def run_agent_background(
     stream: bool,
     enable_context_manager: bool
 ):
-    """Run the agent in the background using Redis for state."""
-    logger.debug(f"Starting background agent run: {agent_run_id} for thread: {thread_id} (Instance: {instance_id})")
-    client = await db.client
-    start_time = datetime.now(timezone.utc)
-    total_responses = 0
-    pubsub = None
-    stop_checker = None
-    stop_signal_received = False
-
-    # Define Redis keys and channels
-    response_list_key = f"agent_run:{agent_run_id}:responses"
-    response_channel = f"agent_run:{agent_run_id}:new_response"
-    instance_control_channel = f"agent_run:{agent_run_id}:control:{instance_id}"
-    global_control_channel = f"agent_run:{agent_run_id}:control"
-    instance_active_key = f"active_run:{instance_id}:{agent_run_id}"
-
-    async def check_for_stop_signal():
-        nonlocal stop_signal_received
-        if not pubsub: return
-        try:
-            while not stop_signal_received:
-                message = await pubsub.get_message(ignore_subscribe_messages=True, timeout=0.5)
-                if message and message.get("type") == "message":
-                    data = message.get("data")
-                    if isinstance(data, bytes): data = data.decode('utf-8')
-                    if data == "STOP":
-                        logger.info(f"Received STOP signal for agent run {agent_run_id} (Instance: {instance_id})")
-                        stop_signal_received = True
-                        break
-                # Periodically refresh the active run key TTL
-                if total_responses % 50 == 0: # Refresh every 50 responses or so
-                    try: await redis.expire(instance_active_key, redis.REDIS_KEY_TTL)
-                    except Exception as ttl_err: logger.warning(f"Failed to refresh TTL for {instance_active_key}: {ttl_err}")
-                await asyncio.sleep(0.1) # Short sleep to prevent tight loop
-        except asyncio.CancelledError:
-            logger.info(f"Stop signal checker cancelled for {agent_run_id} (Instance: {instance_id})")
-        except Exception as e:
-            logger.error(f"Error in stop signal checker for {agent_run_id}: {e}", exc_info=True)
-            stop_signal_received = True # Stop the run if the checker fails
-
+    logger.debug(f"[DEBUG] Entered run_agent_background for agent_run_id={agent_run_id}, thread_id={thread_id}")
     try:
-        # Setup Pub/Sub listener for control signals
-        pubsub = await redis.create_pubsub()
-        await pubsub.subscribe(instance_control_channel, global_control_channel)
-        logger.debug(f"Subscribed to control channels: {instance_control_channel}, {global_control_channel}")
-        stop_checker = asyncio.create_task(check_for_stop_signal())
+        start_time = datetime.now(timezone.utc)
+        logger.debug(f"[DEBUG] Start time: {start_time.isoformat()}")
+        client = await db.client
+        total_responses = 0
+        pubsub = None
+        stop_checker = None
+        stop_signal_received = False
 
-        # Ensure active run key exists and has TTL
-        await redis.set(instance_active_key, "running", ex=redis.REDIS_KEY_TTL)
+        # Define Redis keys and channels
+        response_list_key = f"agent_run:{agent_run_id}:responses"
+        response_channel = f"agent_run:{agent_run_id}:new_response"
+        instance_control_channel = f"agent_run:{agent_run_id}:control:{instance_id}"
+        global_control_channel = f"agent_run:{agent_run_id}:control"
+        instance_active_key = f"active_run:{instance_id}:{agent_run_id}"
 
-        # Initialize agent generator
-        agent_gen = run_agent(
-            thread_id=thread_id, project_id=project_id, stream=stream,
-            thread_manager=thread_manager, model_name=model_name,
-            enable_thinking=enable_thinking, reasoning_effort=reasoning_effort,
-            enable_context_manager=enable_context_manager
-        )
-
-        final_status = "running"
-        error_message = None
-
-        async for response in agent_gen:
-            if stop_signal_received:
-                logger.info(f"Agent run {agent_run_id} stopped by signal.")
-                final_status = "stopped"
-                break
-
-            # Store response in Redis list and publish notification
-            response_json = json.dumps(response)
-            await redis.rpush(response_list_key, response_json)
-            await redis.publish(response_channel, "new")
-            total_responses += 1
-
-            # Check for agent-signaled completion or error
-            if response.get('type') == 'status':
-                 status_val = response.get('status')
-                 if status_val in ['completed', 'failed', 'stopped']:
-                     logger.info(f"Agent run {agent_run_id} finished via status message: {status_val}")
-                     final_status = status_val
-                     if status_val == 'failed' or status_val == 'stopped':
-                         error_message = response.get('message', f"Run ended with status: {status_val}")
-                     break
-
-        # If loop finished without explicit completion/error/stop signal, mark as completed
-        if final_status == "running":
-             final_status = "completed"
-             duration = (datetime.now(timezone.utc) - start_time).total_seconds()
-             logger.info(f"Agent run {agent_run_id} completed normally (duration: {duration:.2f}s, responses: {total_responses})")
-             completion_message = {"type": "status", "status": "completed", "message": "Agent run completed successfully"}
-             await redis.rpush(response_list_key, json.dumps(completion_message))
-             await redis.publish(response_channel, "new") # Notify about the completion message
-
-        # Fetch final responses from Redis for DB update
-        all_responses_json = await redis.lrange(response_list_key, 0, -1)
-        all_responses = [json.loads(r) for r in all_responses_json]
-
-        # Update DB status
-        await update_agent_run_status(client, agent_run_id, final_status, error=error_message, responses=all_responses)
-
-        # --- Deduct prepaid credits if needed ---
-        if final_status == "completed":
+        async def check_for_stop_signal():
+            nonlocal stop_signal_received
+            if not pubsub: return
             try:
-                # Get account_id from thread
-                account_id = await get_account_id_from_thread(client, thread_id)
-                # Check billing status to see if user is on credits
-                can_run, billing_message, subscription = await check_billing_status(client, account_id)
-                # If plan_name is 'prepaid' (from billing.py), deduct minutes
-                if subscription and subscription.get("plan_name") == "prepaid":
-                    # Calculate run duration in minutes
-                    started_at = None
-                    completed_at = None
-                    # Fetch agent_run row for timestamps
-                    agent_run_row = await client.table('agent_runs').select('started_at', 'completed_at').eq('id', agent_run_id).maybe_single().execute()
-                    if agent_run_row.data:
-                        started_at = agent_run_row.data.get('started_at')
-                        completed_at = agent_run_row.data.get('completed_at')
-                    if started_at and completed_at:
-                        from datetime import datetime
-                        from dateutil import parser
-                        start_dt = parser.isoparse(started_at)
-                        end_dt = parser.isoparse(completed_at)
-                        run_minutes = max(0.1, (end_dt - start_dt).total_seconds() / 60)
-                        # Deduct from credits
-                        success = await deduct_user_credits(client, account_id, run_minutes)
-                        if success:
-                            logger.info(f"Deducted {run_minutes:.2f} minutes from prepaid credits for user {account_id} after agent run {agent_run_id}")
-                        else:
-                            logger.error(f"Failed to deduct {run_minutes:.2f} minutes from credits for user {account_id} (insufficient balance?) after agent run {agent_run_id}")
+                while not stop_signal_received:
+                    message = await pubsub.get_message(ignore_subscribe_messages=True, timeout=0.5)
+                    if message and message.get("type") == "message":
+                        data = message.get("data")
+                        if isinstance(data, bytes): data = data.decode('utf-8')
+                        if data == "STOP":
+                            logger.info(f"Received STOP signal for agent run {agent_run_id} (Instance: {instance_id})")
+                            stop_signal_received = True
+                            break
+                    # Periodically refresh the active run key TTL
+                    if total_responses % 50 == 0: # Refresh every 50 responses or so
+                        try: await redis.expire(instance_active_key, redis.REDIS_KEY_TTL)
+                        except Exception as ttl_err: logger.warning(f"Failed to refresh TTL for {instance_active_key}: {ttl_err}")
+                    await asyncio.sleep(0.1) # Short sleep to prevent tight loop
+            except asyncio.CancelledError:
+                logger.info(f"Stop signal checker cancelled for {agent_run_id} (Instance: {instance_id})")
             except Exception as e:
-                logger.error(f"Error deducting prepaid credits for agent run {agent_run_id}: {e}")
+                logger.error(f"Error in stop signal checker for {agent_run_id}: {e}", exc_info=True)
+                stop_signal_received = True # Stop the run if the checker fails
 
-        # Publish final control signal (END_STREAM or ERROR)
-        control_signal = "END_STREAM" if final_status == "completed" else "ERROR" if final_status == "failed" else "STOP"
         try:
-            await redis.publish(global_control_channel, control_signal)
-            # No need to publish to instance channel as the run is ending on this instance
-            logger.debug(f"Published final control signal '{control_signal}' to {global_control_channel}")
+            # Setup Pub/Sub listener for control signals
+            pubsub = await redis.create_pubsub()
+            await pubsub.subscribe(instance_control_channel, global_control_channel)
+            logger.debug(f"Subscribed to control channels: {instance_control_channel}, {global_control_channel}")
+            stop_checker = asyncio.create_task(check_for_stop_signal())
+
+            # Ensure active run key exists and has TTL
+            await redis.set(instance_active_key, "running", ex=redis.REDIS_KEY_TTL)
+
+            # Initialize agent generator
+            logger.debug(f"[DEBUG] About to create agent generator for agent_run_id={agent_run_id}")
+            agent_gen = run_agent(
+                thread_id=thread_id, project_id=project_id, stream=stream,
+                thread_manager=thread_manager, model_name=model_name,
+                enable_thinking=enable_thinking, reasoning_effort=reasoning_effort,
+                enable_context_manager=enable_context_manager
+            )
+            logger.debug(f"[DEBUG] Agent generator created for agent_run_id={agent_run_id}")
+            try:
+                final_status = "running"
+                error_message = None
+
+                async for response in agent_gen:
+                    logger.debug(f"[DEBUG] Received response from agent_gen: {response}")
+                    if stop_signal_received:
+                        logger.info(f"Agent run {agent_run_id} stopped by signal.")
+                        final_status = "stopped"
+                        break
+                    # Store response in Redis list and publish notification
+                    response_json = json.dumps(response)
+                    await redis.rpush(response_list_key, response_json)
+                    await redis.publish(response_channel, "new")
+                    total_responses += 1
+                    # Check for agent-signaled completion or error
+                    if response.get('type') == 'status':
+                         status_val = response.get('status')
+                         if status_val in ['completed', 'failed', 'stopped']:
+                             logger.info(f"Agent run {agent_run_id} finished via status message: {status_val}")
+                             final_status = status_val
+                             if status_val == 'failed' or status_val == 'stopped':
+                                 error_message = response.get('message', f"Run ended with status: {status_val}")
+                             break
+            except Exception as e:
+                logger.error(f"[DEBUG] Exception while iterating agent_gen for agent_run_id={agent_run_id}: {e}")
+                raise
+
+            # If loop finished without explicit completion/error/stop signal, mark as completed
+            if final_status == "running":
+                 final_status = "completed"
+                 duration = (datetime.now(timezone.utc) - start_time).total_seconds()
+                 logger.info(f"Agent run {agent_run_id} completed normally (duration: {duration:.2f}s, responses: {total_responses})")
+                 completion_message = {"type": "status", "status": "completed", "message": "Agent run completed successfully"}
+                 await redis.rpush(response_list_key, json.dumps(completion_message))
+                 await redis.publish(response_channel, "new") # Notify about the completion message
+
+            # Fetch final responses from Redis for DB update
+            all_responses_json = await redis.lrange(response_list_key, 0, -1)
+            all_responses = [json.loads(r) for r in all_responses_json]
+
+            # Update DB status
+            await update_agent_run_status(client, agent_run_id, final_status, error=error_message, responses=all_responses)
+
+            # --- Deduct prepaid credits if needed ---
+            if final_status == "completed":
+                try:
+                    # Get account_id from thread
+                    account_id = await get_account_id_from_thread(client, thread_id)
+                    # Check billing status to see if user is on credits
+                    can_run, billing_message, subscription = await check_billing_status(client, account_id)
+                    # If plan_name is 'prepaid' (from billing.py), deduct minutes
+                    if subscription and subscription.get("plan_name") == "prepaid":
+                        # Calculate run duration in minutes
+                        started_at = None
+                        completed_at = None
+                        # Fetch agent_run row for timestamps
+                        agent_run_row = await client.table('agent_runs').select('started_at', 'completed_at').eq('id', agent_run_id).maybe_single().execute()
+                        if agent_run_row.data:
+                            started_at = agent_run_row.data.get('started_at')
+                            completed_at = agent_run_row.data.get('completed_at')
+                        if started_at and completed_at:
+                            start_dt = parser.isoparse(started_at)
+                            end_dt = parser.isoparse(completed_at)
+                            run_minutes = max(0.1, (end_dt - start_dt).total_seconds() / 60)
+                            # Deduct from credits
+                            success = await deduct_user_credits(client, account_id, run_minutes)
+                            if success:
+                                logger.info(f"Deducted {run_minutes:.2f} minutes from prepaid credits for user {account_id} after agent run {agent_run_id}")
+                            else:
+                                logger.error(f"Failed to deduct {run_minutes:.2f} minutes from credits for user {account_id} (insufficient balance?) after agent run {agent_run_id}")
+                except Exception as e:
+                    logger.error(f"Error deducting prepaid credits for agent run {agent_run_id}: {e}")
+
+            # Publish final control signal (END_STREAM or ERROR)
+            control_signal = "END_STREAM" if final_status == "completed" else "ERROR" if final_status == "failed" else "STOP"
+            try:
+                await redis.publish(global_control_channel, control_signal)
+                # No need to publish to instance channel as the run is ending on this instance
+                logger.debug(f"Published final control signal '{control_signal}' to {global_control_channel}")
+            except Exception as e:
+                logger.warning(f"Failed to publish final control signal {control_signal}: {str(e)}")
+
         except Exception as e:
-            logger.warning(f"Failed to publish final control signal {control_signal}: {str(e)}")
+            error_message = str(e)
+            traceback_str = traceback.format_exc()
+            duration = (datetime.now(timezone.utc) - start_time).total_seconds()
+            logger.error(f"Error in agent run {agent_run_id} after {duration:.2f}s: {error_message}\n{traceback_str} (Instance: {instance_id})")
+            final_status = "failed"
+
+            # Push error message to Redis list
+            error_response = {"type": "status", "status": "error", "message": error_message}
+            try:
+                await redis.rpush(response_list_key, json.dumps(error_response))
+                await redis.publish(response_channel, "new")
+            except Exception as redis_err:
+                 logger.error(f"Failed to push error response to Redis for {agent_run_id}: {redis_err}")
+
+            # Fetch final responses (including the error)
+            all_responses = []
+            try:
+                 all_responses_json = await redis.lrange(response_list_key, 0, -1)
+                 all_responses = [json.loads(r) for r in all_responses_json]
+            except Exception as fetch_err:
+                 logger.error(f"Failed to fetch responses from Redis after error for {agent_run_id}: {fetch_err}")
+                 all_responses = [error_response] # Use the error message we tried to push
+
+            # Update DB status
+            await update_agent_run_status(client, agent_run_id, "failed", error=f"{error_message}\n{traceback_str}", responses=all_responses)
+
+            # Publish ERROR signal
+            try:
+                await redis.publish(global_control_channel, "ERROR")
+                logger.debug(f"Published ERROR signal to {global_control_channel}")
+            except Exception as e:
+                logger.warning(f"Failed to publish ERROR signal: {str(e)}")
+
+        finally:
+            # Cleanup stop checker task
+            if stop_checker and not stop_checker.done():
+                stop_checker.cancel()
+                try: await stop_checker
+                except asyncio.CancelledError: pass
+                except Exception as e: logger.warning(f"Error during stop_checker cancellation: {e}")
+
+            # Close pubsub connection
+            if pubsub:
+                try:
+                    await pubsub.unsubscribe()
+                    await pubsub.close()
+                    logger.debug(f"Closed pubsub connection for {agent_run_id}")
+                except Exception as e:
+                    logger.warning(f"Error closing pubsub for {agent_run_id}: {str(e)}")
+
+            # Set TTL on the response list in Redis
+            await _cleanup_redis_response_list(agent_run_id)
+
+            # Remove the instance-specific active run key
+            await _cleanup_redis_instance_key(agent_run_id)
+
+            logger.info(f"Agent run background task fully completed for: {agent_run_id} (Instance: {instance_id}) with final status: {final_status}")
 
     except Exception as e:
-        error_message = str(e)
-        traceback_str = traceback.format_exc()
-        duration = (datetime.now(timezone.utc) - start_time).total_seconds()
-        logger.error(f"Error in agent run {agent_run_id} after {duration:.2f}s: {error_message}\n{traceback_str} (Instance: {instance_id})")
-        final_status = "failed"
-
-        # Push error message to Redis list
-        error_response = {"type": "status", "status": "error", "message": error_message}
-        try:
-            await redis.rpush(response_list_key, json.dumps(error_response))
-            await redis.publish(response_channel, "new")
-        except Exception as redis_err:
-             logger.error(f"Failed to push error response to Redis for {agent_run_id}: {redis_err}")
-
-        # Fetch final responses (including the error)
-        all_responses = []
-        try:
-             all_responses_json = await redis.lrange(response_list_key, 0, -1)
-             all_responses = [json.loads(r) for r in all_responses_json]
-        except Exception as fetch_err:
-             logger.error(f"Failed to fetch responses from Redis after error for {agent_run_id}: {fetch_err}")
-             all_responses = [error_response] # Use the error message we tried to push
-
-        # Update DB status
-        await update_agent_run_status(client, agent_run_id, "failed", error=f"{error_message}\n{traceback_str}", responses=all_responses)
-
-        # Publish ERROR signal
-        try:
-            await redis.publish(global_control_channel, "ERROR")
-            logger.debug(f"Published ERROR signal to {global_control_channel}")
-        except Exception as e:
-            logger.warning(f"Failed to publish ERROR signal: {str(e)}")
-
-    finally:
-        # Cleanup stop checker task
-        if stop_checker and not stop_checker.done():
-            stop_checker.cancel()
-            try: await stop_checker
-            except asyncio.CancelledError: pass
-            except Exception as e: logger.warning(f"Error during stop_checker cancellation: {e}")
-
-        # Close pubsub connection
-        if pubsub:
-            try:
-                await pubsub.unsubscribe()
-                await pubsub.close()
-                logger.debug(f"Closed pubsub connection for {agent_run_id}")
-            except Exception as e:
-                logger.warning(f"Error closing pubsub for {agent_run_id}: {str(e)}")
-
-        # Set TTL on the response list in Redis
-        await _cleanup_redis_response_list(agent_run_id)
-
-        # Remove the instance-specific active run key
-        await _cleanup_redis_instance_key(agent_run_id)
-
-        logger.info(f"Agent run background task fully completed for: {agent_run_id} (Instance: {instance_id}) with final status: {final_status}")
+        logger.error(f"[DEBUG] Exception in run_agent_background for agent_run_id={agent_run_id}: {e}")
+        raise
 
 async def generate_and_update_project_name(project_id: str, prompt: str):
     """Generates a project name using an LLM and updates the database."""
