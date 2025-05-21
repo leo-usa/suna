@@ -138,6 +138,14 @@ const resources = {
         newAgent: 'New Agent',
         tooltipNewAgent: 'Create a new agent',
       },
+      agentDetail: {
+        streamError: 'Agent stream error',
+        loadError: 'Failed to load thread',
+        cannotViewDetails: 'Cannot view details: Assistant message ID is missing.',
+        couldNotFindDetails: 'Could not find details for this tool call.',
+        sendAMessage: 'Send a message to start.',
+        inputPlaceholder: 'Type your message...'
+      },
     }
   },
   de: {
@@ -752,6 +760,14 @@ const resources = {
         backToHome: '返回首页',
         enterEmailToReset: '请输入你的邮箱地址，我们会发送一封重置密码的邮件给你。',
       },
+      agentDetail: {
+        streamError: '智能体流错误',
+        loadError: '加载对话失败',
+        cannotViewDetails: '无法查看详情：缺少助手消息 ID。',
+        couldNotFindDetails: '未找到此工具调用的详情。',
+        sendAMessage: '发送消息以开始。',
+        inputPlaceholder: '输入你的消息...'
+      },
     }
   },
   'pt-PT': {
@@ -1353,6 +1369,14 @@ const resources = {
         resetPassword: '重置密码',
         backToHome: '返回首页',
         enterEmailToReset: '请输入你的邮箱地址，我们会发送一封重置密码的邮件给你。',
+      },
+      agentDetail: {
+        streamError: '智能体流错误',
+        loadError: '加载对话失败',
+        cannotViewDetails: '无法查看详情：缺少助手消息 ID。',
+        couldNotFindDetails: '未找到此工具调用的详情。',
+        sendAMessage: '发送消息以开始。',
+        inputPlaceholder: '输入你的消息...'
       },
     }
   },
