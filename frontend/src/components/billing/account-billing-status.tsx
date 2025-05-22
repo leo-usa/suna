@@ -93,9 +93,9 @@ export default function AccountBillingStatus({ accountId, returnUrl }: Props) {
     const handleManageSubscription = async () => {
         try {
             setIsManaging(true);
-            // Map i18n.language to Stripe locale (always use 'zh-CN' for Simplified Chinese)
+            // Map i18n.language to Stripe locale (patch: map zh-CN to zh)
             let locale = i18n.language;
-            if (locale === 'zh-CN') locale = 'zh-CN';
+            if (locale === 'zh-CN') locale = 'zh';
             else if (locale === 'zh-TW') locale = 'zh-TW';
             else if (locale === 'en-US' || locale === 'en') locale = 'en';
             else if (locale === 'es') locale = 'es';

@@ -1,5 +1,5 @@
 export const siteConfig = {
-  name: "Suna",
+  name: "Dobby",
   url: "https://www.drpang.ai/",
   description: "DrPang.AI",
   links: {
