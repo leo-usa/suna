@@ -47,8 +47,8 @@ function DashboardContent() {
         // Create a FormData instance
         const formData = new FormData();
 
-        // Append the message
-        formData.append('message', message);
+        // Append the prompt (was 'message', should be 'prompt')
+        formData.append('prompt', message);
 
         // Append all files
         files.forEach(file => {
