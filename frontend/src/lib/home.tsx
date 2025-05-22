@@ -1092,9 +1092,9 @@ export const siteConfig = {
     {
       title: "Legal",
       links: [
-        { id: 9, title: "Privacy Policy", url: "https://dobby.so/legal?tab=privacy" },
-        { id: 10, title: "Terms of Service", url: "https://dobby.so/legal?tab=terms" },
-        { id: 11, title: "License Apache 2.0", url: "https://github.com/DrPang-ai/Dobby/blob/main/LICENSE" },
+        { id: 9, title: "Privacy", url: "https://dobby.so/legal?tab=privacy" },
+        { id: 10, title: "Terms", url: "https://dobby.so/legal?tab=terms" },
+        { id: 11, title: "License", url: "https://github.com/DrPang-ai/Dobby/blob/main/LICENSE" },
       ],
     },
   ],
