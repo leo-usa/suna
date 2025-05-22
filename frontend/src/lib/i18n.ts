@@ -37,10 +37,11 @@ const resources = {
         subtext: 'No credit card required.'
       },
       footer: {
-        description: 'Dobby is your AI employee. Provided by DrPang.AI.',
+        description: 'Dobby is your open source AI employee. Built by DrPang.AI.',
         links: {
           Product: 'Product',
           Pricing: 'Pricing',
+          Docs: 'Docs',
           Blog: 'Blog',
           Company: 'Company',
           About: 'About',
@@ -49,14 +50,21 @@ const resources = {
           Legal: 'Legal',
           Privacy: 'Privacy',
           Terms: 'Terms',
-        }
+          Suna: 'Dobby',
+        },
+        about: '关于',
+        contact: '联系',
+        careers: '招聘',
+        legal: '法律',
+        privacy: '隐私',
+        terms: '条款',
       },
       pricing: {
         title: 'Choose the right plan for your needs',
         subtitle: 'Start with our free plan or upgrade to a premium plan for more usage hours',
         tabs: {
           cloud: 'Cloud',
-          selfHosted: 'Self-hosted'
+          selfHosted: 'Self-hosted',
         },
         selectPlan: 'Select Plan',
         hireSuna: 'Hire Dobby',
@@ -81,7 +89,7 @@ const resources = {
           Pro: 'Pro',
           ProDesc: 'For professionals and growing teams.',
           Custom: 'Custom',
-          CustomDesc: 'Customize your plan to fit your needs.'
+          CustomDesc: 'Customize your plan to fit your needs.',
         },
         features: {
           'Unlimited agents': 'Unlimited agents',
@@ -886,7 +894,7 @@ const resources = {
       },
       useCases: {
         title: '应用场景',
-        subtitle: '了解 Suna 能为你做什么。',
+        subtitle: '了解 Dobby 能为你做什么。',
         watchReplay: '观看回放',
         none: '暂无可用的用例。',
         'competitor-analysis': {
@@ -923,7 +931,7 @@ const resources = {
         },
         'seo-analysis': {
           title: 'SEO 分析',
-          description: '基于我的网站 suna.so，生成 SEO 分析报告，找出按关键词聚类的高排名页面，并识别缺失主题。'
+          description: '基于我的网站 DrPang.AI，生成 SEO 分析报告，找出按关键词聚类的高排名页面，并识别缺失主题。'
         },
         'personal-trip': {
           title: '个人旅行规划',
@@ -940,10 +948,10 @@ const resources = {
       },
       openSource: {
         title: '开源',
-        subtitle: 'Suna 完全开源且透明。',
+        subtitle: 'Dobby 完全开源且透明。',
         repo: 'GitHub 仓库',
-        mainTitle: 'Suna 核心',
-        mainDesc: '驱动 Suna 的核心引擎，人人可用。',
+        mainTitle: 'Dobby 核心',
+        mainDesc: '驱动 Dobby 的核心引擎，人人可用。',
         viewOnGithub: '在 GitHub 查看',
         transparencyTitle: '透明与社区',
         transparencyDesc: '我们相信开放开发和社区驱动的进步。',
@@ -966,15 +974,15 @@ const resources = {
         description: 'Dobby是你的AI打工狗，由庞博士提供',
         links: {
           Suna: 'Dobby',
-          Pricing: 'Pricing',
+          Pricing: '价格',
           Blog: 'Blog',
           Company: 'Company',
-          About: 'About',
-          Careers: 'Careers',
-          Contact: 'Contact',
-          Legal: 'Legal',
-          Privacy: 'Privacy',
-          Terms: 'Terms',
+          About: '关于',
+          Careers: '招聘',
+          Contact: '联系',
+          Legal: '法律',
+          Privacy: '隐私',
+          Terms: '条款',
         },
         about: '关于',
         contact: '联系',
@@ -1014,7 +1022,7 @@ const resources = {
         localMode: '本地开发模式下，计费功能已禁用',
         tiers: {
           Free: '免费',
-          FreeDesc: '免费开始使用 Suna。',
+          FreeDesc: '免费开始使用 Dobby。',
           Base: '基础',
           BaseDesc: '适合个人和小型团队。',
           Pro: '专业',
