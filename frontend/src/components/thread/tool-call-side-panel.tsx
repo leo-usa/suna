@@ -306,7 +306,7 @@ export function ToolCallSidePanel({
           <div className="pt-4 pl-4 pr-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-100">{t('rightPanel.title', "Suna's Computer")}</h2>
+                <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-100">{t('rightPanel.title', "Dobby's computer")}</h2>
               </div>
               
               <Button 
@@ -350,7 +350,7 @@ export function ToolCallSidePanel({
           <div className="pt-4 pl-4 pr-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-100">{t('rightPanel.title', "Suna's Computer")}</h2>
+                <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-100">{t('rightPanel.title', "Dobby's computer")}</h2>
               </div>
               
               <Button 
@@ -377,7 +377,7 @@ export function ToolCallSidePanel({
         <div className="pt-4 pl-4 pr-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-100">{t('rightPanel.title', "Suna's Computer")}</h2>
+              <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-100">{t('rightPanel.title', "Dobby's computer")}</h2>
             </div>
             
             {currentToolCall.toolResult?.content && !isStreaming && (
