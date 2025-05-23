@@ -154,6 +154,13 @@ const resources = {
         sendAMessage: 'Send a message to start.',
         inputPlaceholder: 'Type your message...'
       },
+      chatInput: {
+        placeholder: 'Describe what you need help with...',
+        attachFile: 'Attach file',
+        start: 'Start',
+        stop: 'Stop',
+        working: 'Dobby is working...'
+      },
     }
   },
   de: {
@@ -776,6 +783,13 @@ const resources = {
         sendAMessage: '发送消息以开始。',
         inputPlaceholder: '输入你的消息...'
       },
+      chatInput: {
+        placeholder: '描述你需要帮助的内容……',
+        attachFile: '附加文件',
+        start: '开始',
+        stop: '停止',
+        working: 'Dobby 正在工作……',
+      },
     }
   },
   'pt-PT': {
@@ -980,16 +994,16 @@ const resources = {
           About: '关于',
           Careers: '招聘',
           Contact: '联系',
-          Legal: '法律',
-          Privacy: '隐私',
-          Terms: '条款',
+          Legal: '法律声明',
+          Privacy: '隐私政策',
+          Terms: '服务条款',
         },
         about: '关于',
         contact: '联系',
         careers: '招聘',
-        legal: '法律',
-        privacy: '隐私',
-        terms: '条款',
+        legal: '法律声明',
+        privacy: '隐私政策',
+        terms: '服务条款',
       },
       nav: {
         Home: '首页',
@@ -1210,6 +1224,7 @@ const resources = {
       chatInput: {
         placeholder: '描述你需要帮助的内容……',
         attachFile: '附加文件',
+        start: '开始',
         stop: '停止',
         working: 'Dobby 正在工作……',
       },

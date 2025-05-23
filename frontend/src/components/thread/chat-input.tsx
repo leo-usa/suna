@@ -528,7 +528,7 @@ export const ChatInput = forwardRef<ChatInputHandles, ChatInputProps>(({
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="top">
-                <p>{t('chatInput.stop', 'Stop')}</p>
+                <p>{isAgentRunning ? t('chatInput.stop', 'Stop') : t('chatInput.start', 'Start')}</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
