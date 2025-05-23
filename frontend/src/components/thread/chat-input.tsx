@@ -78,7 +78,7 @@ export const ChatInput = forwardRef<ChatInputHandles, ChatInputProps>(({
   const [uncontrolledValue, setUncontrolledValue] = useState('');
   const value = isControlled ? controlledValue : uncontrolledValue;
 
-  const [selectedModel, setSelectedModel] = useState("sonnet-3.7");
+  const [selectedModel, setSelectedModel] = useState("sonnet-4");
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
@@ -338,6 +338,7 @@ export const ChatInput = forwardRef<ChatInputHandles, ChatInputProps>(({
   const modelOptions = [
     { id: "sonnet-3.7", label: "Sonnet 3.7" },
     { id: "sonnet-3.7-thinking", label: "Sonnet 3.7 (Thinking)" },
+    { id: "sonnet-4", label: "Sonnet 4" },
     { id: "gpt-4.1", label: "GPT-4.1" },
     { id: "gemini-flash-2.5", label: "Gemini Flash 2.5" }
   ];

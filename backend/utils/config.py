@@ -115,7 +115,7 @@ class Configuration:
     OPENROUTER_API_KEY: Optional[str] = None
     OPENROUTER_API_BASE: Optional[str] = "https://openrouter.ai/api/v1"
     OR_SITE_URL: Optional[str] = None
-    OR_APP_NAME: Optional[str] = "Suna.so"    
+    OR_APP_NAME: Optional[str] = "DrPang.AI"    
     
     # AWS Bedrock credentials
     AWS_ACCESS_KEY_ID: Optional[str] = None
@@ -123,7 +123,7 @@ class Configuration:
     AWS_REGION_NAME: Optional[str] = None
     
     # Model configuration
-    MODEL_TO_USE: Optional[str] = "anthropic/claude-3-7-sonnet-latest"
+    MODEL_TO_USE: Optional[str] = "anthropic/claude-sonnet-4"
     
     # Supabase configuration
     SUPABASE_URL: str

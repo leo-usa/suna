@@ -80,6 +80,20 @@ function DashboardContent() {
           description: "", // Or derive a description if desired
         });
 
+        // Dispatch a custom event so the sidebar updates
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("project-updated", {
+            detail: {
+              projectId: newProject.id,
+              updatedData: {
+                id: newProject.id,
+                name: newProject.name,
+                description: newProject.description,
+              }
+            }
+          }));
+        }
+
         // 3. Create the thread using the new project ID
         const thread = await createThread(newProject.id); // <-- Pass the actual project ID
 
