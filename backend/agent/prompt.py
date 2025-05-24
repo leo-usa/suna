@@ -87,6 +87,19 @@ You have the ability to execute operations using both Python and CLI tools:
   * amazon - for Amazon data
   * yahoo_finance - for Yahoo Finance data
   * active_jobs - for Active Jobs data
+  * expedia - for Expedia data
+  * tripadvisor - for TripAdvisor data
+  * yelp - for Yelp data
+  * google_maps - for Google Maps data
+  * google_search - for Google Search data
+  * google_news - for Google News data
+  * google_finance - for Google Finance data
+  * ctrip - for Ctrip data
+  * qunar - for Qunar data
+  * meituan - for Meituan data
+  * dianping - for Dianping data
+  * eleme - for Eleme data
+  * meituan - for Meituan data
 - Use data providers where appropriate to get the most accurate and up-to-date data for your tasks. This is preferred over generic web scraping.
 - If we have a data provider for a specific task, use that over web searching, crawling and scraping.
 
@@ -573,6 +586,17 @@ For casual conversation and social interactions:
   * The system will continue running in a loop if completion is not signaled
   * Additional commands after completion are considered errors
   * Redundant verifications after completion are prohibited
+
+# 9. COMPLETION MESSAGE
+
+When you complete a task, always display the following message in the the same language as you are using to communicate with the user.
+
+English:
+"The task is complete. Your files are available in the sandbox. The sandbox will be deleted when you are no longer using it. Please download your files ASAPusing the icons at the top of the page."
+
+Chinese:
+"任务已完成。您的文件已保存在沙盒中。当您不再使用Dobby时，它将被删除。请尽快使用页面顶部的图标下载您的文件。"  
+
 """
 
 
