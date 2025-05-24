@@ -209,7 +209,7 @@ async def calculate_monthly_usage(client, user_id: str) -> float:
 
 async def get_user_credits(client, user_id: str) -> float:
     """Get the user's available prepaid credit minutes."""
-    credits_result = await client.table('billing_credits') \
+    credits_result = await client.schema('basejump').table('billing_credits') \
         .select('balance_minutes') \
         .eq('account_id', user_id) \
         .execute()
@@ -219,7 +219,7 @@ async def get_user_credits(client, user_id: str) -> float:
 
 async def deduct_user_credits(client, user_id: str, minutes: float) -> bool:
     """Deduct minutes from user's credits. Returns True if successful, False if insufficient."""
-    credits_result = await client.table('billing_credits') \
+    credits_result = await client.schema('basejump').table('billing_credits') \
         .select('id, balance_minutes') \
         .eq('account_id', user_id) \
         .execute()
@@ -229,7 +229,7 @@ async def deduct_user_credits(client, user_id: str, minutes: float) -> bool:
         if current >= minutes:
             new_balance = current - minutes
             now = datetime.now(timezone.utc).isoformat()
-            await client.table('billing_credits').update({
+            await client.schema('basejump').table('billing_credits').update({
                 'balance_minutes': new_balance,
                 'last_updated': now
             }).eq('id', row['id']).execute()
@@ -771,30 +771,34 @@ async def stripe_webhook(request: Request):
                 payload, sig_header, webhook_secret
             )
         except ValueError as e:
+            logger.error(f"[WEBHOOK] Invalid payload: {e}")
             raise HTTPException(status_code=400, detail="Invalid payload")
         except stripe.error.SignatureVerificationError as e:
+            logger.error(f"[WEBHOOK] Invalid signature: {e}")
             raise HTTPException(status_code=400, detail="Invalid signature")
         
+        logger.info(f"[WEBHOOK] Received event: {event.type}")
         # Handle the event
         if event.type in ['customer.subscription.created', 'customer.subscription.updated', 'customer.subscription.deleted']:
-            # We don't need to do anything here as we'll query Stripe directly
+            logger.debug(f"[WEBHOOK] Subscription event received: {event.type}")
             pass
         elif event.type == 'checkout.session.completed':
             session = event['data']['object']
             mode = session.get('mode')
             metadata = session.get('metadata', {})
+            logger.info(f"[WEBHOOK] checkout.session.completed: mode={mode}, metadata={metadata}")
             # Only handle one-time payment for credits
             if mode == 'payment' and metadata.get('minutes') and metadata.get('user_id'):
                 user_id = metadata['user_id']
                 minutes = int(metadata['minutes'])
                 source = metadata.get('source', 'stripe')
                 transaction_id = session['id']
-                logger.info(f"Crediting {minutes} minutes to user {user_id} from {source} (txn {transaction_id})")
+                logger.info(f"[WEBHOOK] Crediting {minutes} minutes to user {user_id} from {source} (txn {transaction_id})")
                 try:
                     db = DBConnection()
                     client = await db.client
                     # Upsert: if row exists, increment; else insert
-                    credits_result = await client.table('billing_credits') \
+                    credits_result = await client.schema('basejump').table('billing_credits') \
                         .select('id, balance_minutes') \
                         .eq('account_id', user_id) \
                         .execute()
@@ -803,24 +807,27 @@ async def stripe_webhook(request: Request):
                         # Update existing
                         row = credits_result.data[0]
                         new_balance = float(row['balance_minutes']) + minutes
-                        await client.table('billing_credits').update({
+                        logger.debug(f"[WEBHOOK] Updating existing credits: old={row['balance_minutes']}, new={new_balance}")
+                        await client.schema('basejump').table('billing_credits').update({
                             'balance_minutes': new_balance,
                             'last_updated': now,
                             'source': source,
                             'transaction_id': transaction_id
                         }).eq('id', row['id']).execute()
                     else:
-                        # Insert new
-                        await client.table('billing_credits').insert({
+                        logger.debug(f"[WEBHOOK] Inserting new credits row for user {user_id} with {minutes} minutes")
+                        await client.schema('basejump').table('billing_credits').insert({
                             'account_id': user_id,
                             'balance_minutes': minutes,
                             'last_updated': now,
                             'source': source,
                             'transaction_id': transaction_id
                         }).execute()
-                    logger.info(f"Successfully credited {minutes} minutes to user {user_id}")
+                    logger.info(f"[WEBHOOK] Successfully credited {minutes} minutes to user {user_id}")
                 except Exception as db_exc:
-                    logger.error(f"Failed to credit minutes to user {user_id}: {db_exc}")
+                    logger.error(f"[WEBHOOK] Failed to credit minutes to user {user_id}: {db_exc}")
+        else:
+            logger.debug(f"[WEBHOOK] Unhandled event type: {event.type}")
         
         return {"status": "success"}
         
@@ -859,6 +866,13 @@ async def create_credit_session(
 
         # --- New: Use price_id if provided ---
         if request.price_id:
+            # Map price_id to minutes
+            price_id_to_minutes = {
+                'price_1RQZVpP2cIDuyWfbF62E3dsi': 60,   # $9 for 1 hour
+                'price_1RQZVpP2cIDuyWfbgUnmBizh': 300,  # $49 for 5 hours
+                'price_1RQZVpP2cIDuyWfbcceSm4gM': 600,  # $99 for 10 hours
+            }
+            minutes = price_id_to_minutes.get(request.price_id, 0)
             session_kwargs = dict(
                 customer=customer_id,
                 payment_method_types=payment_method_types,
@@ -871,6 +885,7 @@ async def create_credit_session(
                 cancel_url=request.cancel_url,
                 metadata={
                     'user_id': current_user_id,
+                    'minutes': str(minutes),
                     'source': request.payment_method
                 }
             )
