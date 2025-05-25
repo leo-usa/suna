@@ -140,6 +140,10 @@ const resources = {
         card: 'Credit/Debit Card',
         errorRedirect: 'Failed to redirect to payment page',
         subscriptionUpgradeInfo: 'When you upgrade, you only pay the difference.',
+        usageLimitReached: 'Usage Limit Reached',
+        usageLimitMessage: 'Monthly limit of 360 minutes reached and no prepaid credits available. Please upgrade your plan or top up credits.',
+        dismiss: 'Dismiss',
+        upgradePlan: 'Upgrade Plan',
       },
       sidebar: {
         agents: 'Agents',
@@ -734,6 +738,10 @@ const resources = {
         card: '信用卡/借记卡',
         errorRedirect: '跳转到支付页面失败',
         subscriptionUpgradeInfo: '升级时，您只需支付差价。',
+        usageLimitReached: '用量已达上限',
+        usageLimitMessage: '本月 360 分钟额度已用完，且无可用预付费时长。请升级您的方案或充值时长。',
+        dismiss: '关闭',
+        upgradePlan: '升级方案',
       },
       authReset: {
         passwordResetComplete: '密码重置完成',
@@ -1364,6 +1372,10 @@ const resources = {
         card: '信用卡/借记卡',
         errorRedirect: '跳转到支付页面失败',
         subscriptionUpgradeInfo: '升级时，您只需支付差价。',
+        usageLimitReached: '用量已达上限',
+        usageLimitMessage: '本月 360 分钟额度已用完，且无可用预付费时长。请升级您的方案或充值时长。',
+        dismiss: '关闭',
+        upgradePlan: '升级方案',
       },
       auth: {
         welcomeBack: '欢迎回来',

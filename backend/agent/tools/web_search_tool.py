@@ -10,6 +10,12 @@ import json
 
 # TODO: add subpages, etc... in filters as sometimes its necessary 
 
+# Environment variable limits:
+#   WEB_SEARCH_MAX_RESULTS: max number of web search results (default 10, max 50)
+#   WEB_SCRAPE_MAX_CHARS: max number of characters to return from a scrape (default 8000, max 50000)
+#
+# Set these in your environment or .env file as needed.
+
 class WebSearchTool(Tool):
     """Tool for performing web searches using Tavily API and web scraping using Firecrawl."""
 
@@ -28,6 +34,9 @@ class WebSearchTool(Tool):
 
         # Tavily asynchronous search client
         self.tavily_client = AsyncTavilyClient(api_key=self.tavily_api_key)
+        # Read limits from environment
+        self.max_search_results = min(max(int(os.environ.get("WEB_SEARCH_MAX_RESULTS", 10)), 1), 50)
+        self.max_scrape_chars = min(max(int(os.environ.get("WEB_SCRAPE_MAX_CHARS", 8000)), 1000), 50000)
 
     @openapi_schema({
         "type": "function",
@@ -101,18 +110,18 @@ class WebSearchTool(Tool):
             if not query or not isinstance(query, str):
                 return self.fail_response("A valid search query is required.")
             
-            # Normalize num_results
+            # Enforce environment-based limit
             if num_results is None:
-                num_results = 20
+                num_results = self.max_search_results
             elif isinstance(num_results, int):
-                num_results = max(1, min(num_results, 50))
+                num_results = max(1, min(num_results, self.max_search_results))
             elif isinstance(num_results, str):
                 try:
-                    num_results = max(1, min(int(num_results), 50))
+                    num_results = max(1, min(int(num_results), self.max_search_results))
                 except ValueError:
-                    num_results = 20
+                    num_results = self.max_search_results
             else:
-                num_results = 20
+                num_results = self.max_search_results
 
             # Execute the search with Tavily
             search_response = await self.tavily_client.search(
@@ -288,6 +297,12 @@ class WebSearchTool(Tool):
             # Add metadata if available
             if "metadata" in data.get("data", {}):
                 formatted_result["Metadata"] = data["data"]["metadata"]
+            
+            # Truncate text to max_scrape_chars
+            text = data.get("data", {}).get("markdown", "")
+            if len(text) > self.max_scrape_chars:
+                text = text[:self.max_scrape_chars] + "\n...\n[Content truncated due to length limit]"
+            formatted_result["Text"] = text
             
             return self.success_response([formatted_result])
         

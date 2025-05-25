@@ -317,7 +317,50 @@ Here are the XML tools available with examples:
                     openapi_tool_schemas = self.tool_registry.get_openapi_schemas()
                     logger.debug(f"Retrieved {len(openapi_tool_schemas) if openapi_tool_schemas else 0} OpenAPI tool schemas")
 
-                # 6. Make LLM API call
+                # 6. Safeguard: Ensure input + max_tokens does not exceed model context window
+                from litellm import token_counter
+                MODEL_CONTEXT_LIMITS = {
+                    "anthropic/claude-sonnet-4-20250514": 200_000,
+                    "anthropic/claude-3-7-sonnet-latest": 200_000,
+                    # Add other models as needed
+                }
+                context_limit = MODEL_CONTEXT_LIMITS.get(llm_model, 100_000)  # Default to 100k if unknown
+                input_tokens = token_counter(model=llm_model, messages=prepared_messages)
+                max_tokens = llm_max_tokens or 4000
+                if input_tokens + max_tokens > context_limit:
+                    logger.warning(f"Input + max_tokens ({input_tokens} + {max_tokens}) exceeds context limit ({context_limit}). Truncating input.")
+                    # Always keep system prompt and latest user message
+                    def find_latest_user_index(msgs):
+                        for i in range(len(msgs) - 1, 0, -1):
+                            if msgs[i].get('role') == 'user':
+                                return i
+                        return -1
+                    latest_user_index = find_latest_user_index(prepared_messages)
+                    # Remove all messages except system prompt and latest user message
+                    while input_tokens + max_tokens > context_limit and len(prepared_messages) > 2:
+                        # Remove the oldest message after system prompt, but not the latest user message
+                        # Find the first non-system, non-latest-user message
+                        for i in range(1, len(prepared_messages)):
+                            if i != latest_user_index:
+                                prepared_messages.pop(i)
+                                if latest_user_index > i:
+                                    latest_user_index -= 1
+                                break
+                        input_tokens = token_counter(model=llm_model, messages=prepared_messages)
+                    # If still too large, truncate the latest user message's content
+                    if input_tokens + max_tokens > context_limit and len(prepared_messages) == 2:
+                        user_msg = prepared_messages[1]
+                        if isinstance(user_msg.get("content"), str):
+                            allowed_tokens = max(context_limit - max_tokens - 1000, 0)
+                            user_msg["content"] = user_msg["content"][:allowed_tokens] + "\n\n⚠️ Message truncated to fit the model's context window."
+                        input_tokens = token_counter(model=llm_model, messages=prepared_messages)
+                    # Optionally, notify the user
+                    prepared_messages.append({
+                        "role": "system",
+                        "content": "⚠️ Some earlier conversation or file content was truncated to fit the model's context window."
+                    })
+
+                # 7. Make LLM API call
                 logger.debug("Making LLM API call")
                 try:
                     llm_response = await make_llm_api_call(
@@ -337,7 +380,7 @@ Here are the XML tools available with examples:
                     logger.error(f"Failed to make LLM API call: {str(e)}", exc_info=True)
                     raise
 
-                # 7. Process LLM response using the ResponseProcessor
+                # 8. Process LLM response using the ResponseProcessor
                 if stream:
                     logger.debug("Processing streaming response")
                     response_generator = self.response_processor.process_streaming_response(
