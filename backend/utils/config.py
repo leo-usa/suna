@@ -163,6 +163,10 @@ class Configuration:
             return self.STRIPE_PRODUCT_ID_STAGING
         return self.STRIPE_PRODUCT_ID_PROD
     
+    # Environment variables for agent/tools/web_search_tool.py:
+    #   WEB_SEARCH_MAX_RESULTS: max number of web search results (default 10, max 50)
+    #   WEB_SCRAPE_MAX_CHARS: max number of characters to return from a scrape (default 8000, max 50000)
+    
     def __init__(self):
         """Initialize configuration by loading from environment variables."""
         # Load environment variables from .env file if it exists
