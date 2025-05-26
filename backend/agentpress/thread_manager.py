@@ -22,6 +22,7 @@ from agentpress.response_processor import (
 )
 from services.supabase import DBConnection
 from utils.logger import logger
+from agent.tools.replicate_image_tool import ReplicateImageTool
 
 # Type alias for tool choice
 ToolChoice = Literal["auto", "required", "none"]
@@ -45,6 +46,12 @@ class ThreadManager:
             add_message_callback=self.add_message
         )
         self.context_manager = ContextManager()
+        # Register Replicate image generation tool with required context
+        self.tool_registry.register_tool(
+            ReplicateImageTool,
+            project_id=None,  # TODO: Set actual project_id if available in context
+            thread_manager=self
+        )
 
     def add_tool(self, tool_class: Type[Tool], function_names: Optional[List[str]] = None, **kwargs):
         """Add a tool to the ThreadManager."""
@@ -247,6 +254,14 @@ Here are the XML tools available with examples:
                 # Ensure processor_config is available in this scope
                 nonlocal processor_config 
                 # Note: processor_config is now guaranteed to exist due to check above
+                
+                # --- Fetch project_id for this thread ---
+                client = await self.db.client
+                thread_result = await client.table('threads').select('project_id').eq('thread_id', thread_id).maybe_single().execute()
+                project_id = None
+                if thread_result.data and 'project_id' in thread_result.data:
+                    project_id = thread_result.data['project_id']
+                self.update_replicate_tool_project_id(project_id)
                 
                 # 1. Get messages from thread for LLM call
                 messages = await self.get_llm_messages(thread_id)
@@ -473,3 +488,14 @@ Here are the XML tools available with examples:
         
         # Otherwise return the auto-continue wrapper generator
         return auto_continue_wrapper()
+
+    # --- Update ReplicateImageTool instance with correct project_id ---
+    def update_replicate_tool_project_id(self, project_id: str):
+        replicate_tool_info = self.tool_registry.get_tool('generate_image')
+        if replicate_tool_info and 'instance' in replicate_tool_info:
+            replicate_tool = replicate_tool_info['instance']
+            replicate_tool.project_id = project_id
+        replicate_xml_tool_info = self.tool_registry.get_xml_tool('replicate-generate-image')
+        if replicate_xml_tool_info and 'instance' in replicate_xml_tool_info:
+            replicate_xml_tool = replicate_xml_tool_info['instance']
+            replicate_xml_tool.project_id = project_id

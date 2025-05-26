@@ -167,6 +167,19 @@ function getToolView(
           isStreaming={isStreaming}
         />
       );
+    case 'replicate-generate-image':
+      // TODO: Implement a custom view for Replicate image generation results
+      return (
+        <GenericToolView
+          name={normalizedToolName}
+          assistantContent={assistantContent}
+          toolContent={toolContent}
+          assistantTimestamp={assistantTimestamp}
+          toolTimestamp={toolTimestamp}
+          isSuccess={isSuccess}
+          isStreaming={isStreaming}
+        />
+      );
     default:
       // Check if it's a browser operation
       if (normalizedToolName.startsWith('browser-')) {

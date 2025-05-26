@@ -32,3 +32,4 @@ pydantic
 tavily-python>=0.5.4
 pytesseract==0.3.13
 stripe>=7.0.0
+replicate==1.0.6
