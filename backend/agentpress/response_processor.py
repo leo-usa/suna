@@ -231,7 +231,7 @@ class ResponseProcessor:
                                 if hasattr(tool_call_chunk, 'function'):
                                     tool_call_data_chunk['function'] = {}
                                     if hasattr(tool_call_chunk.function, 'name'): tool_call_data_chunk['function']['name'] = tool_call_chunk.function.name
-                                    if hasattr(tool_call_chunk.function, 'arguments'): tool_call_data_chunk['function']['arguments'] = tool_call_chunk.function.arguments
+                                    if hasattr(tool_call_chunk.function, 'arguments'): tool_call_data_chunk['function']['arguments'] = tool_call.function.arguments
 
 
                             now_tool_chunk = datetime.now(timezone.utc).isoformat()
@@ -640,6 +640,7 @@ class ResponseProcessor:
                                      "arguments": json.loads(tool_call.function.arguments) if isinstance(tool_call.function.arguments, str) else tool_call.function.arguments,
                                      "id": tool_call.id if hasattr(tool_call, 'id') else str(uuid.uuid4())
                                  }
+                                 logger.info(f"[TOOL DISPATCH] Parsed native tool call: function={exec_tool_call['function_name']}, arguments={exec_tool_call['arguments']}, id={exec_tool_call['id']}")
                                  all_tool_data.append({"tool_call": exec_tool_call, "parsing_details": None})
                                  native_tool_calls_for_message.append({
                                      "id": exec_tool_call["id"], "type": "function",
@@ -847,68 +848,71 @@ class ResponseProcessor:
             return None
 
     def _extract_xml_chunks(self, content: str) -> List[str]:
-        """Extract complete XML chunks using start and end pattern matching."""
+        """Extract complete XML chunks using start and end pattern matching, including self-closing tags."""
         chunks = []
         pos = 0
-        
         try:
             while pos < len(content):
-                # Find the next tool tag
                 next_tag_start = -1
                 current_tag = None
-                
-                # Find the earliest occurrence of any registered tag
+                self_closing_found = False
+                self_closing_start = None
+                self_closing_end = None
+                # --- Check for self-closing tags for all registered tags ---
+                for tag_name in self.tool_registry.xml_tools.keys():
+                    # Regex for self-closing tag: <tag ... />
+                    self_closing_pattern = rf'<{tag_name}(\s[^<>]*?)?/>'
+                    match = re.search(self_closing_pattern, content[pos:])
+                    if match:
+                        start = pos + match.start()
+                        end = pos + match.end()
+                        # Only add if this is the earliest match
+                        if self_closing_start is None or start < self_closing_start:
+                            self_closing_found = True
+                            self_closing_start = start
+                            self_closing_end = end
+                if self_closing_found and (self_closing_start is not None):
+                    chunks.append(content[self_closing_start:self_closing_end])
+                    pos = self_closing_end
+                    continue  # Go to next chunk
+                # --- Otherwise, look for normal <tag>...</tag> ---
                 for tag_name in self.tool_registry.xml_tools.keys():
                     start_pattern = f'<{tag_name}'
                     tag_pos = content.find(start_pattern, pos)
-                    
                     if tag_pos != -1 and (next_tag_start == -1 or tag_pos < next_tag_start):
                         next_tag_start = tag_pos
                         current_tag = tag_name
-                
                 if next_tag_start == -1 or not current_tag:
                     break
-                
                 # Find the matching end tag
                 end_pattern = f'</{current_tag}>'
                 tag_stack = []
                 chunk_start = next_tag_start
                 current_pos = next_tag_start
-                
                 while current_pos < len(content):
-                    # Look for next start or end tag of the same type
                     next_start = content.find(f'<{current_tag}', current_pos + 1)
                     next_end = content.find(end_pattern, current_pos)
-                    
-                    if next_end == -1:  # No closing tag found
+                    if next_end == -1:
                         break
-                    
                     if next_start != -1 and next_start < next_end:
-                        # Found nested start tag
                         tag_stack.append(next_start)
                         current_pos = next_start + 1
                     else:
-                        # Found end tag
-                        if not tag_stack:  # This is our matching end tag
+                        if not tag_stack:
                             chunk_end = next_end + len(end_pattern)
                             chunk = content[chunk_start:chunk_end]
                             chunks.append(chunk)
                             pos = chunk_end
                             break
                         else:
-                            # Pop nested tag
                             tag_stack.pop()
                             current_pos = next_end + 1
-                
-                if current_pos >= len(content):  # Reached end without finding closing tag
+                if current_pos >= len(content):
                     break
-                
                 pos = max(pos + 1, current_pos)
-        
         except Exception as e:
             logger.error(f"Error extracting XML chunks: {e}")
             logger.error(f"Content was: {content}")
-        
         return chunks
 
     def _parse_xml_tool_call(self, xml_chunk: str) -> Optional[Tuple[Dict[str, Any], Dict[str, Any]]]:
@@ -936,7 +940,7 @@ class ResponseProcessor:
                 logger.error(f"No tool or schema found for tag: {xml_tag_name}")
                 return None
             
-            # This is the actual function name to call (e.g., "create_file")
+            # This is the actual function name to call (e.g., create_file)
             function_name = tool_info['method']
             
             schema = tool_info['schema'].xml_schema
@@ -959,11 +963,11 @@ class ResponseProcessor:
                     if mapping.node_type == "attribute":
                         # Extract attribute from opening tag
                         opening_tag = remaining_chunk.split('>', 1)[0]
-                        value = self._extract_attribute(opening_tag, mapping.path)
+                        value = self._extract_attribute(opening_tag, mapping.param_name)
                         if value is not None:
                             params[mapping.param_name] = value
-                            parsing_details["attributes"][mapping.path] = value # Store raw attribute
-                            logger.info(f"Found attribute {mapping.path} -> {mapping.param_name}: {value}")
+                            parsing_details["attributes"][mapping.param_name] = value # Store raw attribute
+                            logger.info(f"Found attribute {mapping.param_name} -> {mapping.param_name}: {value}")
                 
                     elif mapping.node_type == "element":
                         # Extract element content
@@ -994,13 +998,14 @@ class ResponseProcessor:
                     continue
             
             # Validate required parameters
-            missing = [mapping.param_name for mapping in schema.mappings if mapping.required and mapping.param_name not in params]
+            missing = [mapping.param_name for mapping in schema.mappings if getattr(mapping, 'required', False) and mapping.param_name not in params]
             if missing:
                 logger.error(f"Missing required parameters: {missing}")
                 logger.error(f"Current params: {params}")
                 logger.error(f"XML chunk: {xml_chunk}")
                 return None
             
+            logger.info(f"[TOOL DISPATCH] Final arguments for {function_name}: {params}")
             # Create tool call with clear separation between function_name and xml_tag_name
             tool_call = {
                 "function_name": function_name,  # The actual method to call (e.g., create_file)
@@ -1008,7 +1013,7 @@ class ResponseProcessor:
                 "arguments": params              # The extracted parameters
             }
             
-            logger.debug(f"Created tool call: {tool_call}")
+            logger.info(f"[TOOL DISPATCH] Parsed XML tool call: tag={xml_tag_name}, function={function_name}, arguments={params}")
             return tool_call, parsing_details # Return both dicts
             
         except Exception as e:
@@ -1047,8 +1052,7 @@ class ResponseProcessor:
         try:
             function_name = tool_call["function_name"]
             arguments = tool_call["arguments"]
-            
-            logger.info(f"Executing tool: {function_name} with arguments: {arguments}")
+            logger.info(f"[TOOL DISPATCH] About to execute tool: {function_name} with arguments: {arguments} (tool_call id: {tool_call.get('id', 'N/A')})")
             
             if isinstance(arguments, str):
                 try:
@@ -1115,39 +1119,50 @@ class ResponseProcessor:
             List of tuples containing the original tool call and its result
         """
         if not tool_calls:
+            logger.info("No tool calls to execute (empty list)")
             return []
-            
+        
+        # --- ENFORCE replicate-generate-image/complete rule ---
+        tool_names = [t.get('function_name', 'unknown') for t in tool_calls]
+        logger.info(f"Tool calls parsed for execution: {tool_names}")
+        if 'replicate-generate-image' in tool_names and 'complete' in tool_names:
+            logger.warning("Both 'replicate-generate-image' and 'complete' tool calls found in the same message. Skipping 'complete' until image is generated.")
+            filtered_tool_calls = []
+            for t in tool_calls:
+                if t.get('function_name') == 'complete':
+                    continue
+                filtered_tool_calls.append(t)
+            tool_calls = filtered_tool_calls
+            logger.info(f"Tool calls after filtering: {[t.get('function_name', 'unknown') for t in tool_calls]}")
+        else:
+            logger.info(f"Tool calls after filtering: {tool_names}")
+        
+        # Log available functions in the tool registry
+        available_functions = self.tool_registry.get_available_functions()
+        logger.info(f"Available functions in tool registry: {list(available_functions.keys())}")
+        
         try:
-            tool_names = [t.get('function_name', 'unknown') for t in tool_calls]
-            logger.info(f"Executing {len(tool_calls)} tools sequentially: {tool_names}")
-            
             results = []
             for index, tool_call in enumerate(tool_calls):
                 tool_name = tool_call.get('function_name', 'unknown')
-                logger.debug(f"Executing tool {index+1}/{len(tool_calls)}: {tool_name}")
-                
+                logger.info(f"About to execute tool {index+1}/{len(tool_calls)}: {tool_name} with args: {tool_call.get('arguments')}")
                 try:
                     result = await self._execute_tool(tool_call)
+                    logger.info(f"Executed tool {tool_name} with result: {result}")
                     results.append((tool_call, result))
                     logger.debug(f"Completed tool {tool_name} with success={result.success}")
                 except Exception as e:
                     logger.error(f"Error executing tool {tool_name}: {str(e)}")
                     error_result = ToolResult(success=False, output=f"Error executing tool: {str(e)}")
                     results.append((tool_call, error_result))
-            
             logger.info(f"Sequential execution completed for {len(tool_calls)} tools")
             return results
-            
         except Exception as e:
             logger.error(f"Error in sequential tool execution: {str(e)}", exc_info=True)
-            # Return partial results plus error results for remaining tools
             completed_tool_names = [r[0].get('function_name', 'unknown') for r in results] if 'results' in locals() else []
             remaining_tools = [t for t in tool_calls if t.get('function_name', 'unknown') not in completed_tool_names]
-            
-            # Add error results for remaining tools
             error_results = [(tool, ToolResult(success=False, output=f"Execution error: {str(e)}")) 
                             for tool in remaining_tools]
-                            
             return (results if 'results' in locals() else []) + error_results
 
     async def _execute_tools_in_parallel(self, tool_calls: List[Dict[str, Any]]) -> List[Tuple[Dict[str, Any], ToolResult]]:
