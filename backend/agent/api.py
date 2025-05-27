@@ -13,7 +13,7 @@ import os
 from dateutil import parser
 
 from agentpress.thread_manager import ThreadManager
-from services.supabase import DBConnection
+from services.supabase import DBConnection, upload_file_to_storage
 from services import redis
 from agent.run import run_agent
 from utils.auth_utils import get_current_user_id_from_jwt, get_user_id_from_stream_auth, verify_thread_access, get_account_id_from_thread
@@ -22,7 +22,7 @@ from services.billing import check_billing_status, get_user_credits, deduct_user
 from sandbox.sandbox import create_sandbox, get_or_start_sandbox
 from sandbox.api import get_sandbox_by_id_safely
 from services.llm import make_llm_api_call
-from agent.utils import get_or_create_project_sandbox
+from agent.utils import get_or_create_project_sandbox, find_html_reports, extract_image_paths_from_html
 
 # Initialize shared resources
 router = APIRouter()
@@ -53,6 +53,9 @@ class AgentStartRequest(BaseModel):
 class InitiateAgentResponse(BaseModel):
     thread_id: str
     agent_run_id: Optional[str] = None
+
+class ShareReportRequest(BaseModel):
+    project_id: str
 
 def initialize(
     _thread_manager: ThreadManager,
@@ -1070,3 +1073,54 @@ async def delete_project(project_id: str, user_id: str = Depends(get_current_use
     # Delete the project (threads/messages should cascade)
     await client.table('projects').delete().eq('project_id', project_id).execute()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+@router.post("/share-report")
+async def share_report(
+    body: ShareReportRequest,
+    user_id: str = Depends(get_current_user_id_from_jwt)
+):
+    """Share the latest HTML report and its images to Supabase Storage and return public URLs."""
+    project_id = body.project_id
+    # 1. Get the sandbox for the project
+    client = await db.client
+    project = await client.table('projects').select('sandbox').eq('project_id', project_id).maybe_single().execute()
+    if not project.data or not project.data.get('sandbox'):
+        raise HTTPException(status_code=404, detail="Project or sandbox not found")
+    sandbox_info = project.data['sandbox']
+    sandbox_id = sandbox_info.get('id') or sandbox_info.get('sandbox_id')
+    if not sandbox_id:
+        raise HTTPException(status_code=404, detail="Sandbox ID not found for project")
+    sandbox = await get_or_start_sandbox(sandbox_id)
+    # 2. List HTML files in /workspace using sandbox.fs
+    html_files = [f.name for f in sandbox.fs.list_files("/workspace") if f.name.endswith('.html')]
+    if not html_files:
+        raise HTTPException(status_code=404, detail="No HTML reports found in workspace.")
+    share_id = str(uuid.uuid4())[:8]
+    bucket = "share"
+    uploaded = []
+    for html_name in html_files:
+        html_path = f"/workspace/{html_name}"
+        html_content = sandbox.fs.download_file(html_path).decode("utf-8")
+        img_paths = extract_image_paths_from_html(html_content)
+        img_url_map = {}
+        for idx, img_path in enumerate(img_paths):
+            # Only handle local images (not http/https)
+            if img_path.startswith("http://") or img_path.startswith("https://"):
+                continue
+            abs_img_path = f"/workspace/{img_path}" if not img_path.startswith("/workspace/") else img_path
+            try:
+                img_bytes = sandbox.fs.download_file(abs_img_path)
+            except Exception:
+                continue
+            ext = os.path.splitext(img_path)[1] or ".webp"
+            storage_img_path = f"{user_id}/{project_id}/{share_id}/img_{idx}{ext}"
+            url = await upload_file_to_storage(bucket, storage_img_path, img_bytes, content_type="image/webp")
+            img_url_map[img_path] = url
+        # Upload HTML (with image URLs replaced)
+        html_for_upload = html_content
+        for orig, url in img_url_map.items():
+            html_for_upload = html_for_upload.replace(orig, url)
+        storage_html_path = f"{user_id}/{project_id}/{share_id}/index.html"
+        url = await upload_file_to_storage(bucket, storage_html_path, html_for_upload.encode("utf-8"), content_type="text/html")
+        uploaded.append({"html": url, "images": list(img_url_map.values())})
+    return {"shared": uploaded}

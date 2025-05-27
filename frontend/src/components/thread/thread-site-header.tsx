@@ -28,6 +28,7 @@ interface ThreadSiteHeaderProps {
   onToggleSidePanel: () => void
   onProjectRenamed?: (newName: string) => void
   isMobileView?: boolean
+  rightActions?: React.ReactNode
 }
 
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || '';
@@ -39,7 +40,8 @@ export function SiteHeader({
   onViewFiles, 
   onToggleSidePanel,
   onProjectRenamed,
-  isMobileView
+  isMobileView,
+  rightActions
 }: ThreadSiteHeaderProps) {
   const pathname = usePathname()
   const [isEditing, setIsEditing] = useState(false)
@@ -279,6 +281,8 @@ export function SiteHeader({
                 <p>{t('threadHeader.downloadAll', 'Download all project files. Please download your files promptly—files will be lost if the sandbox is deleted.')}</p>
               </TooltipContent>
             </Tooltip>
+
+            {rightActions}
           </TooltipProvider>
         )}
       </div>
