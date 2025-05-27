@@ -1,6 +1,9 @@
 import uuid
 from utils.logger import logger
 from sandbox.sandbox import create_sandbox, get_or_start_sandbox
+import os
+import re
+from typing import List
 
 async def get_or_create_project_sandbox(client, project_id: str):
     """Get or create a sandbox for a project."""
@@ -46,4 +49,20 @@ async def get_or_create_project_sandbox(client, project_id: str):
         logger.error(f"Failed to update project {project_id} with new sandbox {sandbox_id}")
         raise Exception("Database update failed")
 
-    return sandbox, sandbox_id, sandbox_pass 
+    return sandbox, sandbox_id, sandbox_pass
+
+# --- Web Share Helpers ---
+def find_html_reports(workspace_dir: str) -> List[str]:
+    """Find all HTML report files in the workspace directory."""
+    html_files = []
+    for root, _, files in os.walk(workspace_dir):
+        for file in files:
+            if file.endswith('.html'):
+                html_files.append(os.path.join(root, file))
+    return html_files
+
+def extract_image_paths_from_html(html_content: str) -> List[str]:
+    """Extract all image src paths from HTML content."""
+    # Match <img src="..."> and <img src='...'>
+    img_srcs = re.findall(r'<img[^>]+src=["\\\']([^"\\\']+)["\\\']', html_content)
+    return img_srcs 

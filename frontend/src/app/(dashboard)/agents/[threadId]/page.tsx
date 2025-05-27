@@ -5,9 +5,9 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
-  ArrowDown, CheckCircle, CircleDashed, AlertTriangle, Info, File, ChevronRight
+  ArrowDown, CheckCircle, CircleDashed, AlertTriangle, Info, File, ChevronRight, Share2, Copy, Loader2
 } from 'lucide-react';
-import { addUserMessage, getMessages, startAgent, stopAgent, getAgentRuns, getProject, getThread, updateProject, Project, Message as BaseApiMessageType, BillingError, checkBillingStatus } from '@/lib/api';
+import { addUserMessage, getMessages, startAgent, stopAgent, getAgentRuns, getProject, getThread, updateProject, Project, Message as BaseApiMessageType, BillingError, checkBillingStatus, shareReport } from '@/lib/api';
 import { toast } from 'sonner';
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChatInput } from '@/components/thread/chat-input';
@@ -22,6 +22,8 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { BillingErrorAlert } from '@/components/billing/usage-limit-alert';
 import { isLocalMode } from "@/lib/config";
 import { useTranslation } from 'react-i18next';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 import { UnifiedMessage, ParsedContent, ParsedMetadata, ThreadParams } from '@/components/thread/types';
 import { getToolIcon, extractPrimaryParam, safeJsonParse } from '@/components/thread/utils';
@@ -254,6 +256,13 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
   const initialLayoutAppliedRef = useRef(false);
 
   const userClosedPanelRef = useRef(false);
+
+  // Add state for Web Share dialog
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [shareLoading, setShareLoading] = useState(false);
+  const [shareResult, setShareResult] = useState<{html: string, images: string[]}[] | null>(null);
+  const [shareError, setShareError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   // Replace both useEffect hooks with a single one that respects user closing
   useEffect(() => {
@@ -1098,6 +1107,29 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
     }
   }, [messagesLoadedRef.current, checkBillingLimits, project?.account_id, isLoading]);
 
+  // Handler for Web Share
+  const handleWebShare = async () => {
+    if (!project?.id) return;
+    setShareLoading(true);
+    setShareError(null);
+    setShareResult(null);
+    try {
+      const result = await shareReport(project.id);
+      setShareResult(result.shared);
+    } catch (err: any) {
+      setShareError(err.message || 'Failed to share report');
+    } finally {
+      setShareLoading(false);
+    }
+  };
+
+  // Copy to clipboard handler
+  const handleCopy = (url: string) => {
+    navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+
   if (isLoading && !initialLoadCompleted.current) {
     return (
       <div className="flex h-screen">
@@ -1219,7 +1251,18 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
             projectId={project?.id || ""}
             onViewFiles={handleOpenFileViewer} 
             onToggleSidePanel={toggleSidePanel}
+            onProjectRenamed={handleProjectRenamed}
             isMobileView={isMobile}
+            rightActions={
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="icon" onClick={() => setShareDialogOpen(true)} aria-label="Web Share">
+                    <Share2 className="h-5 w-5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Web Share</TooltipContent>
+              </Tooltip>
+            }
           />
           <div className="flex flex-1 items-center justify-center p-4">
             <div className="flex w-full max-w-md flex-col items-center gap-4 rounded-lg border bg-card p-6 text-center">
@@ -1259,6 +1302,16 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
           onToggleSidePanel={toggleSidePanel}
           onProjectRenamed={handleProjectRenamed}
           isMobileView={isMobile}
+          rightActions={
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" onClick={() => setShareDialogOpen(true)} aria-label="Web Share">
+                  <Share2 className="h-5 w-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Web Share</TooltipContent>
+            </Tooltip>
+          }
         />
         <div 
           ref={messagesContainerRef}
@@ -1566,6 +1619,39 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
         onDismiss={() => setShowBillingAlert(false)}
         isOpen={showBillingAlert}
       />
+
+      <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Web Share</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Button onClick={handleWebShare} disabled={shareLoading || !!shareResult} className="w-full">
+              {shareLoading ? <Loader2 className="animate-spin h-4 w-4 mr-2" /> : <Share2 className="h-4 w-4 mr-2" />}
+              {shareLoading ? 'Sharing...' : 'Generate Public Share Link'}
+            </Button>
+            {shareError && <div className="text-destructive text-sm">{shareError}</div>}
+            {shareResult && shareResult.length > 0 && (
+              <div className="space-y-2">
+                {shareResult.map((item, idx) => (
+                  <div key={idx} className="flex items-center gap-2 border rounded p-2">
+                    <a href={item.html} target="_blank" rel="noopener noreferrer" className="truncate text-primary underline flex-1">{item.html}</a>
+                    <Button variant="outline" size="icon" onClick={() => handleCopy(item.html)}>
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                    {copied && <span className="text-xs text-green-600 ml-1">Copied!</span>}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="secondary">Close</Button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -1427,3 +1427,29 @@ export const createCreditSession = async (params: {
   return response.json();
 };
 
+/**
+ * Share the latest HTML report and its images to Supabase Storage and return public URLs.
+ * @param projectId The project ID to share
+ * @returns {Promise<{shared: {html: string, images: string[]}[]}>}
+ */
+export const shareReport = async (projectId: string): Promise<{shared: {html: string, images: string[]}[]}> => {
+  const supabase = createClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  if (session?.access_token) {
+    headers['Authorization'] = `Bearer ${session.access_token}`;
+  }
+  const response = await fetch(`${API_URL}/share-report`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ project_id: projectId }),
+  });
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => 'Unknown error');
+    throw new Error(`Failed to share report: ${response.status} ${errorText}`);
+  }
+  return response.json();
+};
+

@@ -7,6 +7,7 @@ from typing import Optional
 from supabase import create_async_client, AsyncClient
 from utils.logger import logger
 from utils.config import config
+from storage3._async.client import AsyncStorageClient
 
 class DBConnection:
     """Singleton database connection manager using Supabase."""
@@ -66,5 +67,29 @@ class DBConnection:
             logger.error("Database client is None after initialization")
             raise RuntimeError("Database not initialized")
         return self._client
+
+# --- Supabase Storage Helpers ---
+async def get_storage_client() -> AsyncStorageClient:
+    """Get an async Supabase Storage client."""
+    supabase_url = config.SUPABASE_URL
+    supabase_key = config.SUPABASE_SERVICE_ROLE_KEY or config.SUPABASE_ANON_KEY
+    storage_url = f"{supabase_url}/storage/v1"
+    return AsyncStorageClient(storage_url, {"authorization": f"Bearer {supabase_key}"})
+
+async def upload_file_to_storage(bucket: str, path: str, file_bytes: bytes, content_type: str = None) -> str:
+    """Upload a file to Supabase Storage and return the public URL."""
+    storage = await get_storage_client()
+    # Try to delete the file if it exists (ignore errors)
+    try:
+        await storage.from_(bucket).remove([path])
+    except Exception:
+        pass
+    await storage.from_(bucket).upload(
+        path,
+        file_bytes,
+        file_options={"content-type": content_type or "application/octet-stream"}
+    )
+    public_url = f"{config.SUPABASE_URL}/storage/v1/object/public/{bucket}/{path}"
+    return public_url
 
 
