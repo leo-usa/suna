@@ -131,25 +131,20 @@ class ReplicateImageTool(SandboxToolsBase):
                     url_list = [str(item) for item in output]
 
             local_paths = []
-            save_dir = "/workspace/replicate"
+            save_dir = "/workspace"
             prompt_hash = hashlib.sha256(prompt.encode()).hexdigest()[:8]
             timestamp = time.strftime("%Y%m%d_%H%M%S")
             for idx, url in enumerate(url_list):
                 try:
                     ext = url.split(".")[-1].split("?")[0]
                     fname = f"img_{timestamp}_{prompt_hash}_{idx+1}.{ext}"
-                    rel_path = f"replicate/{fname}"
+                    rel_path = fname
                     resp = requests.get(url)
                     if resp.status_code == 200:
                         # Use sandbox file API if available
                         if hasattr(self, 'sandbox') and hasattr(self.sandbox, 'fs'):
                             logger.info(f"[ReplicateImageTool] self.sandbox: {self.sandbox}")
                             logger.info(f"[ReplicateImageTool] self.sandbox.fs: {getattr(self.sandbox, 'fs', None)}")
-                            logger.info(f"[ReplicateImageTool] Attempting to create /workspace/replicate and upload file to /workspace/{rel_path}")
-                            try:
-                                self.sandbox.fs.create_folder("/workspace/replicate", "755")
-                            except Exception as e:
-                                logger.warning(f"[ReplicateImageTool] create_folder exception: {e}")
                             try:
                                 self.sandbox.fs.upload_file(f"/workspace/{rel_path}", resp.content)
                                 local_paths.append(f"/workspace/{rel_path}")
@@ -158,7 +153,6 @@ class ReplicateImageTool(SandboxToolsBase):
                                 logger.error(f"[ReplicateImageTool] upload_file exception: {e}")
                         else:
                             logger.warning(f"[ReplicateImageTool] Sandbox or fs not available, falling back to local file I/O")
-                            os.makedirs(save_dir, exist_ok=True)
                             local_path = os.path.join(save_dir, fname)
                             with open(local_path, "wb") as f:
                                 f.write(resp.content)
@@ -171,7 +165,7 @@ class ReplicateImageTool(SandboxToolsBase):
             result = {
                 "replicate_urls": url_list,
                 "sandbox_paths": local_paths,
-                "message": f"Saved {len(local_paths)} image(s) to sandbox at /workspace/replicate/"
+                "message": f"Saved {len(local_paths)} image(s) to sandbox at /workspace/"
             }
             logger.info(f"[ReplicateImageTool] Final result: {result}")
             return ToolResult(success=True, output=result)
