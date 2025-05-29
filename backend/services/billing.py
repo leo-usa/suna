@@ -262,17 +262,17 @@ async def check_billing_status(client, user_id: str) -> Tuple[bool, str, Optiona
     if current_usage < tier_info['minutes']:
         logger.debug(f"[DEBUG] User {user_id} is within subscription minutes limit.")
         return True, "OK", subscription
-    # --- Commented out credit fallback for debugging ---
-    # credits = await get_user_credits(client, user_id)
-    # logger.debug(f"[DEBUG] User {user_id} credits={credits}")
-    # if credits > 0:
-    #     logger.debug(f"[DEBUG] User {user_id} can use prepaid credits: {credits:.2f} minutes left.")
-    #     return True, f"Using prepaid credits: {credits:.2f} minutes left.", {
-    #         "plan_name": "prepaid",
-    #         "minutes_limit": credits,
-    #         "current_usage": 0,
-    #         "price_id": None
-    #     }
+    # Fallback to prepaid credits if available
+    credits = await get_user_credits(client, user_id)
+    logger.debug(f"[DEBUG] User {user_id} credits={credits}")
+    if credits > 0:
+        logger.debug(f"[DEBUG] User {user_id} can use prepaid credits: {credits:.2f} minutes left.")
+        return True, f"Using prepaid credits: {credits:.2f} minutes left.", {
+            "plan_name": "prepaid",
+            "minutes_limit": credits,
+            "current_usage": 0,
+            "price_id": None
+        }
     logger.debug(f"[DEBUG] User {user_id} exceeded subscription minutes and has no prepaid credits.")
     return False, f"Monthly limit of {tier_info['minutes']} minutes reached and no prepaid credits available. Please upgrade your plan or top up credits.", subscription
 
