@@ -5,9 +5,9 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
-  ArrowDown, CheckCircle, CircleDashed, AlertTriangle, Info, File, ChevronRight, Share2, Copy, Loader2
+  ArrowDown, CheckCircle, CircleDashed, AlertTriangle, Info, File, ChevronRight, Share2, Copy, Loader2, Users
 } from 'lucide-react';
-import { addUserMessage, getMessages, startAgent, stopAgent, getAgentRuns, getProject, getThread, updateProject, Project, Message as BaseApiMessageType, BillingError, checkBillingStatus, shareReport } from '@/lib/api';
+import { addUserMessage, getMessages, startAgent, stopAgent, getAgentRuns, getProject, getThread, updateProject, Project, Message as BaseApiMessageType, BillingError, checkBillingStatus, shareReport, API_URL } from '@/lib/api';
 import { toast } from 'sonner';
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChatInput } from '@/components/thread/chat-input';
@@ -24,6 +24,7 @@ import { isLocalMode } from "@/lib/config";
 import { useTranslation } from 'react-i18next';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { createClient } from '@/lib/supabase/client';
 
 import { UnifiedMessage, ParsedContent, ParsedMetadata, ThreadParams } from '@/components/thread/types';
 import { getToolIcon, extractPrimaryParam, safeJsonParse } from '@/components/thread/utils';
@@ -263,6 +264,13 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
   const [shareResult, setShareResult] = useState<{html: string, images: string[]}[] | null>(null);
   const [shareError, setShareError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+
+  // Add state for Community Share dialog
+  const [communityDialogOpen, setCommunityDialogOpen] = useState(false);
+  const [communityLoading, setCommunityLoading] = useState(false);
+  const [communityTitle, setCommunityTitle] = useState("");
+  const [communityDescription, setCommunityDescription] = useState("");
+  const [communityResult, setCommunityResult] = useState<{url: string}|null>(null);
 
   // Replace both useEffect hooks with a single one that respects user closing
   useEffect(() => {
@@ -1130,6 +1138,41 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
     setTimeout(() => setCopied(false), 1500);
   };
 
+  // Handler for Community Share
+  const handleCommunityShare = async () => {
+    setCommunityLoading(true);
+    try {
+      // Use shareReport helper
+      const data = await shareReport(project?.id);
+      if (!data.shared || !data.shared[0]?.html) throw new Error('No HTML found');
+      const htmlUrl = data.shared[0].html;
+      const htmlContent = await fetch(htmlUrl).then(r => r.text());
+      // Get Supabase session for Authorization header
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers = { 'Content-Type': 'application/json' };
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
+      // Call community share API using API_URL
+      const resp = await fetch(`${API_URL}/community/share`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          title: communityTitle,
+          description: communityDescription,
+          html_content: htmlContent,
+        }),
+      });
+      const result = await resp.json();
+      setCommunityResult({ url: result.html_url });
+    } catch (e) {
+      toast.error('Failed to share to community');
+    } finally {
+      setCommunityLoading(false);
+    }
+  };
+
   if (isLoading && !initialLoadCompleted.current) {
     return (
       <div className="flex h-screen">
@@ -1254,14 +1297,26 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
             onProjectRenamed={handleProjectRenamed}
             isMobileView={isMobile}
             rightActions={
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" onClick={() => setShareDialogOpen(true)} aria-label="Web Share">
-                    <Share2 className="h-5 w-5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Web Share</TooltipContent>
-              </Tooltip>
+              <>
+                {/*
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" onClick={() => setShareDialogOpen(true)} aria-label="Web Share">
+                      <Share2 className="h-5 w-5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Web Share</TooltipContent>
+                </Tooltip>
+                */}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" onClick={() => setCommunityDialogOpen(true)} aria-label="Community Share">
+                      <Users className="h-5 w-5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>{t('communityShare.tooltip', 'Share to Community (recommended)\nShare your work with the Dobby community!')}</TooltipContent>
+                </Tooltip>
+              </>
             }
           />
           <div className="flex flex-1 items-center justify-center p-4">
@@ -1303,14 +1358,26 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
           onProjectRenamed={handleProjectRenamed}
           isMobileView={isMobile}
           rightActions={
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" onClick={() => setShareDialogOpen(true)} aria-label="Web Share">
-                  <Share2 className="h-5 w-5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Web Share</TooltipContent>
-            </Tooltip>
+            <>
+              {/*
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="icon" onClick={() => setShareDialogOpen(true)} aria-label="Web Share">
+                    <Share2 className="h-5 w-5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Web Share</TooltipContent>
+              </Tooltip>
+              */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="icon" onClick={() => setCommunityDialogOpen(true)} aria-label="Community Share">
+                    <Users className="h-5 w-5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{t('communityShare.tooltip', 'Share to Community (recommended)\nShare your work with the Dobby community!')}</TooltipContent>
+              </Tooltip>
+            </>
           }
         />
         <div 
@@ -1648,6 +1715,39 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
           <DialogFooter>
             <DialogClose asChild>
               <Button variant="secondary">Close</Button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={communityDialogOpen} onOpenChange={setCommunityDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Share to Community</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            <input
+              className="w-full border rounded px-3 py-2"
+              placeholder="Title"
+              value={communityTitle}
+              onChange={e => setCommunityTitle(e.target.value)}
+            />
+            <textarea
+              className="w-full border rounded px-3 py-2"
+              placeholder="Description (optional)"
+              value={communityDescription}
+              onChange={e => setCommunityDescription(e.target.value)}
+            />
+            {communityResult && (
+              <div className="text-green-600 text-sm">Shared! <a href={communityResult.url} target="_blank" rel="noopener noreferrer" className="underline">View in Community</a></div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button onClick={handleCommunityShare} disabled={communityLoading || !communityTitle}>
+              {communityLoading ? <Loader2 className="animate-spin h-4 w-4" /> : 'Share'}
+            </Button>
+            <DialogClose asChild>
+              <Button variant="ghost">Close</Button>
             </DialogClose>
           </DialogFooter>
         </DialogContent>

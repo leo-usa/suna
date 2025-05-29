@@ -134,41 +134,64 @@ class ReplicateImageTool(SandboxToolsBase):
             save_dir = "/workspace"
             prompt_hash = hashlib.sha256(prompt.encode()).hexdigest()[:8]
             timestamp = time.strftime("%Y%m%d_%H%M%S")
+            download_errors = []
             for idx, url in enumerate(url_list):
                 try:
                     ext = url.split(".")[-1].split("?")[0]
                     fname = f"img_{timestamp}_{prompt_hash}_{idx+1}.{ext}"
                     rel_path = fname
-                    resp = requests.get(url)
-                    if resp.status_code == 200:
-                        # Use sandbox file API if available
-                        if hasattr(self, 'sandbox') and hasattr(self.sandbox, 'fs'):
-                            logger.info(f"[ReplicateImageTool] self.sandbox: {self.sandbox}")
-                            logger.info(f"[ReplicateImageTool] self.sandbox.fs: {getattr(self.sandbox, 'fs', None)}")
-                            try:
-                                self.sandbox.fs.upload_file(f"/workspace/{rel_path}", resp.content)
-                                local_paths.append(f"/workspace/{rel_path}")
-                                logger.info(f"[ReplicateImageTool] Successfully uploaded image to /workspace/{rel_path} via sandbox API")
-                            except Exception as e:
-                                logger.error(f"[ReplicateImageTool] upload_file exception: {e}")
+                    try:
+                        resp = requests.get(url, timeout=15)
+                        if resp.status_code == 200:
+                            # Use sandbox file API if available
+                            if hasattr(self, 'sandbox') and hasattr(self.sandbox, 'fs'):
+                                try:
+                                    self.sandbox.fs.upload_file(f"/workspace/{rel_path}", resp.content)
+                                    local_paths.append(f"/workspace/{rel_path}")
+                                except Exception as e:
+                                    logger.error(f"[ReplicateImageTool] upload_file exception: {e}")
+                                    # Fallback to local file I/O
+                                    local_path = os.path.join(save_dir, fname)
+                                    with open(local_path, "wb") as f:
+                                        f.write(resp.content)
+                                    local_paths.append(local_path)
+                            else:
+                                local_path = os.path.join(save_dir, fname)
+                                with open(local_path, "wb") as f:
+                                    f.write(resp.content)
+                                local_paths.append(local_path)
                         else:
-                            logger.warning(f"[ReplicateImageTool] Sandbox or fs not available, falling back to local file I/O")
-                            local_path = os.path.join(save_dir, fname)
-                            with open(local_path, "wb") as f:
-                                f.write(resp.content)
-                            local_paths.append(local_path)
-                            logger.info(f"[ReplicateImageTool] Saved image to {local_path} (local fallback)")
-                    else:
-                        logger.error(f"[ReplicateImageTool] Failed to download image: {url} (status {resp.status_code})")
+                            raise Exception(f"HTTP {resp.status_code}")
+                    except Exception as e:
+                        logger.error(f"[ReplicateImageTool] requests.get failed: {e}")
+                        # Try shell fallback with wget
+                        import subprocess
+                        try:
+                            wget_path = os.path.join(save_dir, fname)
+                            result = subprocess.run([
+                                "wget", "-O", wget_path, url
+                            ], capture_output=True, text=True, timeout=30)
+                            if result.returncode == 0 and os.path.exists(wget_path):
+                                local_paths.append(wget_path)
+                                logger.info(f"[ReplicateImageTool] wget succeeded for {url}")
+                            else:
+                                logger.error(f"[ReplicateImageTool] wget failed: {result.stderr}")
+                                download_errors.append(f"wget failed: {result.stderr}")
+                        except Exception as shell_e:
+                            logger.error(f"[ReplicateImageTool] Both requests and wget failed: {e}, {shell_e}")
+                            download_errors.append(f"requests: {e}, wget: {shell_e}")
                 except Exception as e:
                     logger.error(f"[ReplicateImageTool] Error saving image {url}: {str(e)}")
+                    download_errors.append(str(e))
             result = {
                 "replicate_urls": url_list,
                 "sandbox_paths": local_paths,
                 "message": f"Saved {len(local_paths)} image(s) to sandbox at /workspace/"
             }
+            if download_errors and not local_paths:
+                result["error"] = f"Download errors: {'; '.join(download_errors)}"
             logger.info(f"[ReplicateImageTool] Final result: {result}")
-            return ToolResult(success=True, output=result)
+            return ToolResult(success=bool(local_paths), output=result)
         except Exception as e:
             logger.error(f"[ReplicateImageTool] Error: {str(e)}", exc_info=True)
             print(f"[ReplicateImageTool] Error: {str(e)}")

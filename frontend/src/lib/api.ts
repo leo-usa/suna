@@ -1453,3 +1453,5 @@ export const shareReport = async (projectId: string): Promise<{shared: {html: st
   return response.json();
 };
 
+export { API_URL };
+

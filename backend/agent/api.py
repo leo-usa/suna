@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, Request, Body, File, UploadFile, Form, status
+from fastapi import APIRouter, HTTPException, Depends, Request, Body, File, UploadFile, Form, status, Query
 from fastapi.responses import StreamingResponse, Response
 import asyncio
 import json
@@ -23,6 +23,7 @@ from sandbox.sandbox import create_sandbox, get_or_start_sandbox
 from sandbox.api import get_sandbox_by_id_safely
 from services.llm import make_llm_api_call
 from agent.utils import get_or_create_project_sandbox, find_html_reports, extract_image_paths_from_html
+from utils.config import config
 
 # Initialize shared resources
 router = APIRouter()
@@ -56,6 +57,15 @@ class InitiateAgentResponse(BaseModel):
 
 class ShareReportRequest(BaseModel):
     project_id: str
+
+class CommunityShareRequest(BaseModel):
+    title: str
+    description: str = ""
+    html_content: str
+    thumbnail_path: str = ""
+
+class CommunityLikeRequest(BaseModel):
+    post_id: str
 
 def initialize(
     _thread_manager: ThreadManager,
@@ -1124,3 +1134,142 @@ async def share_report(
         url = await upload_file_to_storage(bucket, storage_html_path, html_for_upload.encode("utf-8"), content_type="text/html")
         uploaded.append({"html": url, "images": list(img_url_map.values())})
     return {"shared": uploaded}
+
+@router.post("/community/share")
+async def share_to_community(
+    body: CommunityShareRequest,
+    user_id: str = Depends(get_current_user_id_from_jwt)
+):
+    """Share an HTML report to the community gallery."""
+    client = await db.client
+    user = await client.table('users').select('name').eq('id', user_id).maybe_single().execute()
+    if not user or not getattr(user, "data", None):
+        await client.table('users').insert({'id': user_id, 'name': 'Anonymous'}).execute()
+        user_name = 'Anonymous'
+    else:
+        user_name = user.data['name']
+    import uuid, datetime
+    post_id = str(uuid.uuid4())
+    html_path = f"community/{post_id}.html"
+    from agent.utils import extract_image_paths_from_html
+    from sandbox.sandbox import get_or_start_sandbox
+    html_content = body.html_content
+    img_paths = extract_image_paths_from_html(html_content)
+    img_url_map = {}
+    if img_paths:
+        project = await client.table('projects').select('sandbox').eq('account_id', user_id).order('created_at', desc=True).limit(1).maybe_single().execute()
+        sandbox = None
+        if project.data and project.data.get('sandbox'):
+            sandbox_info = project.data['sandbox']
+            sandbox_id = sandbox_info.get('id') or sandbox_info.get('sandbox_id')
+            if sandbox_id:
+                try:
+                    sandbox = await get_or_start_sandbox(sandbox_id)
+                except Exception:
+                    sandbox = None
+        for idx, img_path in enumerate(img_paths):
+            if img_path.startswith("http://") or img_path.startswith("https://"):
+                continue
+            abs_img_path = f"/workspace/{img_path}" if not img_path.startswith("/workspace/") else img_path
+            img_bytes = None
+            if sandbox:
+                try:
+                    img_bytes = sandbox.fs.download_file(abs_img_path)
+                except Exception:
+                    continue
+            if img_bytes:
+                ext = os.path.splitext(img_path)[1] or ".webp"
+                storage_img_path = f"community/images/{post_id}_img_{idx}{ext}"
+                url = await upload_file_to_storage("share", storage_img_path, img_bytes, content_type="image/webp")
+                img_url_map[img_path] = url
+        for orig, url in img_url_map.items():
+            html_content = html_content.replace(orig, url)
+    await upload_file_to_storage("share", html_path, html_content.encode("utf-8"), content_type="text/html")
+    await client.table('community_posts').insert({
+        "id": post_id,
+        "user_id": user_id,
+        "user_name": user_name,
+        "title": body.title,
+        "html_path": html_path,
+        "description": body.description,
+        "thumbnail_path": body.thumbnail_path,
+        "created_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "like_count": 0,
+        "approved": True
+    }).execute()
+    supabase_url = config.SUPABASE_URL.rstrip('/')
+    return {"success": True, "post_id": post_id, "html_url": f"{supabase_url}/storage/v1/object/public/share/{html_path}"}
+
+@router.get("/community")
+async def list_community_posts(
+    sort_by: str = Query("created_at", description="Sort by 'created_at' or 'like_count'"),
+    order: str = Query("desc", description="Sort order: 'asc' or 'desc'"),
+    limit: int = Query(20, ge=1, le=100, description="Number of posts to return"),
+    offset: int = Query(0, ge=0, description="Offset for pagination")
+):
+    """List all approved community posts with metadata."""
+    client = await db.client
+    sort_field = sort_by if sort_by in ["created_at", "like_count"] else "created_at"
+    sort_order = order if order in ["asc", "desc"] else "desc"
+    posts = await client.table('community_posts')\
+        .select('*')\
+        .eq('approved', True)\
+        .order(sort_field, desc=(sort_order=="desc"))\
+        .range(offset, offset+limit-1)\
+        .execute()
+    bucket = "share"
+    supabase_url = config.SUPABASE_URL.rstrip('/')
+    def make_html_url(html_path):
+        return f"{supabase_url}/storage/v1/object/public/{bucket}/{html_path}"
+    result = [
+        {
+            "id": p["id"],
+            "title": p["title"],
+            "user_name": p["user_name"],
+            "like_count": p["like_count"],
+            "description": p.get("description", ""),
+            "thumbnail_path": p.get("thumbnail_path", ""),
+            "created_at": p["created_at"],
+            "html_url": make_html_url(p["html_path"])
+        }
+        for p in posts.data or []
+    ]
+    return {"posts": result, "total": len(result)}
+
+@router.post("/community/like")
+async def like_community_post(
+    body: CommunityLikeRequest,
+    user_id: str = Depends(get_current_user_id_from_jwt)
+):
+    """Like a community post (increments like_count)."""
+    client = await db.client
+    post_id = body.post_id
+    # Increment like_count atomically
+    result = await client.rpc('increment_like_count', {'post_id': post_id}).execute()
+    if result.status_code != 200:
+        raise HTTPException(status_code=400, detail="Failed to like post.")
+    return {"success": True, "post_id": post_id}
+
+@router.get("/community/post/{post_id}")
+async def get_community_post(post_id: str):
+    client = await db.client
+    logger.info(f"[COMMUNITY POST DEBUG] Requested post_id: {post_id}")
+    post = await client.table('community_posts').select('*').eq('id', post_id).maybe_single().execute()
+    logger.info(f"[COMMUNITY POST DEBUG] Raw query result: {post}")
+    logger.info(f"[COMMUNITY POST DEBUG] post.data: {getattr(post, 'data', None)}")
+    if not post or not getattr(post, 'data', None):
+        logger.info(f"[COMMUNITY POST DEBUG] Post not found for id: {post_id}")
+        raise HTTPException(status_code=404, detail="Post not found")
+    p = post.data
+    supabase_url = config.SUPABASE_URL.rstrip('/')
+    html_url = f"{supabase_url}/storage/v1/object/public/share/{p['html_path']}"
+    return {
+        "id": p["id"],
+        "title": p["title"],
+        "user_name": p["user_name"],
+        "like_count": p["like_count"],
+        "description": p.get("description", ""),
+        "thumbnail_path": p.get("thumbnail_path", ""),
+        "created_at": p["created_at"],
+        "html_url": html_url
+    }

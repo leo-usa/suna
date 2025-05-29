@@ -8,6 +8,7 @@ import { HeroSection } from "@/components/home/sections/hero-section";
 // import { OpenSourceSection } from "@/components/home/sections/open-source-section";
 import { PricingSection } from "@/components/home/sections/pricing-section";
 import { UseCasesSection } from "@/components/home/sections/use-cases-section";
+import CommunitySection from "@/components/home/sections/community-section";
 
 export default function Home() {
   return (
@@ -16,6 +17,7 @@ export default function Home() {
         <div className="w-full divide-y divide-border">
           <HeroSection />
           <UseCasesSection />
+          <CommunitySection />
           {/* <CompanyShowcase /> */}
           {/* <BentoSection /> */}
           {/* <QuoteSection /> */}
