@@ -246,8 +246,20 @@ async def check_billing_status(client, user_id: str) -> Tuple[bool, str, Optiona
     logger.debug(f"[DEBUG] Checking billing status for user_id={user_id}")
     subscription = await get_user_subscription(user_id)
     if not subscription:
-        logger.debug(f"[DEBUG] No subscription found for user_id={user_id}")
-        return False, "No active subscription found.", None
+        # No subscription, check prepaid credits
+        credits = await get_user_credits(client, user_id)
+        logger.debug(f"[DEBUG] No subscription found for user_id={user_id}, credits={credits}")
+        if credits > 0:
+            logger.debug(f"[DEBUG] User {user_id} can use prepaid credits: {credits:.2f} minutes left (no subscription). Allowing run.")
+            return True, f"Using prepaid credits: {credits:.2f} minutes left.", {
+                "plan_name": "prepaid",
+                "minutes_limit": credits,
+                "current_usage": 0,
+                "price_id": None
+            }
+        else:
+            logger.debug(f"[DEBUG] User {user_id} has no subscription and no prepaid credits.")
+            return False, "No active subscription or prepaid credits found.", None
     # Get price_id from subscription, or use free tier
     price_id = None
     if subscription.get('items') and subscription['items'].get('data') and len(subscription['items']['data']) > 0:
