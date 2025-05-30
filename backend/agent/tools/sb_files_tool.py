@@ -116,29 +116,49 @@ class SandboxFilesTool(SandboxToolsBase):
         try:
             # Ensure sandbox is initialized
             await self._ensure_sandbox()
-            
+            logger.info(f"[create_file] Start: file_path={file_path}")
             file_path = self.clean_path(file_path)
             full_path = f"{self.workspace_path}/{file_path}"
             if self._file_exists(full_path):
+                logger.warning(f"[create_file] File already exists: {file_path}")
                 return self.fail_response(f"File '{file_path}' already exists. Use update_file to modify existing files.")
-            
             # Create parent directories if needed
             parent_dir = '/'.join(full_path.split('/')[:-1])
             if parent_dir:
-                self.sandbox.fs.create_folder(parent_dir, "755")
-            
+                try:
+                    logger.info(f"[create_file] Creating parent dir: {parent_dir}")
+                    self.sandbox.fs.create_folder(parent_dir, "755")
+                    logger.info(f"[create_file] Parent dir created: {parent_dir}")
+                except Exception as e:
+                    logger.warning(f"[create_file] Parent dir may already exist or failed to create: {parent_dir}, error: {e}")
             # Write the file content
-            self.sandbox.fs.upload_file(full_path, file_contents.encode())
-            self.sandbox.fs.set_file_permissions(full_path, permissions)
-            
+            try:
+                logger.info(f"[create_file] Uploading file: {full_path}")
+                self.sandbox.fs.upload_file(full_path, file_contents.encode())
+                logger.info(f"[create_file] File uploaded: {full_path}")
+            except Exception as e:
+                logger.error(f"[create_file] Failed to upload file: {full_path}, error: {e}")
+                return self.fail_response(f"Error uploading file: {str(e)}")
+            # Set file permissions
+            perm_warning = None
+            try:
+                logger.info(f"[create_file] Setting permissions: {permissions} for {full_path}")
+                self.sandbox.fs.set_file_permissions(full_path, permissions)
+                logger.info(f"[create_file] Permissions set: {permissions} for {full_path}")
+            except Exception as e:
+                logger.warning(f"[create_file] Failed to set permissions for {full_path}: {e}")
+                perm_warning = str(e)
             # Get preview URL if it's an HTML file
             preview_url = self._get_preview_url(file_path)
             message = f"File '{file_path}' created successfully."
             if preview_url:
                 message += f"\n\nYou can preview this HTML file at the automatically served HTTP server: {preview_url}"
-            
+            if perm_warning:
+                message += f"\n\nWarning: File was created, but setting permissions failed: {perm_warning}"
+            logger.info(f"[create_file] Success: {file_path}")
             return self.success_response(message)
         except Exception as e:
+            logger.error(f"[create_file] General error: {e}")
             return self.fail_response(f"Error creating file: {str(e)}")
 
     @openapi_schema({
