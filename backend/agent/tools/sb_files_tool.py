@@ -135,7 +135,11 @@ class SandboxFilesTool(SandboxToolsBase):
             # Write the file content
             try:
                 logger.info(f"[create_file] Uploading file: {full_path}")
-                self.sandbox.fs.upload_file(full_path, file_contents.encode())
+                if isinstance(file_contents, str):
+                    data = file_contents.encode()
+                else:
+                    data = file_contents
+                self.sandbox.fs.upload_file(full_path, data)
                 logger.info(f"[create_file] File uploaded: {full_path}")
             except Exception as e:
                 logger.error(f"[create_file] Failed to upload file: {full_path}, error: {e}")
@@ -224,7 +228,11 @@ class SandboxFilesTool(SandboxToolsBase):
             
             # Perform replacement
             new_content = content.replace(old_str, new_str)
-            self.sandbox.fs.upload_file(full_path, new_content.encode())
+            if isinstance(new_content, str):
+                data = new_content.encode()
+            else:
+                data = new_content
+            self.sandbox.fs.upload_file(full_path, data)
             
             # Show snippet around the edit
             replacement_line = content.split(old_str)[0].count('\n')
@@ -294,7 +302,11 @@ class SandboxFilesTool(SandboxToolsBase):
             if not self._file_exists(full_path):
                 return self.fail_response(f"File '{file_path}' does not exist. Use create_file to create a new file.")
             
-            self.sandbox.fs.upload_file(full_path, file_contents.encode())
+            if isinstance(file_contents, str):
+                data = file_contents.encode()
+            else:
+                data = file_contents
+            self.sandbox.fs.upload_file(full_path, data)
             self.sandbox.fs.set_file_permissions(full_path, permissions)
             
             # Get preview URL if it's an HTML file
