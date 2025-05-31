@@ -132,7 +132,8 @@ async def create_file(
         
         # Read file content directly from the uploaded file
         content = await file.read()
-        
+        if isinstance(content, str):
+            content = content.encode('utf-8')
         # Create file using raw binary content
         sandbox.fs.upload_file(path, content)
         logger.info(f"File created at {path} in sandbox {sandbox_id}")

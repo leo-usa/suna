@@ -146,7 +146,10 @@ class ReplicateImageTool(SandboxToolsBase):
                             # Use sandbox file API if available
                             if hasattr(self, 'sandbox') and hasattr(self.sandbox, 'fs'):
                                 try:
-                                    self.sandbox.fs.upload_file(f"/workspace/{rel_path}", resp.content)
+                                    data = resp.content
+                                    if isinstance(data, str):
+                                        data = data.encode('utf-8')
+                                    self.sandbox.fs.upload_file(f"/workspace/{rel_path}", data)
                                     local_paths.append(f"/workspace/{rel_path}")
                                 except Exception as e:
                                     logger.error(f"[ReplicateImageTool] upload_file exception: {e}")
