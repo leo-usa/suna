@@ -925,8 +925,12 @@ async def initiate_agent_with_files(
                             if hasattr(sandbox, 'fs') and hasattr(sandbox.fs, 'upload_file'):
                                 import inspect
                                 if inspect.iscoroutinefunction(sandbox.fs.upload_file):
+                                    if isinstance(content, str):
+                                        content = content.encode('utf-8')
                                     await sandbox.fs.upload_file(target_path, content)
                                 else:
+                                    if isinstance(content, str):
+                                        content = content.encode('utf-8')
                                     sandbox.fs.upload_file(target_path, content)
                                 logger.debug(f"Called sandbox.fs.upload_file for {target_path}")
                                 upload_successful = True

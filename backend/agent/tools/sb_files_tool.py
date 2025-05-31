@@ -141,11 +141,9 @@ class SandboxFilesTool(SandboxToolsBase):
                     data = file_contents.encode()
                 else:
                     data = file_contents
-                logger.info(f"[create_file] Type of data: {type(data)}, first 100 bytes: {data[:100] if isinstance(data, bytes) else str(data)[:100]}")
-                # Force types
-                full_path = str(full_path)
                 if not isinstance(data, bytes):
                     data = bytes(data)
+                logger.info(f"[create_file] Type of data: {type(data)}, first 100 bytes: {data[:100] if isinstance(data, bytes) else str(data)[:100]}")
                 self.sandbox.fs.upload_file(full_path, data)
                 logger.info(f"[create_file] File uploaded: {full_path}")
             except Exception as e:
@@ -239,6 +237,8 @@ class SandboxFilesTool(SandboxToolsBase):
                 data = new_content.encode()
             else:
                 data = new_content
+            if not isinstance(data, bytes):
+                data = bytes(data)
             self.sandbox.fs.upload_file(full_path, data)
             
             # Show snippet around the edit
@@ -313,6 +313,8 @@ class SandboxFilesTool(SandboxToolsBase):
                 data = file_contents.encode()
             else:
                 data = file_contents
+            if not isinstance(data, bytes):
+                data = bytes(data)
             self.sandbox.fs.upload_file(full_path, data)
             self.sandbox.fs.set_file_permissions(full_path, permissions)
             
