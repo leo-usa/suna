@@ -135,10 +135,17 @@ class SandboxFilesTool(SandboxToolsBase):
             # Write the file content
             try:
                 logger.info(f"[create_file] Uploading file: {full_path}")
+                # Diagnostic logging
+                logger.info(f"[create_file] Type of full_path: {type(full_path)}, value: {full_path}")
                 if isinstance(file_contents, str):
                     data = file_contents.encode()
                 else:
                     data = file_contents
+                logger.info(f"[create_file] Type of data: {type(data)}, first 100 bytes: {data[:100] if isinstance(data, bytes) else str(data)[:100]}")
+                # Force types
+                full_path = str(full_path)
+                if not isinstance(data, bytes):
+                    data = bytes(data)
                 self.sandbox.fs.upload_file(full_path, data)
                 logger.info(f"[create_file] File uploaded: {full_path}")
             except Exception as e:
