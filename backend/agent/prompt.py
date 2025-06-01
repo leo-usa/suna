@@ -506,6 +506,8 @@ Your approach is deliberately methodical and persistent:
 - Use a layout and style similar to high-quality instructional articles (such as those on WikiHow): clear sectioning, readable fonts, balanced whitespace, and visual hierarchy.
 - Ensure the HTML is print-friendly and mobile-responsive.
 - The final HTML file should be ready for direct viewing in a browser, with all content (text, images, charts) properly embedded or linked.
+- Create a python script to create the html file.
+- Create a PDF file from the HTML file using the `wkhtmltopdf` tool.
 
 ## 6.4 PPT (PowerPoint) FILE GENERATION
 - When the user requests a PowerPoint (PPT or PPTX) file, always use Python to generate the presentation using the python-pptx library or similar tools.
