@@ -342,38 +342,50 @@ Here are the XML tools available with examples:
                 context_limit = MODEL_CONTEXT_LIMITS.get(llm_model, 100_000)  # Default to 100k if unknown
                 input_tokens = token_counter(model=llm_model, messages=prepared_messages)
                 max_tokens = llm_max_tokens or 4000
+                # --- PATCH: Tighter input token reduction for Claude ---
+                claude_models = ["anthropic/claude-sonnet-4-20250514", "anthropic/claude-3-7-sonnet-latest"]
+                input_token_target = 130000 if llm_model in claude_models else context_limit - max_tokens
                 if input_tokens + max_tokens > context_limit:
                     logger.warning(f"Input + max_tokens ({input_tokens} + {max_tokens}) exceeds context limit ({context_limit}). Truncating input.")
-                    # Always keep system prompt and latest user message
                     def find_latest_user_index(msgs):
                         for i in range(len(msgs) - 1, 0, -1):
                             if msgs[i].get('role') == 'user':
                                 return i
                         return -1
                     latest_user_index = find_latest_user_index(prepared_messages)
-                    # Remove all messages except system prompt and latest user message
-                    while input_tokens + max_tokens > context_limit and len(prepared_messages) > 2:
-                        # Remove the oldest message after system prompt, but not the latest user message
-                        # Find the first non-system, non-latest-user message
+                    # Aggressively remove all but system prompt and latest user message
+                    while len(prepared_messages) > 2:
                         for i in range(1, len(prepared_messages)):
                             if i != latest_user_index:
+                                logger.info(f"Removing message at index {i} to reduce input tokens.")
                                 prepared_messages.pop(i)
                                 if latest_user_index > i:
                                     latest_user_index -= 1
                                 break
                         input_tokens = token_counter(model=llm_model, messages=prepared_messages)
-                    # If still too large, truncate the latest user message's content
-                    if input_tokens + max_tokens > context_limit and len(prepared_messages) == 2:
+                        logger.info(f"After removal: input_tokens={input_tokens}")
+                    # Now only system + user message left, truncate user message content if needed
+                    if len(prepared_messages) == 2:
                         user_msg = prepared_messages[1]
                         if isinstance(user_msg.get("content"), str):
-                            allowed_tokens = max(context_limit - max_tokens - 1000, 0)
+                            allowed_tokens = max(input_token_target - 1000, 0)
+                            logger.info(f"Truncating user message content to fit {input_token_target} tokens.")
                             user_msg["content"] = user_msg["content"][:allowed_tokens] + "\n\n⚠️ Message truncated to fit the model's context window."
                         input_tokens = token_counter(model=llm_model, messages=prepared_messages)
+                        logger.info(f"After user message truncation: input_tokens={input_tokens}")
                     # Optionally, notify the user
                     prepared_messages.append({
                         "role": "system",
                         "content": "⚠️ Some earlier conversation or file content was truncated to fit the model's context window."
                     })
+                    input_tokens = token_counter(model=llm_model, messages=prepared_messages)
+                    logger.info(f"After adding system warning: input_tokens={input_tokens}")
+                    # Dynamically reduce max_tokens if still over limit
+                    if input_tokens + max_tokens > context_limit:
+                        new_max_tokens = max(context_limit - input_tokens, 2000)
+                        logger.warning(f"Reducing max_tokens from {max_tokens} to {new_max_tokens} to fit context window.")
+                        max_tokens = new_max_tokens
+                logger.info(f"Final input_tokens: {input_tokens}, max_tokens: {max_tokens}, total: {input_tokens + max_tokens} (limit: {context_limit})")
 
                 # 7. Make LLM API call
                 logger.debug("Making LLM API call")
@@ -382,7 +394,7 @@ Here are the XML tools available with examples:
                         prepared_messages, # Pass the potentially modified messages
                         llm_model,
                         temperature=llm_temperature,
-                        max_tokens=llm_max_tokens,
+                        max_tokens=max_tokens,
                         tools=openapi_tool_schemas,
                         tool_choice=tool_choice if processor_config.native_tool_calling else None,
                         stream=stream,
