@@ -132,23 +132,21 @@ class SandboxFilesTool(SandboxToolsBase):
                     logger.info(f"[create_file] Parent dir created: {parent_dir}")
                 except Exception as e:
                     logger.warning(f"[create_file] Parent dir may already exist or failed to create: {parent_dir}, error: {e}")
-            # Write the file content
-            try:
-                logger.info(f"[create_file] Uploading file: {full_path}")
-                # Diagnostic logging
-                logger.info(f"[create_file] Type of full_path: {type(full_path)}, value: {full_path}")
+            # Workaround for Render.com Daytona bug: pass str not bytes
+            if os.environ.get("RENDER") == "true":
+                if isinstance(file_contents, bytes):
+                    data = file_contents.decode("utf-8")
+                else:
+                    data = file_contents
+            else:
                 if isinstance(file_contents, str):
                     data = file_contents.encode()
                 else:
                     data = file_contents
                 if not isinstance(data, bytes):
                     data = bytes(data)
-                logger.info(f"[create_file] Type of data: {type(data)}, first 100 bytes: {data[:100] if isinstance(data, bytes) else str(data)[:100]}")
-                self.sandbox.fs.upload_file(full_path, data)
-                logger.info(f"[create_file] File uploaded: {full_path}")
-            except Exception as e:
-                logger.error(f"[create_file] Failed to upload file: {full_path}, error: {e}")
-                return self.fail_response(f"Error uploading file: {str(e)}")
+            self.sandbox.fs.upload_file(full_path, data)
+            logger.info(f"[create_file] File uploaded: {full_path}")
             # Set file permissions
             perm_warning = None
             try:
@@ -233,12 +231,19 @@ class SandboxFilesTool(SandboxToolsBase):
             
             # Perform replacement
             new_content = content.replace(old_str, new_str)
-            if isinstance(new_content, str):
-                data = new_content.encode()
+            # Workaround for Render.com Daytona bug: pass str not bytes
+            if os.environ.get("RENDER") == "true":
+                if isinstance(new_content, bytes):
+                    data = new_content.decode("utf-8")
+                else:
+                    data = new_content
             else:
-                data = new_content
-            if not isinstance(data, bytes):
-                data = bytes(data)
+                if isinstance(new_content, str):
+                    data = new_content.encode()
+                else:
+                    data = new_content
+                if not isinstance(data, bytes):
+                    data = bytes(data)
             self.sandbox.fs.upload_file(full_path, data)
             
             # Show snippet around the edit
@@ -309,12 +314,19 @@ class SandboxFilesTool(SandboxToolsBase):
             if not self._file_exists(full_path):
                 return self.fail_response(f"File '{file_path}' does not exist. Use create_file to create a new file.")
             
-            if isinstance(file_contents, str):
-                data = file_contents.encode()
+            # Workaround for Render.com Daytona bug: pass str not bytes
+            if os.environ.get("RENDER") == "true":
+                if isinstance(file_contents, bytes):
+                    data = file_contents.decode("utf-8")
+                else:
+                    data = file_contents
             else:
-                data = file_contents
-            if not isinstance(data, bytes):
-                data = bytes(data)
+                if isinstance(file_contents, str):
+                    data = file_contents.encode()
+                else:
+                    data = file_contents
+                if not isinstance(data, bytes):
+                    data = bytes(data)
             self.sandbox.fs.upload_file(full_path, data)
             self.sandbox.fs.set_file_permissions(full_path, permissions)
             
