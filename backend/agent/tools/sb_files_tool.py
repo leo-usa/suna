@@ -145,11 +145,14 @@ class SandboxFilesTool(SandboxToolsBase):
             except Exception as upload_err:
                 logger.error(f"[create_file] upload_file failed: {upload_err}. Attempting fallback via shell command.")
                 try:
-                    # Use shell to create the file with the given content
-                    # Use 'cat' with a heredoc for arbitrary content
+                    session_id = "file-create-fallback"
+                    try:
+                        self.sandbox.process.create_session(session_id)
+                    except Exception as sess_err:
+                        logger.info(f"[create_file] Session may already exist: {sess_err}")
                     heredoc = f"cat <<'EOF' > {full_path}\n{file_contents}\nEOF"
                     req = SessionExecuteRequest(command=heredoc, var_async=False)
-                    self.sandbox.process.execute(req)
+                    self.sandbox.process.execute_session_command(session_id, req)
                     logger.info(f"[create_file] Fallback shell file creation succeeded: {full_path}")
                 except Exception as fallback_err:
                     logger.error(f"[create_file] Fallback shell file creation failed: {fallback_err}")
