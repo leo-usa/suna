@@ -132,19 +132,13 @@ class SandboxFilesTool(SandboxToolsBase):
                     logger.info(f"[create_file] Parent dir created: {parent_dir}")
                 except Exception as e:
                     logger.warning(f"[create_file] Parent dir may already exist or failed to create: {parent_dir}, error: {e}")
-            # Workaround for Render.com Daytona bug: pass str not bytes
-            if os.environ.get("RENDER") == "true":
-                if isinstance(file_contents, bytes):
-                    data = file_contents.decode("utf-8")
-                else:
-                    data = file_contents
+            # Always encode file_contents to bytes before upload
+            if isinstance(file_contents, str):
+                data = file_contents.encode()
             else:
-                if isinstance(file_contents, str):
-                    data = file_contents.encode()
-                else:
-                    data = file_contents
-                if not isinstance(data, bytes):
-                    data = bytes(data)
+                data = file_contents
+            if not isinstance(data, bytes):
+                data = bytes(data)
             self.sandbox.fs.upload_file(full_path, data)
             logger.info(f"[create_file] File uploaded: {full_path}")
             # Set file permissions
@@ -231,19 +225,13 @@ class SandboxFilesTool(SandboxToolsBase):
             
             # Perform replacement
             new_content = content.replace(old_str, new_str)
-            # Workaround for Render.com Daytona bug: pass str not bytes
-            if os.environ.get("RENDER") == "true":
-                if isinstance(new_content, bytes):
-                    data = new_content.decode("utf-8")
-                else:
-                    data = new_content
+            # Always encode new_content to bytes before upload
+            if isinstance(new_content, str):
+                data = new_content.encode()
             else:
-                if isinstance(new_content, str):
-                    data = new_content.encode()
-                else:
-                    data = new_content
-                if not isinstance(data, bytes):
-                    data = bytes(data)
+                data = new_content
+            if not isinstance(data, bytes):
+                data = bytes(data)
             self.sandbox.fs.upload_file(full_path, data)
             
             # Show snippet around the edit
@@ -314,19 +302,13 @@ class SandboxFilesTool(SandboxToolsBase):
             if not self._file_exists(full_path):
                 return self.fail_response(f"File '{file_path}' does not exist. Use create_file to create a new file.")
             
-            # Workaround for Render.com Daytona bug: pass str not bytes
-            if os.environ.get("RENDER") == "true":
-                if isinstance(file_contents, bytes):
-                    data = file_contents.decode("utf-8")
-                else:
-                    data = file_contents
+            # Always encode file_contents to bytes before upload
+            if isinstance(file_contents, str):
+                data = file_contents.encode()
             else:
-                if isinstance(file_contents, str):
-                    data = file_contents.encode()
-                else:
-                    data = file_contents
-                if not isinstance(data, bytes):
-                    data = bytes(data)
+                data = file_contents
+            if not isinstance(data, bytes):
+                data = bytes(data)
             self.sandbox.fs.upload_file(full_path, data)
             self.sandbox.fs.set_file_permissions(full_path, permissions)
             
