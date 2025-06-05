@@ -139,8 +139,21 @@ class SandboxFilesTool(SandboxToolsBase):
                 data = file_contents
             if not isinstance(data, bytes):
                 data = bytes(data)
-            self.sandbox.fs.upload_file(full_path, data)
-            logger.info(f"[create_file] File uploaded: {full_path}")
+            try:
+                self.sandbox.fs.upload_file(full_path, data)
+                logger.info(f"[create_file] File uploaded: {full_path}")
+            except Exception as upload_err:
+                logger.error(f"[create_file] upload_file failed: {upload_err}. Attempting fallback via shell command.")
+                try:
+                    # Use shell to create the file with the given content
+                    # Use 'cat' with a heredoc for arbitrary content
+                    heredoc = f"cat <<'EOF' > {full_path}\n{file_contents}\nEOF"
+                    req = SessionExecuteRequest(command=heredoc, var_async=False)
+                    self.sandbox.process.execute(req)
+                    logger.info(f"[create_file] Fallback shell file creation succeeded: {full_path}")
+                except Exception as fallback_err:
+                    logger.error(f"[create_file] Fallback shell file creation failed: {fallback_err}")
+                    return self.fail_response(f"Error creating file: upload_file failed with: {upload_err}; fallback shell creation also failed with: {fallback_err}")
             # Set file permissions
             perm_warning = None
             try:
