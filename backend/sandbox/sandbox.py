@@ -3,7 +3,6 @@ from typing import Optional
 import time
 
 from daytona_sdk import Daytona, DaytonaConfig, CreateSandboxParams, Sandbox, SessionExecuteRequest
-from daytona_api_client.models.workspace_state import WorkspaceState
 from dotenv import load_dotenv
 
 from agentpress.tool import Tool
@@ -47,7 +46,7 @@ async def get_or_start_sandbox(sandbox_id: str):
         sandbox = daytona.get_current_sandbox(sandbox_id)
         
         # Check if sandbox needs to be started
-        if sandbox.instance.state == WorkspaceState.ARCHIVED or sandbox.instance.state == WorkspaceState.STOPPED:
+        if sandbox.instance.state == "archived" or sandbox.instance.state == "stopped":
             logger.info(f"Sandbox is in {sandbox.instance.state} state. Starting...")
             try:
                 daytona.start(sandbox)
@@ -120,7 +119,7 @@ def create_sandbox(password: str, project_id: str = None):
     try:
         sandboxes = daytona.list()  # List all sandboxes
         # Filter for non-active sandboxes
-        non_active = [s for s in sandboxes if getattr(s.instance, 'state', None) in [WorkspaceState.ARCHIVED, WorkspaceState.STOPPED]]
+        non_active = [s for s in sandboxes if getattr(s.instance, 'state', None) in ["archived", "stopped"]]
         # Log all candidates for deletion
         for s in non_active:
             logger.info(f"Non-active sandbox: id={getattr(s, 'id', s)}, created_at={getattr(s, 'created_at', getattr(s, 'instance', None) and getattr(s.instance, 'created_at', 'N/A'))} (raw: {getattr(s, 'created_at', None)}, instance.created_at: {getattr(s, 'instance', None) and getattr(s.instance, 'created_at', None)})")
@@ -155,7 +154,7 @@ def create_sandbox(password: str, project_id: str = None):
             logger.warning("Daytona VM limit reached. Attempting LRU deletion of non-active sandbox.")
             sandboxes = daytona.list()  # List all sandboxes
             # Filter for non-active sandboxes
-            non_active = [s for s in sandboxes if getattr(s.instance, 'state', None) in [WorkspaceState.ARCHIVED, WorkspaceState.STOPPED]]
+            non_active = [s for s in sandboxes if getattr(s.instance, 'state', None) in ["archived", "stopped"]]
             if non_active:
                 # Sort by creation or last used time (if available)
                 non_active.sort(key=lambda s: getattr(s, 'created_at', getattr(s, 'instance', None) and getattr(s.instance, 'created_at', 0) or 0))
