@@ -129,13 +129,13 @@ def create_sandbox(password: str, project_id: str = None):
         non_active.sort(key=get_sort_key)
         oldest = non_active[0]
         if isinstance(oldest, str):
-            logger.info(f"[TEMP] Would delete sandbox object for ID: {oldest} (deletion disabled)")
-            # sandbox_obj = daytona.get_current_sandbox(oldest)
-            # logger.info(f"Deleting oldest non-active sandbox: {oldest}")
-            # daytona.delete(sandbox_obj)
+            logger.info(f"[TEMP] Would delete sandbox object for ID: {oldest}")
+            sandbox_obj = daytona.get_current_sandbox(oldest)
+            logger.info(f"Deleting oldest non-active sandbox: {oldest}")
+            daytona.delete(sandbox_obj)
         else:
-            logger.info(f"[TEMP] Would delete oldest non-active sandbox: {oldest.id} (deletion disabled)")
-            # daytona.delete(oldest)
+            logger.info(f"[TEMP] Would delete oldest non-active sandbox: {oldest.id}")
+            daytona.delete(oldest)
         # Wait for Daytona to free up the slot
         time.sleep(3)
         # Retry creation up to 2 times
@@ -160,13 +160,13 @@ def create_sandbox(password: str, project_id: str = None):
                 non_active.sort(key=lambda s: getattr(s, 'created_at', getattr(s, 'instance', None) and getattr(s.instance, 'created_at', 0) or 0))
                 oldest = non_active[0]
                 if isinstance(oldest, str):
-                    logger.info(f"[TEMP] Would delete sandbox object for ID: {oldest} (deletion disabled)")
-                    # sandbox_obj = daytona.get_current_sandbox(oldest)
-                    # logger.info(f"Deleting oldest non-active sandbox: {oldest}")
-                    # daytona.delete(sandbox_obj)
+                    logger.info(f"[TEMP] Would delete sandbox object for ID: {oldest}")
+                    sandbox_obj = daytona.get_current_sandbox(oldest)
+                    logger.info(f"Deleting oldest non-active sandbox: {oldest}")
+                    daytona.delete(sandbox_obj)
                 else:
-                    logger.info(f"[TEMP] Would delete oldest non-active sandbox: {oldest.id} (deletion disabled)")
-                    # daytona.delete(oldest)
+                    logger.info(f"[TEMP] Would delete oldest non-active sandbox: {oldest.id}")
+                    daytona.delete(oldest)
                 # Retry creation once
                 sandbox = daytona.create(params)
             else:
