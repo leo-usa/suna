@@ -924,6 +924,36 @@ class ResponseProcessor:
             - parsing_details: Dict with 'attributes', 'elements', 'text_content', 'root_content'
         """
         try:
+            # --- AUTO-FIX for malformed <str-replace> XML ---
+            if '<str-replace' in xml_chunk:
+                # Case 1: Two <old_str> tags, no <new_str>
+                if '<old_str>' in xml_chunk and xml_chunk.count('<old_str>') == 2 and '<new_str>' not in xml_chunk:
+                    first = xml_chunk.find('<old_str>')
+                    second = xml_chunk.find('<old_str>', first + 1)
+                    end_second = xml_chunk.find('</old_str>', second)
+                    if second != -1 and end_second != -1:
+                        new_str_content = xml_chunk[second + len('<old_str>'):end_second]
+                        fixed_chunk = (
+                            xml_chunk[:second] +
+                            '<new_str>' + new_str_content + '</new_str>' +
+                            xml_chunk[end_second + len('</old_str>'):]
+                        )
+                        logger.warning(f"Auto-fixed malformed <str-replace> XML: replaced second <old_str> with <new_str>")
+                        xml_chunk = fixed_chunk
+                # Case 2: <new_str> is present but closed with </old_str>
+                elif '<new_str>' in xml_chunk and '</old_str>' in xml_chunk:
+                    new_str_start = xml_chunk.find('<new_str>')
+                    old_str_close_after_new = xml_chunk.find('</old_str>', new_str_start)
+                    if new_str_start != -1 and old_str_close_after_new != -1:
+                        fixed_chunk = (
+                            xml_chunk[:old_str_close_after_new] +
+                            '</new_str>' +
+                            xml_chunk[old_str_close_after_new + len('</old_str>'):]
+                        )
+                        logger.warning(f"Auto-fixed malformed <str-replace> XML: replaced </old_str> with </new_str> after <new_str>")
+                        xml_chunk = fixed_chunk
+            # --- END AUTO-FIX ---
+            
             # Extract tag name and validate
             tag_match = re.match(r'<([^\s>]+)', xml_chunk)
             if not tag_match:
