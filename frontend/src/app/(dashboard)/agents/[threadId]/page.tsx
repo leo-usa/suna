@@ -269,7 +269,7 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
   const [communityDialogOpen, setCommunityDialogOpen] = useState(false);
   const [communityLoading, setCommunityLoading] = useState(false);
   const [communityTitle, setCommunityTitle] = useState("");
-  const [communityDescription, setCommunityDescription] = useState("");
+  const [communityPrompt, setCommunityPrompt] = useState("");
   const [communityResult, setCommunityResult] = useState<{url: string}|null>(null);
 
   // Replace both useEffect hooks with a single one that respects user closing
@@ -409,7 +409,7 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
     console.error(`[PAGE] Stream hook error: ${errorMessage}`);
     if (!errorMessage.toLowerCase().includes('not found') && 
         !errorMessage.toLowerCase().includes('agent run is not running')) {
-        toast.error(t('agentDetail.streamError', errorMessage));
+        toast.error(t('agentDetail.streamError', '流式传输出错'));
     }
   }, [t]);
   
@@ -583,7 +583,7 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
         if (isMounted) {
           const errorMessage = err instanceof Error ? err.message : 'Failed to load thread';
           setError(errorMessage);
-          toast.error(t('agentDetail.loadError', errorMessage));
+          toast.error(t('agentDetail.loadError', '加载线程失败'));
         }
       } finally {
         if (isMounted) setIsLoading(false);
@@ -877,7 +877,7 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
     
     if (!clickedAssistantMessageId) {
       console.warn("Clicked assistant message ID is null. Cannot open side panel.");
-      toast.warning(t('agentDetail.cannotViewDetails', 'Cannot view details: Assistant message ID is missing.'));
+      toast.warning(t('agentDetail.cannotViewDetails', '无法查看详情：缺少助手消息ID'));
       return;
     }
 
@@ -919,78 +919,11 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
       setIsSidePanelOpen(true); // Explicitly open the panel
     } else {
       console.warn(`[PAGE] Could not find matching tool call in toolCalls array for assistant message ID: ${clickedAssistantMessageId}`);
-      toast.info(t('agentDetail.couldNotFindDetails', 'Could not find details for this tool call.'));
+      toast.info(t('agentDetail.couldNotFindDetails', '未找到此工具调用的详情'));
       // Optionally, still open the panel but maybe at the last index or show a message?
       // setIsSidePanelOpen(true);
     }
   }, [messages, toolCalls, t]); // Add toolCalls as a dependency
-
-  // Handle streaming tool calls
-  const handleStreamingToolCall = useCallback((toolCall: StreamingToolCall | null) => {
-    if (!toolCall) return;
-    
-    const toolName = toolCall.name || toolCall.xml_tag_name || 'Unknown Tool';
-    
-    // Skip <ask> tags from showing in the side panel during streaming
-    if (toolName === 'ask' || toolName === 'complete') {
-      return;
-    }
-    
-    console.log("[STREAM] Received tool call:", toolName);
-    
-    // If user explicitly closed the panel, don't reopen it for streaming calls
-    if (userClosedPanelRef.current) return;
-    
-    // Create a properly formatted tool call input for the streaming tool
-    // that matches the format of historical tool calls
-    const toolArguments = toolCall.arguments || '';
-    
-    // Format the arguments in a way that matches the expected XML format for each tool
-    // This ensures the specialized tool views render correctly
-    let formattedContent = toolArguments;
-    if (toolName.toLowerCase().includes('command') && !toolArguments.includes('<execute-command>')) {
-      formattedContent = `<execute-command>${toolArguments}</execute-command>`;
-    } else if (toolName.toLowerCase().includes('file') && !toolArguments.includes('<create-file>')) {
-      // For file operations, wrap with appropriate tag if not already wrapped
-      const fileOpTags = ['create-file', 'delete-file', 'full-file-rewrite'];
-      const matchingTag = fileOpTags.find(tag => toolName.toLowerCase().includes(tag));
-      if (matchingTag && !toolArguments.includes(`<${matchingTag}>`)) {
-        formattedContent = `<${matchingTag}>${toolArguments}</${matchingTag}>`;
-      }
-    }
-    
-    const newToolCall: ToolCallInput = {
-      assistantCall: {
-        name: toolName,
-        content: formattedContent,
-        timestamp: new Date().toISOString()
-      },
-      // For streaming tool calls, provide empty content that indicates streaming
-      toolResult: {
-        content: "STREAMING",
-        isSuccess: true, 
-        timestamp: new Date().toISOString()
-      }
-    };
-    
-    // Update the tool calls state to reflect the streaming tool
-    setToolCalls(prev => {
-      // If the same tool is already being streamed, update it instead of adding a new one
-      if (prev.length > 0 && prev[0].assistantCall.name === toolName) {
-        return [{
-          ...prev[0],
-          assistantCall: {
-            ...prev[0].assistantCall,
-            content: formattedContent
-          }
-        }];
-      }
-      return [newToolCall];
-    });
-    
-    setCurrentToolIndex(0);
-    setIsSidePanelOpen(true);
-  }, []);
 
   // SEO title update
   useEffect(() => {
@@ -1138,10 +1071,25 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
     setTimeout(() => setCopied(false), 1500);
   };
 
-  // Handler for Community Share
+  // Handler for Community Share (no UI, just logic)
   const handleCommunityShare = async () => {
+    if (communityLoading || communityResult) return;
     setCommunityLoading(true);
+    toast.info(t('communityShare.sharing', '正在分享...'));
     try {
+      // Autofill title with project name
+      const title = projectName || "";
+      // Autofill prompt with first user message
+      const firstUserMsg = messages.find(m => m.type === 'user');
+      let prompt = "";
+      if (firstUserMsg) {
+        try {
+          const parsed = safeJsonParse<{ content: string }>(firstUserMsg.content, { content: firstUserMsg.content });
+          prompt = parsed.content || firstUserMsg.content;
+        } catch {
+          prompt = firstUserMsg.content;
+        }
+      }
       // Use shareReport helper
       const data = await shareReport(project?.id);
       if (!data.shared || !data.shared[0]?.html) throw new Error('No HTML found');
@@ -1159,15 +1107,16 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
         method: 'POST',
         headers,
         body: JSON.stringify({
-          title: communityTitle,
-          description: communityDescription,
+          title,
+          description: prompt,
           html_content: htmlContent,
         }),
       });
       const result = await resp.json();
       setCommunityResult({ url: result.html_url });
-    } catch (e) {
-      toast.error('Failed to share to community');
+      toast.success(t('communityShare.shared', '已分享到社区！'));
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed to share to community');
     } finally {
       setCommunityLoading(false);
     }
@@ -1297,26 +1246,14 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
             onProjectRenamed={handleProjectRenamed}
             isMobileView={isMobile}
             rightActions={
-              <>
-                {/*
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" onClick={() => setShareDialogOpen(true)} aria-label="Web Share">
-                      <Share2 className="h-5 w-5" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Web Share</TooltipContent>
-                </Tooltip>
-                */}
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" onClick={() => setCommunityDialogOpen(true)} aria-label="Community Share">
-                      <Users className="h-5 w-5" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>{t('communityShare.tooltip', 'Share to Community (recommended)\nShare your work with the Dobby community!')}</TooltipContent>
-                </Tooltip>
-              </>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="icon" onClick={handleCommunityShare} aria-label="Community Share" disabled={communityLoading || !!communityResult}>
+                    <Users className="h-5 w-5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{t('communityShare.tooltip', '分享到社区（推荐）\n与Dobby社区分享你的作品！')}</TooltipContent>
+              </Tooltip>
             }
           />
           <div className="flex flex-1 items-center justify-center p-4">
@@ -1358,26 +1295,16 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
           onProjectRenamed={handleProjectRenamed}
           isMobileView={isMobile}
           rightActions={
-            <>
-              {/*
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" onClick={() => setShareDialogOpen(true)} aria-label="Web Share">
-                    <Share2 className="h-5 w-5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Web Share</TooltipContent>
-              </Tooltip>
-              */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" onClick={() => setCommunityDialogOpen(true)} aria-label="Community Share">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span>
+                  <Button variant="ghost" size="icon" onClick={handleCommunityShare} aria-label="Community Share" disabled={communityLoading || !!communityResult}>
                     <Users className="h-5 w-5" />
                   </Button>
-                </TooltipTrigger>
-                <TooltipContent>{t('communityShare.tooltip', 'Share to Community (recommended)\nShare your work with the Dobby community!')}</TooltipContent>
-              </Tooltip>
-            </>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>{communityResult ? t('communityShare.shared', '已分享到社区！') : communityLoading ? t('communityShare.sharing', '正在分享...') : t('communityShare.tooltip', '分享到社区（推荐）\n与Dobby社区分享你的作品！')}</TooltipContent>
+            </Tooltip>
           }
         />
         <div 
@@ -1388,7 +1315,7 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
           <div className="mx-auto max-w-3xl">
             {messages.length === 0 && !streamingTextContent && !streamingToolCall && agentStatus === 'idle' ? (
               <div className="flex h-full items-center justify-center">
-                <div className="text-center text-muted-foreground">{t('agentDetail.sendAMessage', 'Send a message to start.')}</div>
+                <div className="text-center text-muted-foreground">{t('agentDetail.sendAMessage', '发送消息以开始')}</div>
               </div>
             ) : (
               <div className="space-y-8">
@@ -1638,7 +1565,7 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
             value={newMessage}
             onChange={setNewMessage}
             onSubmit={handleSubmitMessage}
-            placeholder={t('agentDetail.inputPlaceholder', 'Type your message...')}
+            placeholder={t('agentDetail.inputPlaceholder', '输入你的消息...')}
             loading={isSending}
             disabled={isSending || agentStatus === 'running' || agentStatus === 'connecting'}
             isAgentRunning={agentStatus === 'running' || agentStatus === 'connecting'}
@@ -1715,39 +1642,6 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
           <DialogFooter>
             <DialogClose asChild>
               <Button variant="secondary">Close</Button>
-            </DialogClose>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={communityDialogOpen} onOpenChange={setCommunityDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Share to Community</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-2">
-            <input
-              className="w-full border rounded px-3 py-2"
-              placeholder="Title"
-              value={communityTitle}
-              onChange={e => setCommunityTitle(e.target.value)}
-            />
-            <textarea
-              className="w-full border rounded px-3 py-2"
-              placeholder="Description (optional)"
-              value={communityDescription}
-              onChange={e => setCommunityDescription(e.target.value)}
-            />
-            {communityResult && (
-              <div className="text-green-600 text-sm">Shared! <a href={communityResult.url} target="_blank" rel="noopener noreferrer" className="underline">View in Community</a></div>
-            )}
-          </div>
-          <DialogFooter>
-            <Button onClick={handleCommunityShare} disabled={communityLoading || !communityTitle}>
-              {communityLoading ? <Loader2 className="animate-spin h-4 w-4" /> : 'Share'}
-            </Button>
-            <DialogClose asChild>
-              <Button variant="ghost">Close</Button>
             </DialogClose>
           </DialogFooter>
         </DialogContent>

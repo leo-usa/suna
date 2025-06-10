@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, Request, Body, File, UploadFile, Form, status, Query
+from fastapi import APIRouter, HTTPException, Depends, Request, Body, File, UploadFile, Form, status, Query, Response
 from fastapi.responses import StreamingResponse, Response
 import asyncio
 import json
@@ -11,6 +11,9 @@ from pydantic import BaseModel
 import tempfile
 import os
 from dateutil import parser
+import mimetypes
+import re
+import httpx
 
 from agentpress.thread_manager import ThreadManager
 from services.supabase import DBConnection, upload_file_to_storage
@@ -1131,11 +1134,24 @@ async def share_report(
             url = await upload_file_to_storage(bucket, storage_img_path, img_bytes, content_type="image/webp")
             img_url_map[img_path] = url
         # Upload HTML (with image URLs replaced)
-        html_for_upload = html_content
-        for orig, url in img_url_map.items():
-            html_for_upload = html_for_upload.replace(orig, url)
+        def replace_asset_refs(html):
+            def normalize_path(path):
+                path = path.lstrip("./")
+                while '//' in path:
+                    path = path.replace('//', '/')
+                return path
+            def repl(match):
+                orig = match.group(2)
+                rel = normalize_path(orig)
+                return f'{match.group(1)}="{img_url_map.get(rel, orig)}"'
+            # Replace src="..." and href="..." (double or single quotes)
+            html = re.sub(r'(src|href)=["\"]([^"\"]+)["\"]', repl, html)
+            return html
+        logger.info(f"HTML before asset ref replacement: {html_content[:1000]}")
+        html_content = replace_asset_refs(html_content)
+        logger.info(f"HTML after asset ref replacement: {html_content[:1000]}")
         storage_html_path = f"{user_id}/{project_id}/{share_id}/index.html"
-        url = await upload_file_to_storage(bucket, storage_html_path, html_for_upload.encode("utf-8"), content_type="text/html")
+        url = await upload_file_to_storage(bucket, storage_html_path, html_content.encode("utf-8"), content_type="text/html")
         uploaded.append({"html": url, "images": list(img_url_map.values())})
     return {"shared": uploaded}
 
@@ -1144,7 +1160,7 @@ async def share_to_community(
     body: CommunityShareRequest,
     user_id: str = Depends(get_current_user_id_from_jwt)
 ):
-    """Share an HTML report to the community gallery."""
+    """Share all workspace files to the community gallery."""
     client = await db.client
     user = await client.table('users').select('name').eq('id', user_id).maybe_single().execute()
     if not user or not getattr(user, "data", None):
@@ -1154,41 +1170,85 @@ async def share_to_community(
         user_name = user.data['name']
     import uuid, datetime
     post_id = str(uuid.uuid4())
-    html_path = f"community/{post_id}.html"
+    html_path = f"community/{post_id}/index.html"
     from agent.utils import extract_image_paths_from_html
     from sandbox.sandbox import get_or_start_sandbox
     html_content = body.html_content
-    img_paths = extract_image_paths_from_html(html_content)
-    img_url_map = {}
-    if img_paths:
-        project = await client.table('projects').select('sandbox').eq('account_id', user_id).order('created_at', desc=True).limit(1).maybe_single().execute()
-        sandbox = None
-        if project.data and project.data.get('sandbox'):
-            sandbox_info = project.data['sandbox']
-            sandbox_id = sandbox_info.get('id') or sandbox_info.get('sandbox_id')
-            if sandbox_id:
-                try:
-                    sandbox = await get_or_start_sandbox(sandbox_id)
-                except Exception:
-                    sandbox = None
-        for idx, img_path in enumerate(img_paths):
-            if img_path.startswith("http://") or img_path.startswith("https://"):
-                continue
-            abs_img_path = f"/workspace/{img_path}" if not img_path.startswith("/workspace/") else img_path
-            img_bytes = None
-            if sandbox:
-                try:
-                    img_bytes = sandbox.fs.download_file(abs_img_path)
-                except Exception:
-                    continue
-            if img_bytes:
-                ext = os.path.splitext(img_path)[1] or ".webp"
-                storage_img_path = f"community/images/{post_id}_img_{idx}{ext}"
-                url = await upload_file_to_storage("share", storage_img_path, img_bytes, content_type="image/webp")
-                img_url_map[img_path] = url
-        for orig, url in img_url_map.items():
-            html_content = html_content.replace(orig, url)
-    await upload_file_to_storage("share", html_path, html_content.encode("utf-8"), content_type="text/html")
+    # --- Helper: Recursively list all files in /workspace ---
+    async def list_all_files(sandbox, base="/workspace"):
+        files = []
+        stack = [base]
+        while stack:
+            current = stack.pop()
+            for f in sandbox.fs.list_files(current):
+                full_path = f"{current.rstrip('/')}/{f.name}"
+                rel_path = full_path[len("/workspace/"):] if full_path.startswith("/workspace/") else full_path
+                if getattr(f, 'is_dir', False):
+                    stack.append(full_path)
+                else:
+                    files.append((full_path, rel_path))
+        return files
+    # --- Get user's latest sandbox ---
+    project = await client.table('projects').select('sandbox').eq('account_id', user_id).order('created_at', desc=True).limit(1).maybe_single().execute()
+    sandbox = None
+    if project.data and project.data.get('sandbox'):
+        sandbox_info = project.data['sandbox']
+        sandbox_id = sandbox_info.get('id') or sandbox_info.get('sandbox_id')
+        if sandbox_id:
+            try:
+                sandbox = await get_or_start_sandbox(sandbox_id)
+            except Exception:
+                sandbox = None
+    if not sandbox:
+        raise HTTPException(status_code=404, detail="No sandbox found for user.")
+    # --- List all files in workspace ---
+    all_files = await list_all_files(sandbox)
+    # --- Upload all files to Supabase ---
+    supabase_url = config.SUPABASE_URL.rstrip('/')
+    bucket = "share"
+    rel_to_url = {}
+    image_exts = {'.png', '.jpg', '.jpeg', '.webp', '.gif', '.svg', '.bmp'}
+    image_candidates = []
+    for full_path, rel_path in all_files:
+        try:
+            file_bytes = sandbox.fs.download_file(full_path)
+            # Guess content type
+            content_type, _ = mimetypes.guess_type(rel_path)
+            if not content_type:
+                content_type = "application/octet-stream"
+            storage_path = f"community/{post_id}/{rel_path}"
+            url = await upload_file_to_storage(bucket, storage_path, file_bytes, content_type=content_type)
+            rel_to_url[rel_path] = url
+            # Collect image candidates for thumbnail
+            ext = os.path.splitext(rel_path)[1].lower()
+            if ext in image_exts:
+                image_candidates.append(url)
+        except Exception as e:
+            logger.warning(f"Failed to upload {rel_path}: {e}")
+    # --- Update HTML asset references to point to Supabase URLs ---
+    # Replace src/href in HTML to point to rel_to_url if present
+    def replace_asset_refs(html):
+        def normalize_path(path):
+            path = path.lstrip("./")
+            while '//' in path:
+                path = path.replace('//', '/')
+            return path
+        def repl(match):
+            orig = match.group(2)
+            rel = normalize_path(orig)
+            return f'{match.group(1)}="{rel_to_url.get(rel, orig)}"'
+        # Replace src="..." and href="..." (double or single quotes)
+        html = re.sub(r'(src|href)=["\"]([^"\"]+)["\"]', repl, html)
+        return html
+    logger.info(f"HTML before asset ref replacement: {html_content[:1000]}")
+    html_content = replace_asset_refs(html_content)
+    logger.info(f"HTML after asset ref replacement: {html_content[:1000]}")
+    # --- Upload main HTML file (again, with updated refs) ---
+    await upload_file_to_storage(bucket, html_path, html_content.encode("utf-8"), content_type="text/html")
+    # --- Auto-select thumbnail if not provided ---
+    thumbnail_path = body.thumbnail_path
+    if not thumbnail_path and image_candidates:
+        thumbnail_path = image_candidates[0]
     await client.table('community_posts').insert({
         "id": post_id,
         "user_id": user_id,
@@ -1196,12 +1256,11 @@ async def share_to_community(
         "title": body.title,
         "html_path": html_path,
         "description": body.description,
-        "thumbnail_path": body.thumbnail_path,
+        "thumbnail_path": thumbnail_path,
         "created_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "like_count": 0,
         "approved": True
     }).execute()
-    supabase_url = config.SUPABASE_URL.rstrip('/')
     return {"success": True, "post_id": post_id, "html_url": f"{supabase_url}/storage/v1/object/public/share/{html_path}"}
 
 @router.get("/community")
@@ -1277,3 +1336,13 @@ async def get_community_post(post_id: str):
         "created_at": p["created_at"],
         "html_url": html_url
     }
+
+@router.get("/public-html/{post_id}")
+async def serve_public_html(post_id: str):
+    """Proxy the HTML file from Supabase Storage and serve it as text/html."""
+    supabase_url = f"https://tsdrmlnyclxwkryqrjic.supabase.co/storage/v1/object/public/share/community/{post_id}/index.html"
+    async with httpx.AsyncClient() as client:
+        r = await client.get(supabase_url)
+        if r.status_code != 200:
+            raise HTTPException(status_code=404, detail="HTML file not found in Supabase Storage.")
+        return Response(content=r.content, media_type="text/html")

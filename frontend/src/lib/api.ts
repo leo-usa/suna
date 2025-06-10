@@ -1453,5 +1453,19 @@ export const shareReport = async (projectId: string): Promise<{shared: {html: st
   return response.json();
 };
 
+/**
+ * Fetch a single community post by postId.
+ * @param postId The community post ID
+ * @returns {Promise<any>} The post metadata
+ */
+export const getCommunityPost = async (postId: string): Promise<any> => {
+  if (!API_URL) throw new Error('Backend URL is not configured. Set NEXT_PUBLIC_BACKEND_URL in your environment.');
+  const response = await fetch(`${API_URL}/community/post/${postId}`);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch community post: ${response.statusText}`);
+  }
+  return response.json();
+};
+
 export { API_URL };
 
