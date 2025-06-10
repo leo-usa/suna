@@ -250,7 +250,7 @@ export function SiteHeader({
                       if (!session?.access_token) {
                         throw new Error('No access token available');
                       }
-                      const res = await fetch(`${API_URL}/project/${projectId}/download-all`, {
+                      const res = await fetch(`/api/project/${projectId}/download-all`, {
                         method: 'GET',
                         headers: {
                           'Accept': 'application/zip',
