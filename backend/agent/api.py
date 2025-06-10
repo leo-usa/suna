@@ -14,6 +14,7 @@ from dateutil import parser
 import mimetypes
 import re
 import httpx
+from daytona_sdk.process import SessionExecuteRequest
 
 from agentpress.thread_manager import ThreadManager
 from services.supabase import DBConnection, upload_file_to_storage
@@ -1042,12 +1043,14 @@ async def download_all_project_files(project_id: str, user_id: str = Depends(get
         try:
             logger.info(f"[DOWNLOAD-ALL] Removing old zip if exists: {zip_path}")
             try:
-                sandbox.process.execute_session_command("default", {"command": f"rm -f {zip_path}", "var_async": False})
+                req_rm = SessionExecuteRequest(command=f"rm -f {zip_path}", var_async=False)
+                sandbox.process.execute_session_command("default", req_rm)
                 logger.info(f"[DOWNLOAD-ALL] Old zip removed (if existed): {zip_path}")
             except Exception as e:
                 logger.warning(f"[DOWNLOAD-ALL] Could not remove old zip (may not exist): {e}")
             logger.info(f"[DOWNLOAD-ALL] About to zip workspace in sandbox: {sandbox_id}")
-            sandbox.process.execute_session_command("default", {"command": f"zip -r {zip_path} /workspace", "var_async": False})
+            req_zip = SessionExecuteRequest(command=f"zip -r {zip_path} /workspace", var_async=False)
+            sandbox.process.execute_session_command("default", req_zip)
             logger.info(f"[DOWNLOAD-ALL] Zip command completed: {zip_path}")
         except Exception as e:
             import traceback
