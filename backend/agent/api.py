@@ -1040,18 +1040,26 @@ async def download_all_project_files(project_id: str, user_id: str = Depends(get
         # Zip the /workspace directory inside the sandbox
         zip_path = "/tmp/project.zip"
         try:
-            # Remove old zip if exists
+            logger.info(f"[DOWNLOAD-ALL] Removing old zip if exists: {zip_path}")
             try:
                 sandbox.process.execute_session_command("default", {"command": f"rm -f {zip_path}", "var_async": False})
-            except Exception:
-                pass
+                logger.info(f"[DOWNLOAD-ALL] Old zip removed (if existed): {zip_path}")
+            except Exception as e:
+                logger.warning(f"[DOWNLOAD-ALL] Could not remove old zip (may not exist): {e}")
+            logger.info(f"[DOWNLOAD-ALL] About to zip workspace in sandbox: {sandbox_id}")
             sandbox.process.execute_session_command("default", {"command": f"zip -r {zip_path} /workspace", "var_async": False})
+            logger.info(f"[DOWNLOAD-ALL] Zip command completed: {zip_path}")
         except Exception as e:
+            import traceback
+            logger.error(f"[DOWNLOAD-ALL] Failed to zip workspace: {e}\n{traceback.format_exc()}")
             raise HTTPException(status_code=500, detail=f"Failed to zip workspace: {str(e)}")
-        # Download the zip file
         try:
+            logger.info(f"[DOWNLOAD-ALL] Attempting to download zip file from sandbox: {zip_path}")
             zip_bytes = sandbox.fs.download_file(zip_path)
+            logger.info(f"[DOWNLOAD-ALL] Successfully downloaded zip file from sandbox: {zip_path}, size: {len(zip_bytes)} bytes")
         except Exception as e:
+            import traceback
+            logger.error(f"[DOWNLOAD-ALL] Failed to download zip from sandbox: {zip_path}, error: {e}\n{traceback.format_exc()}")
             raise HTTPException(status_code=500, detail=f"Failed to download zip: {str(e)}")
         # Stream the zip file
         return StreamingResponse(
