@@ -6,6 +6,7 @@ import requests
 import time
 import hashlib
 from sandbox.sandbox import SandboxToolsBase
+import tempfile
 
 class ReplicateTTSTool(SandboxToolsBase):
     """Tool for generating speech audio from text using Replicate's minimax/speech-02-hd model."""
@@ -25,7 +26,13 @@ class ReplicateTTSTool(SandboxToolsBase):
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "text": {"type": "string", "description": "Text to convert to speech."},
+                    "text": {
+                        "type": "string",
+                        "description": (
+                            "The full transcript to convert to speech. Always provide the entire transcript in a single call if possible. "
+                            "If the transcript exceeds 5000 characters (the model's maximum input length), split it at sentence boundaries and process all parts sequentially, ensuring the full transcript is converted to speech."
+                        )
+                    },
                     "pitch": {"type": "integer", "description": "Speech pitch", "default": 0},
                     "speed": {"type": "number", "description": "Speech speed", "default": 1},
                     "volume": {"type": "number", "description": "Speech volume", "default": 1},
@@ -110,11 +117,29 @@ class ReplicateTTSTool(SandboxToolsBase):
             url = output.url
         else:
             url = str(output)
-        # Download and save to sandbox
-        resp = requests.get(url, timeout=15)
-        if resp.status_code == 200:
-            fname = f"tts_{hashlib.sha256(text.encode()).hexdigest()[:8]}_{int(time.time())}.mp3"
-            self.sandbox.fs.upload_file(f"/workspace/{fname}", resp.content)
+        # Download and save to sandbox (robust version)
+        min_size = 10 * 1024  # 10KB minimum for a valid audio file
+        max_retries = 3
+        success = False
+        fname = f"tts_{hashlib.sha256(text.encode()).hexdigest()[:8]}_{int(time.time())}.mp3"
+        for attempt in range(max_retries):
+            resp = requests.get(url, stream=True, timeout=60)
+            if resp.status_code == 200:
+                with tempfile.NamedTemporaryFile(delete=False) as tmpf:
+                    for chunk in resp.iter_content(chunk_size=8192):
+                        if chunk:
+                            tmpf.write(chunk)
+                    tmp_path = tmpf.name
+                if os.path.getsize(tmp_path) >= min_size:
+                    with open(tmp_path, 'rb') as f:
+                        self.sandbox.fs.upload_file(f"/workspace/{fname}", f.read())
+                    os.remove(tmp_path)
+                    success = True
+                    break
+                else:
+                    os.remove(tmp_path)
+            time.sleep(3)  # Wait before retry
+        if success:
             return ToolResult(success=True, output={"replicate_url": url, "sandbox_path": f"/workspace/{fname}"})
         else:
-            return ToolResult(success=False, output=f"Failed to download audio: HTTP {resp.status_code}") 
+            return ToolResult(success=False, output=f"Failed to download complete audio after {max_retries} attempts.") 
