@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
+import { useAuth } from '@/components/AuthProvider';
 
 // Price mapping for display and Stripe price IDs (copy from AccountBillingStatus)
 const CREDIT_PRICE_IDS: Record<number, string> = {
@@ -28,6 +29,7 @@ const WeChatPayIcon = (props: React.SVGProps<SVGSVGElement>) => (
 
 export default function HomeBillingTabs() {
   const { t, i18n } = useTranslation();
+  const { session, isLoading: authLoading } = useAuth();
   const [topUpAmount, setTopUpAmount] = useState(60); // default 1h
   const [paymentMethod, setPaymentMethod] = useState<'alipay' | 'wechat_pay' | 'card'>('alipay');
   const [isTopUpLoading, setIsTopUpLoading] = useState(false);
@@ -35,6 +37,10 @@ export default function HomeBillingTabs() {
 
   // Prepaid top-up handler (copy logic from AccountBillingStatus, but no balance display)
   const handleTopUp = async () => {
+    if (!session && !authLoading) {
+      window.location.href = '/auth';
+      return;
+    }
     setIsTopUpLoading(true);
     setTopUpError(null);
     try {
@@ -61,7 +67,6 @@ export default function HomeBillingTabs() {
         else if (locale.startsWith('es')) locale = 'es';
         else locale = 'en';
       }
-      // Use the same API as dashboard (assume createCreditSession is globally available)
       const res = await window.createCreditSession?.({
         price_id,
         payment_method: paymentMethod,
