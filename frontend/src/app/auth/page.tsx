@@ -281,6 +281,20 @@ function LoginContent() {
     );
   }
 
+  let safeMessage: string | null = null;
+  if (message != null && !isSuccessMessage) {
+    const msg = message as any;
+    if (typeof msg === 'object') {
+      if ('messageKey' in msg && msg.messageKey) {
+        safeMessage = t(msg.messageKey);
+      } else if ('message' in msg && msg.message) {
+        safeMessage = msg.message;
+      }
+    } else if (typeof msg === 'string') {
+      safeMessage = msg;
+    }
+  }
+
   return (
     <main className="flex flex-col items-center justify-center min-h-screen w-full">
       <div className="w-full divide-y divide-border">
@@ -359,24 +373,12 @@ function LoginContent() {
           <div className="relative z-10 flex justify-center px-6 pb-24">
             <div className="w-full max-w-md rounded-xl bg-[#F3F4F6] dark:bg-[#F9FAFB]/[0.02] border border-border p-8">
               {/* Non-registration related messages */}
-              {message && !isSuccessMessage && (() => {
-                let safeMessage: string | null = null;
-                if (typeof message === 'object' && message !== null) {
-                  if (message.messageKey) {
-                    safeMessage = t(message.messageKey);
-                  } else if (message.message) {
-                    safeMessage = message.message;
-                  }
-                } else if (typeof message === 'string') {
-                  safeMessage = message;
-                }
-                return safeMessage ? (
-                  <div className="mb-6 p-4 rounded-lg flex items-center gap-3 bg-secondary/10 border border-secondary/20 text-secondary">
-                    <AlertCircle className="h-5 w-5 flex-shrink-0 text-secondary" />
-                    <span className="text-sm font-medium">{safeMessage}</span>
-                  </div>
-                ) : null;
-              })()}
+              {safeMessage && (
+                <div className="mb-6 p-4 rounded-lg flex items-center gap-3 bg-secondary/10 border border-secondary/20 text-secondary">
+                  <AlertCircle className="h-5 w-5 flex-shrink-0 text-secondary" />
+                  <span className="text-sm font-medium">{safeMessage}</span>
+                </div>
+              )}
 
               {/* Google Sign In */}
               <div className="w-full">
