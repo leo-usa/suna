@@ -62,7 +62,6 @@ export default function HomeBillingTabs() {
         else locale = 'en';
       }
       // Use the same API as dashboard (assume createCreditSession is globally available)
-      // @ts-ignore
       const res = await window.createCreditSession?.({
         price_id,
         payment_method: paymentMethod,
