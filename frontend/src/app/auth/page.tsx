@@ -64,6 +64,7 @@ function LoginContent() {
   const [forgotPasswordStatus, setForgotPasswordStatus] = useState<{
     success?: boolean;
     message?: string;
+    messageKey?: string;
   }>({});
 
   useEffect(() => {
@@ -358,12 +359,24 @@ function LoginContent() {
           <div className="relative z-10 flex justify-center px-6 pb-24">
             <div className="w-full max-w-md rounded-xl bg-[#F3F4F6] dark:bg-[#F9FAFB]/[0.02] border border-border p-8">
               {/* Non-registration related messages */}
-              {message && !isSuccessMessage && (
-                <div className="mb-6 p-4 rounded-lg flex items-center gap-3 bg-secondary/10 border border-secondary/20 text-secondary">
-                  <AlertCircle className="h-5 w-5 flex-shrink-0 text-secondary" />
-                  <span className="text-sm font-medium">{message}</span>
-                </div>
-              )}
+              {message && !isSuccessMessage && (() => {
+                let safeMessage: string | null = null;
+                if (typeof message === 'object' && message !== null) {
+                  if (message.messageKey) {
+                    safeMessage = t(message.messageKey);
+                  } else if (message.message) {
+                    safeMessage = message.message;
+                  }
+                } else if (typeof message === 'string') {
+                  safeMessage = message;
+                }
+                return safeMessage ? (
+                  <div className="mb-6 p-4 rounded-lg flex items-center gap-3 bg-secondary/10 border border-secondary/20 text-secondary">
+                    <AlertCircle className="h-5 w-5 flex-shrink-0 text-secondary" />
+                    <span className="text-sm font-medium">{safeMessage}</span>
+                  </div>
+                ) : null;
+              })()}
 
               {/* Google Sign In */}
               <div className="w-full">
@@ -511,7 +524,7 @@ function LoginContent() {
               required
             />
             
-            {forgotPasswordStatus.message && (
+            {(forgotPasswordStatus.messageKey || forgotPasswordStatus.message) && (
               <div className={`p-4 rounded-lg flex items-center gap-3 ${
                 forgotPasswordStatus.success 
                   ? "bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900/50 text-green-800 dark:text-green-400" 
@@ -522,7 +535,7 @@ function LoginContent() {
                 ) : (
                   <AlertCircle className="h-5 w-5 flex-shrink-0 text-secondary" />
                 )}
-                <span className="text-sm font-medium">{forgotPasswordStatus.message}</span>
+                <span className="text-sm font-medium">{forgotPasswordStatus.messageKey ? t(forgotPasswordStatus.messageKey) : forgotPasswordStatus.message}</span>
               </div>
             )}
             

@@ -9,11 +9,11 @@ export async function signIn(prevState: any, formData: FormData) {
   const returnUrl = formData.get("returnUrl") as string | undefined;
   
   if (!email || !email.includes('@')) {
-    return { message: "Please enter a valid email address" };
+    return { messageKey: "auth.invalidEmail" };
   }
   
   if (!password || password.length < 6) {
-    return { message: "Password must be at least 6 characters" };
+    return { messageKey: "auth.passwordTooShort" };
   }
 
   const supabase = await createClient();
@@ -39,15 +39,15 @@ export async function signUp(prevState: any, formData: FormData) {
   const returnUrl = formData.get("returnUrl") as string | undefined;
   
   if (!email || !email.includes('@')) {
-    return { message: "Please enter a valid email address" };
+    return { messageKey: "auth.invalidEmail" };
   }
   
   if (!password || password.length < 6) {
-    return { message: "Password must be at least 6 characters" };
+    return { messageKey: "auth.passwordTooShort" };
   }
 
   if (password !== confirmPassword) {
-    return { message: "Passwords do not match" };
+    return { messageKey: "auth.passwordsDontMatch" };
   }
 
   const supabase = await createClient();
@@ -71,7 +71,7 @@ export async function signUp(prevState: any, formData: FormData) {
   });
 
   if (signInError) {
-    return { message: "Account created! Check your email to confirm your registration." };
+    return { messageKey: "auth.accountCreatedCheckEmail" };
   }
 
   // Use client-side navigation instead of server-side redirect
@@ -83,7 +83,7 @@ export async function forgotPassword(prevState: any, formData: FormData) {
   const origin = formData.get("origin") as string;
   
   if (!email || !email.includes('@')) {
-    return { message: "Please enter a valid email address" };
+    return { messageKey: "auth.invalidEmail" };
   }
 
   const supabase = await createClient();
@@ -98,7 +98,7 @@ export async function forgotPassword(prevState: any, formData: FormData) {
 
   return { 
     success: true, 
-    message: "Check your email for a password reset link" 
+    messageKey: "auth.checkEmailForReset" 
   };
 }
 
@@ -107,11 +107,11 @@ export async function resetPassword(prevState: any, formData: FormData) {
   const confirmPassword = formData.get("confirmPassword") as string;
   
   if (!password || password.length < 6) {
-    return { message: "Password must be at least 6 characters" };
+    return { messageKey: "auth.passwordTooShort" };
   }
 
   if (password !== confirmPassword) {
-    return { message: "Passwords do not match" };
+    return { messageKey: "auth.passwordsDontMatch" };
   }
 
   const supabase = await createClient();
@@ -126,7 +126,7 @@ export async function resetPassword(prevState: any, formData: FormData) {
 
   return { 
     success: true, 
-    message: "Password updated successfully" 
+    messageKey: "auth.passwordUpdated" 
   };
 }
 
