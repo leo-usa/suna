@@ -30,6 +30,7 @@ import { createClient } from "@/lib/supabase/client";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { useTranslation } from 'react-i18next';
 import { EditableHtml } from "@/components/file-renderers/editable-html";
+import { TiptapHtmlEditor } from "@/components/file-renderers/tiptap-html-editor";
 
 // Define API_URL
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || '';
@@ -899,7 +900,7 @@ export function FileViewerModal({
                       onEdit={isHtmlFile ? () => setIsHtmlEditMode(true) : undefined}
                     />
                   ) : (
-                    <EditableHtml
+                    <TiptapHtmlEditor
                       html={textContentForRenderer || ''}
                       onSave={handleHtmlSave}
                       onCancel={handleHtmlCancel}
