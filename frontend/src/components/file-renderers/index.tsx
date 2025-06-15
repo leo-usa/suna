@@ -107,7 +107,8 @@ function getContentHash(content: string | null): string {
     hash = ((hash << 5) - hash) + chr;
     hash |= 0; // Convert to 32bit integer
   }
-  return hash.toString();
+  // Add a random component to force a new key if content is the same as before
+  return hash.toString() + '-' + Date.now();
 }
 
 export function FileRenderer({ 
@@ -123,28 +124,26 @@ export function FileRenderer({
   const language = getLanguageFromExtension(fileName);
   const isHtmlFile = fileName.toLowerCase().endsWith('.html');
   
-  // Create blob URL for HTML content if needed
-  const blobHtmlUrl = React.useMemo(() => {
+  // Create blob URL for HTML content if needed (useEffect version)
+  const [blobHtmlUrl, setBlobHtmlUrl] = React.useState<string | undefined>(undefined);
+  React.useEffect(() => {
     if (isHtmlFile && content && !project?.sandbox?.sandbox_url) {
       const blob = new Blob([content], { type: 'text/html' });
-      return URL.createObjectURL(blob);
+      const url = URL.createObjectURL(blob);
+      setBlobHtmlUrl(url);
+      return () => {
+        URL.revokeObjectURL(url);
+      };
+    } else {
+      setBlobHtmlUrl(undefined);
     }
-    return undefined;
+    // Only run when these change
   }, [isHtmlFile, content, project?.sandbox?.sandbox_url]);
   
   // Construct HTML file preview URL if we have a sandbox and the file is HTML
   const htmlPreviewUrl = (isHtmlFile && project?.sandbox?.sandbox_url && fileName) 
     ? constructHtmlPreviewUrl(project.sandbox.sandbox_url, fileName)
     : blobHtmlUrl; // Use blob URL as fallback
-  
-  // Clean up blob URL on unmount
-  React.useEffect(() => {
-    return () => {
-      if (blobHtmlUrl) {
-        URL.revokeObjectURL(blobHtmlUrl);
-      }
-    };
-  }, [blobHtmlUrl]);
   
   return (
     <div className={cn("w-full h-full", className)}>
