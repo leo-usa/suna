@@ -585,9 +585,11 @@ export function FileViewerModal({
     if (!selectedFilePath) return;
     try {
       setIsLoadingContent(true);
-      setIsHtmlEditMode(false);
+      // Update content state first
       setRawContent(newHtml);
       setTextContentForRenderer(newHtml);
+      // Then exit edit mode
+      setIsHtmlEditMode(false);
       // Save to backend
       const supabase = createClient();
       const { data: { session } } = await supabase.auth.getSession();
@@ -845,7 +847,7 @@ export function FileViewerModal({
         {/* Content Area */}
         <div className="flex-1 overflow-hidden">
           {selectedFilePath ? (
-            <div className="h-full w-full overflow-auto">
+            <div className={isHtmlEditMode ? "h-full w-full" : "h-full w-full overflow-auto"}>
               {isLoadingContent ? (
                 <div className="h-full w-full flex flex-col items-center justify-center">
                   <Loader className="h-8 w-8 animate-spin text-primary mb-3" />
