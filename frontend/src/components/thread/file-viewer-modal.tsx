@@ -17,6 +17,10 @@ import {
   AlertTriangle,
   FileText,
   ChevronDown,
+  Monitor,
+  Code,
+  ExternalLink,
+  Pencil,
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { FileRenderer, getFileTypeFromExtension } from "@/components/file-renderers";
@@ -25,6 +29,7 @@ import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { useTranslation } from 'react-i18next';
+import { EditableHtml } from "@/components/file-renderers/editable-html";
 
 // Define API_URL
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || '';
@@ -79,6 +84,10 @@ export function FileViewerModal({
   
   // Add state for print orientation
   const [pdfOrientation, setPdfOrientation] = useState<'portrait' | 'landscape'>('portrait');
+  
+  // Add state for HTML edit mode
+  const [isHtmlEditMode, setIsHtmlEditMode] = useState(false);
+  const isHtmlFile = selectedFilePath ? selectedFilePath.toLowerCase().endsWith('.html') : false;
   
   // Setup project with sandbox URL if not provided directly
   useEffect(() => {
@@ -571,6 +580,43 @@ export function FileViewerModal({
     }
   }, [selectedFilePath, isExportingPdf, isMarkdownFile]);
 
+  // Handle HTML save
+  const handleHtmlSave = async (newHtml: string) => {
+    if (!selectedFilePath) return;
+    try {
+      setIsLoadingContent(true);
+      setIsHtmlEditMode(false);
+      setRawContent(newHtml);
+      setTextContentForRenderer(newHtml);
+      // Save to backend
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('No access token');
+      const response = await fetch(`${API_URL}/sandboxes/${sandboxId}/files/json`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          path: selectedFilePath,
+          content: newHtml,
+        }),
+      });
+      if (!response.ok) throw new Error(await response.text());
+      toast.success('HTML file saved');
+    } catch (err) {
+      toast.error('Failed to save HTML file');
+      console.error(err);
+    } finally {
+      setIsLoadingContent(false);
+    }
+  };
+
+  const handleHtmlCancel = () => {
+    setIsHtmlEditMode(false);
+  };
+
   // --- useEffect Hooks --- //
 
   // Load files when modal opens or path changes - Refined
@@ -799,7 +845,6 @@ export function FileViewerModal({
         {/* Content Area */}
         <div className="flex-1 overflow-hidden">
           {selectedFilePath ? (
-            /* File Viewer */
             <div className="h-full w-full overflow-auto">
               {isLoadingContent ? (
                 <div className="h-full w-full flex flex-col items-center justify-center">
@@ -838,6 +883,26 @@ export function FileViewerModal({
                       </Button>
                     </div>
                   </div>
+                </div>
+              ) : isHtmlFile ? (
+                <div className="relative h-full w-full">
+                  {!isHtmlEditMode ? (
+                    <FileRenderer
+                      key={selectedFilePath}
+                      content={textContentForRenderer}
+                      binaryUrl={blobUrlForRenderer}
+                      fileName={selectedFilePath}
+                      className="h-full w-full"
+                      project={projectWithSandbox}
+                      onEdit={isHtmlFile ? () => setIsHtmlEditMode(true) : undefined}
+                    />
+                  ) : (
+                    <EditableHtml
+                      html={textContentForRenderer || ''}
+                      onSave={handleHtmlSave}
+                      onCancel={handleHtmlCancel}
+                    />
+                  )}
                 </div>
               ) : (
                 <div className="h-full w-full relative">
