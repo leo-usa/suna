@@ -31,6 +31,7 @@ interface FileRendererProps {
     }
   };
   markdownRef?: React.RefObject<HTMLDivElement>;
+  onEdit?: () => void;
 }
 
 // Helper function to determine file type from extension
@@ -98,13 +99,25 @@ export function getLanguageFromExtension(fileName: string): string {
   return extensionToLanguage[extension] || '';
 }
 
+function getContentHash(content: string | null): string {
+  if (!content) return '';
+  let hash = 0, i, chr;
+  for (i = 0; i < content.length; i++) {
+    chr = content.charCodeAt(i);
+    hash = ((hash << 5) - hash) + chr;
+    hash |= 0; // Convert to 32bit integer
+  }
+  return hash.toString();
+}
+
 export function FileRenderer({ 
   content, 
   binaryUrl, 
   fileName, 
   className, 
   project,
-  markdownRef 
+  markdownRef,
+  onEdit
 }: FileRendererProps) {
   const fileType = getFileTypeFromExtension(fileName);
   const language = getLanguageFromExtension(fileName);
@@ -148,9 +161,11 @@ export function FileRenderer({
         <MarkdownRenderer content={content || ''} ref={markdownRef} />
       ) : isHtmlFile ? (
         <HtmlRenderer
+          key={getContentHash(content || '')}
           content={content || ''}
           previewUrl={htmlPreviewUrl || ''}
           className="w-full h-full"
+          onEdit={onEdit}
         />
       ) : fileType === 'code' || fileType === 'text' ? (
         <CodeRenderer 

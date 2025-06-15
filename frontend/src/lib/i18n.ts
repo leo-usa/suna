@@ -527,6 +527,14 @@ const zhTranslation = {
     copyLink: '复制链接',
     attribution: '由Dobby生成',
   },
+  editor: {
+    preview: '预览',
+    code: '代码',
+    open: '打开',
+    edit: '编辑',
+    save: '保存',
+    discard: '放弃',
+  },
 };
 
 const resources = {
@@ -707,6 +715,14 @@ const resources = {
         start: 'Start',
         stop: 'Stop',
         working: 'Dobby is working...'
+      },
+      editor: {
+        preview: 'Preview',
+        code: 'Code',
+        open: 'Open',
+        edit: 'Edit',
+        save: 'Save',
+        discard: 'Discard',
       },
     }
   },
