@@ -87,7 +87,16 @@ export function FileViewerModal({
   
   // Add state for HTML edit mode
   const [isHtmlEditMode, setIsHtmlEditMode] = useState(false);
+  const [htmlEditBody, setHtmlEditBody] = useState<string>('');
   const isHtmlFile = selectedFilePath ? selectedFilePath.toLowerCase().endsWith('.html') : false;
+  
+  // Add state for last saved time
+  const [lastSaved, setLastSaved] = useState(Date.now());
+  
+  // Add state for text edit mode
+  const [isTextEditMode, setIsTextEditMode] = useState(false);
+  const [textEditValue, setTextEditValue] = useState('');
+  const isTextFile = selectedFilePath ? getFileTypeFromExtension(selectedFilePath) === 'text' : false;
   
   // Setup project with sandbox URL if not provided directly
   useEffect(() => {
@@ -580,16 +589,34 @@ export function FileViewerModal({
     }
   }, [selectedFilePath, isExportingPdf, isMarkdownFile]);
 
+  // When entering edit mode, always fetch the latest file content
+  const startHtmlEditMode = async () => {
+    if (!selectedFilePath) return;
+    setIsLoadingContent(true);
+    try {
+      const content = await getSandboxFileContent(sandboxId, selectedFilePath);
+      let html = '';
+      if (typeof content === 'string') {
+        html = content;
+      } else if (content instanceof Blob) {
+        html = await content.text();
+      }
+      setHtmlEditBody(extractBodyContent(html));
+      setIsHtmlEditMode(true);
+    } catch (err) {
+      toast.error('Failed to load latest file content for editing');
+      console.error(err);
+    } finally {
+      setIsLoadingContent(false);
+    }
+  };
+
   // Handle HTML save
-  const handleHtmlSave = async (newHtml: string) => {
+  const handleHtmlSave = async (newBodyHtml: string) => {
     if (!selectedFilePath) return;
     try {
       setIsLoadingContent(true);
-      // Update content state first
-      setRawContent(newHtml);
-      setTextContentForRenderer(newHtml);
-      // Then exit edit mode
-      setIsHtmlEditMode(false);
+      const fullHtml = wrapWithHtmlDoc(newBodyHtml);
       // Save to backend
       const supabase = createClient();
       const { data: { session } } = await supabase.auth.getSession();
@@ -602,10 +629,14 @@ export function FileViewerModal({
         },
         body: JSON.stringify({
           path: selectedFilePath,
-          content: newHtml,
+          content: fullHtml,
         }),
       });
       if (!response.ok) throw new Error(await response.text());
+      // Reload the file from disk to update state and preview
+      await openFile({ path: selectedFilePath, name: selectedFilePath.split('/').pop() || '', is_dir: false, size: 0, mod_time: new Date().toISOString() });
+      setLastSaved(Date.now());
+      setIsHtmlEditMode(false);
       toast.success('HTML file saved');
     } catch (err) {
       toast.error('Failed to save HTML file');
@@ -618,6 +649,76 @@ export function FileViewerModal({
   const handleHtmlCancel = () => {
     setIsHtmlEditMode(false);
   };
+
+  // Start text edit mode for .txt files
+  const startTextEditMode = async () => {
+    if (!selectedFilePath) return;
+    setIsLoadingContent(true);
+    try {
+      const content = await getSandboxFileContent(sandboxId, selectedFilePath);
+      let text = '';
+      if (typeof content === 'string') {
+        text = content;
+      } else if (content instanceof Blob) {
+        text = await content.text();
+      }
+      setTextEditValue(text);
+      setIsTextEditMode(true);
+    } catch (err) {
+      toast.error('Failed to load latest file content for editing');
+      console.error(err);
+    } finally {
+      setIsLoadingContent(false);
+    }
+  };
+
+  // Handle text file save
+  const handleTextSave = async () => {
+    if (!selectedFilePath) return;
+    try {
+      setIsLoadingContent(true);
+      // Save to backend
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('No access token');
+      const response = await fetch(`${API_URL}/sandboxes/${sandboxId}/files/json`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          path: selectedFilePath,
+          content: textEditValue,
+        }),
+      });
+      if (!response.ok) throw new Error(await response.text());
+      // Reload the file from disk to update state and preview
+      await openFile({ path: selectedFilePath, name: selectedFilePath.split('/').pop() || '', is_dir: false, size: 0, mod_time: new Date().toISOString() });
+      setTextContentForRenderer(textEditValue); // Ensure preview updates immediately
+      setLastSaved(Date.now());
+      setIsTextEditMode(false);
+      toast.success('Text file saved');
+    } catch (err) {
+      toast.error('Failed to save text file');
+      console.error(err);
+    } finally {
+      setIsLoadingContent(false);
+    }
+  };
+
+  const handleTextCancel = () => {
+    setIsTextEditMode(false);
+  };
+
+  // Add helper function at the top (after imports)
+  function extractBodyContent(html: string): string {
+    const match = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+    return match ? match[1] : html;
+  }
+  function wrapWithHtmlDoc(bodyContent: string): string {
+    return `<!DOCTYPE html>\n<html>\n  <head>\n    <meta charset=\"utf-8\" />\n    <title>Document</title>\n  </head>\n  <body>\n    ${bodyContent}\n  </body>\n</html>`;
+  }
 
   // --- useEffect Hooks --- //
 
@@ -890,26 +991,79 @@ export function FileViewerModal({
                 <div className="relative h-full w-full">
                   {!isHtmlEditMode ? (
                     <FileRenderer
-                      key={selectedFilePath}
+                      key={selectedFilePath + '-' + lastSaved}
                       content={textContentForRenderer}
                       binaryUrl={blobUrlForRenderer}
                       fileName={selectedFilePath}
                       className="h-full w-full"
                       project={projectWithSandbox}
-                      onEdit={isHtmlFile ? () => setIsHtmlEditMode(true) : undefined}
+                      onEdit={isHtmlFile ? () => { startHtmlEditMode(); } : undefined}
                     />
                   ) : (
                     <EditableHtml
-                      html={textContentForRenderer || ''}
+                      html={htmlEditBody}
                       onSave={handleHtmlSave}
                       onCancel={handleHtmlCancel}
                     />
                   )}
                 </div>
+              ) : isTextFile ? (
+                <div className="relative h-full w-full">
+                  {!isTextEditMode ? (
+                    <>
+                      <div className="absolute left-2 top-2 z-10 flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-foreground hover:text-foreground flex items-center gap-2 bg-background/80 backdrop-blur-sm hover:bg-background/90"
+                          onClick={startTextEditMode}
+                        >
+                          <Pencil className="h-4 w-4" />
+                          Edit
+                        </Button>
+                      </div>
+                      <FileRenderer
+                        key={selectedFilePath + '-' + lastSaved}
+                        content={textContentForRenderer}
+                        binaryUrl={blobUrlForRenderer}
+                        fileName={selectedFilePath}
+                        className="h-full w-full"
+                        project={projectWithSandbox}
+                      />
+                    </>
+                  ) : (
+                    <div className="flex flex-col h-full w-full">
+                      <textarea
+                        className="flex-1 w-full border rounded p-4 font-mono text-sm bg-white dark:bg-black"
+                        value={textEditValue}
+                        onChange={e => setTextEditValue(e.target.value)}
+                        style={{ minHeight: 200, resize: 'vertical' }}
+                        spellCheck={false}
+                        autoFocus
+                      />
+                      <div className="flex gap-2 justify-end mt-2">
+                        <button
+                          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded"
+                          onClick={handleTextSave}
+                          disabled={isLoadingContent}
+                        >
+                          Save
+                        </button>
+                        <button
+                          className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold px-4 py-2 rounded"
+                          onClick={handleTextCancel}
+                          disabled={isLoadingContent}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               ) : (
                 <div className="h-full w-full relative">
                   <FileRenderer
-                    key={selectedFilePath}
+                    key={selectedFilePath + '-' + lastSaved}
                     content={textContentForRenderer}
                     binaryUrl={blobUrlForRenderer}
                     fileName={selectedFilePath}
