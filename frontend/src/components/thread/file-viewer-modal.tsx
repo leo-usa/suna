@@ -310,31 +310,21 @@ export function FileViewerModal({
     };
   }, [rawContent, selectedFilePath]); // Re-run when rawContent or selectedFilePath changes
 
+  // Helper to determine if a file is too large or binary for preview
+  function isLargeOrBinaryFile(fileInfo: FileInfo, sizeLimitMB = 50): boolean {
+    const binaryExtensions = [
+      'mp4', 'mov', 'avi', 'mkv', 'webm', 'flv', 'wmv', 'mp3', 'wav', 'ogg', 'zip', 'rar', '7z', 'tar', 'gz', 'exe', 'bin', 'iso', 'dmg', 'pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'apk', 'ipa', 'img', 'raw', 'dat', 'sqlite', 'db', 'psd', 'ai', 'indd', 'swf', 'flac', 'm4a', 'aac', 'midi', 'mid', '3gp', 'm4v', 'rm', 'vob', 'ts', 'asf', 'f4v', 'rmvb', 'mpg', 'mpeg', 'mp2', 'mpe', 'mpv', 'm2v', 'srt', 'sub', 'idx', 'ass', 'ttf', 'otf', 'woff', 'woff2', 'eot', 'ttc', 'jar', 'class', 'so', 'dll', 'pdb', 'pyo', 'pyc', 'apk', 'ipa', 'crx', 'xpi', 'cab', 'deb', 'rpm', 'msi', 'msp', 'msm', 'bat', 'sh', 'bash', 'csh', 'tcsh', 'ksh', 'zsh', 'fish', 'pl', 'pm', 't', 'xs', 'pod', 'ps1', 'psm1', 'psd1', 'ps1xml', 'psc1', 'pssc', 'psrc', 'psf', 'psd', 'ai', 'eps', 'svgz', 'sketch', 'fig', 'xd', 'indd', 'idml', 'indt', 'inx', 'swi', 'swd', 'swc', 'swf', 'spl', 'dcr', 'dir', 'dxr', 'cst', 'cxt', 'w3d', 'fgd', 'cct', 'cfc', 'cfm', 'cfr', 'cfs', 'cfml', 'dbf', 'mdb', 'accdb', 'sql', 'sqlite', 'db', 'bak', 'bkp', 'backup', 'dmp', 'log', 'ldf', 'mdf', 'ndf', 'ora', 'par', 'pdb', 'dbf', 'frm', 'myd', 'myi', 'ibd', 'mrg', 'ibdata1', 'ib_logfile0', 'ib_logfile1'];
+    const ext = fileInfo.name.split('.').pop()?.toLowerCase() || '';
+    return fileInfo.size > sizeLimitMB * 1024 * 1024 || binaryExtensions.includes(ext);
+  }
+
   // Handle file download - Define after helpers
-  const handleDownload = useCallback(async () => {
+  const handleDownload = useCallback(async (forceFresh = false) => {
     if (!selectedFilePath || isDownloading) return;
-    
     setIsDownloading(true);
-    
     try {
-      // Use cached content if available
-      if (rawContent) {
-        const blob = rawContent instanceof Blob 
-          ? rawContent 
-          : new Blob([rawContent], { type: 'text/plain' });
-          
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = selectedFilePath.split('/').pop() || 'file';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url); // Clean up the URL
-        
-        toast.success("File downloaded");
-      } else {
-        // Fetch directly if not cached
+      // Always fetch directly from backend if forceFresh is true
+      if (forceFresh) {
         const content = await getSandboxFileContent(sandboxId, selectedFilePath);
         const blob = content instanceof Blob ? content : new Blob([String(content)]);
         const url = URL.createObjectURL(blob);
@@ -344,8 +334,33 @@ export function FileViewerModal({
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-        URL.revokeObjectURL(url); // Clean up the URL
-        
+        URL.revokeObjectURL(url);
+        toast.success("File downloaded");
+      } else if (rawContent) {
+        const blob = rawContent instanceof Blob 
+          ? rawContent 
+          : new Blob([rawContent], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = selectedFilePath.split('/').pop() || 'file';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        toast.success("File downloaded");
+      } else {
+        // Fallback: fetch directly
+        const content = await getSandboxFileContent(sandboxId, selectedFilePath);
+        const blob = content instanceof Blob ? content : new Blob([String(content)]);
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = selectedFilePath.split('/').pop() || 'file';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
         toast.success("File downloaded");
       }
     } catch (error) {
@@ -868,7 +883,10 @@ export function FileViewerModal({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={handleDownload}
+                  onClick={() => {
+                    setContentError(null);
+                    handleDownload(true);
+                  }}
                   disabled={isDownloading || isLoadingContent}
                   className="h-8 gap-1"
                 >
@@ -948,80 +966,81 @@ export function FileViewerModal({
         {/* Content Area */}
         <div className="flex-1 overflow-hidden">
           {selectedFilePath ? (
-            <div className={isHtmlEditMode ? "h-full w-full" : "h-full w-full overflow-auto"}>
-              {isLoadingContent ? (
-                <div className="h-full w-full flex flex-col items-center justify-center">
-                  <Loader className="h-8 w-8 animate-spin text-primary mb-3" />
-                  <p className="text-sm text-muted-foreground">{t('fileViewer.loadingFile', 'Loading file...')}</p>
-                </div>
-              ) : contentError ? (
-                <div className="h-full w-full flex items-center justify-center p-4">
-                  <div className="max-w-md p-6 text-center border rounded-lg bg-muted/10">
-                    <AlertTriangle className="h-10 w-10 text-orange-500 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium mb-2">{t('fileViewer.errorLoading', 'Error Loading File')}</h3>
-                    <p className="text-sm text-muted-foreground mb-4">{contentError}</p>
-                    <div className="flex justify-center gap-3">
-                      <Button 
-                        onClick={() => {
-                          setContentError(null);
-                          setIsLoadingContent(true);
-                          openFile({
-                            path: selectedFilePath,
-                            name: selectedFilePath.split('/').pop() || '',
-                            is_dir: false,
-                            size: 0,
-                            mod_time: new Date().toISOString()
-                          } as FileInfo);
-                        }}
-                      >
-                        {t('fileViewer.retry', 'Retry')}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          clearSelectedFile();
-                        }}
-                      >
-                        {t('fileViewer.backToFiles', 'Back to Files')}
-                      </Button>
-                    </div>
+            isLargeOrBinaryFile({
+              name: selectedFilePath.split('/').pop() || '',
+              size: files.find(f => f.path === selectedFilePath)?.size || 0,
+              is_dir: false,
+              path: selectedFilePath,
+              mod_time: new Date().toISOString(),
+            }) ? (
+              <div className="h-full w-full flex flex-col items-center justify-center p-4">
+                <div className="max-w-md p-6 text-center border rounded-lg bg-muted/10">
+                  <AlertTriangle className="h-10 w-10 text-orange-500 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium mb-2">This file is too large or binary to preview</h3>
+                  <p className="text-sm text-muted-foreground mb-4">You can download it instead.</p>
+                  <div className="flex justify-center gap-3">
+                    <Button
+                      onClick={() => {
+                        setContentError(null);
+                        handleDownload(true);
+                      }}
+                      variant="default"
+                      className="min-w-[150px]"
+                      disabled={isDownloading || isLoadingContent}
+                    >
+                      {isDownloading ? (
+                        <Loader className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Download className="h-4 w-4" />
+                      )}
+                      <span className="ml-2">Download</span>
+                    </Button>
                   </div>
                 </div>
-              ) : isHtmlFile ? (
-                <div className="relative h-full w-full">
-                  {!isHtmlEditMode ? (
-                    <FileRenderer
-                      key={selectedFilePath + '-' + lastSaved}
-                      content={textContentForRenderer}
-                      binaryUrl={blobUrlForRenderer}
-                      fileName={selectedFilePath}
-                      className="h-full w-full"
-                      project={projectWithSandbox}
-                      onEdit={isHtmlFile ? () => { startHtmlEditMode(); } : undefined}
-                    />
-                  ) : (
-                    <EditableHtml
-                      html={htmlEditBody}
-                      onSave={handleHtmlSave}
-                      onCancel={handleHtmlCancel}
-                    />
-                  )}
-                </div>
-              ) : isTextFile ? (
-                <div className="relative h-full w-full">
-                  {!isTextEditMode ? (
-                    <>
-                      <div className="absolute left-2 top-2 z-10 flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-foreground hover:text-foreground flex items-center gap-2 bg-background/80 backdrop-blur-sm hover:bg-background/90"
-                          onClick={startTextEditMode}
+              </div>
+            ) : (
+              <div className={isHtmlEditMode ? "h-full w-full" : "h-full w-full overflow-auto"}>
+                {isLoadingContent ? (
+                  <div className="h-full w-full flex flex-col items-center justify-center">
+                    <Loader className="h-8 w-8 animate-spin text-primary mb-3" />
+                    <p className="text-sm text-muted-foreground">{t('fileViewer.loadingFile', 'Loading file...')}</p>
+                  </div>
+                ) : contentError ? (
+                  <div className="h-full w-full flex items-center justify-center p-4">
+                    <div className="max-w-md p-6 text-center border rounded-lg bg-muted/10">
+                      <AlertTriangle className="h-10 w-10 text-orange-500 mx-auto mb-4" />
+                      <h3 className="text-lg font-medium mb-2">{t('fileViewer.errorLoading', 'Error Loading File')}</h3>
+                      <p className="text-sm text-muted-foreground mb-4">{contentError}</p>
+                      <div className="flex justify-center gap-3">
+                        <Button 
+                          onClick={() => {
+                            setContentError(null);
+                            setIsLoadingContent(true);
+                            openFile({
+                              path: selectedFilePath,
+                              name: selectedFilePath.split('/').pop() || '',
+                              is_dir: false,
+                              size: 0,
+                              mod_time: new Date().toISOString()
+                            } as FileInfo);
+                          }}
                         >
-                          <Pencil className="h-4 w-4" />
-                          Edit
+                          {t('fileViewer.retry', 'Retry')}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            clearSelectedFile();
+                          }}
+                        >
+                          {t('fileViewer.backToFiles', 'Back to Files')}
                         </Button>
                       </div>
+                    </div>
+                  </div>
+                ) : isHtmlFile ? (
+                  <div className="relative h-full w-full">
+                    {!isHtmlEditMode ? (
                       <FileRenderer
                         key={selectedFilePath + '-' + lastSaved}
                         content={textContentForRenderer}
@@ -1029,51 +1048,84 @@ export function FileViewerModal({
                         fileName={selectedFilePath}
                         className="h-full w-full"
                         project={projectWithSandbox}
+                        onEdit={isHtmlFile ? () => { startHtmlEditMode(); } : undefined}
                       />
-                    </>
-                  ) : (
-                    <div className="flex flex-col h-full w-full">
-                      <textarea
-                        className="flex-1 w-full border rounded p-4 font-mono text-sm bg-white dark:bg-black"
-                        value={textEditValue}
-                        onChange={e => setTextEditValue(e.target.value)}
-                        style={{ minHeight: 200, resize: 'vertical' }}
-                        spellCheck={false}
-                        autoFocus
+                    ) : (
+                      <EditableHtml
+                        html={htmlEditBody}
+                        onSave={handleHtmlSave}
+                        onCancel={handleHtmlCancel}
                       />
-                      <div className="flex gap-2 justify-end mt-2">
-                        <button
-                          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded"
-                          onClick={handleTextSave}
-                          disabled={isLoadingContent}
-                        >
-                          Save
-                        </button>
-                        <button
-                          className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold px-4 py-2 rounded"
-                          onClick={handleTextCancel}
-                          disabled={isLoadingContent}
-                        >
-                          Cancel
-                        </button>
+                    )}
+                  </div>
+                ) : isTextFile ? (
+                  <div className="relative h-full w-full">
+                    {!isTextEditMode ? (
+                      <>
+                        <div className="absolute left-2 top-2 z-10 flex items-center gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-foreground hover:text-foreground flex items-center gap-2 bg-background/80 backdrop-blur-sm hover:bg-background/90"
+                            onClick={startTextEditMode}
+                          >
+                            <Pencil className="h-4 w-4" />
+                            Edit
+                          </Button>
+                        </div>
+                        <FileRenderer
+                          key={selectedFilePath + '-' + lastSaved}
+                          content={textContentForRenderer}
+                          binaryUrl={blobUrlForRenderer}
+                          fileName={selectedFilePath}
+                          className="h-full w-full"
+                          project={projectWithSandbox}
+                        />
+                      </>
+                    ) : (
+                      <div className="flex flex-col h-full w-full">
+                        <textarea
+                          className="flex-1 w-full border rounded p-4 font-mono text-sm bg-white dark:bg-black"
+                          value={textEditValue}
+                          onChange={e => setTextEditValue(e.target.value)}
+                          style={{ minHeight: 200, resize: 'vertical' }}
+                          spellCheck={false}
+                          autoFocus
+                        />
+                        <div className="flex gap-2 justify-end mt-2">
+                          <button
+                            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded"
+                            onClick={handleTextSave}
+                            disabled={isLoadingContent}
+                          >
+                            Save
+                          </button>
+                          <button
+                            className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold px-4 py-2 rounded"
+                            onClick={handleTextCancel}
+                            disabled={isLoadingContent}
+                          >
+                            Cancel
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="h-full w-full relative">
-                  <FileRenderer
-                    key={selectedFilePath + '-' + lastSaved}
-                    content={textContentForRenderer}
-                    binaryUrl={blobUrlForRenderer}
-                    fileName={selectedFilePath}
-                    className="h-full w-full"
-                    project={projectWithSandbox}
-                    markdownRef={isMarkdownFile(selectedFilePath) ? markdownRef : undefined}
-                  />
-                </div>
-              )}
-            </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="h-full w-full relative">
+                    <FileRenderer
+                      key={selectedFilePath + '-' + lastSaved}
+                      content={textContentForRenderer}
+                      binaryUrl={blobUrlForRenderer}
+                      fileName={selectedFilePath}
+                      className="h-full w-full"
+                      project={projectWithSandbox}
+                      markdownRef={isMarkdownFile(selectedFilePath) ? markdownRef : undefined}
+                    />
+                  </div>
+                )}
+              </div>
+            )
           ) : (
             /* File Explorer */
             <div className="h-full w-full">
