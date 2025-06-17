@@ -1246,14 +1246,14 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
             onProjectRenamed={handleProjectRenamed}
             isMobileView={isMobile}
             rightActions={
-              <Tooltip>
-                <TooltipTrigger asChild>
+                <Tooltip>
+                  <TooltipTrigger asChild>
                   <Button variant="ghost" size="icon" onClick={handleCommunityShare} aria-label="Community Share" disabled={communityLoading || !!communityResult}>
-                    <Users className="h-5 w-5" />
-                  </Button>
-                </TooltipTrigger>
+                      <Users className="h-5 w-5" />
+                    </Button>
+                  </TooltipTrigger>
                 <TooltipContent>{t('communityShare.tooltip', '分享到社区（推荐）\n与Dobby社区分享你的作品！')}</TooltipContent>
-              </Tooltip>
+                </Tooltip>
             }
           />
           <div className="flex flex-1 items-center justify-center p-4">
@@ -1295,16 +1295,16 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
           onProjectRenamed={handleProjectRenamed}
           isMobileView={isMobile}
           rightActions={
-            <Tooltip>
-              <TooltipTrigger asChild>
+              <Tooltip>
+                <TooltipTrigger asChild>
                 <span>
                   <Button variant="ghost" size="icon" onClick={handleCommunityShare} aria-label="Community Share" disabled={communityLoading || !!communityResult}>
                     <Users className="h-5 w-5" />
                   </Button>
                 </span>
-              </TooltipTrigger>
+                </TooltipTrigger>
               <TooltipContent>{communityResult ? t('communityShare.shared', '已分享到社区！') : communityLoading ? t('communityShare.sharing', '正在分享...') : t('communityShare.tooltip', '分享到社区（推荐）\n与Dobby社区分享你的作品！')}</TooltipContent>
-            </Tooltip>
+              </Tooltip>
           }
         />
         <div 

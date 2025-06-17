@@ -31,7 +31,7 @@ export default function CommunityPostEmbedPage() {
   const handleCopy = () => {
     if (typeof window !== 'undefined') {
       navigator.clipboard.writeText(shareUrl);
-      setCopied(true);
+    setCopied(true);
       toast.success("Link copied to clipboard");
       setTimeout(() => setCopied(false), 1500);
     }
@@ -51,13 +51,13 @@ export default function CommunityPostEmbedPage() {
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <button
-                    onClick={handleCopy}
+          <button
+            onClick={handleCopy}
                     className="rounded h-9 w-9 flex items-center justify-center text-gray-500 hover:bg-gray-100 transition"
                     aria-label="Copy link"
-                  >
+          >
                     <Link className="h-4 w-4" />
-                  </button>
+          </button>
                 </TooltipTrigger>
                 <TooltipContent>{t('communityPost.copyLink', '复制链接')}</TooltipContent>
               </Tooltip>
