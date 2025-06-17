@@ -23,6 +23,7 @@ from agentpress.response_processor import (
 from services.supabase import DBConnection
 from utils.logger import logger
 from agent.tools.replicate_image_tool import ReplicateImageTool
+from agent.tools.replicate_tts_tool import ReplicateTTSTool
 
 # Type alias for tool choice
 ToolChoice = Literal["auto", "required", "none"]
@@ -49,6 +50,12 @@ class ThreadManager:
         # Register Replicate image generation tool with required context
         self.tool_registry.register_tool(
             ReplicateImageTool,
+            project_id=None,  # TODO: Set actual project_id if available in context
+            thread_manager=self
+        )
+        # Register Replicate TTS tool
+        self.tool_registry.register_tool(
+            ReplicateTTSTool,
             project_id=None,  # TODO: Set actual project_id if available in context
             thread_manager=self
         )
@@ -262,6 +269,7 @@ Here are the XML tools available with examples:
                 if thread_result.data and 'project_id' in thread_result.data:
                     project_id = thread_result.data['project_id']
                 self.update_replicate_tool_project_id(project_id)
+                self.update_replicate_tts_tool_project_id(project_id)
                 
                 # 1. Get messages from thread for LLM call
                 messages = await self.get_llm_messages(thread_id)
@@ -342,37 +350,45 @@ Here are the XML tools available with examples:
                 context_limit = MODEL_CONTEXT_LIMITS.get(llm_model, 100_000)  # Default to 100k if unknown
                 input_tokens = token_counter(model=llm_model, messages=prepared_messages)
                 max_tokens = llm_max_tokens or 4000
-                # --- PATCH: Tighter input token reduction for Claude ---
-                claude_models = ["anthropic/claude-sonnet-4-20250514", "anthropic/claude-3-7-sonnet-latest"]
-                input_token_target = 130000 if llm_model in claude_models else context_limit - max_tokens
-                if input_tokens + max_tokens > context_limit:
-                    logger.warning(f"Input + max_tokens ({input_tokens} + {max_tokens}) exceeds context limit ({context_limit}). Truncating input.")
+                # Add a buffer to avoid LLM-side token counting discrepancies
+                SAFE_CONTEXT_LIMIT = context_limit - 15000
+                if input_tokens + max_tokens > SAFE_CONTEXT_LIMIT:
+                    logger.warning(f"Input + max_tokens ({input_tokens} + {max_tokens}) exceeds safe context limit ({SAFE_CONTEXT_LIMIT}). Truncating input.")
                     def find_latest_user_index(msgs):
                         for i in range(len(msgs) - 1, 0, -1):
                             if msgs[i].get('role') == 'user':
                                 return i
                         return -1
                     latest_user_index = find_latest_user_index(prepared_messages)
-                    # Aggressively remove all but system prompt and latest user message
-                    while len(prepared_messages) > 2:
+                    # Remove messages until under safe context limit, not just until 2 left
+                    while len(prepared_messages) > 2 and input_tokens + max_tokens > SAFE_CONTEXT_LIMIT:
+                        removed = False
                         for i in range(1, len(prepared_messages)):
                             if i != latest_user_index:
                                 logger.info(f"Removing message at index {i} to reduce input tokens.")
                                 prepared_messages.pop(i)
                                 if latest_user_index > i:
                                     latest_user_index -= 1
-                                break
-                        input_tokens = token_counter(model=llm_model, messages=prepared_messages)
-                        logger.info(f"After removal: input_tokens={input_tokens}")
-                    # Now only system + user message left, truncate user message content if needed
-                    if len(prepared_messages) == 2:
-                        user_msg = prepared_messages[1]
-                        if isinstance(user_msg.get("content"), str):
-                            allowed_tokens = max(input_token_target - 1000, 0)
-                            logger.info(f"Truncating user message content to fit {input_token_target} tokens.")
-                            user_msg["content"] = user_msg["content"][:allowed_tokens] + "\n\n⚠️ Message truncated to fit the model's context window."
-                        input_tokens = token_counter(model=llm_model, messages=prepared_messages)
-                        logger.info(f"After user message truncation: input_tokens={input_tokens}")
+                                input_tokens = token_counter(model=llm_model, messages=prepared_messages)
+                                logger.info(f"After removal: input_tokens={input_tokens}")
+                                removed = True
+                                # Immediately break out of both loops if under limit
+                                if input_tokens + max_tokens <= SAFE_CONTEXT_LIMIT:
+                                    break
+                                else:
+                                    break
+                        if not removed or input_tokens + max_tokens <= SAFE_CONTEXT_LIMIT:
+                            break
+                    # If still over limit, truncate user message
+                    if input_tokens + max_tokens > SAFE_CONTEXT_LIMIT and len(prepared_messages) == 2:
+                        user_msg = prepared_messages[latest_user_index]
+                        user_tokens = token_counter(model=llm_model, messages=[user_msg])
+                        allowed_tokens = SAFE_CONTEXT_LIMIT - (input_tokens - user_tokens + max_tokens)
+                        if allowed_tokens > 0:
+                            user_msg['content'] = truncate_to_token_limit(user_msg['content'], allowed_tokens)
+                            logger.info(f"Truncated user message to {allowed_tokens} tokens.")
+                        else:
+                            logger.error("Cannot fit any user message content within context window.")
                     # Optionally, notify the user
                     prepared_messages.append({
                         "role": "system",
@@ -511,3 +527,13 @@ Here are the XML tools available with examples:
         if replicate_xml_tool_info and 'instance' in replicate_xml_tool_info:
             replicate_xml_tool = replicate_xml_tool_info['instance']
             replicate_xml_tool.project_id = project_id
+
+    def update_replicate_tts_tool_project_id(self, project_id: str):
+        tts_tool_info = self.tool_registry.get_tool('replicate_generate_speech')
+        if tts_tool_info and 'instance' in tts_tool_info:
+            tts_tool = tts_tool_info['instance']
+            tts_tool.project_id = project_id
+        tts_xml_tool_info = self.tool_registry.get_xml_tool('replicate-generate-speech')
+        if tts_xml_tool_info and 'instance' in tts_xml_tool_info:
+            tts_xml_tool = tts_xml_tool_info['instance']
+            tts_xml_tool.project_id = project_id

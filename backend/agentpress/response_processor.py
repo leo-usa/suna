@@ -1029,6 +1029,18 @@ class ResponseProcessor:
             
             # Validate required parameters
             missing = [mapping.param_name for mapping in schema.mappings if getattr(mapping, 'required', False) and mapping.param_name not in params]
+            # --- BEGIN PATCH: Accept 'prompt' as 'text' for replicate-generate-speech ---
+            if xml_tag_name == 'replicate-generate-speech' and 'text' in missing and 'prompt' in params:
+                params['text'] = params['prompt']
+                missing = [m for m in missing if m != 'text']
+                logger.warning("Patched: Used 'prompt' as 'text' for replicate-generate-speech tool call.")
+            # --- END PATCH ---
+            # --- BEGIN PATCH: Default voice_id for replicate-generate-speech ---
+            if xml_tag_name == 'replicate-generate-speech' and 'voice_id' in missing:
+                params['voice_id'] = 'R8_YFFUMRXZ'
+                missing = [m for m in missing if m != 'voice_id']
+                logger.warning("Patched: Used default 'voice_id' for replicate-generate-speech tool call.")
+            # --- END PATCH ---
             if missing:
                 logger.error(f"Missing required parameters: {missing}")
                 logger.error(f"Current params: {params}")
