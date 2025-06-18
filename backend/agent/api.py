@@ -1251,6 +1251,32 @@ async def share_to_community(
         # Replace src="..." and href="..." (double or single quotes)
         html = re.sub(r'(src|href)=["\"]([^"\"]+)["\"]', repl, html)
         return html
+
+    # --- If no HTML file or html_content is empty, generate a summary HTML ---
+    import html as html_escape_mod
+    def is_html_file(content: str) -> bool:
+        return content.strip().lower().startswith("<!doctype html") or "<html" in content.lower()
+
+    if not html_content or not is_html_file(html_content):
+        file_links = []
+        for rel_path, url in rel_to_url.items():
+            safe_name = html_escape_mod.escape(rel_path)
+            file_links.append(f'<li><a href="{url}" target="_blank">{safe_name}</a></li>')
+        html_content = f"""<!DOCTYPE html>
+<html>
+<head>
+  <meta charset=\"utf-8\">
+  <title>{html_escape_mod.escape(body.title or 'Project Files')}</title>
+</head>
+<body>
+  <h1>{html_escape_mod.escape(body.title or 'Project Files')}</h1>
+  <p>{html_escape_mod.escape(body.description or 'This project contains the following files:')}</p>
+  <ul>
+    {''.join(file_links)}
+  </ul>
+</body>
+</html>"""
+
     logger.info(f"HTML before asset ref replacement: {html_content[:1000]}")
     html_content = replace_asset_refs(html_content)
     logger.info(f"HTML after asset ref replacement: {html_content[:1000]}")
