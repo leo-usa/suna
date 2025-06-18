@@ -1,10 +1,42 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useMemo } from "react";
 import { useTranslation } from 'react-i18next';
 
 interface EditableHtmlProps {
   html: string;
   onSave: (newHtml: string) => void;
   onCancel: () => void;
+}
+
+// Helper to extract background color from inline body style
+function extractBodyBgFromInline(html: string): string | null {
+  const bodyMatch = html.match(/<body[^>]*style=["'][^"']*background\s*:\s*([^;"']+)/i);
+  return bodyMatch ? bodyMatch[1].trim() : null;
+}
+
+// Helper to extract background color from <style>body { background: ...; }</style>
+function extractBodyBgFromStyle(html: string): string | null {
+  const styleMatch = html.match(/<style[^>]*>[\s\S]*?body\s*{[^}]*background\s*:\s*([^;\n]+)[^}]*}/i);
+  return styleMatch ? styleMatch[1].trim() : null;
+}
+
+// Helper to extract text-align and justify-content from inline body style
+function extractBodyTextAlignFromInline(html: string): string | null {
+  const bodyMatch = html.match(/<body[^>]*style=["'][^"']*text-align\s*:\s*([^;"']+)/i);
+  return bodyMatch ? bodyMatch[1].trim() : null;
+}
+function extractBodyJustifyContentFromInline(html: string): string | null {
+  const bodyMatch = html.match(/<body[^>]*style=["'][^"']*justify-content\s*:\s*([^;"']+)/i);
+  return bodyMatch ? bodyMatch[1].trim() : null;
+}
+
+// Helper to extract text-align and justify-content from <style>body { ... }</style>
+function extractBodyTextAlignFromStyle(html: string): string | null {
+  const styleMatch = html.match(/<style[^>]*>[\s\S]*?body\s*{[^}]*text-align\s*:\s*([^;\n]+)[^}]*}/i);
+  return styleMatch ? styleMatch[1].trim() : null;
+}
+function extractBodyJustifyContentFromStyle(html: string): string | null {
+  const styleMatch = html.match(/<style[^>]*>[\s\S]*?body\s*{[^}]*justify-content\s*:\s*([^;\n]+)[^}]*}/i);
+  return styleMatch ? styleMatch[1].trim() : null;
 }
 
 export function EditableHtml({ html, onSave, onCancel }: EditableHtmlProps) {
@@ -46,6 +78,31 @@ export function EditableHtml({ html, onSave, onCancel }: EditableHtmlProps) {
     }
   };
 
+  // Detect background color and centering styles from HTML
+  const bgColor = useMemo(() => {
+    return (
+      extractBodyBgFromInline(html) ||
+      extractBodyBgFromStyle(html) ||
+      'white'
+    );
+  }, [html]);
+
+  const textAlign = useMemo(() => {
+    return (
+      extractBodyTextAlignFromInline(html) ||
+      extractBodyTextAlignFromStyle(html) ||
+      undefined
+    );
+  }, [html]);
+
+  const justifyContent = useMemo(() => {
+    return (
+      extractBodyJustifyContentFromInline(html) ||
+      extractBodyJustifyContentFromStyle(html) ||
+      undefined
+    );
+  }, [html]);
+
   return (
     <div style={{
       position: 'fixed',
@@ -55,15 +112,16 @@ export function EditableHtml({ html, onSave, onCancel }: EditableHtmlProps) {
       width: '80vw',
       maxWidth: 900,
       zIndex: 2000,
-      background: 'white',
+      background: bgColor,
       borderRadius: 12,
       boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
       padding: 32,
+      transition: 'background 0.2s',
     }}>
       <div style={{ overflowAnchor: "none" }}>
         <div
           ref={editableRef}
-          className="mb-8 border rounded p-4 bg-gray-50 focus:outline-none"
+          className="mb-8 border rounded p-4 focus:outline-none"
           contentEditable
           suppressContentEditableWarning
           onInput={handleInput}
@@ -75,22 +133,27 @@ export function EditableHtml({ html, onSave, onCancel }: EditableHtmlProps) {
             overflow: "auto",
             cursor: "text",
             resize: "vertical",
+            background: bgColor,
+            transition: 'background 0.2s',
+            textAlign: textAlign as any,
+            display: justifyContent ? 'flex' : undefined,
+            justifyContent: justifyContent,
           }}
         />
-      </div>
-      <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 1000, display: "flex", justifyContent: "center", padding: 16, background: "rgba(255,255,255,0.95)", boxShadow: "0 -2px 16px rgba(0,0,0,0.08)", gap: 16 }}>
-        <button
-          style={{ background: "#667eea", color: "white", border: "none", borderRadius: 8, padding: "10px 28px", fontWeight: 600, fontSize: 16, cursor: "pointer" }}
-          onClick={handleSave}
-        >
-          {t('editor.save')}
-        </button>
-        <button
-          style={{ background: "#eee", color: "#333", border: "none", borderRadius: 8, padding: "10px 28px", fontWeight: 600, fontSize: 16, cursor: "pointer" }}
-          onClick={onCancel}
-        >
-          {t('editor.discard')}
-        </button>
+        <div style={{ display: "flex", justifyContent: "center", padding: 16, background: "rgba(255,255,255,0.95)", boxShadow: "0 -2px 16px rgba(0,0,0,0.08)", gap: 16, marginTop: 16 }}>
+          <button
+            style={{ background: "#667eea", color: "white", border: "none", borderRadius: 8, padding: "10px 28px", fontWeight: 600, fontSize: 16, cursor: "pointer" }}
+            onClick={handleSave}
+          >
+            {t('editor.save')}
+          </button>
+          <button
+            style={{ background: "#eee", color: "#333", border: "none", borderRadius: 8, padding: "10px 28px", fontWeight: 600, fontSize: 16, cursor: "pointer" }}
+            onClick={onCancel}
+          >
+            {t('editor.discard')}
+          </button>
+        </div>
       </div>
     </div>
   );

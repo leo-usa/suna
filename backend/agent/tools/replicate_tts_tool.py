@@ -99,8 +99,10 @@ class ReplicateTTSTool(SandboxToolsBase):
                 "english_normalization": english_normalization
             }
         )
+        print(f"[DEBUG] Replicate TTS output: {output}")
         # output is a URL to the audio file
         if not output:
+            print("[DEBUG] No output from Replicate API.")
             return ToolResult(success=False, output="No output from Replicate API.")
         # Robustly extract the URL from output
         url = None
@@ -117,29 +119,39 @@ class ReplicateTTSTool(SandboxToolsBase):
             url = output.url
         else:
             url = str(output)
+        print(f"[DEBUG] Extracted URL: {url}")
         # Download and save to sandbox (robust version)
         min_size = 10 * 1024  # 10KB minimum for a valid audio file
         max_retries = 3
         success = False
         fname = f"tts_{hashlib.sha256(text.encode()).hexdigest()[:8]}_{int(time.time())}.mp3"
         for attempt in range(max_retries):
+            print(f"[DEBUG] Downloading from URL: {url} (attempt {attempt+1})")
             resp = requests.get(url, stream=True, timeout=60)
+            print(f"[DEBUG] Download status: {resp.status_code}, headers: {resp.headers}")
             if resp.status_code == 200:
                 with tempfile.NamedTemporaryFile(delete=False) as tmpf:
                     for chunk in resp.iter_content(chunk_size=8192):
                         if chunk:
                             tmpf.write(chunk)
                     tmp_path = tmpf.name
+                print(f"[DEBUG] Downloaded file size: {os.path.getsize(tmp_path)} bytes")
                 if os.path.getsize(tmp_path) >= min_size:
                     with open(tmp_path, 'rb') as f:
                         self.sandbox.fs.upload_file(f"/workspace/{fname}", f.read())
                     os.remove(tmp_path)
+                    print(f"[DEBUG] Uploaded file to /workspace/{fname}")
                     success = True
                     break
                 else:
                     os.remove(tmp_path)
+                    print(f"[DEBUG] File too small, deleted: {tmp_path}")
+            else:
+                print(f"[DEBUG] Failed to download file, status: {resp.status_code}")
             time.sleep(3)  # Wait before retry
         if success:
+            print(f"[DEBUG] ToolResult: success, replicate_url={url}, sandbox_path=/workspace/{fname}")
             return ToolResult(success=True, output={"replicate_url": url, "sandbox_path": f"/workspace/{fname}"})
         else:
+            print(f"[DEBUG] ToolResult: failed after {max_retries} attempts.")
             return ToolResult(success=False, output=f"Failed to download complete audio after {max_retries} attempts.") 

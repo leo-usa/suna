@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import {
   ArrowDown, CheckCircle, CircleDashed, AlertTriangle, Info, File, ChevronRight, Share2, Copy, Loader2, Users
 } from 'lucide-react';
-import { addUserMessage, getMessages, startAgent, stopAgent, getAgentRuns, getProject, getThread, updateProject, Project, Message as BaseApiMessageType, BillingError, checkBillingStatus, shareReport, API_URL } from '@/lib/api';
+import { addUserMessage, getMessages, startAgent, stopAgent, getAgentRuns, getProject, getThread, updateProject, Project, Message as BaseApiMessageType, BillingError, checkBillingStatus, shareReport, API_URL, listSandboxFiles, createSandboxFile } from '@/lib/api';
 import { toast } from 'sonner';
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChatInput } from '@/components/thread/chat-input';
@@ -1073,6 +1073,7 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
 
   // Handler for Community Share (no UI, just logic)
   const handleCommunityShare = async () => {
+    console.log("Community share clicked");
     if (communityLoading || communityResult) return;
     setCommunityLoading(true);
     toast.info(t('communityShare.sharing', '正在分享...'));
@@ -1090,19 +1091,60 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
           prompt = firstUserMsg.content;
         }
       }
-      // Use shareReport helper
-      const data = await shareReport(project?.id);
-      if (!data.shared || !data.shared[0]?.html) throw new Error('No HTML found');
-      const htmlUrl = data.shared[0].html;
-      const htmlContent = await fetch(htmlUrl).then(r => r.text());
-      // Get Supabase session for Authorization header
+      if (!sandboxId) throw new Error('No sandbox ID');
+      // 1. List files in the sandbox and check for any .html file
+      let files = await listSandboxFiles(sandboxId, '/');
+      let htmlFile = files.find(f => !f.is_dir && f.name.toLowerCase().endsWith('.html'));
+      let htmlPath = htmlFile ? htmlFile.path : '/index.html';
+      if (!htmlFile) {
+        // 2. If no HTML file exists, generate and upload summary HTML as /index.html
+        const fileList = files.filter(f => !f.is_dir);
+        const htmlContent = `<!DOCTYPE html><html><head><meta charset='utf-8'><title>${title || 'Project Files'}</title></head><body><h1>${title || 'Project Files'}</h1><ul>` +
+          fileList.map(f => `<li><a href=\"/api/sandboxes/${sandboxId}/files/content?path=${encodeURIComponent(f.path)}\" target=\"_blank\" rel=\"noopener noreferrer\">${f.name}</a></li>`).join('') +
+          '</ul></body></html>';
+        try {
+          await createSandboxFile(sandboxId, '/index.html', htmlContent);
+          toast.info('index.html uploaded, checking workspace...');
+        } catch (uploadErr) {
+          console.error('Failed to upload index.html:', uploadErr);
+          toast.error('Failed to upload index.html: ' + (uploadErr?.message || uploadErr));
+          setCommunityLoading(false);
+          return;
+        }
+        // 3. List files again and confirm /index.html exists
+        files = await listSandboxFiles(sandboxId, '/');
+        htmlFile = files.find(f => !f.is_dir && f.name === 'index.html');
+        if (!htmlFile) {
+          toast.error('index.html was not created in the workspace!');
+          setCommunityLoading(false);
+          return;
+        }
+        toast.success('index.html confirmed in workspace. Proceeding to share.');
+      }
+      // 4. Now call shareReport to get the public URL and content
+      let htmlUrl = undefined;
+      let htmlContent = '';
+      try {
+        const data = await shareReport(project?.id);
+        htmlUrl = data.shared[0]?.html;
+        if (htmlUrl) {
+          htmlContent = await fetch(htmlUrl).then(r => r.text());
+        } else {
+          throw new Error('shareReport did not return an HTML URL');
+        }
+      } catch (err) {
+        console.error('shareReport failed:', err);
+        toast.error('Failed to share report: ' + (err?.message || err));
+        setCommunityLoading(false);
+        return;
+      }
+      // 5. Call /community/share as before
       const supabase = createClient();
       const { data: { session } } = await supabase.auth.getSession();
       const headers = { 'Content-Type': 'application/json' };
       if (session?.access_token) {
         headers['Authorization'] = `Bearer ${session.access_token}`;
       }
-      // Call community share API using API_URL
       const resp = await fetch(`${API_URL}/community/share`, {
         method: 'POST',
         headers,
