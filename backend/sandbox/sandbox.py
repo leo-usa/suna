@@ -38,32 +38,43 @@ daytona = Daytona(daytona_config)
 logger.debug("Daytona client initialized")
 
 async def get_or_start_sandbox(sandbox_id: str):
-    """Retrieve a sandbox by ID, check its state, and start it if needed."""
-    
+    """Retrieve a sandbox by ID, check its state, and start it if needed. Wait for true readiness."""
     logger.info(f"Getting or starting sandbox with ID: {sandbox_id}")
-    
     try:
         sandbox = daytona.get_current_sandbox(sandbox_id)
-        
         # Check if sandbox needs to be started
         if sandbox.instance.state == "archived" or sandbox.instance.state == "stopped":
             logger.info(f"Sandbox is in {sandbox.instance.state} state. Starting...")
             try:
                 daytona.start(sandbox)
-                # Wait a moment for the sandbox to initialize
-                # sleep(5)
+                # Wait for the sandbox to be running and healthy
+                for attempt in range(10):
+                    time.sleep(2)
+                    sandbox = daytona.get_current_sandbox(sandbox_id)
+                    logger.info(f"[SANDBOX WAIT] Attempt {attempt+1}: state={sandbox.instance.state}")
+                    if sandbox.instance.state == "running":
+                        # Try a basic health check: can we create a session and run a command?
+                        try:
+                            session_id = f"healthcheck-session-{attempt}"
+                            sandbox.process.create_session(session_id)
+                            logger.info(f"[SANDBOX WAIT] Health check session {session_id} created successfully.")
+                            # Try to execute a simple command
+                            result = sandbox.process.execute_session_command(session_id, SessionExecuteRequest(command="ls /workspace", var_async=False))
+                            logger.info(f"[SANDBOX WAIT] Health check command result: {result}")
+                            break
+                        except Exception as e:
+                            logger.info(f"[SANDBOX WAIT] Health check failed: {e}")
+                    if attempt == 9:
+                        raise Exception("Sandbox did not become ready in time")
                 # Refresh sandbox state after starting
                 sandbox = daytona.get_current_sandbox(sandbox_id)
-                
                 # Start supervisord in a session when restarting
                 start_supervisord_session(sandbox)
             except Exception as e:
                 logger.error(f"Error starting sandbox: {e}")
                 raise e
-        
         logger.info(f"Sandbox {sandbox_id} is ready")
         return sandbox
-        
     except Exception as e:
         logger.error(f"Error retrieving or starting sandbox: {str(e)}")
         raise e
