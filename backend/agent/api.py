@@ -1236,6 +1236,33 @@ async def share_to_community(
                 image_candidates.append(url)
         except Exception as e:
             logger.warning(f"Failed to upload {rel_path}: {e}")
+
+    # --- Rewrite asset references in JS files to public URLs ---
+    def rewrite_js_assets(js_content, rel_to_url):
+        # Replace all string literals that match asset filenames
+        def replacer(match):
+            filename = match.group(1)
+            url = rel_to_url.get(filename)
+            if url:
+                return f"'{url}'"
+            return match.group(0)
+        # This regex matches 'filename.ext' or "filename.ext"
+        pattern = r"['\"]([^'\"]+\.[a-zA-Z0-9]+)['\"]"
+        return re.sub(pattern, replacer, js_content)
+
+    for full_path, rel_path in all_files:
+        if rel_path.lower().endswith('.js'):
+            try:
+                js_bytes = sandbox.fs.download_file(full_path)
+                js_content = js_bytes.decode('utf-8')
+                new_js_content = rewrite_js_assets(js_content, rel_to_url)
+                if new_js_content != js_content:
+                    # Upload the rewritten JS file to Supabase
+                    storage_path = f"community/{post_id}/{rel_path}"
+                    await upload_file_to_storage(bucket, storage_path, new_js_content.encode('utf-8'), content_type="application/javascript")
+            except Exception as e:
+                logger.warning(f"Failed to rewrite/upload JS asset refs for {rel_path}: {e}")
+
     # --- Update HTML asset references to point to Supabase URLs ---
     # Replace src/href in HTML to point to rel_to_url if present
     def replace_asset_refs(html):
