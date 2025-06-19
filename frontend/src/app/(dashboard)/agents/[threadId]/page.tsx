@@ -476,22 +476,27 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
             // Make sure sandbox ID is set correctly
             if (typeof projectData.sandbox === 'string') {
               setSandboxId(projectData.sandbox);
-              if (projectData.sandbox) {
-                const exists = await checkSandboxExists(projectData.sandbox);
+              const sandboxIdStr = projectData.sandbox;
+              if (sandboxIdStr && String(sandboxIdStr).trim() !== "") {
+                const exists = await checkSandboxExists(String(sandboxIdStr));
                 if (!exists) {
                   console.log('Setting sandboxMissing to true');
                   setSandboxMissing(true);
                 }
               }
-            } else if (projectData.sandbox?.id) {
+            } else if (projectData.sandbox && typeof projectData.sandbox.id === 'string') {
               setSandboxId(projectData.sandbox.id);
-              if (projectData.sandbox.id) {
-                const exists = await checkSandboxExists(projectData.sandbox.id);
+              const sandboxIdStr = projectData.sandbox.id;
+              if (sandboxIdStr && String(sandboxIdStr).trim() !== "") {
+                const exists = await checkSandboxExists(String(sandboxIdStr));
                 if (!exists) {
                   console.log('Setting sandboxMissing to true');
                   setSandboxMissing(true);
                 }
               }
+            } else if (projectData.sandbox && projectData.sandbox.id) {
+              // If id exists but is not a string, just set it without checking
+              setSandboxId(projectData.sandbox.id);
             }
             
             setProjectName(projectData.name || '');
@@ -1233,7 +1238,17 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
             console.log('[SANDBOX] Using new sandbox id:', projectData.sandbox.id);
           } else if (typeof projectData.sandbox === 'string') {
             setSandboxId(projectData.sandbox);
-            console.log('[SANDBOX] Using new sandbox id (string):', projectData.sandbox);
+            const sandboxIdStr = projectData.sandbox;
+            if (sandboxIdStr && String(sandboxIdStr).trim() !== "") {
+              const exists = await checkSandboxExists(String(sandboxIdStr));
+              if (!exists) {
+                console.log('Setting sandboxMissing to true');
+                setSandboxMissing(true);
+              }
+            }
+          } else if (projectData.sandbox && projectData.sandbox.id) {
+            // If id exists but is not a string, just set it without checking
+            setSandboxId(projectData.sandbox.id);
           }
         }
         toast.success('New sandbox created!');
