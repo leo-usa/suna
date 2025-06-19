@@ -473,30 +473,46 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
             // Set project data
             setProject(projectData);
             
-            // Make sure sandbox ID is set correctly
+            // Store the initial sandbox ID to detect if it changes
+            let initialSandboxId: string | undefined;
             if (typeof projectData.sandbox === 'string') {
-              setSandboxId(projectData.sandbox);
-              const sandboxIdStr = projectData.sandbox;
-              if (sandboxIdStr && String(sandboxIdStr).trim() !== "") {
-                const exists = await checkSandboxExists(String(sandboxIdStr));
-                if (!exists) {
-                  console.log('Setting sandboxMissing to true');
-                  setSandboxMissing(true);
+              initialSandboxId = projectData.sandbox;
+            } else if (projectData.sandbox?.id) {
+              initialSandboxId = projectData.sandbox.id;
+            }
+            setSandboxId(initialSandboxId);
+
+            if (initialSandboxId) {
+              console.log('[PAGE] Initial sandbox ID:', initialSandboxId);
+              
+              // Check sandbox status
+              let exists = await checkSandboxExists(initialSandboxId);
+              
+              // If it doesn't exist, the backend will create a new one.
+              // We need to check if the sandbox ID has changed.
+              if (!exists) {
+                console.log('[PAGE] Initial sandbox check failed. Refetching project to check for new sandbox.');
+                
+                // Refetch project data to see if a new sandbox was created
+                const updatedProjectData = await getProject(threadData.project_id);
+                if (isMounted && updatedProjectData) {
+                  let newSandboxId: string | undefined;
+                  if (typeof updatedProjectData.sandbox === 'string') {
+                    newSandboxId = updatedProjectData.sandbox;
+                  } else if (updatedProjectData.sandbox?.id) {
+                    newSandboxId = updatedProjectData.sandbox.id;
+                  }
+
+                  console.log('[PAGE] New sandbox ID from refetch:', newSandboxId);
+
+                  if (newSandboxId && newSandboxId !== initialSandboxId) {
+                    console.log('[PAGE] Sandbox ID has changed, showing modal.');
+                    setSandboxMissing(true);
+                    setSandboxId(newSandboxId);
+                    setProject(updatedProjectData);
+                  }
                 }
               }
-            } else if (projectData.sandbox && typeof projectData.sandbox.id === 'string') {
-              setSandboxId(projectData.sandbox.id);
-              const sandboxIdStr = projectData.sandbox.id;
-              if (sandboxIdStr && String(sandboxIdStr).trim() !== "") {
-                const exists = await checkSandboxExists(String(sandboxIdStr));
-                if (!exists) {
-                  console.log('Setting sandboxMissing to true');
-                  setSandboxMissing(true);
-                }
-              }
-            } else if (projectData.sandbox && projectData.sandbox.id) {
-              // If id exists but is not a string, just set it without checking
-              setSandboxId(projectData.sandbox.id);
             }
             
             setProjectName(projectData.name || '');
@@ -602,24 +618,25 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
           
         initialLoadCompleted.current = true;
 
-      } catch (err) {
-        console.error('Error loading thread data:', err);
+      } catch (err: any) {
         if (isMounted) {
-          const errorMessage = err instanceof Error ? err.message : 'Failed to load thread';
-          setError(errorMessage);
-          toast.error(t('agentDetail.loadError', '加载线程失败'));
+          setError(err.message || String(err));
+          console.error('[PAGE] Error loading data:', err);
         }
       } finally {
-        if (isMounted) setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+          initialLoadCompleted.current = true;
+        }
       }
     }
-    
+
     loadData();
 
     return () => {
       isMounted = false;
     };
-  }, [threadId, t]);
+  }, [threadId]);
 
   const handleSubmitMessage = useCallback(async (message: string, options?: { model_name?: string; enable_thinking?: boolean }) => {
     if (!message.trim()) return;
@@ -1189,25 +1206,76 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
   };
 
   async function checkSandboxExists(sandboxId: string): Promise<boolean> {
-    console.log('Checking sandbox existence for:', sandboxId);
+    console.log('[PAGE] Checking sandbox existence for:', sandboxId);
     try {
       setSandboxCheckInProgress(true);
       setSandboxCheckError(null);
-      const resp = await fetch(`${API_URL}/sandboxes/${sandboxId}/files?path=/workspace`, { credentials: 'include' });
+
+      // Get auth token first
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      // Try to list files in the sandbox
+      console.log('[PAGE] Attempting to list files in sandbox:', sandboxId);
+      
+      // First try without auth to see if sandbox exists at all
+      let resp = await fetch(`${API_URL}/sandboxes/${sandboxId}/files?path=/workspace`, {
+        credentials: 'include'
+      });
+
+      console.log('[PAGE] Initial sandbox check response:', resp.status);
+
+      // If we get 401, try again with auth
+      if (resp.status === 401 && session?.access_token) {
+        console.log('[PAGE] Got 401, retrying with auth token');
+        resp = await fetch(`${API_URL}/sandboxes/${sandboxId}/files?path=/workspace`, {
+          credentials: 'include',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        console.log('[PAGE] Authenticated sandbox check response:', resp.status);
+      }
+
       if (resp.ok) {
-        console.log('Sandbox exists:', sandboxId);
+        // Successfully listed files, sandbox is truly accessible
+        console.log('[PAGE] Sandbox exists and is accessible:', sandboxId);
         return true;
       }
+
+      // For any error response, try to read the error message
+      const errorText = await resp.text();
+      console.warn('[PAGE] Sandbox check error:', resp.status, errorText);
+
+      // If we get a 404, the sandbox is definitely gone
       if (resp.status === 404) {
-        console.log('Sandbox missing:', sandboxId);
+        console.log('[PAGE] Sandbox missing (404):', sandboxId);
         return false;
       }
-      // For 401 or other errors, treat as exists to avoid false modal
-      console.warn('Unexpected response when checking sandbox:', resp.status);
-      return true;
+
+      // If we get a 500 with specific error messages, the sandbox exists but is not accessible
+      if (resp.status === 500 && 
+         (errorText.includes('Sandbox is not running') || 
+          errorText.includes('Failed to list files') ||
+          errorText.includes('not found'))) {
+        console.log('[PAGE] Sandbox exists but not accessible (500):', sandboxId);
+        return false;
+      }
+
+      // If we still have a 401 after retrying with auth, treat as sandbox missing
+      if (resp.status === 401) {
+        console.log('[PAGE] Still getting 401 after auth retry, treating as missing');
+        return false;
+      }
+
+      // For any other error, treat as sandbox missing to be safe
+      console.warn('[PAGE] Unexpected error when checking sandbox - treating as missing:', resp.status);
+      return false;
     } catch (err: any) {
       setSandboxCheckError(err.message || String(err));
-      return true; // treat as exists to avoid false modal
+      console.error('[PAGE] Error checking sandbox existence:', err);
+      return false;
     } finally {
       setSandboxCheckInProgress(false);
     }
