@@ -539,7 +539,7 @@ const zhTranslation = {
     title: '沙盒已删除',
     deleted: '该项目的沙盒已被删除。',
     lost: '所有文件和数据已永久丢失。',
-    recovery: '我们将为你创建一个新的沙盒，但文件操作可能无法可靠工作。',
+    recovery: '我们将为你创建一个新的沙盒，你可以在这个新的沙盒中继续你的工作。',
     recommend: '建议你新建一个项目以获得最佳体验。',
   },
   common: {
@@ -738,7 +738,7 @@ const resources = {
         title: 'Sandbox Deleted',
         deleted: 'This project\'s sandbox has been deleted.',
         lost: 'All files and data are permanently lost.',
-        recovery: 'We will create a new sandbox for you, but file operations may not work reliably.',
+        recovery: 'We will create a new sandbox for you to continue your work.',
         recommend: 'We recommend starting a new project for best results.',
       },
       common: {
