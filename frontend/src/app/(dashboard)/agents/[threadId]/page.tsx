@@ -1202,10 +1202,12 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
         console.log('Sandbox missing:', sandboxId);
         return false;
       }
-      throw new Error(await resp.text());
+      // For 401 or other errors, treat as exists to avoid false modal
+      console.warn('Unexpected response when checking sandbox:', resp.status);
+      return true;
     } catch (err: any) {
       setSandboxCheckError(err.message || String(err));
-      return false;
+      return true; // treat as exists to avoid false modal
     } finally {
       setSandboxCheckInProgress(false);
     }
