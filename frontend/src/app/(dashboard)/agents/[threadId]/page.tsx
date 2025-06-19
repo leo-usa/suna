@@ -272,6 +272,11 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
   const [communityPrompt, setCommunityPrompt] = useState("");
   const [communityResult, setCommunityResult] = useState<{url: string}|null>(null);
 
+  // Add state for sandbox existence check
+  const [sandboxMissing, setSandboxMissing] = useState(false);
+  const [sandboxCheckInProgress, setSandboxCheckInProgress] = useState(false);
+  const [sandboxCheckError, setSandboxCheckError] = useState<string|null>(null);
+
   // Replace both useEffect hooks with a single one that respects user closing
   useEffect(() => {
     if (initialLoadCompleted.current && !initialPanelOpenAttempted) {
@@ -471,8 +476,22 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
             // Make sure sandbox ID is set correctly
             if (typeof projectData.sandbox === 'string') {
               setSandboxId(projectData.sandbox);
+              if (projectData.sandbox) {
+                const exists = await checkSandboxExists(projectData.sandbox);
+                if (!exists) {
+                  console.log('Setting sandboxMissing to true');
+                  setSandboxMissing(true);
+                }
+              }
             } else if (projectData.sandbox?.id) {
               setSandboxId(projectData.sandbox.id);
+              if (projectData.sandbox.id) {
+                const exists = await checkSandboxExists(projectData.sandbox.id);
+                if (!exists) {
+                  console.log('Setting sandboxMissing to true');
+                  setSandboxMissing(true);
+                }
+              }
             }
             
             setProjectName(projectData.name || '');
@@ -1164,6 +1183,74 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
     }
   };
 
+  async function checkSandboxExists(sandboxId: string): Promise<boolean> {
+    console.log('Checking sandbox existence for:', sandboxId);
+    try {
+      setSandboxCheckInProgress(true);
+      setSandboxCheckError(null);
+      const resp = await fetch(`${API_URL}/sandboxes/${sandboxId}/files?path=/workspace`, { credentials: 'include' });
+      if (resp.ok) {
+        console.log('Sandbox exists:', sandboxId);
+        return true;
+      }
+      if (resp.status === 404) {
+        console.log('Sandbox missing:', sandboxId);
+        return false;
+      }
+      throw new Error(await resp.text());
+    } catch (err: any) {
+      setSandboxCheckError(err.message || String(err));
+      return false;
+    } finally {
+      setSandboxCheckInProgress(false);
+    }
+  }
+
+  async function createNewSandbox(projectId: string) {
+    try {
+      setSandboxCheckInProgress(true);
+      setSandboxCheckError(null);
+      // Get Supabase session/access token
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('No access token');
+      const resp = await fetch(`${API_URL}/project/${projectId}/sandbox/ensure-active`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!resp.ok) throw new Error(await resp.text());
+      const data = await resp.json();
+      if (data.sandbox_id) {
+        // Reload project data to get the latest sandbox info
+        const projectData = await getProject(projectId);
+        if (projectData) {
+          setProject(projectData);
+          if (projectData.sandbox?.id) {
+            setSandboxId(projectData.sandbox.id);
+            console.log('[SANDBOX] Using new sandbox id:', projectData.sandbox.id);
+          } else if (typeof projectData.sandbox === 'string') {
+            setSandboxId(projectData.sandbox);
+            console.log('[SANDBOX] Using new sandbox id (string):', projectData.sandbox);
+          }
+        }
+        toast.success('New sandbox created!');
+        setSandboxMissing(false);
+        return data.sandbox_id;
+      } else {
+        throw new Error('No sandbox_id returned');
+      }
+    } catch (err: any) {
+      setSandboxCheckError(err.message || String(err));
+      toast.error('Failed to create new sandbox: ' + (err.message || err));
+      return null;
+    } finally {
+      setSandboxCheckInProgress(false);
+    }
+  }
+
   if (isLoading && !initialLoadCompleted.current) {
     return (
       <div className="flex h-screen">
@@ -1688,6 +1775,32 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {sandboxMissing && (
+        <Dialog open={sandboxMissing}>
+          <DialogContent className="max-w-md rounded-xl p-8 text-center">
+            <DialogHeader>
+              <div className="flex flex-col items-center gap-2">
+                <div className="rounded-full bg-destructive/10 p-3 mb-2">
+                  <AlertTriangle className="h-8 w-8 text-destructive" />
+                </div>
+                <DialogTitle className="text-xl font-semibold text-destructive mb-1">{t('sandboxModal.title')}</DialogTitle>
+              </div>
+            </DialogHeader>
+            <div className="text-base text-muted-foreground mb-4">
+              {t('sandboxModal.deleted')}<br />
+              <span className="font-medium text-foreground">{t('sandboxModal.lost')}</span><br />
+              {t('sandboxModal.recovery')}<br />
+              <span className="font-medium text-foreground">{t('sandboxModal.recommend')}</span>
+            </div>
+            <DialogFooter className="flex flex-col gap-2">
+              <Button variant="default" className="w-full" onClick={() => setSandboxMissing(false)}>
+                {t('common.close', 'Close')}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
