@@ -16,7 +16,8 @@ export type FileType =
   | 'pdf'
   | 'image'
   | 'text'
-  | 'binary';
+  | 'binary'
+  | 'html';
 
 interface FileRendererProps {
   content: string | null;
@@ -32,6 +33,7 @@ interface FileRendererProps {
   };
   markdownRef?: React.RefObject<HTMLDivElement>;
   onEdit?: () => void;
+  cacheBuster?: number;
 }
 
 // Helper function to determine file type from extension
@@ -52,6 +54,9 @@ export function getFileTypeFromExtension(fileName: string): FileType {
   if (markdownExtensions.includes(extension)) {
     return 'markdown';
   } else if (codeExtensions.includes(extension)) {
+    if (extension === 'html') {
+      return 'html';
+    }
     return 'code';
   } else if (imageExtensions.includes(extension)) {
     return 'image';
@@ -118,7 +123,8 @@ export function FileRenderer({
   className, 
   project,
   markdownRef,
-  onEdit
+  onEdit,
+  cacheBuster
 }: FileRendererProps) {
   const fileType = getFileTypeFromExtension(fileName);
   const language = getLanguageFromExtension(fileName);
@@ -141,9 +147,14 @@ export function FileRenderer({
   }, [isHtmlFile, content, project?.sandbox?.sandbox_url]);
   
   // Construct HTML file preview URL if we have a sandbox and the file is HTML
-  const htmlPreviewUrl = (isHtmlFile && project?.sandbox?.sandbox_url && fileName) 
+  const baseUrl = (isHtmlFile && project?.sandbox?.sandbox_url && fileName) 
     ? constructHtmlPreviewUrl(project.sandbox.sandbox_url, fileName)
     : blobHtmlUrl; // Use blob URL as fallback
+
+  // Add cache-busting query parameter if available
+  const htmlPreviewUrl = (baseUrl && cacheBuster)
+    ? `${baseUrl}?v=${cacheBuster}`
+    : baseUrl;
   
   return (
     <div className={cn("w-full h-full", className)}>
@@ -160,7 +171,7 @@ export function FileRenderer({
         <MarkdownRenderer content={content || ''} ref={markdownRef} />
       ) : isHtmlFile ? (
         <HtmlRenderer
-          key={getContentHash(content || '')}
+          key={getContentHash(content || '') + `-${cacheBuster}`}
           content={content || ''}
           previewUrl={htmlPreviewUrl || ''}
           className="w-full h-full"

@@ -140,6 +140,7 @@ class Configuration:
     DAYTONA_API_KEY: str
     DAYTONA_SERVER_URL: str
     DAYTONA_TARGET: str
+    DAYTONA_MAX_SANDBOXES: int = 10
     
     # Search and other API keys
     TAVILY_API_KEY: str
