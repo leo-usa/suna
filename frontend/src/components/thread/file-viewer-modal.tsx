@@ -29,7 +29,7 @@ import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { useTranslation } from 'react-i18next';
-import { EditableHtml } from "@/components/file-renderers/editable-html";
+import InlineContentEditor from "@/components/file-renderers/inline-content-editor";
 
 // Define API_URL
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || '';
@@ -85,17 +85,14 @@ export function FileViewerModal({
   // Add state for print orientation
   const [pdfOrientation, setPdfOrientation] = useState<'portrait' | 'landscape'>('portrait');
   
-  // Add state for HTML edit mode
-  const [isHtmlEditMode, setIsHtmlEditMode] = useState(false);
-  const [htmlEditBody, setHtmlEditBody] = useState<string>('');
-  const isHtmlFile = selectedFilePath ? selectedFilePath.toLowerCase().endsWith('.html') : false;
+  // Unified edit mode state
+  const [isEditing, setIsEditing] = useState(false);
   
   // Add state for last saved time
   const [lastSaved, setLastSaved] = useState(Date.now());
   
-  // Add state for text edit mode
-  const [isTextEditMode, setIsTextEditMode] = useState(false);
-  const [textEditValue, setTextEditValue] = useState('');
+  // These are derived, no need for separate state
+  const isHtmlFile = selectedFilePath ? getFileTypeFromExtension(selectedFilePath) === 'html' : false;
   const isTextFile = selectedFilePath ? getFileTypeFromExtension(selectedFilePath) === 'text' : false;
   
   // Setup project with sandbox URL if not provided directly
@@ -262,7 +259,7 @@ export function FileViewerModal({
     if (rawContent instanceof Blob) {
       // Determine if it *should* be text - might still render via blob URL if conversion fails
       const fileType = selectedFilePath ? getFileTypeFromExtension(selectedFilePath) : 'binary';
-      const shouldBeText = ['text', 'code', 'markdown'].includes(fileType);
+      const shouldBeText = ['text', 'code', 'markdown', 'html'].includes(fileType);
       
       // Attempt to read as text first if it should be text
       if (shouldBeText) {
@@ -604,136 +601,69 @@ export function FileViewerModal({
     }
   }, [selectedFilePath, isExportingPdf, isMarkdownFile]);
 
-  // When entering edit mode, always fetch the latest file content
-  const startHtmlEditMode = async () => {
-    if (!selectedFilePath) return;
-    setIsLoadingContent(true);
-    try {
-      const content = await getSandboxFileContent(sandboxId, selectedFilePath);
-      let html = '';
-      if (typeof content === 'string') {
-        html = content;
-      } else if (content instanceof Blob) {
-        html = await content.text();
-      }
-      setHtmlEditBody(extractBodyContent(html));
-      setIsHtmlEditMode(true);
-    } catch (err) {
-      toast.error('Failed to load latest file content for editing');
-      console.error(err);
-    } finally {
-      setIsLoadingContent(false);
+  const handleEdit = () => {
+    if (isHtmlFile || isTextFile) {
+      setIsEditing(true);
     }
   };
 
-  // Handle HTML save
-  const handleHtmlSave = async (newBodyHtml: string) => {
+  const handleSave = async (newContent: string) => {
     if (!selectedFilePath) return;
+    
+    setIsEditing(false); // Optimistically close the editor
+
+    console.log(`Saving file: ${selectedFilePath}`);
     try {
-      setIsLoadingContent(true);
-      const fullHtml = wrapWithHtmlDoc(newBodyHtml);
-      // Save to backend
-      const supabase = createClient();
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) throw new Error('No access token');
-      const response = await fetch(`${API_URL}/sandboxes/${sandboxId}/files/json`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          path: selectedFilePath,
-          content: fullHtml,
-        }),
-      });
-      if (!response.ok) throw new Error(await response.text());
-      // Reload the file from disk to update state and preview
-      await openFile({ path: selectedFilePath, name: selectedFilePath.split('/').pop() || '', is_dir: false, size: 0, mod_time: new Date().toISOString() });
-      setLastSaved(Date.now());
-      setIsHtmlEditMode(false);
-      toast.success('HTML file saved');
-    } catch (err) {
-      toast.error('Failed to save HTML file');
-      console.error(err);
-    } finally {
-      setIsLoadingContent(false);
+        const supabase = createClient();
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+            throw new Error("User not authenticated");
+        }
+        
+        // Convert the string content to a Blob to be sent as a file
+        const fileBlob = new Blob([newContent], { type: 'text/plain' });
+        const formData = new FormData();
+        formData.append('path', selectedFilePath);
+        // The third argument to append is the file name
+        formData.append('file', fileBlob, selectedFilePath.split('/').pop() || 'file.txt');
+
+        const response = await fetch(`${API_URL}/sandboxes/${sandboxId}/files`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${session.access_token}`
+            },
+            body: formData
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || "Failed to save file");
+        }
+
+        toast.success("File saved successfully!");
+        
+        // Update local state to reflect the save without a full reload
+        setRawContent(newContent);
+        setTextContentForRenderer(newContent);
+        setLastSaved(Date.now()); // Force re-render of FileRenderer
+
+    } catch (error) {
+        console.error("Failed to save file:", error);
+        toast.error(error instanceof Error ? error.message : "An unknown error occurred");
+        setIsEditing(true); // Re-open editor on failure
     }
   };
 
-  const handleHtmlCancel = () => {
-    setIsHtmlEditMode(false);
+  const handleCancel = () => {
+    setIsEditing(false);
   };
-
-  // Start text edit mode for .txt files
-  const startTextEditMode = async () => {
-    if (!selectedFilePath) return;
-    setIsLoadingContent(true);
-    try {
-      const content = await getSandboxFileContent(sandboxId, selectedFilePath);
-      let text = '';
-      if (typeof content === 'string') {
-        text = content;
-      } else if (content instanceof Blob) {
-        text = await content.text();
-      }
-      setTextEditValue(text);
-      setIsTextEditMode(true);
-    } catch (err) {
-      toast.error('Failed to load latest file content for editing');
-      console.error(err);
-    } finally {
-      setIsLoadingContent(false);
-    }
+  
+  // Utility function to check if file is editable
+  const isEditableFile = (filePath: string | null): boolean => {
+    if (!filePath) return false;
+    const fileType = getFileTypeFromExtension(filePath);
+    return fileType === 'html' || fileType === 'text';
   };
-
-  // Handle text file save
-  const handleTextSave = async () => {
-    if (!selectedFilePath) return;
-    try {
-      setIsLoadingContent(true);
-      // Save to backend
-      const supabase = createClient();
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) throw new Error('No access token');
-      const response = await fetch(`${API_URL}/sandboxes/${sandboxId}/files/json`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          path: selectedFilePath,
-          content: textEditValue,
-        }),
-      });
-      if (!response.ok) throw new Error(await response.text());
-      // Reload the file from disk to update state and preview
-      await openFile({ path: selectedFilePath, name: selectedFilePath.split('/').pop() || '', is_dir: false, size: 0, mod_time: new Date().toISOString() });
-      setTextContentForRenderer(textEditValue); // Ensure preview updates immediately
-      setLastSaved(Date.now());
-      setIsTextEditMode(false);
-      toast.success('Text file saved');
-    } catch (err) {
-      toast.error('Failed to save text file');
-      console.error(err);
-    } finally {
-      setIsLoadingContent(false);
-    }
-  };
-
-  const handleTextCancel = () => {
-    setIsTextEditMode(false);
-  };
-
-  // Add helper function at the top (after imports)
-  function extractBodyContent(html: string): string {
-    const match = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
-    return match ? match[1] : html;
-  }
-  function wrapWithHtmlDoc(bodyContent: string): string {
-    return `<!DOCTYPE html>\n<html>\n  <head>\n    <meta charset=\"utf-8\" />\n    <title>Document</title>\n  </head>\n  <body>\n    ${bodyContent}\n  </body>\n</html>`;
-  }
 
   // --- useEffect Hooks --- //
 
@@ -898,40 +828,17 @@ export function FileViewerModal({
                   <span className="hidden sm:inline">{t('fileViewer.download', 'Download')}</span>
                 </Button>
                 
-                {/* Replace the Export as PDF button with a dropdown */}
-                {isMarkdownFile(selectedFilePath) && (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={isExportingPdf || isLoadingContent || contentError !== null}
-                        className="h-8 gap-1"
-                      >
-                        {isExportingPdf ? (
-                          <Loader className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <FileText className="h-4 w-4" />
-                        )}
-                        <span className="hidden sm:inline">{t('fileViewer.exportPdf', 'Export as PDF')}</span>
-                        <ChevronDown className="h-3 w-3 ml-1" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem 
-                        onClick={() => handleExportPdf('portrait')}
-                        className="flex items-center gap-2 cursor-pointer"
-                      >
-                        <span className="rotate-90">⬌</span> {t('fileViewer.portrait', 'Portrait')}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem 
-                        onClick={() => handleExportPdf('landscape')}
-                        className="flex items-center gap-2 cursor-pointer"
-                      >
-                        <span>⬌</span> {t('fileViewer.landscape', 'Landscape')}
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                {isEditableFile(selectedFilePath) && !isEditing && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleEdit}
+                    disabled={isLoadingContent || contentError !== null}
+                    className="h-8 gap-1"
+                  >
+                    <Pencil className="h-4 w-4" />
+                    <span className="hidden sm:inline">{t('fileViewer.edit')}</span>
+                  </Button>
                 )}
               </>
             )}
@@ -999,7 +906,7 @@ export function FileViewerModal({
                 </div>
               </div>
             ) : (
-              <div className={isHtmlEditMode ? "h-full w-full" : "h-full w-full overflow-auto"}>
+              <div className={isEditing ? "h-full w-full" : "h-full w-full overflow-auto"}>
                 {isLoadingContent ? (
                   <div className="h-full w-full flex flex-col items-center justify-center">
                     <Loader className="h-8 w-8 animate-spin text-primary mb-3" />
@@ -1038,79 +945,14 @@ export function FileViewerModal({
                       </div>
                     </div>
                   </div>
-                ) : isHtmlFile ? (
-                  <div className="relative h-full w-full">
-                    {!isHtmlEditMode ? (
-                      <FileRenderer
-                        key={selectedFilePath + '-' + lastSaved}
-                        content={textContentForRenderer}
-                        binaryUrl={blobUrlForRenderer}
-                        fileName={selectedFilePath}
-                        className="h-full w-full"
-                        project={projectWithSandbox}
-                        onEdit={isHtmlFile ? () => { startHtmlEditMode(); } : undefined}
-                      />
-                    ) : (
-                      <EditableHtml
-                        html={htmlEditBody}
-                        onSave={handleHtmlSave}
-                        onCancel={handleHtmlCancel}
-                      />
-                    )}
-                  </div>
-                ) : isTextFile ? (
-                  <div className="relative h-full w-full">
-                    {!isTextEditMode ? (
-                      <>
-                        <div className="absolute left-2 top-2 z-10 flex items-center gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-foreground hover:text-foreground flex items-center gap-2 bg-background/80 backdrop-blur-sm hover:bg-background/90"
-                            onClick={startTextEditMode}
-                          >
-                            <Pencil className="h-4 w-4" />
-                            Edit
-                          </Button>
-                        </div>
-                        <FileRenderer
-                          key={selectedFilePath + '-' + lastSaved}
-                          content={textContentForRenderer}
-                          binaryUrl={blobUrlForRenderer}
-                          fileName={selectedFilePath}
-                          className="h-full w-full"
-                          project={projectWithSandbox}
-                        />
-                      </>
-                    ) : (
-                      <div className="flex flex-col h-full w-full">
-                        <textarea
-                          className="flex-1 w-full border rounded p-4 font-mono text-sm bg-white dark:bg-black"
-                          value={textEditValue}
-                          onChange={e => setTextEditValue(e.target.value)}
-                          style={{ minHeight: 200, resize: 'vertical' }}
-                          spellCheck={false}
-                          autoFocus
-                        />
-                        <div className="flex gap-2 justify-end mt-2">
-                          <button
-                            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded"
-                            onClick={handleTextSave}
-                            disabled={isLoadingContent}
-                          >
-                            Save
-                          </button>
-                          <button
-                            className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold px-4 py-2 rounded"
-                            onClick={handleTextCancel}
-                            disabled={isLoadingContent}
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                ) : isEditing ? (
+                  <InlineContentEditor
+                    html={textContentForRenderer}
+                    onSave={handleSave}
+                    onCancel={handleCancel}
+                    project={projectWithSandbox}
+                    fileName={selectedFilePath}
+                  />
                 ) : (
                   <div className="h-full w-full relative">
                     <FileRenderer
@@ -1121,6 +963,7 @@ export function FileViewerModal({
                       className="h-full w-full"
                       project={projectWithSandbox}
                       markdownRef={isMarkdownFile(selectedFilePath) ? markdownRef : undefined}
+                      cacheBuster={lastSaved}
                     />
                   </div>
                 )}
