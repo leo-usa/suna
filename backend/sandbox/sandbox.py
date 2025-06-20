@@ -42,32 +42,33 @@ async def get_or_start_sandbox(sandbox_id: str):
     logger.info(f"Getting or starting sandbox with ID: {sandbox_id}")
     try:
         sandbox = daytona.get_current_sandbox(sandbox_id)
+
         # Check if sandbox needs to be started
-        if sandbox.instance.state == "archived" or sandbox.instance.state == "stopped":
+        if sandbox.instance.state in ["archived", "stopped"]:
             logger.info(f"Sandbox is in {sandbox.instance.state} state. Starting...")
             try:
                 daytona.start(sandbox)
                 # Wait for the sandbox to be running and healthy
-                for attempt in range(10):
+                max_attempts = 45  # 45 attempts * 2s = 90s total wait time
+                for attempt in range(max_attempts):
                     time.sleep(2)
                     sandbox = daytona.get_current_sandbox(sandbox_id)
                     logger.info(f"[SANDBOX WAIT] Attempt {attempt+1}: state={sandbox.instance.state}")
-                    if sandbox.instance.state == "running":
-                        # Try a basic health check: can we create a session and run a command?
+                    if sandbox.instance.state == "started":
+                        # Try a basic health check: can we create a session?
                         try:
-                            session_id = f"healthcheck-session-{attempt}"
+                            session_id = f"healthcheck-session-{int(time.time())}"
                             sandbox.process.create_session(session_id)
                             logger.info(f"[SANDBOX WAIT] Health check session {session_id} created successfully.")
-                            # Try to execute a simple command
-                            result = sandbox.process.execute_session_command(session_id, SessionExecuteRequest(command="ls /workspace", var_async=False))
-                            logger.info(f"[SANDBOX WAIT] Health check command result: {result}")
+                            sandbox.process.delete_session(session_id)
+                            logger.info(f"[SANDBOX WAIT] Health check session {session_id} deleted.")
                             break
                         except Exception as e:
-                            logger.info(f"[SANDBOX WAIT] Health check failed: {e}")
-                    if attempt == 9:
+                            logger.info(f"[SANDBOX WAIT] Health check failed: {e}. Retrying...")
+                    
+                    if attempt == max_attempts - 1:
                         raise Exception("Sandbox did not become ready in time")
-                # Refresh sandbox state after starting
-                sandbox = daytona.get_current_sandbox(sandbox_id)
+
                 # Start supervisord in a session when restarting
                 start_supervisord_session(sandbox)
             except Exception as e:
@@ -77,7 +78,7 @@ async def get_or_start_sandbox(sandbox_id: str):
         logger.info(f"Sandbox {sandbox_id} is ready. Updating last_used_ts label.")
         try:
             # Update the last used timestamp on the sandbox labels for LRU policy
-            labels = sandbox.labels or {}
+            labels = sandbox.instance.labels or {}
             labels['last_used_ts'] = str(time.time())
             sandbox.set_labels(labels)
             logger.info(f"Successfully updated labels for sandbox {sandbox_id}")
