@@ -38,7 +38,7 @@ daytona = Daytona(daytona_config)
 logger.debug("Daytona client initialized")
 
 async def get_or_start_sandbox(sandbox_id: str):
-    """Retrieve a sandbox by ID, check its state, and start it if needed. Wait for true readiness."""
+    """Retrieve a sandbox by ID, check its state, start it if needed, and update its last_used label."""
     logger.info(f"Getting or starting sandbox with ID: {sandbox_id}")
     try:
         sandbox = daytona.get_current_sandbox(sandbox_id)
@@ -73,37 +73,64 @@ async def get_or_start_sandbox(sandbox_id: str):
             except Exception as e:
                 logger.error(f"Error starting sandbox: {e}")
                 raise e
-        logger.info(f"Sandbox {sandbox_id} is ready")
+        
+        logger.info(f"Sandbox {sandbox_id} is ready. Updating last_used_ts label.")
+        try:
+            # Update the last used timestamp on the sandbox labels for LRU policy
+            labels = sandbox.labels or {}
+            labels['last_used_ts'] = str(time.time())
+            sandbox.set_labels(labels)
+            logger.info(f"Successfully updated labels for sandbox {sandbox_id}")
+        except Exception as e:
+            logger.error(f"Could not update labels for sandbox {sandbox_id}: {e}")
+
         return sandbox
     except Exception as e:
         logger.error(f"Error retrieving or starting sandbox: {str(e)}")
         raise e
 
-def start_supervisord_session(sandbox: Sandbox):
-    """Start supervisord in a session."""
+def start_supervisord_session(sandbox):
+    """Start supervisord in a dedicated session to ensure it's always running."""
     session_id = "supervisord-session"
+    logger.info(f"Creating session {session_id} for supervisord")
     try:
-        logger.info(f"Creating session {session_id} for supervisord")
         sandbox.process.create_session(session_id)
-        
-        # Execute supervisord command
-        sandbox.process.execute_session_command(session_id, SessionExecuteRequest(
-            command="exec /usr/bin/supervisord -n -c /etc/supervisor/conf.d/supervisord.conf",
-            var_async=True
-        ))
-        logger.info(f"Supervisord started in session {session_id}")
     except Exception as e:
-        logger.error(f"Error starting supervisord session: {str(e)}")
-        raise e
+        if "already exists" in str(e):
+            logger.debug(f"Session {session_id} already exists, proceeding.")
+        else:
+            raise e
+    
+    # Start supervisord if not already running
+    sandbox.process.execute_session_command(
+        session_id,
+        SessionExecuteRequest(command="supervisord -c /etc/supervisor/supervisord.conf", var_async=True)
+    )
+    logger.debug(f"Supervisord started in session {session_id}")
 
-def create_sandbox(password: str, project_id: str = None):
+async def create_sandbox(password: str, project_id: str = None):
     """Create a new sandbox with all required services configured and running. Handles VM limit with LRU deletion."""
     logger.debug("Creating new Daytona sandbox environment")
-    logger.debug("Configuring sandbox with browser-use image and environment variables")
-    labels = None
+
+    # Sort by the last_used_ts label. Sandboxes without the label are treated as the oldest.
+    def get_sort_key(s):
+        if hasattr(s, 'labels') and s.labels and s.labels.get('last_used_ts'):
+            try:
+                return float(s.labels.get('last_used_ts'))
+            except (ValueError, TypeError):
+                # Label is malformed, treat as very old.
+                return 0
+        # No label, treat as very old to prioritize for deletion.
+        return 0
+
+    labels = {}
     if project_id:
-        logger.debug(f"Using sandbox_id as label: {project_id}")
-        labels = {'id': project_id}
+        logger.debug(f"Using project_id as label: {project_id}")
+        labels['id'] = project_id
+    
+    # Add a last_used timestamp as a label for our LRU policy.
+    labels['last_used_ts'] = str(time.time())
+
     params = CreateSandboxParams(
         image="adamcohenhillel/kortix-suna:0.0.20",
         public=True,
@@ -131,38 +158,31 @@ def create_sandbox(password: str, project_id: str = None):
         sandboxes = daytona.list()
         logger.info(f"Found {len(sandboxes)} existing sandboxes.")
 
-        if len(sandboxes) > 10:
-            logger.warning("Sandbox limit reached. Attempting to delete oldest non-active sandbox.")
+        while len(sandboxes) >= 100:
+            logger.warning(f"Sandbox limit (100) reached. Current count: {len(sandboxes)}. Attempting to delete oldest non-active sandbox.")
             
-            # Filter for non-active sandboxes
+            # Filter for non-active sandboxes from the current list
             non_active = [s for s in sandboxes if getattr(s.instance, 'state', None) in ["archived", "stopped"]]
             
             if not non_active:
-                logger.error("All sandboxes are active. Cannot create new sandbox.")
+                logger.error("All sandboxes are active, but limit is reached. Cannot create new sandbox.")
                 raise RuntimeError("All agents are busy. Please wait for a slot to become available.")
 
             # Log all candidates for deletion
             for s in non_active:
-                logger.info(f"Non-active sandbox: id={getattr(s, 'id', s)}, created_at={getattr(s, 'created_at', getattr(s, 'instance', None) and getattr(s.instance, 'created_at', 'N/A'))} (raw: {getattr(s, 'created_at', None)}, instance.created_at: {getattr(s, 'instance', None) and getattr(s.instance, 'created_at', None)})")
-            
-            # Sort by last_used, then created_at, then fallback to 0
-            def get_sort_key(s):
-                return getattr(s, 'last_used', None) or getattr(s, 'created_at', getattr(s, 'instance', None) and getattr(s.instance, 'created_at', 0) or 0)
+                last_used = s.labels.get('last_used_ts', 'N/A') if hasattr(s, 'labels') and s.labels else 'N/A'
+                logger.info(f"Non-active sandbox: id={getattr(s, 'id', 'N/A')}, last_used_ts={last_used}")
             
             non_active.sort(key=get_sort_key)
             oldest = non_active[0]
             
-            if isinstance(oldest, str):
-                logger.info(f"[TEMP] Would delete sandbox object for ID: {oldest}")
-                sandbox_obj = daytona.get_current_sandbox(oldest)
-                logger.info(f"Deleting oldest non-active sandbox: {oldest}")
-                daytona.delete(sandbox_obj)
-            else:
-                logger.info(f"[TEMP] Would delete oldest non-active sandbox: {oldest.id}")
-                daytona.delete(oldest)
+            logger.info(f"Deleting oldest non-active sandbox based on LRU label: {getattr(oldest, 'id', 'N/A')}")
+            oldest.delete()
             
-            # Wait for Daytona to free up the slot
+            # Wait for Daytona to free up the slot and then re-fetch the list
             time.sleep(3)
+            sandboxes = daytona.list()
+            logger.info(f"Re-checked sandbox count. Found {len(sandboxes)} sandboxes.")
 
         # Create the new sandbox
         sandbox = daytona.create(params)
