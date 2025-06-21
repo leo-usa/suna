@@ -1173,12 +1173,28 @@ async def share_to_community(
 ):
     """Share all workspace files to the community gallery."""
     client = await db.client
-    user = await client.table('users').select('name').eq('id', user_id).maybe_single().execute()
-    if not user or not getattr(user, "data", None):
-        await client.table('users').insert({'id': user_id, 'name': 'Anonymous'}).execute()
+    
+    user_name = None
+    try:
+        # This requires an authenticated client (service role) to access auth.users
+        supabase_admin = await db.admin_client
+        auth_user_res = await supabase_admin.auth.admin.get_user_by_id(user_id)
+        
+        # Try to get name from raw_user_meta_data (for OAuth and new signups)
+        meta_data = auth_user_res.user.user_metadata
+        user_name = meta_data.get('name') or meta_data.get('full_name')
+
+        # If still no name, fallback to email
+        if not user_name:
+            user_email = auth_user_res.user.email
+            user_name = user_email.split('@')[0] if user_email else 'Anonymous'
+        
+        logger.info(f"Using user name: '{user_name}'")
+
+    except Exception as e:
+        logger.error(f"Could not retrieve user details from auth: {e}")
         user_name = 'Anonymous'
-    else:
-        user_name = user.data['name']
+
     import uuid, datetime
     post_id = str(uuid.uuid4())
     html_path = f"community/{post_id}/index.html"
