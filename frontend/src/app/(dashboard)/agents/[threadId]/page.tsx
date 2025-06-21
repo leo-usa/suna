@@ -1116,6 +1116,15 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
   const handleCommunityShare = async () => {
     console.log("Community share clicked");
     if (communityLoading || communityResult) return;
+
+    // Open a new tab immediately. It might be blocked by a popup blocker.
+    const newTab = window.open('', '_blank');
+    if (!newTab) {
+      toast.error(t('communityShare.popupBlocked', "Could not open new tab. Please allow pop-ups for this site."));
+      return;
+    }
+    newTab.document.write(t('communityShare.generating', "Generating share link, please wait..."));
+
     setCommunityLoading(true);
     toast.info(t('communityShare.sharing', '正在分享...'));
     try {
@@ -1136,7 +1145,7 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
       // 1. List files in the sandbox and check for any .html file
       let files = await listSandboxFiles(sandboxId, '/');
       let htmlFile = files.find(f => !f.is_dir && f.name.toLowerCase().endsWith('.html'));
-      let htmlPath = htmlFile ? htmlFile.path : '/index.html';
+
       if (!htmlFile) {
         // 2. If no HTML file exists, generate and upload summary HTML as /index.html
         const fileList = files.filter(f => !f.is_dir);
@@ -1146,10 +1155,11 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
         try {
           await createSandboxFile(sandboxId, '/index.html', htmlContent);
           toast.info('index.html uploaded, checking workspace...');
-        } catch (uploadErr) {
+        } catch (uploadErr: any) {
           console.error('Failed to upload index.html:', uploadErr);
           toast.error('Failed to upload index.html: ' + (uploadErr?.message || uploadErr));
           setCommunityLoading(false);
+          newTab.close(); // Close the tab on error
           return;
         }
         // 3. List files again and confirm /index.html exists
@@ -1158,31 +1168,42 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
         if (!htmlFile) {
           toast.error('index.html was not created in the workspace!');
           setCommunityLoading(false);
+          newTab.close(); // Close the tab on error
           return;
         }
         toast.success('index.html confirmed in workspace. Proceeding to share.');
       }
+      
       // 4. Now call shareReport to get the public URL and content
       let htmlUrl = undefined;
       let htmlContent = '';
       try {
         const data = await shareReport(project?.id);
-        htmlUrl = data.shared[0]?.html;
+        const sharedHtml = data.shared.find(s => s.html.endsWith('.html'));
+        htmlUrl = sharedHtml?.html;
         if (htmlUrl) {
           htmlContent = await fetch(htmlUrl).then(r => r.text());
         } else {
-          throw new Error('shareReport did not return an HTML URL');
+          // If no specific html, check for a generic file to get content from
+          const firstFile = data.shared[0];
+          if(firstFile) {
+            htmlContent = await fetch(firstFile.html).then(r => r.text());
+          } else {
+            throw new Error('shareReport did not return any file URL');
+          }
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('shareReport failed:', err);
         toast.error('Failed to share report: ' + (err?.message || err));
         setCommunityLoading(false);
+        newTab.close(); // Close the tab on error
         return;
       }
+
       // 5. Call /community/share as before
       const supabase = createClient();
       const { data: { session } } = await supabase.auth.getSession();
-      const headers = { 'Content-Type': 'application/json' };
+      const headers: { [key: string]: string } = { 'Content-Type': 'application/json' };
       if (session?.access_token) {
         headers['Authorization'] = `Bearer ${session.access_token}`;
       }
@@ -1195,10 +1216,24 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
           html_content: htmlContent,
         }),
       });
+      if (!resp.ok) {
+        const errorData = await resp.json();
+        throw new Error(errorData.detail || 'Failed to share to community');
+      }
       const result = await resp.json();
       setCommunityResult({ url: result.html_url });
+      
+      // Navigate the new tab to the final URL
+      const finalUrl = `/community/view/${result.post_id}`;
+      if (newTab) {
+        newTab.location.href = finalUrl;
+      }
+
       toast.success(t('communityShare.shared', '已分享到社区！'));
     } catch (e: any) {
+      if (newTab) {
+        newTab.close(); // Also close on final catch
+      }
       toast.error(e?.message || 'Failed to share to community');
     } finally {
       setCommunityLoading(false);
@@ -1206,6 +1241,7 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
   };
 
   async function checkSandboxExists(sandboxId: string): Promise<boolean> {
+    if (!sandboxId) return false;
     console.log('[PAGE] Checking sandbox existence for:', sandboxId);
     try {
       setSandboxCheckInProgress(true);

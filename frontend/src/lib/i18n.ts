@@ -529,7 +529,9 @@ const zhTranslation = {
   communityShare: {
     sharing: '正在分享...',
     shared: '已分享到社区！',
-    tooltip: '推荐使用社区分享\n将你的作品分享给Dobby社区！'
+    tooltip: '推荐使用社区分享\n将你的作品分享给Dobby社区！',
+    popupBlocked: '无法打开新标签页，请允许弹出窗口。',
+    generating: '正在生成分享链接...'
   },
   communityPost: {
     copyLink: '复制链接',
@@ -735,7 +737,9 @@ const resources = {
       communityShare: {
         sharing: 'Sharing...',
         shared: 'Shared to community!',
-        tooltip: 'Share to Community (recommended)\nShare your work with the Dobby community!'
+        tooltip: 'Share to Community (recommended)\nShare your work with the Dobby community!',
+        popupBlocked: 'Could not open new tab. Please allow pop-ups for this site.',
+        generating: 'Generating share link, please wait...'
       },
       communityPost: {
         copyLink: 'Copy link',
