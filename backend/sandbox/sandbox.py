@@ -4,6 +4,7 @@ import time
 
 from daytona_sdk import Daytona, DaytonaConfig, CreateSandboxParams, Sandbox, SessionExecuteRequest
 from dotenv import load_dotenv
+import daytona_sdk.sandbox
 
 from agentpress.tool import Tool
 from utils.logger import logger
@@ -11,6 +12,11 @@ from utils.config import config
 from utils.files_utils import clean_path
 
 load_dotenv()
+
+# Monkey patch: Make 'image' field default if missing (Pydantic v2 compatible)
+if hasattr(daytona_sdk.sandbox, "SandboxInfo"):
+    daytona_sdk.sandbox.SandboxInfo.model_fields["image"].default = "adamcohenhillel/kortix-suna:0.0.20"
+    daytona_sdk.sandbox.SandboxInfo.model_fields["image"].default_factory = None
 
 logger.debug("Initializing Daytona sandbox configuration")
 daytona_config = DaytonaConfig(
@@ -157,6 +163,12 @@ async def create_sandbox(password: str, project_id: str = None):
     )
     try:
         sandboxes = daytona.list()
+        logger.info(f"[SANDBOX DEBUG] Raw Daytona response: {sandboxes}")
+        # Patch: Ensure all sandboxes have a valid image field
+        for s in sandboxes:
+            if not getattr(s.instance, 'image', None):
+                logger.warning(f"[SANDBOX PATCH] Sandbox {getattr(s, 'id', 'N/A')} missing image field, setting to default.")
+                setattr(s.instance, 'image', 'adamcohenhillel/kortix-suna:0.0.20')
         logger.info(f"Found {len(sandboxes)} existing sandboxes.")
 
         while len(sandboxes) >= 100:
@@ -187,6 +199,10 @@ async def create_sandbox(password: str, project_id: str = None):
 
         # Create the new sandbox
         sandbox = daytona.create(params)
+        # Patch: Ensure sandbox.instance.image is a valid string
+        if not getattr(sandbox.instance, 'image', None):
+            logger.warning(f"[SANDBOX PATCH] Sandbox {sandbox.id} missing image field, setting to default.")
+            setattr(sandbox.instance, 'image', params.image)
 
     except Exception as e:
         logger.error(f"An unexpected error occurred during sandbox creation: {str(e)}")
