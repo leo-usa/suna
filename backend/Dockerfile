@@ -21,6 +21,7 @@ RUN useradd -m -u 1000 appuser && \
 
 # Install Python dependencies
 COPY --chown=appuser:appuser requirements.txt .
+RUN apt-get update && apt-get install -y git
 RUN pip install --no-cache-dir -r requirements.txt gunicorn
 
 # Switch to non-root user
