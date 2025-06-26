@@ -108,8 +108,8 @@ const zhTranslation = {
   },
   nav: {
     Home: '首页',
-    'Use Cases': '应用场景',
-    'Open Source': '开源',
+    UseCases: '应用场景',
+    OpenSource: '开源',
     Pricing: '价格',
     Dashboard: '控制台',
     Community: '社区',
