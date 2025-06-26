@@ -75,13 +75,37 @@ export default function CommunityPostEmbedPage() {
       />
       {/* Floating Attribution Bar */}
       <a
-        href="/"
+        href="https://dobby.now"
         target="_blank"
         rel="noopener noreferrer"
-        className="fixed bottom-4 right-4 z-50 bg-white/90 border border-gray-200 rounded-full px-4 py-2 shadow flex items-center gap-2 text-xs text-gray-700 hover:bg-gray-100 transition"
-        style={{ pointerEvents: 'auto' }}
+        className="fixed bottom-4 right-4 z-50 border border-primary rounded-xl px-3 py-2 shadow-md flex flex-col items-center gap-0.5 text-xs font-bold hover:bg-primary hover:text-white transition-all duration-500 max-w-xs w-48 backdrop-blur-sm dobby-bounce dobby-color"
+        style={{ pointerEvents: 'auto', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}
       >
-        <span role="img" aria-label="robot">🤖</span> {t('communityPost.attribution', '由Dobby生成')}
+        <span className="text-xl mb-0.5" role="img" aria-label="robot">🤖</span>
+        <span className="text-center leading-tight">本研究报告由Robby智能体做研究和生成</span>
+        <span className="text-center leading-tight">Dobby，你的AI打工狗</span>
+        <span className="text-center leading-tight">帮你做研究，写报告，建网站，做PPT</span>
+        <span className="text-center leading-tight underline">点我到Dobby主页</span>
+        <span className="text-center text-[10px] font-normal mt-0.5">网址：https://dobby.now</span>
+        <style jsx>{`
+          .dobby-bounce {
+            animation: dobby-bounce-keyframes 3.5s cubic-bezier(0.4,0,0.6,1) infinite;
+          }
+          @keyframes dobby-bounce-keyframes {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+          }
+          .dobby-color {
+            animation: dobby-color-keyframes 10s linear infinite;
+          }
+          @keyframes dobby-color-keyframes {
+            0% { background-color: rgba(255,255,255,0.7); color: #2563eb; }
+            25% { background-color: rgba(236, 254, 255, 0.7); color: #f59e42; }
+            50% { background-color: rgba(255,255,255,0.7); color: #10b981; }
+            75% { background-color: rgba(236, 254, 255, 0.7); color: #2563eb; }
+            100% { background-color: rgba(255,255,255,0.7); color: #2563eb; }
+          }
+        `}</style>
       </a>
     </div>
   );
