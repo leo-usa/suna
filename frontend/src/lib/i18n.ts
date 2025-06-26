@@ -112,6 +112,7 @@ const zhTranslation = {
     'Open Source': '开源',
     Pricing: '价格',
     Dashboard: '控制台',
+    Community: '社区',
   },
   pricing: {
     title: '选择适合你的方案',
@@ -769,6 +770,14 @@ const resources = {
       },
       common: {
         close: 'Close',
+      },
+      nav: {
+        Home: 'Home',
+        UseCases: 'Use Cases',
+        OpenSource: 'Open Source',
+        Pricing: 'Pricing',
+        Dashboard: 'Dashboard',
+        Community: 'Community',
       },
     }
   },
