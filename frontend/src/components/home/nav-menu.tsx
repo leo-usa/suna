@@ -129,7 +129,7 @@ export function NavMenu() {
             } tracking-tight`}
           >
             <a href={item.href} onClick={(e) => handleClick(e, item)}>
-              {t(`nav.${item.name}`, item.name)}
+              {t(`nav.${item.name.replace(/\s/g, '')}`, item.name)}
             </a>
           </li>
         ))}
