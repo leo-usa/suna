@@ -7,6 +7,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/components/AuthProvider';
+import { createCreditSession } from '@/lib/api';
 
 // Price mapping for display and Stripe price IDs (copy from AccountBillingStatus)
 const CREDIT_PRICE_IDS: Record<number, string> = {
@@ -67,7 +68,7 @@ export default function HomeBillingTabs() {
         else if (locale.startsWith('es')) locale = 'es';
         else locale = 'en';
       }
-      const res = await window.createCreditSession?.({
+      const res = await createCreditSession({
         price_id,
         payment_method: paymentMethod,
         success_url,
