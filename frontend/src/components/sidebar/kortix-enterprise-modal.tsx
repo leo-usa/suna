@@ -45,7 +45,7 @@ export function KortixProcessModal() {
             <div className="relative z-10 flex flex-col h-full">
               <div className="mb-8 mt-0 flex-shrink-0">
                 <Image 
-                  src={isDarkMode ? "/drpang-logo-white.svg" : "/drpang-logo.svg"} 
+                  src={isDarkMode ? "/dobby-logo-white.svg" : "/dobby-logo.svg"} 
                   alt="DrPang.AI Logo" 
                   width={60} 
                   height={21} 

@@ -21,8 +21,8 @@ export function FooterSection() {
     setMounted(true);
   }, []);
 
-  const logoSrc = !mounted ? "/drpang-logo.svg" : 
-    (resolvedTheme === "dark" ? "/drpang-logo-white.svg" : "/drpang-logo.svg");
+  const logoSrc = !mounted ? "/dobby-logo.svg" : 
+    (resolvedTheme === "dark" ? "/dobby-logo-white.svg" : "/dobby-logo.svg");
 
   return (
     <footer id="footer" className="w-full pb-0">

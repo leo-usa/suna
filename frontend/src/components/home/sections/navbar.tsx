@@ -150,8 +150,8 @@ export function Navbar() {
   const toggleDrawer = () => setIsDrawerOpen((prev) => !prev);
   const handleOverlayClick = () => setIsDrawerOpen(false);
 
-  const logoSrc = !mounted ? "/drpang-logo.svg" : 
-    (resolvedTheme === "dark" ? "/drpang-logo-white.svg" : "/drpang-logo.svg");
+  const logoSrc = !mounted ? "/dobby-logo.svg" :
+    (resolvedTheme === "dark" ? "/dobby-logo-white.svg" : "/dobby-logo.svg");
 
   return (
     <header
@@ -257,7 +257,7 @@ export function Navbar() {
                 <div className="flex items-center justify-between">
                   <Link href="/" className="flex items-center gap-3">
                     <Image 
-                      src={logoSrc.replace('drpang-logo', 'drpang-logo')} 
+                      src={logoSrc.replace('dobby-logo', 'dobby-logo')} 
                       alt="DrPang.AI Logo" 
                       width={120} 
                       height={22} 
