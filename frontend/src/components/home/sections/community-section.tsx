@@ -44,7 +44,7 @@ export default function CommunitySection() {
   };
 
   return (
-    <section className="w-full py-16 bg-muted/50">
+    <section id="community" className="w-full py-16 bg-muted/50">
       <div className="max-w-6xl mx-auto px-4">
         <h2 className="text-3xl font-bold mb-8 text-center">{t('community.gallery', 'Community Gallery')}</h2>
         {loading ? (
