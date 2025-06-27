@@ -361,7 +361,7 @@ function LoginContent() {
               </Link>
               
               <h1 className="text-3xl md:text-4xl lg:text-5xl font-medium tracking-tighter text-center text-balance text-primary">
-                {isSignUp ? t('auth.joinSuna', 'Join Suna') : t('auth.welcomeBack', 'Welcome back')}
+                {isSignUp ? t('auth.joinSuna', 'Join Dobby') : t('auth.welcomeBack', 'Welcome back')}
               </h1>
               <p className="text-base md:text-lg text-center text-muted-foreground font-medium text-balance leading-relaxed tracking-tight max-w-md mb-2">
                 {isSignUp ? t('auth.createAccountAndStart', 'Create your account and start building with AI') : t('auth.signInToContinue', 'Sign in to your account to continue')}

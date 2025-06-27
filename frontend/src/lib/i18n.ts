@@ -614,7 +614,7 @@ const resources = {
         subtext: 'No credit card required.'
       },
       footer: {
-        description: 'Dobby is your open source AI employee. Built by DrPang.AI.',
+        description: 'Dobby is your AI employee. Provided by DrPang.AI.',
         links: {
           Product: 'Product',
           Pricing: 'Pricing',

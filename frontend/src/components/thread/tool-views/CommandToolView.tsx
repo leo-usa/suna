@@ -42,7 +42,7 @@ export function CommandToolView({
 
   // Clean the command by removing any leading/trailing whitespace and newlines
   const command = rawCommand
-    ?.replace(/^suna@computer:~\$\s*/g, '') // Remove prompt prefix
+    ?.replace(/^Dobby@computer:~\$\s*/g, '') // Remove prompt prefix
     ?.replace(/\\n/g, '') // Remove escaped newlines
     ?.replace(/\n/g, '') // Remove actual newlines
     ?.trim(); // Clean up any remaining whitespace
@@ -122,7 +122,7 @@ export function CommandToolView({
               {command && output && !isStreaming && (
                 <div className="space-y-2">
                   <div className="flex items-start">
-                    <span className="text-emerald-400 shrink-0 mr-2">suna@computer:~$</span>
+                    <span className="text-emerald-400 shrink-0 mr-2">dobby@computer:~$</span>
                     <span className="text-zinc-300">{command}</span>
                   </div>
                   
@@ -130,14 +130,14 @@ export function CommandToolView({
                     {output}
                   </div>
                   
-                  {isSuccess && <div className="text-emerald-400 mt-1">suna@computer:~$ _</div>}
+                  {isSuccess && <div className="text-emerald-400 mt-1">dobby@computer:~$ _</div>}
                 </div>
               )}
               
               {command && !output && !isStreaming && (
                 <div className="space-y-2">
                   <div className="flex items-start">
-                    <span className="text-emerald-400 shrink-0 mr-2">suna@computer:~$</span>
+                    <span className="text-emerald-400 shrink-0 mr-2">dobby@computer:~$</span>
                     <span className="text-zinc-300">{command}</span>
                   </div>
                   <div className="flex items-center h-4">
@@ -148,7 +148,7 @@ export function CommandToolView({
               
               {!command && !output && !isStreaming && (
                 <div className="flex items-start">
-                  <span className="text-emerald-400 shrink-0 mr-2">suna@computer:~$</span>
+                  <span className="text-emerald-400 shrink-0 mr-2">dobby@computer:~$</span>
                   <span className="w-2 h-4 bg-zinc-500 animate-pulse"></span>
                 </div>
               )}
@@ -156,7 +156,7 @@ export function CommandToolView({
               {isStreaming && (
                 <div className="space-y-2">
                   <div className="flex items-start">
-                    <span className="text-emerald-400 shrink-0 mr-2">suna@computer:~$</span>
+                    <span className="text-emerald-400 shrink-0 mr-2">dobby@computer:~$</span>
                     <span className="text-zinc-300">{command || t('command.running', 'running command...')}</span>
                   </div>
                   <div className="flex items-center gap-2 text-zinc-400">
