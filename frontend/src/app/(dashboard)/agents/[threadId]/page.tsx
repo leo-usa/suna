@@ -970,18 +970,18 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
   useEffect(() => {
     if (projectName) {
       // Update document title when project name changes
-      document.title = `${projectName} | Kortix Suna`;
+      document.title = `${projectName} | Dobby`;
       
       // Update meta tags for SEO
       const metaDescription = document.querySelector('meta[name="description"]');
       if (metaDescription) {
-        metaDescription.setAttribute('content', `${projectName} - Interactive agent conversation powered by Kortix Suna`);
+        metaDescription.setAttribute('content', `${projectName} - Interactive agent conversation powered by Dobby`);
       }
       
       // Update OpenGraph tags if they exist
       const ogTitle = document.querySelector('meta[property="og:title"]');
       if (ogTitle) {
-        ogTitle.setAttribute('content', `${projectName} | Kortix Suna`);
+        ogTitle.setAttribute('content', `${projectName} | Dobby`);
       }
       
       const ogDescription = document.querySelector('meta[property="og:description"]');
@@ -1653,7 +1653,7 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
                         <div key={group.key} ref={groupIndex === groupedMessages.length - 1 ? latestMessageRef : null}>
                           <div className="flex items-start gap-3">
                             <div className="flex-shrink-0 w-5 h-5 mt-2 rounded-md flex items-center justify-center overflow-hidden ml-auto mr-2">
-                              <Image src="/dobby-symbol.svg" alt="Kortix" width={14} height={14} className="object-contain invert dark:invert-0 opacity-70" />
+                              <Image src="/dobby-symbol.svg" alt="Dobby" width={14} height={14} className="object-contain invert dark:invert-0 opacity-70" />
                             </div>
                             <div className="flex-1">
                               <div className="inline-flex max-w-[90%] rounded-lg bg-muted/5 px-4 py-3 text-sm">
@@ -1780,7 +1780,7 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
                     <div ref={latestMessageRef}>
                       <div className="flex items-start gap-3">
                         <div className="flex-shrink-0 w-5 h-5 rounded-md flex items-center justify-center overflow-hidden bg-primary/10">
-                          <Image src="/dobby-symbol.svg" alt="Suna" width={14} height={14} className="object-contain"/>
+                          <Image src="/dobby-symbol.svg" alt="Dobby" width={14} height={14} className="object-contain"/>
                         </div>
                         <div className="flex-1 space-y-2">
                           <div className="max-w-[90%] px-4 py-3 text-sm">

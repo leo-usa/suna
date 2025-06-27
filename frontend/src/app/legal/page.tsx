@@ -151,8 +151,8 @@ function LegalContent() {
                     <h3 className="text-lg font-medium tracking-tight">{t('legal.definitions', 'Definitions')}</h3>
                     <ul className="text-muted-foreground space-y-1 mb-6">
                       <li>{t('legal.def.company', '"Company" refers to Kortix AI Corp ...')}</li>
-                      <li>{t('legal.def.site', '"Site" refers to the Suna website ...')}</li>
-                      <li>{t('legal.def.service', '"Service" refers to the Suna website ...')}</li>
+                      <li>{t('legal.def.site', '"Site" refers to the Dobby website ...')}</li>
+                      <li>{t('legal.def.service', '"Service" refers to the Dobby website ...')}</li>
                       <li>{t('legal.def.user', '"User" refers to any individual ...')}</li>
                       <li>{t('legal.def.content', '"Content" refers to any text ...')}</li>
                       <li>{t('legal.def.assets', '"Assets" refers to the results ...')}</li>
@@ -194,9 +194,6 @@ function LegalContent() {
                     <h3 className="text-lg font-medium tracking-tight">{t('legal.userResponsibility', 'User Responsibility for Created Content')}</h3>
                     <p className="text-muted-foreground text-balance mb-6">{t('legal.userResponsibilityText', 'You agree not to create any content ...')}</p>
 
-                    <h3 className="text-lg font-medium tracking-tight">{t('legal.openSource', 'Open Source License')}</h3>
-                    <p className="text-muted-foreground text-balance mb-6">{t('legal.openSourceText', 'Suna is licensed under the Apache License ...')}</p>
-
                     <h3 className="text-lg font-medium tracking-tight">{t('legal.accuracy', 'Accuracy Disclaimer')}</h3>
                     <p className="text-muted-foreground text-balance mb-6">{t('legal.accuracyText', 'The Service is provided for general assistance ...')}</p>
 
@@ -232,7 +229,7 @@ function LegalContent() {
                     <p className="text-muted-foreground text-balance mb-6">{t('legal.modificationText', 'At its sole discretion, the Company may modify or replace any of the Terms of Use, or change, suspend, or discontinue the Service (including without limitation, the availability of any feature, database, or content) at any time by posting a notice on the Site or by sending you an email. The Company may also impose limits on certain features and services or restrict your access to parts or all of the Service without notice or liability. It is your responsibility to check the Terms of Use periodically for changes. Your continued use of the Service following the posting of any changes to the Terms of Use constitutes acceptance of those changes.')}</p>
 
                     <h3 className="text-lg font-medium tracking-tight">{t('legal.trademarks', 'Trademarks and Patents')}</h3>
-                    <p className="text-muted-foreground text-balance mb-6">{t('legal.trademarksText', 'All Suna logos, marks, and designations are trademarks or registered trademarks of the Company. All other trademarks mentioned on this website are the property of their respective owners. The trademarks and logos displayed on this website may not be used without the prior written consent of the Company or their respective owners. Portions, features, and/or functionality of the Company\'s products may be protected under the Company\'s patent applications or patents.')}</p>
+                    <p className="text-muted-foreground text-balance mb-6">{t('legal.trademarksText', 'All Dobby logos, marks, and designations are trademarks or registered trademarks of the Company. All other trademarks mentioned on this website are the property of their respective owners. The trademarks and logos displayed on this website may not be used without the prior written consent of the Company or their respective owners. Portions, features, and/or functionality of the Company\'s products may be protected under the Company\'s patent applications or patents.')}</p>
 
                     <h3 className="text-lg font-medium tracking-tight">{t('legal.licensing', 'Licensing Terms')}</h3>
                     <p className="text-muted-foreground text-balance mb-4">{t('legal.licensingText1', 'Subject to your compliance with this Agreement, the conditions herein, and any limitations applicable to the Company or by law:')}</p>

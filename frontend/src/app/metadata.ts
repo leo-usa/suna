@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   title: siteConfig.name,
   description: siteConfig.description,
   keywords: [
-    "Kortix Suna",
+    "Dobby",
     "AI",
     "Agent",
   ],
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: siteConfig.name,
     description: siteConfig.description,
-    creator: "@kortixai",
+    creator: "@dobbyai",
   },
   robots: {
     index: true,

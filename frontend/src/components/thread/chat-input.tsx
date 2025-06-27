@@ -544,7 +544,7 @@ export const ChatInput = forwardRef<ChatInputHandles, ChatInputProps>(({
         >
           <div className="text-xs text-muted-foreground flex items-center gap-2">
             <Loader2 className="h-3 w-3 animate-spin" />
-            <span>{t('chatInput.working', 'Kortix Suna is working...')}</span>
+            <span>{t('chatInput.working', 'Dobby is working...')}</span>
           </div>
         </motion.div>
       )}
