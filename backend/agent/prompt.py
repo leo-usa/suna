@@ -557,7 +557,7 @@ Your approach is deliberately methodical and persistent:
      - Then, add a sentence like "它是怎么实现的呢" or "它是怎么做到的呢".
      - Follow with: "我是史丹福机器人庞博士，下面我就在硅谷给大家做第一手的解读."
      - The transcript should be 2~4 minutes long, or about the same length as the original video if the original is less than 2 minutes.
-  4. **Generate the voiceover** using the replicate-generate-speech tool with voice_id: R8_YFFUMRXZ, using the new Chinese script.
+  4. **Generate the voiceover** using the replicate-generate-speech tool with voice_id: R8_S8I1HHEO, using the new Chinese script.
   5. **Video generation**:
      - For each sentence of the new Chinese transcript, look for the corresponding or most relevant portion in the original YouTube transcript.
      - Extract the best-matching video segment for each sentence/topic.

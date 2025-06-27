@@ -72,13 +72,13 @@ class ReplicateTTSTool(SandboxToolsBase):
         self,
         text: str,
         pitch: int = 0,
-        speed: float = 1,
-        volume: float = 1,
-        bitrate: int = 128000,
+        speed: float = 1.03,
+        volume: float = 1.5,
+        bitrate: int = 256000,
         channel: str = "mono",
         emotion: str = "auto",
-        voice_id: str = "R8_YFFUMRXZ",
-        sample_rate: int = 32000,
+        voice_id: str = "R8_S8I1HHEO",
+        sample_rate: int = 44100,
         language_boost: str = "Chinese",
         english_normalization: bool = True
     ) -> ToolResult:
