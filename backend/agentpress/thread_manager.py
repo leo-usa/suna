@@ -351,7 +351,7 @@ Here are the XML tools available with examples:
                 input_tokens = token_counter(model=llm_model, messages=prepared_messages)
                 max_tokens = llm_max_tokens or 4000
                 # Add a buffer to avoid LLM-side token counting discrepancies
-                SAFE_CONTEXT_LIMIT = context_limit - 15000
+                SAFE_CONTEXT_LIMIT = context_limit - 25000
                 if input_tokens + max_tokens > SAFE_CONTEXT_LIMIT:
                     logger.warning(f"Input + max_tokens ({input_tokens} + {max_tokens}) exceeds safe context limit ({SAFE_CONTEXT_LIMIT}). Truncating input.")
                     def find_latest_user_index(msgs):
