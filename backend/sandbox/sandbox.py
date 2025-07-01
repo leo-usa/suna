@@ -171,8 +171,8 @@ async def create_sandbox(password: str, project_id: str = None):
                 setattr(s.instance, 'image', 'adamcohenhillel/kortix-suna:0.0.20')
         logger.info(f"Found {len(sandboxes)} existing sandboxes.")
 
-        while len(sandboxes) >= 100:
-            logger.warning(f"Sandbox limit (100) reached. Current count: {len(sandboxes)}. Attempting to delete oldest non-active sandbox.")
+        while len(sandboxes) >= 90:
+            logger.warning(f"Sandbox limit (90) reached. Current count: {len(sandboxes)}. Attempting to delete oldest non-active sandbox.")
             
             # Filter for non-active sandboxes from the current list
             non_active = [s for s in sandboxes if getattr(s.instance, 'state', None) in ["archived", "stopped"]]
