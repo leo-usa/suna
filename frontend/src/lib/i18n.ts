@@ -522,7 +522,7 @@ const zhTranslation = {
     inputPlaceholder: '输入你的消息...'
   },
   community: {
-    gallery: '社区作品',
+    gallery: '社区：Dobby生成作品展示',
     by: '作者：{{name}}',
     anonymous: '匿名',
     communitySub: '加入我们不断壮大的Dobby社区。'
@@ -569,6 +569,11 @@ const zhTranslation = {
   },
   common: {
     close: '关闭',
+  },
+  pagination: {
+    prev: '上一页',
+    next: '下一页',
+    page: '第{{page}}页',
   },
 };
 
@@ -778,6 +783,11 @@ const resources = {
         Pricing: 'Pricing',
         Dashboard: 'Dashboard',
         Community: 'Community',
+      },
+      pagination: {
+        prev: 'Previous',
+        next: 'Next',
+        page: 'Page {{page}}',
       },
     }
   },
