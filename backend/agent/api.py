@@ -1388,11 +1388,19 @@ async def like_community_post(
     """Like a community post (increments like_count)."""
     client = await db.client
     post_id = body.post_id
-    # Increment like_count atomically
-    result = await client.rpc('increment_like_count', {'post_id': post_id}).execute()
-    if result.status_code != 200:
-        raise HTTPException(status_code=400, detail="Failed to like post.")
-    return {"success": True, "post_id": post_id}
+    try:
+        # Increment like_count atomically
+        result = await client.rpc('increment_like_count', {'post_id': post_id}).execute()
+        if not result or not getattr(result, 'data', None):
+            raise Exception("Supabase RPC did not return data")
+        # Fetch the updated like count
+        post = await client.table('community_posts').select('like_count').eq('id', post_id).maybe_single().execute()
+        if not post or not getattr(post, 'data', None):
+            raise Exception("Could not fetch updated like count")
+        like_count = post.data['like_count']
+        return {"success": True, "post_id": post_id, "like_count": like_count}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to like post: {str(e)}")
 
 @router.get("/community/post/{post_id}")
 async def get_community_post(post_id: str):

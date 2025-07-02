@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { API_URL } from '@/lib/api';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '@/components/AuthProvider';
 
 interface CommunityPost {
   id: string;
@@ -16,6 +17,7 @@ interface CommunityPost {
 
 export default function CommunitySection() {
   const { t } = useTranslation();
+  const { session } = useAuth();
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [liking, setLiking] = useState<string | null>(null);
@@ -28,16 +30,30 @@ export default function CommunitySection() {
   }, []);
 
   const handleLike = async (postId: string) => {
+    if (!session || !session.access_token) {
+      window.location.href = '/auth';
+      return;
+    }
     setLiking(postId);
-    await fetch(`${API_URL}/community/like`, {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (session.access_token) {
+      headers['Authorization'] = `Bearer ${session.access_token}`;
+    }
+    const resp = await fetch(`${API_URL}/community/like`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify({ post_id: postId }),
     });
-    // Optimistically update like count
+    let newLikeCount = null;
+    if (resp.ok) {
+      const data = await resp.json();
+      newLikeCount = data.like_count;
+    }
     setPosts((prev) =>
       prev.map((p) =>
-        p.id === postId ? { ...p, like_count: p.like_count + 1 } : p
+        p.id === postId
+          ? { ...p, like_count: newLikeCount !== null ? newLikeCount : p.like_count + 1 }
+          : p
       )
     );
     setLiking(null);
