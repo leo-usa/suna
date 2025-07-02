@@ -91,10 +91,16 @@ export default function HomeBillingTabs() {
     <div className="rounded-xl border shadow-sm bg-card p-6">
       <Tabs defaultValue="subscription" className="w-full">
         <TabsList className="mb-6 border-b border-border bg-transparent px-0">
-          <TabsTrigger value="subscription" className="rounded-t-lg border border-b-0 border-border bg-background px-6 py-2 mr-2 data-[state=active]:bg-card data-[state=active]:shadow-none data-[state=active]:border-b-card">
+          <TabsTrigger
+            value="subscription"
+            className="rounded-t-lg border border-b-0 border-border bg-background px-6 py-2 mr-2 data-[state=active]:bg-red-50 data-[state=active]:text-red-500 dark:data-[state=active]:bg-red-900 dark:data-[state=active]:text-red-300 data-[state=active]:border-b-card"
+          >
             {t('billing.subscription', '订阅')}
           </TabsTrigger>
-          <TabsTrigger value="prepaid" className="rounded-t-lg border border-b-0 border-border bg-background px-6 py-2 data-[state=active]:bg-card data-[state=active]:shadow-none data-[state=active]:border-b-card">
+          <TabsTrigger
+            value="prepaid"
+            className="rounded-t-lg border border-b-0 border-border bg-background px-6 py-2 data-[state=active]:bg-red-50 data-[state=active]:text-red-500 dark:data-[state=active]:bg-red-900 dark:data-[state=active]:text-red-300 data-[state=active]:border-b-card"
+          >
             {t('billing.prepaidTab', '预付（支持微信，支付宝）')}
           </TabsTrigger>
         </TabsList>
@@ -106,7 +112,7 @@ export default function HomeBillingTabs() {
           <div className="max-w-md mx-auto bg-card border border-border rounded-xl p-6 mt-4">
             <Label className="mb-2 font-medium">{t('billing.selectAmount', '选择时长套餐')}</Label>
             <RadioGroup value={String(topUpAmount)} onValueChange={v => setTopUpAmount(Number(v))} className="flex flex-col gap-2 mb-4">
-              {[60, 300, 600].map((minutes) => (
+              {[300, 600].map((minutes) => (
                 <div key={minutes} className="flex items-center gap-3 rounded-lg border px-4 py-2 hover:bg-muted cursor-pointer transition">
                   <RadioGroupItem value={String(minutes)} id={`credit-${minutes}`} />
                   <Label htmlFor={`credit-${minutes}`} className="flex-1 cursor-pointer text-sm font-normal flex items-center gap-2">
