@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/tooltip"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { useI18nReady } from '@/hooks/useI18nReady'
+import { useTranslation } from 'react-i18next'
 
 export function SidebarLeft({
   ...props
@@ -42,6 +43,7 @@ export function SidebarLeft({
     avatar: ""
   })
   const i18nReady = useI18nReady()
+  const { t } = useTranslation()
 
   // Fetch user data
   useEffect(() => {
@@ -101,7 +103,7 @@ export function SidebarLeft({
                 <TooltipTrigger asChild>
                   <SidebarTrigger className="h-8 w-8" />
                 </TooltipTrigger>
-                <TooltipContent>Toggle sidebar (CMD+B)</TooltipContent>
+                <TooltipContent>{t('sidebar.toggleSidebar', 'Toggle sidebar (CMD+B)')}</TooltipContent>
               </Tooltip>
             )}
             {isMobile && (
@@ -135,7 +137,7 @@ export function SidebarLeft({
               <TooltipTrigger asChild>
                 <SidebarTrigger className="h-8 w-8" />
               </TooltipTrigger>
-              <TooltipContent>Expand sidebar (CMD+B)</TooltipContent>
+              <TooltipContent>{t('sidebar.expandSidebar', 'Expand sidebar (CMD+B)')}</TooltipContent>
             </Tooltip>
           </div>
         )}        

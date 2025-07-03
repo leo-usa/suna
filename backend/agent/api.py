@@ -1361,6 +1361,9 @@ async def list_community_posts(
         .order(sort_field, desc=(sort_order=="desc"))\
         .range(offset, offset+limit-1)\
         .execute()
+    # Get total count of approved posts
+    total_result = await client.table('community_posts').select('id', count='exact').eq('approved', True).execute()
+    total = total_result.count if hasattr(total_result, 'count') else 0
     bucket = "share"
     supabase_url = config.SUPABASE_URL.rstrip('/')
     def make_html_url(html_path):
@@ -1378,7 +1381,7 @@ async def list_community_posts(
         }
         for p in posts.data or []
     ]
-    return {"posts": result, "total": len(result)}
+    return {"posts": result, "total": total}
 
 @router.post("/community/like")
 async def like_community_post(
