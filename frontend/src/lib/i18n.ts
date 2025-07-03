@@ -406,6 +406,7 @@ const zhTranslation = {
     agents: '智能体',
     newAgent: '新建智能体',
     tooltipNewAgent: '新建智能体',
+    noAgents: '暂无智能体',
     menu: '菜单',
     dashboard: '控制台',
     settings: {
@@ -447,6 +448,8 @@ const zhTranslation = {
     benefit247: '全天候生产力',
     addWeChatEN: 'Add DrLeoPang in WeChat',
     addWeChatCN: '加庞博士微信：DrLeoPang',
+    toggleSidebar: '切换侧边栏 (CMD+B)',
+    expandSidebar: '展开侧边栏 (CMD+B)',
   },
   billing: {
     status: '账单状态',
@@ -478,6 +481,8 @@ const zhTranslation = {
     usageLimitMessage: '本月 360 分钟额度已用完，且无可用预付费时长。请升级您的方案或充值时长。',
     dismiss: '关闭',
     upgradePlan: '升级方案',
+    paymentRequired: '需要付款',
+    noActiveSubscription: '未找到有效订阅或预付费时长。',
   },
   auth: {
     welcomeBack: '欢迎回来',
@@ -519,7 +524,8 @@ const zhTranslation = {
     cannotViewDetails: '无法查看详情：缺少助手消息 ID。',
     couldNotFindDetails: '未找到此工具调用的详情。',
     sendAMessage: '发送消息以开始。',
-    inputPlaceholder: '输入你的消息...'
+    inputPlaceholder: '输入你的消息...',
+    noToolCallDetails: '暂无工具调用详情。',
   },
   community: {
     gallery: '社区：Dobby生成作品展示',
@@ -698,7 +704,7 @@ const resources = {
       },
       billing: {
         status: 'Billing Status',
-        usageThisMonth: 'This Month\'s Agent Usage',
+        usageThisMonth: "This Month's Agent Usage",
         manage: 'Manage Subscription',
         minutes: 'minutes',
         localMode: 'Running in local development mode - billing features are disabled',
@@ -726,11 +732,16 @@ const resources = {
         usageLimitMessage: 'Monthly limit of 360 minutes reached and no prepaid credits available. Please upgrade your plan or top up credits.',
         dismiss: 'Dismiss',
         upgradePlan: 'Upgrade Plan',
+        paymentRequired: 'Payment Required',
+        noActiveSubscription: 'No active subscription or prepaid credits found.',
       },
       sidebar: {
         agents: 'Agents',
         newAgent: 'New Agent',
         tooltipNewAgent: 'Create a new agent',
+        noAgents: 'No agents yet',
+        toggleSidebar: 'Toggle sidebar (CMD+B)',
+        expandSidebar: 'Expand sidebar (CMD+B)',
       },
       agentDetail: {
         streamError: 'Agent stream error',
@@ -738,7 +749,8 @@ const resources = {
         cannotViewDetails: 'Cannot view details: Assistant message ID is missing.',
         couldNotFindDetails: 'Could not find details for this tool call.',
         sendAMessage: 'Send a message to start.',
-        inputPlaceholder: 'Type your message...'
+        inputPlaceholder: 'Type your message...',
+        noToolCallDetails: 'No tool call details available.',
       },
       communityShare: {
         sharing: 'Sharing...',
@@ -788,6 +800,12 @@ const resources = {
         prev: 'Previous',
         next: 'Next',
         page: 'Page {{page}}',
+      },
+      settings: {
+        billing: 'Billing',
+      },
+      teamSettings: {
+        billing: 'Billing',
       },
     }
   },
@@ -1366,6 +1384,7 @@ const resources = {
         usageLimitMessage: '本月 360 分钟额度已用完，且无可用预付费时长。请升级您的方案或充值时长。',
         dismiss: '关闭',
         upgradePlan: '升级方案',
+        paymentRequired: '需要付款',
       },
       authReset: {
         passwordResetComplete: '密码重置完成',
