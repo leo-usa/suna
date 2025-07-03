@@ -21,7 +21,7 @@ type Props = {
 
 // Mapping from minutes to Stripe price IDs
 const CREDIT_PRICE_IDS: Record<number, string> = {
-    60: 'price_1RQZVpP2cIDuyWfbF62E3dsi',   // $9 for 1 hour
+    30: 'price_1RQZVpP2cIDuyWfbF62E3dsi',   // $9 for 30 minutes
     300: 'price_1RQZVpP2cIDuyWfbgUnmBizh',  // $49 for 5 hours
     600: 'price_1RQZVpP2cIDuyWfbcceSm4gM',  // $99 for 10 hours
 };
@@ -36,7 +36,7 @@ const WeChatPayIcon = (props: React.SVGProps<SVGSVGElement>) => (
 
 // Add price mapping for display
 const CREDIT_PRICES: Record<number, string> = {
-  60: '$9',
+  30: '$9',
   300: '$49',
   600: '$99',
 };
@@ -237,10 +237,11 @@ export default function AccountBillingStatus({ accountId, returnUrl }: Props) {
                     <div className="max-w-md mx-auto bg-card border border-border rounded-xl p-6 mt-4">
                         <Label className="mb-2 font-medium">{t('billing.selectAmount', '选择时长套餐')}</Label>
                         <RadioGroup value={String(topUpAmount)} onValueChange={v => setTopUpAmount(Number(v))} className="flex flex-col gap-2 mb-4">
-                          {[300, 600].map((minutes) => (
+                          {[30, 300, 600].map((minutes) => (
                             <div key={minutes} className="flex items-center gap-3 rounded-lg border px-4 py-2 hover:bg-muted cursor-pointer transition">
                               <RadioGroupItem value={String(minutes)} id={`credit-${minutes}`} />
                               <Label htmlFor={`credit-${minutes}`} className="flex-1 cursor-pointer text-sm font-normal flex items-center gap-2">
+                                {minutes === 30 && t('billing.30mins', '30分钟')}
                                 {minutes === 300 && t('billing.5hours', '5小时')}
                                 {minutes === 600 && t('billing.10hours', '10小时')}
                                 <span className="text-muted-foreground ml-2">{CREDIT_PRICES[minutes]}</span>

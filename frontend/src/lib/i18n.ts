@@ -196,6 +196,7 @@ const zhTranslation = {
     usageThisMonth: '本月代理用量',
     manage: '管理订阅',
     minutes: '分钟',
+    '30mins': '30分钟',
   },
   dashboard: {
     greeting: '你好',
@@ -483,6 +484,7 @@ const zhTranslation = {
     upgradePlan: '升级方案',
     paymentRequired: '需要付款',
     noActiveSubscription: '未找到有效订阅或预付费时长。',
+    '30mins': '30分钟',
   },
   auth: {
     welcomeBack: '欢迎回来',
@@ -701,6 +703,7 @@ const resources = {
           failedOperation: '{{tool}} operation failed',
           executing: 'Executing',
         },
+        '30mins': '30 mins',
       },
       billing: {
         status: 'Billing Status',
@@ -734,6 +737,7 @@ const resources = {
         upgradePlan: 'Upgrade Plan',
         paymentRequired: 'Payment Required',
         noActiveSubscription: 'No active subscription or prepaid credits found.',
+        '30mins': '30 mins',
       },
       sidebar: {
         agents: 'Agents',
@@ -913,6 +917,7 @@ const resources = {
           failedOperation: '{{tool}} operation failed',
           executing: 'Executing',
         },
+        '30mins': '30 mins',
       }
     }
   },
@@ -1020,6 +1025,7 @@ const resources = {
           failedOperation: '{{tool}} operation failed',
           executing: 'Executing',
         },
+        '30mins': '30 mins',
       },
       billing: {
         status: 'Facturación',
@@ -1139,6 +1145,7 @@ const resources = {
           failedOperation: '{{tool}} operation failed',
           executing: 'Executing',
         },
+        '30mins': '30 mins',
       }
     }
   },
@@ -1246,6 +1253,7 @@ const resources = {
           failedOperation: '{{tool}} operation failed',
           executing: 'Executing',
         },
+        '30mins': '30 mins',
       }
     }
   },
@@ -1353,6 +1361,7 @@ const resources = {
           failedOperation: '{{tool}} operation failed',
           executing: 'Executing',
         },
+        '30mins': '30 mins',
       },
       billing: {
         status: '账单状态',
@@ -1385,6 +1394,7 @@ const resources = {
         dismiss: '关闭',
         upgradePlan: '升级方案',
         paymentRequired: '需要付款',
+        '30mins': '30 mins',
       },
       authReset: {
         passwordResetComplete: '密码重置完成',
@@ -1431,6 +1441,7 @@ const resources = {
         accountCreatedCheckEmail: '账户已创建！请查收邮件以完成注册。',
         checkEmailForReset: '请查收邮件以获取重置密码的链接',
         passwordUpdated: '密码更新成功',
+        '30mins': '30 mins',
       },
       agentDetail: {
         streamError: '智能体流错误',
@@ -1553,6 +1564,7 @@ const resources = {
           failedOperation: '{{tool}} operation failed',
           executing: 'Executing',
         },
+        '30mins': '30 mins',
       }
     }
   },
@@ -1666,6 +1678,7 @@ const resources = {
           failedOperation: '{{tool}} operation failed',
           executing: 'Executing',
         },
+        '30mins': '30 mins',
       }
     }
   },
@@ -1773,6 +1786,7 @@ const resources = {
           failedOperation: '{{tool}} operation failed',
           executing: 'Executing',
         },
+        '30mins': '30 mins',
       }
     }
   },
@@ -1880,6 +1894,7 @@ const resources = {
           failedOperation: '{{tool}} operation failed',
           executing: 'Executing',
         },
+        '30mins': '30 mins',
       }
     }
   },
