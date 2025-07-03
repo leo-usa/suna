@@ -956,7 +956,7 @@ export function FileViewerModal({
                 ) : (
                   <div className="h-full w-full relative">
                     <FileRenderer
-                      key={selectedFilePath + '-' + lastSaved}
+                      key={selectedFilePath + '-' + lastSaved + '-' + (textContentForRenderer ? textContentForRenderer.length : 0)}
                       content={textContentForRenderer}
                       binaryUrl={blobUrlForRenderer}
                       fileName={selectedFilePath}

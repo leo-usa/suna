@@ -183,13 +183,13 @@ export default function AccountBillingStatus({ accountId, returnUrl }: Props) {
                 <TabsList className="mb-6 border-b border-border bg-transparent px-0">
                     <TabsTrigger
                         value="subscription"
-                        className="rounded-t-lg border border-b-0 border-border bg-background px-6 py-2 mr-2 data-[state=active]:bg-red-50 data-[state=active]:text-red-500 dark:data-[state=active]:bg-red-900 dark:data-[state=active]:text-red-300 data-[state=active]:border-b-card"
+                        className="rounded-t-lg border border-b-0 border-border bg-background px-6 py-2 mr-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:hover:bg-primary/90 data-[state=active]:border-b-card"
                     >
                         {t('billing.subscription', '订阅')}
                     </TabsTrigger>
                     <TabsTrigger
                         value="prepaid"
-                        className="rounded-t-lg border border-b-0 border-border bg-background px-6 py-2 data-[state=active]:bg-red-50 data-[state=active]:text-red-500 dark:data-[state=active]:bg-red-900 dark:data-[state=active]:text-red-300 data-[state=active]:border-b-card"
+                        className="rounded-t-lg border border-b-0 border-border bg-background px-6 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:hover:bg-primary/90 data-[state=active]:border-b-card"
                     >
                         {t('billing.prepaidTab', '预付（支持微信，支付宝）')}
                     </TabsTrigger>
