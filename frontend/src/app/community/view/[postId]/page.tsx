@@ -81,7 +81,7 @@ export default function CommunityPostEmbedPage() {
         className="fixed bottom-4 right-4 z-50 border border-primary rounded-xl px-3 py-2 shadow-md flex flex-col items-center gap-0.5 text-xs font-bold hover:bg-primary hover:text-white transition-all duration-500 max-w-xs w-48 backdrop-blur-sm dobby-bounce dobby-color"
         style={{ pointerEvents: 'auto', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}
       >
-        <span className="text-xl mb-0.5" role="img" aria-label="robot">🤖</span>
+        <img src="/dobby-logo.svg" alt="Dobby Logo" className="h-16 w-16 mb-0.5" />
         <span className="text-center leading-tight">本研究报告由Robby智能体做研究和生成</span>
         <span className="text-center leading-tight">Dobby，你的AI打工狗</span>
         <span className="text-center leading-tight">帮你做研究，写报告，建网站，做PPT</span>
