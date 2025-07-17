@@ -17,6 +17,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 type Props = {
     accountId: string;
     returnUrl: string;
+    defaultTab?: "subscription" | "prepaid";
 }
 
 // Mapping from minutes to Stripe price IDs
@@ -41,7 +42,7 @@ const CREDIT_PRICES: Record<number, string> = {
   600: '$99',
 };
 
-export default function AccountBillingStatus({ accountId, returnUrl }: Props) {
+export default function AccountBillingStatus({ accountId, returnUrl, defaultTab = "subscription" }: Props) {
     const { t, i18n } = useTranslation();
     const { session, isLoading: authLoading } = useAuth();
     const [subscriptionData, setSubscriptionData] = useState<SubscriptionStatus | null>(null);
@@ -51,7 +52,7 @@ export default function AccountBillingStatus({ accountId, returnUrl }: Props) {
     const [creditBalance, setCreditBalance] = useState<number | null>(null);
     const [isCreditLoading, setIsCreditLoading] = useState(true);
     const [showTopUp, setShowTopUp] = useState(false);
-    const [topUpAmount, setTopUpAmount] = useState(60); // default 1h
+    const [topUpAmount, setTopUpAmount] = useState(300); // default 5h
     const [paymentMethod, setPaymentMethod] = useState<'alipay' | 'wechat_pay' | 'card'>('alipay');
     const [isTopUpLoading, setIsTopUpLoading] = useState(false);
     const [topUpError, setTopUpError] = useState<string | null>(null);
@@ -179,7 +180,7 @@ export default function AccountBillingStatus({ accountId, returnUrl }: Props) {
 
     return (
         <div className="rounded-xl border shadow-sm bg-card p-6">
-            <Tabs defaultValue="subscription" className="w-full">
+            <Tabs defaultValue={defaultTab} className="w-full">
                 <TabsList className="mb-6 border-b border-border bg-transparent px-0">
                     <TabsTrigger
                         value="subscription"

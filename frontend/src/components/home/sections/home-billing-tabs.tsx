@@ -31,10 +31,14 @@ const WeChatPayIcon = (props: React.SVGProps<SVGSVGElement>) => (
 export default function HomeBillingTabs() {
   const { t, i18n } = useTranslation();
   const { session, isLoading: authLoading } = useAuth();
-  const [topUpAmount, setTopUpAmount] = useState(60); // default 1h
+  // Set default to 300 (5 hours, $49)
+  const [topUpAmount, setTopUpAmount] = useState(300);
   const [paymentMethod, setPaymentMethod] = useState<'alipay' | 'wechat_pay' | 'card'>('alipay');
   const [isTopUpLoading, setIsTopUpLoading] = useState(false);
   const [topUpError, setTopUpError] = useState<string | null>(null);
+
+  // Show prepaid tab by default if language is Chinese
+  const defaultTab = i18n.language.startsWith('zh') ? 'prepaid' : 'subscription';
 
   // Prepaid top-up handler (copy logic from AccountBillingStatus, but no balance display)
   const handleTopUp = async () => {
@@ -89,7 +93,7 @@ export default function HomeBillingTabs() {
 
   return (
     <div className="rounded-xl border shadow-sm bg-card p-6">
-      <Tabs defaultValue="subscription" className="w-full">
+      <Tabs defaultValue={defaultTab} className="w-full">
         <TabsList className="mb-6 border-b border-border bg-transparent px-0">
           <TabsTrigger
             value="subscription"
