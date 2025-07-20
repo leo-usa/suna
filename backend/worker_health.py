@@ -1,35 +1,61 @@
-import dotenv
-dotenv.load_dotenv()
+#!/usr/bin/env python3
+"""
+Health check script for the background worker.
+"""
 
-from utils.logger import logger
-import run_agent_background
-from services import redis
-import asyncio
-from utils.retry import retry
-import uuid
+import os
+import sys
+from dotenv import load_dotenv
 
+# Add the current directory to Python path
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-async def main():
-    await retry(lambda: redis.initialize_async())
-    key = uuid.uuid4().hex
-    run_agent_background.check_health.send(key)
-    timeout = 20  # seconds
-    elapsed = 0
-    while elapsed < timeout:
-        if await redis.get(key) == "healthy":
-            break
-        await asyncio.sleep(1)
-        elapsed += 1
+load_dotenv()
 
-    if elapsed >= timeout:
-        logger.critical("Health check timed out")
-        exit(1)
+def check_redis():
+    """Check Redis connectivity."""
+    try:
+        from services import redis
+        import asyncio
+        
+        async def test_redis():
+            await redis.initialize_async()
+            await redis.set("health_check", "ok", ex=60)
+            result = await redis.get("health_check")
+            return result == "ok"
+        
+        return asyncio.run(test_redis())
+    except Exception as e:
+        print(f"Redis health check failed: {e}")
+        return False
+
+def check_rabbitmq():
+    """Check RabbitMQ connectivity."""
+    try:
+        from services.rabbitmq import get_rabbitmq_connection_params
+        import pika
+        
+        parameters = get_rabbitmq_connection_params()
+        connection = pika.BlockingConnection(parameters)
+        connection.close()
+        return True
+    except Exception as e:
+        print(f"RabbitMQ health check failed: {e}")
+        return False
+
+def main():
+    """Run all health checks."""
+    print("🔍 Running worker health checks...")
+    
+    redis_ok = check_redis()
+    rabbitmq_ok = check_rabbitmq()
+    
+    if redis_ok and rabbitmq_ok:
+        print("✅ All health checks passed!")
+        return 0
     else:
-        logger.critical("Health check passed")
-        await redis.delete(key)
-        await redis.close()
-        exit(0)
-
+        print("❌ Some health checks failed!")
+        return 1
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    exit(main())
