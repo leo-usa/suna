@@ -19,13 +19,14 @@ from dramatiq.brokers.rabbitmq import RabbitmqBroker
 import os
 from services.langfuse import langfuse
 from utils.retry import retry
+from services.rabbitmq import get_dramatiq_broker_url
 
 import sentry_sdk
 from typing import Dict, Any
 
-rabbitmq_host = os.getenv('RABBITMQ_HOST', 'rabbitmq')
-rabbitmq_port = int(os.getenv('RABBITMQ_PORT', 5672))
-rabbitmq_broker = RabbitmqBroker(host=rabbitmq_host, port=rabbitmq_port, middleware=[dramatiq.middleware.AsyncIO()])
+# Configure Dramatiq broker using our RabbitMQ service
+broker_url = get_dramatiq_broker_url()
+rabbitmq_broker = RabbitmqBroker(url=broker_url, middleware=[dramatiq.middleware.AsyncIO()])
 dramatiq.set_broker(rabbitmq_broker)
 
 
