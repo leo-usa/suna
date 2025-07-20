@@ -10,7 +10,7 @@ load_dotenv()
 def get_rabbitmq_connection_params():
     """
     Get RabbitMQ connection parameters based on environment configuration.
-    Supports both local RabbitMQ and CloudAMQP.
+    Supports local RabbitMQ, CloudAMQP, and LavinMQ.
     """
     rabbitmq_host = os.getenv("RABBITMQ_HOST", "localhost")
     rabbitmq_port = int(os.getenv("RABBITMQ_PORT", "5672"))
@@ -18,12 +18,17 @@ def get_rabbitmq_connection_params():
     rabbitmq_password = os.getenv("RABBITMQ_PASSWORD", "guest")
     rabbitmq_vhost = os.getenv("RABBITMQ_VHOST", "/")
     
-    # Check if we're using CloudAMQP (URL-based connection)
+    # Check if we're using a managed service (URL-based connection)
     rabbitmq_url = os.getenv("RABBITMQ_URL")
     
     if rabbitmq_url:
-        # Parse CloudAMQP URL
-        logger.info("Using CloudAMQP connection")
+        # Parse URL for CloudAMQP, LavinMQ, or other managed services
+        if "cloudamqp.com" in rabbitmq_url:
+            logger.info("Using CloudAMQP connection")
+        elif "lavinmq.com" in rabbitmq_url:
+            logger.info("Using LavinMQ connection")
+        else:
+            logger.info("Using managed RabbitMQ service")
         return pika.URLParameters(rabbitmq_url)
     else:
         # Use individual parameters
@@ -42,11 +47,12 @@ def get_rabbitmq_connection_params():
 def get_dramatiq_broker_url():
     """
     Get the broker URL for Dramatiq configuration.
+    Supports CloudAMQP, LavinMQ, and local RabbitMQ.
     """
     rabbitmq_url = os.getenv("RABBITMQ_URL")
     
     if rabbitmq_url:
-        # CloudAMQP URL
+        # Managed service URL (CloudAMQP, LavinMQ, etc.)
         return rabbitmq_url
     else:
         # Local RabbitMQ

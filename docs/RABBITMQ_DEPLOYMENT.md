@@ -6,9 +6,39 @@ This guide covers different options for deploying RabbitMQ on Render to support 
 
 Suna uses RabbitMQ as the message broker for Dramatiq, which handles background agent execution. For Render deployment, you have several options:
 
-## Option 1: CloudAMQP (Recommended)
+## Option 1: LavinMQ (Recommended)
 
-CloudAMQP is a managed RabbitMQ service that's easy to set up and reliable for production.
+LavinMQ is a high-performance message broker that's fully compatible with RabbitMQ's AMQP 0.9.1 protocol. It offers better performance and twice the limits of other providers.
+
+### Setup Steps:
+
+1. **Create LavinMQ Account**
+   - Go to [LavinMQ](https://www.lavinmq.com/)
+   - Sign up for a free account
+   - Create a new instance
+
+2. **Get Connection Details**
+   - In your LavinMQ dashboard, find your instance
+   - Click on "Details" to get the connection information
+   - Copy the AMQP URL
+
+3. **Configure Environment Variables**
+   Add to your Render environment variables:
+   ```
+   RABBITMQ_URL=amqps://username:password@hostname:port/vhost
+   ```
+
+4. **Update Your Application**
+   The application is already configured to use `RABBITMQ_URL` when available.
+
+### LavinMQ Plans:
+- **Free Tier**: Generous limits for development
+- **Paid Plans**: Twice the limits of other providers
+- **High Performance**: Optimized for modern workloads
+
+## Option 2: CloudAMQP
+
+CloudAMQP is an established managed RabbitMQ service that's reliable for production.
 
 ### Setup Steps:
 
@@ -113,7 +143,10 @@ RABBITMQ_URL=amqps://username:password@hostname:port/vhost
 
 ### Production (Render Environment Variables)
 ```bash
-# CloudAMQP (Recommended)
+# LavinMQ (Recommended)
+RABBITMQ_URL=amqps://your-username:your-password@your-instance.lavinmq.com:5671/your-vhost
+
+# CloudAMQP
 RABBITMQ_URL=amqps://your-username:your-password@your-instance.cloudamqp.com:5671/your-vhost
 
 # Or Self-hosted RabbitMQ
@@ -248,14 +281,15 @@ python -c "from dramatiq.brokers.rabbitmq import RabbitmqBroker; print('OK')"
 
 ## Recommended Setup for Production
 
-1. **Use CloudAMQP** - Most reliable and easiest to manage
-2. **Start with Tiny Turtle plan** - Good balance of features and cost
+1. **Use LavinMQ** - High-performance with better limits and pricing
+2. **Start with free tier** - Generous limits for development
 3. **Enable SSL/TLS** - Secure all connections
 4. **Set up monitoring** - Monitor queue depths and error rates
 5. **Use dedicated credentials** - Separate users for different environments
 
 ## Support
 
+- [LavinMQ Documentation](https://www.lavinmq.com/docs/)
 - [CloudAMQP Documentation](https://www.cloudamqp.com/docs/)
 - [RabbitMQ Documentation](https://www.rabbitmq.com/documentation.html)
 - [Dramatiq Documentation](https://dramatiq.io/)
