@@ -1410,16 +1410,13 @@ async def create_credit_session(
         db = DBConnection()
         client = await db.client
         
-        # Get user email
-        user_result = await client.schema('basejump').from_('accounts') \
-            .select('email') \
-            .eq('id', current_user_id) \
-            .execute()
+        # Get user email from auth.users table
+        user_result = await client.auth.admin.get_user_by_id(current_user_id)
         
-        if not user_result.data:
+        if not user_result.user:
             raise HTTPException(status_code=404, detail="User not found")
         
-        user_email = user_result.data[0]['email']
+        user_email = user_result.user.email
         
         # Get or create Stripe customer
         customer_id = await get_stripe_customer_id(client, current_user_id)
