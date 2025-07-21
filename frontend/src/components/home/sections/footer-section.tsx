@@ -20,10 +20,10 @@ export function FooterSection() {
   }, []);
 
   const logoSrc = !mounted
-    ? '/kortix-logo.svg'
+    ? '/dobby-logo.svg'
     : resolvedTheme === 'dark'
-      ? '/kortix-logo-white.svg'
-      : '/kortix-logo.svg';
+      ? '/dobby-logo-white.svg'
+      : '/dobby-logo.svg';
 
   return (
     <footer id="footer" className="w-full pb-0">
@@ -32,7 +32,7 @@ export function FooterSection() {
           <Link href="/" className="flex items-center gap-2">
             <Image
               src={logoSrc}
-              alt="Kortix Logo"
+              alt="Dobby Logo"
               width={122}
               height={22}
               priority

@@ -100,10 +100,10 @@ export function Navbar() {
   const handleOverlayClick = () => setIsDrawerOpen(false);
 
   const logoSrc = !mounted
-    ? '/kortix-logo.svg'
+    ? '/dobby-logo.svg'
     : resolvedTheme === 'dark'
-      ? '/kortix-logo-white.svg'
-      : '/kortix-logo.svg';
+      ? '/dobby-logo-white.svg'
+      : '/dobby-logo.svg';
 
   return (
     <header
@@ -129,7 +129,7 @@ export function Navbar() {
             <Link href="/" className="flex items-center gap-3">
               <Image
                 src={logoSrc}
-                alt="Kortix Logo"
+                alt="Dobby Logo"
                 width={140}
                 height={22}
                 priority

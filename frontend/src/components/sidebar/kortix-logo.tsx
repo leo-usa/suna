@@ -22,8 +22,8 @@ export function KortixLogo({ size = 24 }: KortixLogoProps) {
 
   return (
     <Image
-        src="/kortix-symbol.svg"
-        alt="Kortix"
+        src="/dobby-symbol.svg"
+        alt="Dobby"
         width={size}
         height={size}
         className={`${shouldInvert ? 'invert' : ''} flex-shrink-0`}
