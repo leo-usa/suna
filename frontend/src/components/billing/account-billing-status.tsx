@@ -11,7 +11,7 @@ import { useSubscription } from '@/hooks/react-query';
 import Link from 'next/link';
 import { OpenInNewWindowIcon } from '@radix-ui/react-icons';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogHeader, DialogFooter } from '@/components/ui/dialog';
+
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Loader2, CreditCard, Landmark, QrCode } from 'lucide-react';
@@ -51,7 +51,7 @@ export default function AccountBillingStatus({ accountId, returnUrl, defaultTab 
   const [isManaging, setIsManaging] = useState(false);
   const [creditBalance, setCreditBalance] = useState<number | null>(null);
   const [isCreditLoading, setIsCreditLoading] = useState(true);
-  const [showTopUp, setShowTopUp] = useState(false);
+
   const [topUpAmount, setTopUpAmount] = useState(300); // default 5h
   const [paymentMethod, setPaymentMethod] = useState<'alipay' | 'wechat_pay' | 'card'>('alipay');
   const [isTopUpLoading, setIsTopUpLoading] = useState(false);
@@ -303,122 +303,85 @@ export default function AccountBillingStatus({ accountId, returnUrl, defaultTab 
                     `${creditBalance?.toFixed(1) || '0'} minutes`
                   )}
                 </span>
-                <Button 
-                  onClick={() => setShowTopUp(true)}
-                  variant="outline" 
-                  className="text-sm"
-                  disabled={isCreditLoading}
-                >
-                  Top Up
-                </Button>
               </div>
             </div>
           </div>
 
-          <div className="text-center text-sm text-muted-foreground">
+          <div className="text-center text-sm text-muted-foreground mb-6">
             <p>Pre-paid credits allow you to use agents without a subscription.</p>
             <p className="mt-1">Credits are consumed based on your usage and never expire.</p>
           </div>
 
-          <div className="flex justify-center">
-            <Button
-              onClick={() => setShowTopUp(true)}
-              className="bg-primary hover:bg-primary/90 shadow-md hover:shadow-lg transition-all"
-              disabled={isCreditLoading}
-            >
-              Purchase Credits
-            </Button>
+          <div className="max-w-md mx-auto bg-card border border-border rounded-xl p-6">
+            <Label className="mb-2 font-medium">Select Credit Amount</Label>
+            <RadioGroup value={topUpAmount.toString()} onValueChange={(value) => setTopUpAmount(Number(value))} className="flex flex-col gap-2 mb-4">
+              {[30, 300, 600].map((minutes) => (
+                <div key={minutes} className="flex items-center gap-3 rounded-lg border px-4 py-2 hover:bg-muted cursor-pointer transition">
+                  <RadioGroupItem value={String(minutes)} id={`credit-${minutes}`} />
+                  <Label htmlFor={`credit-${minutes}`} className="flex-1 cursor-pointer text-sm font-normal flex items-center gap-2">
+                    {minutes === 30 && '30 minutes'}
+                    {minutes === 300 && '5 hours'}
+                    {minutes === 600 && '10 hours'}
+                    <span className="text-muted-foreground ml-2">{CREDIT_PRICES[minutes]}</span>
+                  </Label>
+                </div>
+              ))}
+            </RadioGroup>
+            
+            <Label className="mb-2 mt-4 font-medium">Select Payment Method</Label>
+            <RadioGroup value={paymentMethod} onValueChange={(value) => setPaymentMethod(value as any)} className="flex flex-col gap-2 mb-4">
+              <div className="flex items-center gap-3 rounded-lg border px-4 py-2 hover:bg-muted cursor-pointer transition">
+                <RadioGroupItem value="alipay" id="pm-alipay" />
+                <Label htmlFor="pm-alipay" className="flex-1 cursor-pointer text-sm font-normal flex items-center gap-2">
+                  <AliPayIcon />
+                  AliPay
+                </Label>
+              </div>
+              <div className="flex items-center gap-3 rounded-lg border px-4 py-2 hover:bg-muted cursor-pointer transition">
+                <RadioGroupItem value="wechat_pay" id="pm-wechat" />
+                <Label htmlFor="pm-wechat" className="flex-1 cursor-pointer text-sm font-normal flex items-center gap-2">
+                  <WeChatPayIcon />
+                  WeChat Pay
+                </Label>
+              </div>
+              <div className="flex items-center gap-3 rounded-lg border px-4 py-2 hover:bg-muted cursor-pointer transition">
+                <RadioGroupItem value="card" id="pm-card" />
+                <Label htmlFor="pm-card" className="flex-1 cursor-pointer text-sm font-normal flex items-center gap-2">
+                  <CreditCard className="w-5 h-5" />
+                  Credit/Debit Card
+                </Label>
+              </div>
+            </RadioGroup>
+            
+            {topUpError && (
+              <div className="bg-destructive/10 border border-destructive/20 text-destructive text-sm rounded-md px-3 py-2 mb-2">
+                {topUpError}
+              </div>
+            )}
+            
+            <div className="flex justify-end gap-2 mt-4">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setTopUpAmount(300);
+                  setPaymentMethod('alipay');
+                  setTopUpError(null);
+                }}
+              >
+                Reset
+              </Button>
+              <Button
+                onClick={handleTopUp}
+                disabled={isTopUpLoading}
+              >
+                {isTopUpLoading ? <Loader2 className="animate-spin h-4 w-4 mr-2 inline" /> : null}
+                Pay Now
+              </Button>
+            </div>
           </div>
         </TabsContent>
       </Tabs>
 
-      {/* Top-up Dialog */}
-      <Dialog open={showTopUp} onOpenChange={setShowTopUp}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Purchase Credits</DialogTitle>
-            <DialogDescription>
-              Choose the amount of credits you want to purchase
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            <div>
-              <Label className="text-sm font-medium">Credit Amount</Label>
-              <RadioGroup value={topUpAmount.toString()} onValueChange={(value) => setTopUpAmount(Number(value))}>
-                <div className="grid grid-cols-1 gap-3 mt-2">
-                  <Label htmlFor="30" className="flex items-center space-x-3 p-3 border rounded-lg cursor-pointer hover:bg-muted/50">
-                    <RadioGroupItem value="30" id="30" />
-                    <div className="flex-1">
-                      <div className="font-medium">30 minutes</div>
-                      <div className="text-sm text-muted-foreground">{CREDIT_PRICES[30]}</div>
-                    </div>
-                  </Label>
-                  <Label htmlFor="300" className="flex items-center space-x-3 p-3 border rounded-lg cursor-pointer hover:bg-muted/50">
-                    <RadioGroupItem value="300" id="300" />
-                    <div className="flex-1">
-                      <div className="font-medium">5 hours</div>
-                      <div className="text-sm text-muted-foreground">{CREDIT_PRICES[300]}</div>
-                    </div>
-                  </Label>
-                  <Label htmlFor="600" className="flex items-center space-x-3 p-3 border rounded-lg cursor-pointer hover:bg-muted/50">
-                    <RadioGroupItem value="600" id="600" />
-                    <div className="flex-1">
-                      <div className="font-medium">10 hours</div>
-                      <div className="text-sm text-muted-foreground">{CREDIT_PRICES[600]}</div>
-                    </div>
-                  </Label>
-                </div>
-              </RadioGroup>
-            </div>
-
-            <div>
-              <Label className="text-sm font-medium">Payment Method</Label>
-              <RadioGroup value={paymentMethod} onValueChange={(value) => setPaymentMethod(value as any)}>
-                <div className="grid grid-cols-3 gap-3 mt-2">
-                  <Label htmlFor="alipay" className="flex items-center space-x-2 p-3 border rounded-lg cursor-pointer hover:bg-muted/50">
-                    <RadioGroupItem value="alipay" id="alipay" />
-                    <AliPayIcon />
-                    <span className="text-sm">AliPay</span>
-                  </Label>
-                  <Label htmlFor="wechat_pay" className="flex items-center space-x-2 p-3 border rounded-lg cursor-pointer hover:bg-muted/50">
-                    <RadioGroupItem value="wechat_pay" id="wechat_pay" />
-                    <WeChatPayIcon />
-                    <span className="text-sm">WeChat</span>
-                  </Label>
-                  <Label htmlFor="card" className="flex items-center space-x-2 p-3 border rounded-lg cursor-pointer hover:bg-muted/50">
-                    <RadioGroupItem value="card" id="card" />
-                    <CreditCard className="w-6 h-6" />
-                    <span className="text-sm">Card</span>
-                  </Label>
-                </div>
-              </RadioGroup>
-            </div>
-
-            {topUpError && (
-              <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
-                <p className="text-sm text-destructive">{topUpError}</p>
-              </div>
-            )}
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowTopUp(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleTopUp} disabled={isTopUpLoading}>
-              {isTopUpLoading ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Processing...
-                </>
-              ) : (
-                `Purchase for ${CREDIT_PRICES[topUpAmount]}`
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
