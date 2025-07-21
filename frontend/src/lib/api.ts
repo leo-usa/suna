@@ -2054,7 +2054,12 @@ export const createCreditSession = async (params: {
     throw new NoAccessTokenAvailableError();
   }
 
-  const response = await fetch(`${API_URL}/billing/create-credit-session`, {
+  const url = `${API_URL}/billing/create-credit-session`;
+  console.log('Creating credit session with URL:', url);
+  console.log('API_URL:', API_URL);
+  console.log('Params:', params);
+
+  const response = await fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -2063,8 +2068,12 @@ export const createCreditSession = async (params: {
     body: JSON.stringify(params),
   });
 
+  console.log('Response status:', response.status);
+  console.log('Response URL:', response.url);
+
   if (!response.ok) {
     const errorText = await response.text().catch(() => 'No error details available');
+    console.error('Credit session error:', errorText);
     throw new Error(`Failed to create credit session: ${errorText}`);
   }
 
