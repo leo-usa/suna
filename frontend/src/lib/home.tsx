@@ -57,23 +57,23 @@ export interface PricingTier {
 }
 
 export const siteConfig = {
-  name: 'Kortix Suna',
+  name: 'Dobby',
   description: 'The Generalist AI Agent that can act on your behalf.',
-  cta: 'Start Free',
+  cta: 'Hire Dobby',
   url: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
   keywords: ['AI Agent', 'Generalist AI', 'Open Source AI', 'Autonomous Agent'],
   links: {
-    email: 'support@kortix.ai',
-    twitter: 'https://x.com/kortixai',
-    discord: 'https://discord.gg/kortixai',
-    github: 'https://github.com/Kortix-ai/Suna',
-    instagram: 'https://instagram.com/kortixai',
+    email: 'support@drpang.ai',
+    twitter: 'https://x.com/drpangai',
+    discord: 'https://discord.gg/drpangai',
+    github: 'https://github.com/drpang/dobby',
+    instagram: 'https://instagram.com/drpangai',
   },
   nav: {
     links: [
       { id: 1, name: 'Home', href: '#hero' },
       { id: 2, name: 'Use Cases', href: '#use-cases' },
-      { id: 3, name: 'Open Source', href: '#open-source' },
+      { id: 3, name: 'Community', href: '#community' },
       { id: 4, name: 'Pricing', href: '#pricing' },
     ],
   },
@@ -105,11 +105,11 @@ export const siteConfig = {
       </svg>
     ),
     badge: '100% OPEN SOURCE',
-    githubUrl: 'https://github.com/kortix-ai/suna',
-    title: 'Suna, the AI Employee.',
+    githubUrl: 'https://github.com/drpang/dobby',
+    title: 'Dobby, your AI Employee.',
     description:
-      'Suna by Kortix – is a generalist AI Agent that acts on your behalf.',
-    inputPlaceholder: 'Ask Suna to...',
+      'Dobby by Dr.Pang.AI – is a generalist AI Agent that acts on your behalf.',
+    inputPlaceholder: 'Ask Dobby to...',
   },
   cloudPricingItems: [
     {
@@ -1220,7 +1220,7 @@ export const siteConfig = {
   },
   ctaSection: {
     id: 'cta',
-    title: 'Start Using Kortix Suna Today',
+    title: 'Start Using Dobby Today',
     backgroundImage: '/holo.png',
     button: {
       text: 'Get Started for free',
@@ -1230,23 +1230,11 @@ export const siteConfig = {
   },
   footerLinks: [
     {
-      title: 'Kortix',
+      title: 'Dr.Pang.AI',
       links: [
-        { id: 1, title: 'About', url: 'https://kortix.ai' },
-        { id: 3, title: 'Contact', url: 'mailto:hey@kortix.ai' },
-        { id: 4, title: 'Careers', url: 'https://kortix.ai/careers' },
-      ],
-    },
-    {
-      title: 'Resources',
-      links: [
-        {
-          id: 5,
-          title: 'Documentation',
-          url: 'https://github.com/Kortix-ai/Suna',
-        },
-        { id: 7, title: 'Discord', url: 'https://discord.gg/Py6pCBUUPw' },
-        { id: 8, title: 'GitHub', url: 'https://github.com/Kortix-ai/Suna' },
+        { id: 1, title: 'About', url: 'https://drpang.ai' },
+        { id: 3, title: 'Contact', url: 'mailto:hey@drpang.ai' },
+        { id: 4, title: 'Careers', url: 'https://drpang.ai/careers' },
       ],
     },
     {
@@ -1255,17 +1243,17 @@ export const siteConfig = {
         {
           id: 9,
           title: 'Privacy Policy',
-          url: 'https://suna.so/legal?tab=privacy',
+          url: 'https://dobby.ai/legal?tab=privacy',
         },
         {
           id: 10,
           title: 'Terms of Service',
-          url: 'https://suna.so/legal?tab=terms',
+          url: 'https://dobby.ai/legal?tab=terms',
         },
         {
           id: 11,
           title: 'License Apache 2.0',
-          url: 'https://github.com/Kortix-ai/Suna/blob/main/LICENSE',
+          url: 'https://github.com/drpang/dobby/blob/main/LICENSE',
         },
       ],
     },

@@ -5,11 +5,10 @@ import { CTASection } from '@/components/home/sections/cta-section';
 // import { FAQSection } from "@/components/sections/faq-section";
 import { FooterSection } from '@/components/home/sections/footer-section';
 import { HeroSection } from '@/components/home/sections/hero-section';
-import { OpenSourceSection } from '@/components/home/sections/open-source-section';
 import HomeBillingTabs from '@/components/home/sections/home-billing-tabs';
 import { UseCasesSection } from '@/components/home/sections/use-cases-section';
 import { ModalProviders } from '@/providers/modal-providers';
-import { HeroVideoSection } from '@/components/home/sections/hero-video-section';
+import CommunityGallerySection from '@/components/home/sections/community-gallery-section';
 
 export default function Home() {
   return (
@@ -24,12 +23,9 @@ export default function Home() {
           {/* <QuoteSection /> */}
           {/* <FeatureSection /> */}
           {/* <GrowthSection /> */}
-          <OpenSourceSection />
+          <CommunityGallerySection />
           <div className='flex flex-col items-center px-4'>
             <HomeBillingTabs />
-          </div>
-          <div className="pb-10 mx-auto">
-            <HeroVideoSection />
           </div>
           {/* <TestimonialSection /> */}
           {/* <FAQSection /> */}
