@@ -232,7 +232,7 @@ export function HeroSection() {
             className="h-full w-full"
             squareSize={mounted && tablet ? 2 : 2.5}
             gridGap={mounted && tablet ? 2 : 2.5}
-            color="var(--secondary)"
+            color="var(--primary)"
             maxOpacity={0.4}
             flickerChance={isScrolling ? 0.01 : 0.03} // Low flickering when not scrolling
           />
@@ -253,7 +253,7 @@ export function HeroSection() {
             className="h-full w-full"
             squareSize={mounted && tablet ? 2 : 2.5}
             gridGap={mounted && tablet ? 2 : 2.5}
-            color="var(--secondary)"
+            color="var(--primary)"
             maxOpacity={0.4}
             flickerChance={isScrolling ? 0.01 : 0.03} // Low flickering when not scrolling
           />
