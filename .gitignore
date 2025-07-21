@@ -202,3 +202,7 @@ backend/.test_token_compression.py
 backend/test_token_compression_data.py
 
 dump.rdb
+
+# Local backup files
+my-local-changes.patch
+my-local-backups/
