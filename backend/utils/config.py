@@ -49,7 +49,14 @@ class Configuration:
     STRIPE_TIER_125_800_ID_PROD: str = 'price_1RMBRfP2cIDuyWfbVPuRpDkq'
     STRIPE_TIER_200_1000_ID_PROD: str = 'price_1RMBRfP2cIDuyWfbJZh9gNHu'
     
-
+    # Yearly subscription tier IDs - Production (15% discount)
+    STRIPE_TIER_2_20_YEARLY_ID_PROD: str = 'price_1RnOhYP2cIDuyWfbryEigAqQ'
+    STRIPE_TIER_6_50_YEARLY_ID_PROD: str = 'price_1RnOjXP2cIDuyWfbP2eZnMOE'
+    STRIPE_TIER_12_100_YEARLY_ID_PROD: str = 'price_1RnOl0P2cIDuyWfb0M8AFcf0'
+    STRIPE_TIER_25_200_YEARLY_ID_PROD: str = 'price_1RnOljP2cIDuyWfbnXSXPVNR'
+    STRIPE_TIER_50_400_YEARLY_ID_PROD: str = 'price_1RnOnUP2cIDuyWfbTBzltbAK'
+    STRIPE_TIER_125_800_YEARLY_ID_PROD: str = 'price_1RnOoDP2cIDuyWfbaWewDX98'
+    STRIPE_TIER_200_1000_YEARLY_ID_PROD: str = 'price_1RnOokP2cIDuyWfbEzXTcgCN'
     
     # Subscription tier IDs - Staging
     STRIPE_FREE_TIER_ID_STAGING: str = 'price_1RIGvuG6l1KZGqIrw14abxeL'
@@ -61,7 +68,14 @@ class Configuration:
     STRIPE_TIER_125_800_ID_STAGING: str = 'price_1RIKNrG6l1KZGqIrjKT0yGvI'
     STRIPE_TIER_200_1000_ID_STAGING: str = 'price_1RIKQ2G6l1KZGqIrum9n8SI7'
     
-
+    # Yearly subscription tier IDs - Staging (15% discount)
+    STRIPE_TIER_2_20_YEARLY_ID_STAGING: str = 'price_1ReGogG6l1KZGqIrEyBTmtPk'
+    STRIPE_TIER_6_50_YEARLY_ID_STAGING: str = 'price_1ReGoJG6l1KZGqIr0DJWtoOc'
+    STRIPE_TIER_12_100_YEARLY_ID_STAGING: str = 'price_1ReGnZG6l1KZGqIr0ThLEl5S'
+    STRIPE_TIER_25_200_YEARLY_ID_STAGING: str = 'price_1ReGmzG6l1KZGqIre31mqoEJ'
+    STRIPE_TIER_50_400_YEARLY_ID_STAGING: str = 'price_1ReGmgG6l1KZGqIrn5nBc7e5'
+    STRIPE_TIER_125_800_YEARLY_ID_STAGING: str = 'price_1ReGmMG6l1KZGqIrvE2ycrAX'
+    STRIPE_TIER_200_1000_YEARLY_ID_STAGING: str = 'price_1ReGlXG6l1KZGqIrlgurP5GU'
     
     # Computed subscription tier IDs based on environment
     @property
@@ -112,7 +126,48 @@ class Configuration:
             return self.STRIPE_TIER_200_1000_ID_STAGING
         return self.STRIPE_TIER_200_1000_ID_PROD
     
-
+    # Yearly tier computed properties
+    @property
+    def STRIPE_TIER_2_20_YEARLY_ID(self) -> str:
+        if self.ENV_MODE == EnvMode.STAGING:
+            return self.STRIPE_TIER_2_20_YEARLY_ID_STAGING
+        return self.STRIPE_TIER_2_20_YEARLY_ID_PROD
+    
+    @property
+    def STRIPE_TIER_6_50_YEARLY_ID(self) -> str:
+        if self.ENV_MODE == EnvMode.STAGING:
+            return self.STRIPE_TIER_6_50_YEARLY_ID_STAGING
+        return self.STRIPE_TIER_6_50_YEARLY_ID_PROD
+    
+    @property
+    def STRIPE_TIER_12_100_YEARLY_ID(self) -> str:
+        if self.ENV_MODE == EnvMode.STAGING:
+            return self.STRIPE_TIER_12_100_YEARLY_ID_STAGING
+        return self.STRIPE_TIER_12_100_YEARLY_ID_PROD
+    
+    @property
+    def STRIPE_TIER_25_200_YEARLY_ID(self) -> str:
+        if self.ENV_MODE == EnvMode.STAGING:
+            return self.STRIPE_TIER_25_200_YEARLY_ID_STAGING
+        return self.STRIPE_TIER_25_200_YEARLY_ID_PROD
+    
+    @property
+    def STRIPE_TIER_50_400_YEARLY_ID(self) -> str:
+        if self.ENV_MODE == EnvMode.STAGING:
+            return self.STRIPE_TIER_50_400_YEARLY_ID_STAGING
+        return self.STRIPE_TIER_50_400_YEARLY_ID_PROD
+    
+    @property
+    def STRIPE_TIER_125_800_YEARLY_ID(self) -> str:
+        if self.ENV_MODE == EnvMode.STAGING:
+            return self.STRIPE_TIER_125_800_YEARLY_ID_STAGING
+        return self.STRIPE_TIER_125_800_YEARLY_ID_PROD
+    
+    @property
+    def STRIPE_TIER_200_1000_YEARLY_ID(self) -> str:
+        if self.ENV_MODE == EnvMode.STAGING:
+            return self.STRIPE_TIER_200_1000_YEARLY_ID_STAGING
+        return self.STRIPE_TIER_200_1000_YEARLY_ID_PROD
     
     # LLM API keys
     ANTHROPIC_API_KEY: Optional[str] = None
