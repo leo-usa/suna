@@ -5,14 +5,14 @@ stripe listen --forward-to localhost:8000/api/billing/webhook
 """
 
 from fastapi import APIRouter, HTTPException, Depends, Request
-from typing import Optional, Dict, Tuple
+from typing import Optional, Dict, Any, List, Tuple
 import stripe
 from datetime import datetime, timezone
 from utils.logger import logger
 from utils.config import config, EnvMode
 from services.supabase import DBConnection
 from utils.auth_utils import get_current_user_id_from_jwt
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from utils.constants import MODEL_ACCESS_TIERS, MODEL_NAME_ALIASES, HARDCODED_MODEL_PRICES
 from litellm.cost_calculator import cost_per_token
 import time
@@ -40,6 +40,47 @@ def get_model_pricing(model: str) -> tuple[float, float] | None:
         pricing = HARDCODED_MODEL_PRICES[model]
         return pricing["input_cost_per_million_tokens"], pricing["output_cost_per_million_tokens"]
     return None
+
+async def get_user_credits(client, user_id: str) -> float:
+    """Get the current credit balance for a user."""
+    try:
+        result = await client.schema('basejump').from_('billing_credits') \
+            .select('credits_minutes') \
+            .eq('account_id', user_id) \
+            .execute()
+        
+        if result.data and len(result.data) > 0:
+            return float(result.data[0]['credits_minutes'])
+        return 0.0
+    except Exception as e:
+        logger.error(f"Error getting user credits: {str(e)}")
+        return 0.0
+
+async def deduct_user_credits(client, user_id: str, minutes: float) -> bool:
+    """Deduct credits from a user's account. Returns True if successful."""
+    try:
+        # Get current credits
+        current_credits = await get_user_credits(client, user_id)
+        
+        if current_credits < minutes:
+            return False
+        
+        # Deduct credits
+        new_credits = current_credits - minutes
+        
+        # Update credits in database
+        await client.schema('basejump').from_('billing_credits') \
+            .upsert({
+                'account_id': user_id,
+                'credits_minutes': new_credits,
+                'updated_at': datetime.now(timezone.utc).isoformat()
+            }) \
+            .execute()
+        
+        return True
+    except Exception as e:
+        logger.error(f"Error deducting user credits: {str(e)}")
+        return False
 
 
 SUBSCRIPTION_TIERS = {
@@ -86,6 +127,14 @@ class SubscriptionStatus(BaseModel):
     scheduled_plan_name: Optional[str] = None
     scheduled_price_id: Optional[str] = None # Added scheduled price ID
     scheduled_change_date: Optional[datetime] = None
+
+class CreateCreditSessionRequest(BaseModel):
+    price_id: Optional[str] = None
+    amount_minutes: Optional[int] = None
+    payment_method: str  # 'alipay', 'wechat_pay', or 'card'
+    success_url: str
+    cancel_url: str
+    locale: Optional[str] = None
 
 # Helper functions
 async def get_stripe_customer_id(client, user_id: str) -> Optional[str]:
@@ -457,7 +506,7 @@ async def can_use_model(client, user_id: str, model_name: str):
 
 async def check_billing_status(client, user_id: str) -> Tuple[bool, str, Optional[Dict]]:
     """
-    Check if a user can run agents based on their subscription and usage.
+    Check if a user can run agents based on their subscription, usage, and credits.
     
     Returns:
         Tuple[bool, str, Optional[Dict]]: (can_run, message, subscription_info)
@@ -472,9 +521,18 @@ async def check_billing_status(client, user_id: str) -> Tuple[bool, str, Optiona
     
     # Get current subscription
     subscription = await get_user_subscription(user_id)
-    # print("Current subscription:", subscription)
     
-    # If no subscription, they can use free tier
+    # Get current credits
+    credits = await get_user_credits(client, user_id)
+    
+    # If user has credits, they can run regardless of subscription status
+    if credits > 0:
+        return True, f"OK - {credits:.1f} minutes of credits available", {
+            "credits": credits,
+            "subscription": subscription
+        }
+    
+    # If no subscription and no credits, they can use free tier
     if not subscription:
         subscription = {
             'price_id': config.STRIPE_FREE_TIER_ID,  # Free tier
@@ -499,7 +557,7 @@ async def check_billing_status(client, user_id: str) -> Tuple[bool, str, Optiona
     
     # Check if within limits
     if current_usage >= tier_info['cost']:
-        return False, f"Monthly limit of {tier_info['cost']} dollars reached. Please upgrade your plan or wait until next month.", subscription
+        return False, f"Monthly limit of {tier_info['cost']} dollars reached. Please upgrade your plan, purchase credits, or wait until next month.", subscription
     
     return True, "OK", subscription
 
@@ -1073,6 +1131,52 @@ async def stripe_webhook(request: Request):
             
             logger.info(f"Processed {event.type} event for customer {customer_id}")
         
+        elif event.type == 'checkout.session.completed':
+            # Handle credit purchase completion
+            session = event.data.object
+            
+            # Check if this is a credit purchase (one-time payment)
+            if session.get('mode') == 'payment':
+                customer_id = session.get('customer')
+                
+                if not customer_id:
+                    logger.warning(f"No customer ID found in checkout session: {session.id}")
+                    return {"status": "error", "message": "No customer ID found"}
+                
+                # Get database connection
+                db = DBConnection()
+                client = await db.client
+                
+                # Get user ID from customer ID
+                customer_result = await client.schema('basejump').from_('billing_customers') \
+                    .select('account_id') \
+                    .eq('id', customer_id) \
+                    .execute()
+                
+                if not customer_result.data:
+                    logger.warning(f"No user found for customer {customer_id}")
+                    return {"status": "error", "message": "No user found for customer"}
+                
+                user_id = customer_result.data[0]['account_id']
+                
+                # Calculate credits from line items
+                total_amount = session.get('amount_total', 0)  # in cents
+                credits_minutes = total_amount / 100  # $1 per minute
+                
+                # Add credits to user's account
+                current_credits = await get_user_credits(client, user_id)
+                new_credits = current_credits + credits_minutes
+                
+                await client.schema('basejump').from_('billing_credits') \
+                    .upsert({
+                        'account_id': user_id,
+                        'credits_minutes': new_credits,
+                        'updated_at': datetime.now(timezone.utc).isoformat()
+                    }) \
+                    .execute()
+                
+                logger.info(f"Added {credits_minutes} minutes of credits to user {user_id} (total: {new_credits})")
+        
         return {"status": "success"}
         
     except Exception as e:
@@ -1293,3 +1397,106 @@ async def get_usage_logs_endpoint(
     except Exception as e:
         logger.error(f"Error getting usage logs: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error getting usage logs: {str(e)}")
+
+
+@router.post("/create-credit-session")
+async def create_credit_session(
+    request: CreateCreditSessionRequest,
+    current_user_id: str = Depends(get_current_user_id_from_jwt)
+):
+    """Create a Stripe checkout session for purchasing credits."""
+    try:
+        # Get Supabase client
+        db = DBConnection()
+        client = await db.client
+        
+        # Get user email
+        user_result = await client.schema('basejump').from_('accounts') \
+            .select('email') \
+            .eq('id', current_user_id) \
+            .execute()
+        
+        if not user_result.data:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        user_email = user_result.data[0]['email']
+        
+        # Get or create Stripe customer
+        customer_id = await get_stripe_customer_id(client, current_user_id)
+        if not customer_id:
+            customer_id = await create_stripe_customer(client, current_user_id, user_email)
+        
+        # Determine amount and price
+        if request.price_id:
+            # Use predefined price ID
+            price_id = request.price_id
+        elif request.amount_minutes:
+            # Create a one-time payment for the specified amount
+            amount_cents = int(request.amount_minutes * 100)  # $1 per minute
+            price_id = None
+        else:
+            raise HTTPException(status_code=400, detail="Either price_id or amount_minutes must be provided")
+        
+        # Create checkout session
+        session_data = {
+            'customer': customer_id,
+            'success_url': request.success_url,
+            'cancel_url': request.cancel_url,
+            'mode': 'payment',
+            'locale': request.locale or 'en',
+        }
+        
+        if price_id:
+            session_data['line_items'] = [{'price': price_id, 'quantity': 1}]
+        else:
+            session_data['line_items'] = [{
+                'price_data': {
+                    'currency': 'usd',
+                    'product_data': {
+                        'name': f'{request.amount_minutes} minutes of credits',
+                    },
+                    'unit_amount': amount_cents,
+                },
+                'quantity': 1,
+            }]
+        
+        # Add payment method specific settings
+        if request.payment_method == 'alipay':
+            session_data['payment_method_types'] = ['alipay']
+        elif request.payment_method == 'wechat_pay':
+            session_data['payment_method_types'] = ['wechat_pay']
+        else:
+            session_data['payment_method_types'] = ['card']
+        
+        checkout_session = stripe.checkout.Session.create(**session_data)
+        
+        return {
+            "session_id": checkout_session.id,
+            "url": checkout_session.url
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error creating credit session: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error creating credit session: {str(e)}")
+
+
+@router.get("/credits")
+async def get_credits(current_user_id: str = Depends(get_current_user_id_from_jwt)):
+    """Get the current credit balance for a user."""
+    try:
+        # Get Supabase client
+        db = DBConnection()
+        client = await db.client
+        
+        credits = await get_user_credits(client, current_user_id)
+        
+        return {
+            "credits_minutes": credits,
+            "user_id": current_user_id
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting credits: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error getting credits: {str(e)}")
