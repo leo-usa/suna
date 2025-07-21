@@ -149,6 +149,13 @@ if config.ENV_MODE == EnvMode.STAGING:
     allowed_origins.append("http://localhost:3000")
     allow_origin_regex = r"https://suna-.*-prjcts\.vercel\.app"
 
+# Add production-specific origins for Render deployment
+if config.ENV_MODE == EnvMode.PRODUCTION:
+    allowed_origins.append("https://dobby2.onrender.com")
+    allowed_origins.append("https://dobby2-backend.onrender.com")
+    # Allow any Render subdomain for flexibility
+    allow_origin_regex = r"https://.*\.onrender\.com"
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
