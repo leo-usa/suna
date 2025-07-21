@@ -193,7 +193,7 @@ export default function HomeBillingTabs() {
       </div>
       
       <div className="mt-4 p-4 bg-primary/5 dark:bg-primary/10 border border-primary/20 dark:border-primary/30 rounded-lg max-w-2xl mx-auto">
-        <p className="text-sm text-primary-foreground dark:text-primary-foreground text-center">
+        <p className="text-sm text-foreground dark:text-foreground text-center">
           <strong>What are AI tokens?</strong> Tokens are units of text that AI models process. 
           Your plan includes credits to spend on various AI models - the more complex the task, 
           the more tokens used.
