@@ -232,6 +232,11 @@ class Configuration:
     # Admin API key for server-side operations
     ADMIN_API_KEY: Optional[str] = None
     
+    # Pre-paid credit configuration
+    PREPAID_SERVICE_FEE: float = 4.50  # Service fee in dollars for pre-paid purchases
+    DOLLAR_TO_MINUTES_RATE: float = 6.0  # $1 = 6 minutes (conversion rate)
+    MINUTES_TO_DOLLAR_RATE: float = 1/6.0  # 1 minute = $0.167 (inverse conversion)
+    
     @property
     def STRIPE_PRODUCT_ID(self) -> str:
         if self.ENV_MODE == EnvMode.STAGING:

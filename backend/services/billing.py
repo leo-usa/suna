@@ -42,38 +42,61 @@ def get_model_pricing(model: str) -> tuple[float, float] | None:
     return None
 
 async def get_user_credits(client, user_id: str) -> float:
-    """Get the current credit balance for a user."""
+    """Get the current credit balance in dollars (converting minutes if needed)."""
     try:
         result = await client.schema('basejump').from_('billing_credits') \
-            .select('credits_minutes') \
+            .select('balance_dollars, balance_minutes') \
             .eq('account_id', user_id) \
             .execute()
         
         if result.data and len(result.data) > 0:
-            return float(result.data[0]['credits_minutes'])
+            dollars = float(result.data[0]['balance_dollars'])
+            minutes = float(result.data[0]['balance_minutes'])
+            
+            # Convert minutes to dollars for comparison
+            minutes_as_dollars = minutes * config.MINUTES_TO_DOLLAR_RATE
+            
+            # Return the higher value (prioritize the system with more credits)
+            return max(dollars, minutes_as_dollars)
         return 0.0
     except Exception as e:
         logger.error(f"Error getting user credits: {str(e)}")
         return 0.0
 
-async def deduct_user_credits(client, user_id: str, minutes: float) -> bool:
-    """Deduct credits from a user's account. Returns True if successful."""
+async def deduct_user_credits(client, user_id: str, amount_dollars: float) -> bool:
+    """Deduct credits from both minutes and dollars for cross-compatibility."""
     try:
-        # Get current credits
-        current_credits = await get_user_credits(client, user_id)
+        # Get current balances
+        result = await client.schema('basejump').from_('billing_credits') \
+            .select('balance_minutes, balance_dollars') \
+            .eq('account_id', user_id) \
+            .execute()
         
-        if current_credits < minutes:
+        if result.data and len(result.data) > 0:
+            current_minutes = float(result.data[0]['balance_minutes'])
+            current_dollars = float(result.data[0]['balance_dollars'])
+        else:
+            current_minutes = 0.0
+            current_dollars = 0.0
+        
+        # Convert dollars to minutes for comparison
+        amount_minutes = amount_dollars * config.DOLLAR_TO_MINUTES_RATE
+        
+        # Check if user has enough credits (either minutes or dollars)
+        if current_minutes < amount_minutes and current_dollars < amount_dollars:
             return False
         
-        # Deduct credits
-        new_credits = current_credits - minutes
+        # Deduct from both systems for cross-compatibility
+        new_minutes = max(0, current_minutes - amount_minutes)
+        new_dollars = max(0, current_dollars - amount_dollars)
         
-        # Update credits in database
+        # Update both balances
         await client.schema('basejump').from_('billing_credits') \
             .upsert({
                 'account_id': user_id,
-                'credits_minutes': new_credits,
-                'updated_at': datetime.now(timezone.utc).isoformat()
+                'balance_minutes': new_minutes,
+                'balance_dollars': new_dollars,
+                'last_updated': datetime.now(timezone.utc).isoformat()
             }) \
             .execute()
         
@@ -1159,23 +1182,43 @@ async def stripe_webhook(request: Request):
                 
                 user_id = customer_result.data[0]['account_id']
                 
-                # Calculate credits from line items
+                # Calculate credits with service fee for NEW purchases
                 total_amount = session.get('amount_total', 0)  # in cents
-                credits_minutes = total_amount / 100  # $1 per minute
+                gross_dollars = total_amount / 100
+                service_fee = config.PREPAID_SERVICE_FEE
+                net_credits_dollars = gross_dollars - service_fee
                 
-                # Add credits to user's account
-                current_credits = await get_user_credits(client, user_id)
-                new_credits = current_credits + credits_minutes
+                # Get current balances
+                current_result = await client.schema('basejump').from_('billing_credits') \
+                    .select('balance_minutes, balance_dollars') \
+                    .eq('account_id', user_id) \
+                    .execute()
+                
+                if current_result.data and len(current_result.data) > 0:
+                    current_minutes = float(current_result.data[0]['balance_minutes'])
+                    current_dollars = float(current_result.data[0]['balance_dollars'])
+                else:
+                    current_minutes = 0.0
+                    current_dollars = 0.0
+                
+                # Add to dollar balance (new system)
+                new_dollars = current_dollars + net_credits_dollars
+                
+                # Keep minutes unchanged (existing customers keep their old credits)
+                new_minutes = current_minutes
                 
                 await client.schema('basejump').from_('billing_credits') \
                     .upsert({
                         'account_id': user_id,
-                        'credits_minutes': new_credits,
-                        'updated_at': datetime.now(timezone.utc).isoformat()
+                        'balance_dollars': new_dollars,
+                        'balance_minutes': new_minutes,
+                        'last_updated': datetime.now(timezone.utc).isoformat(),
+                        'source': 'prepaid_purchase',
+                        'transaction_id': session.id
                     }) \
                     .execute()
                 
-                logger.info(f"Added {credits_minutes} minutes of credits to user {user_id} (total: {new_credits})")
+                logger.info(f"Added ${net_credits_dollars:.2f} credits to user {user_id} (gross: ${gross_dollars:.2f}, service fee: ${service_fee:.2f})")
         
         return {"status": "success"}
         
@@ -1481,19 +1524,38 @@ async def create_credit_session(
 
 @router.get("/credits")
 async def get_credits(current_user_id: str = Depends(get_current_user_id_from_jwt)):
-    """Get the current credit balance for a user."""
+    """Get the current credit balance for the current user."""
     try:
-        # Get Supabase client
         db = DBConnection()
         client = await db.client
         
-        credits = await get_user_credits(client, current_user_id)
+        result = await client.schema('basejump').from_('billing_credits') \
+            .select('balance_dollars, balance_minutes') \
+            .eq('account_id', current_user_id) \
+            .execute()
         
-        return {
-            "credits_minutes": credits,
-            "user_id": current_user_id
-        }
-        
+        if result.data and len(result.data) > 0:
+            dollars = float(result.data[0]['balance_dollars'])
+            minutes = float(result.data[0]['balance_minutes'])
+            
+            # Convert minutes to dollars for comparison
+            minutes_as_dollars = minutes * config.MINUTES_TO_DOLLAR_RATE
+            
+            return {
+                "credits_dollars": dollars,
+                "credits_minutes": minutes,
+                "total_credits_dollars": max(dollars, minutes_as_dollars),
+                "conversion_rate": "6 minutes per $1",
+                "user_id": current_user_id
+            }
+        else:
+            return {
+                "credits_dollars": 0.0,
+                "credits_minutes": 0.0,
+                "total_credits_dollars": 0.0,
+                "conversion_rate": "6 minutes per $1",
+                "user_id": current_user_id
+            }
     except Exception as e:
         logger.error(f"Error getting credits: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error getting credits: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get credits")
