@@ -550,7 +550,7 @@ async def check_billing_status(client, user_id: str) -> Tuple[bool, str, Optiona
     
     # If user has credits, they can run regardless of subscription status
     if credits > 0:
-        return True, f"OK - {credits:.1f} minutes of credits available", {
+        return True, f"OK - ${credits:.2f} of credits available", {
             "credits": credits,
             "subscription": subscription
         }

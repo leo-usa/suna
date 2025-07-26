@@ -2015,8 +2015,14 @@ export const getAgentBuilderChatHistory = async (agentId: string): Promise<{mess
   return data;
 };
 
-// Get user's prepaid credit balance (in minutes)
-export const getCreditBalance = async (): Promise<number> => {
+// Get user's unified credit balance (returns total credits in dollars)
+export const getCreditBalance = async (): Promise<{
+  credits_dollars: number;
+  credits_minutes: number;
+  total_credits_dollars: number;
+  conversion_rate: string;
+  user_id: string;
+}> => {
   const supabase = createClient();
   const {
     data: { session },
@@ -2034,7 +2040,13 @@ export const getCreditBalance = async (): Promise<number> => {
 
   if (!response.ok) throw new Error('Failed to fetch credit balance');
   const data = await response.json();
-  return data.credits_minutes ?? 0;
+  return data;
+};
+
+// Legacy function for backward compatibility - returns total credits in dollars
+export const getCreditBalanceLegacy = async (): Promise<number> => {
+  const data = await getCreditBalance();
+  return data.total_credits_dollars;
 };
 
 export const createCreditSession = async (params: {

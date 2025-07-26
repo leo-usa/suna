@@ -22,18 +22,18 @@ type Props = {
   defaultTab?: "subscription" | "prepaid";
 };
 
-// Mapping from minutes to Stripe price IDs
+// Mapping from dollar amounts to Stripe price IDs
 const CREDIT_PRICE_IDS: Record<number, string> = {
-  30: 'price_1RQZVpP2cIDuyWfbF62E3dsi',   // $9 for 30 minutes
-  300: 'price_1RQZVpP2cIDuyWfbgUnmBizh',  // $49 for 5 hours
-  600: 'price_1RQZVpP2cIDuyWfbcceSm4gM',  // $99 for 10 hours
+  9: 'price_1RQZVpP2cIDuyWfbF62E3dsi',   // $9 (after service fee: $4.50)
+  49: 'price_1RQZVpP2cIDuyWfbgUnmBizh',  // $49 (after service fee: $44.50)
+  99: 'price_1RQZVpP2cIDuyWfbcceSm4gM',  // $99 (after service fee: $94.50)
 };
 
 // Add price mapping for display
 const CREDIT_PRICES: Record<number, string> = {
-  30: '$9',
-  300: '$49',
-  600: '$99',
+  9: '$9',
+  49: '$49',
+  99: '$99',
 };
 
 // Inline AliPay and WeChat Pay SVG icons
@@ -49,10 +49,16 @@ export default function AccountBillingStatus({ accountId, returnUrl, defaultTab 
   const { session, isLoading: authLoading } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [isManaging, setIsManaging] = useState(false);
-  const [creditBalance, setCreditBalance] = useState<number | null>(null);
+  const [creditBalance, setCreditBalance] = useState<{
+    credits_dollars: number;
+    credits_minutes: number;
+    total_credits_dollars: number;
+    conversion_rate: string;
+    user_id: string;
+  } | null>(null);
   const [isCreditLoading, setIsCreditLoading] = useState(true);
 
-  const [topUpAmount, setTopUpAmount] = useState(300); // default 5h
+  const [topUpAmount, setTopUpAmount] = useState(49); // default $49
   const [paymentMethod, setPaymentMethod] = useState<'alipay' | 'wechat_pay' | 'card'>('alipay');
   const [isTopUpLoading, setIsTopUpLoading] = useState(false);
   const [topUpError, setTopUpError] = useState<string | null>(null);
@@ -74,7 +80,13 @@ export default function AccountBillingStatus({ accountId, returnUrl, defaultTab 
         setCreditBalance(balance);
       } catch (err) {
         console.error('Failed to fetch credits:', err);
-        setCreditBalance(0);
+        setCreditBalance({
+          credits_dollars: 0,
+          credits_minutes: 0,
+          total_credits_dollars: 0,
+          conversion_rate: "6 minutes per $1",
+          user_id: ""
+        });
       } finally {
         setIsCreditLoading(false);
       }
@@ -300,7 +312,7 @@ export default function AccountBillingStatus({ accountId, returnUrl, defaultTab 
                   {isCreditLoading ? (
                     <Skeleton className="h-4 w-16" />
                   ) : (
-                    `${creditBalance?.toFixed(1) || '0'} minutes`
+                    `$${creditBalance?.total_credits_dollars.toFixed(2) || '0.00'} (${creditBalance?.conversion_rate || '6 min/$1'})`
                   )}
                 </span>
               </div>
@@ -308,21 +320,19 @@ export default function AccountBillingStatus({ accountId, returnUrl, defaultTab 
           </div>
 
           <div className="text-center text-sm text-muted-foreground mb-6">
-            <p>Pre-paid credits allow you to use agents without a subscription.</p>
-            <p className="mt-1">Credits are consumed based on your usage and never expire.</p>
+                            <p>Pre-paid credits allow you to use agents without a subscription.</p>
+                <p className="mt-1">Credits are consumed based on your usage and never expire. New purchases use dollar-based credits.</p>
           </div>
 
           <div className="max-w-md mx-auto bg-card border border-border rounded-xl p-6">
             <Label className="mb-2 font-medium">Select Credit Amount</Label>
             <RadioGroup value={topUpAmount.toString()} onValueChange={(value) => setTopUpAmount(Number(value))} className="flex flex-col gap-2 mb-4">
-              {[30, 300, 600].map((minutes) => (
-                <div key={minutes} className="flex items-center gap-3 rounded-lg border px-4 py-2 hover:bg-muted cursor-pointer transition">
-                  <RadioGroupItem value={String(minutes)} id={`credit-${minutes}`} />
-                  <Label htmlFor={`credit-${minutes}`} className="flex-1 cursor-pointer text-sm font-normal flex items-center gap-2">
-                    {minutes === 30 && '30 minutes'}
-                    {minutes === 300 && '5 hours'}
-                    {minutes === 600 && '10 hours'}
-                    <span className="text-muted-foreground ml-2">{CREDIT_PRICES[minutes]}</span>
+              {[9, 49, 99].map((dollars) => (
+                <div key={dollars} className="flex items-center gap-3 rounded-lg border px-4 py-2 hover:bg-muted cursor-pointer transition">
+                  <RadioGroupItem value={String(dollars)} id={`credit-${dollars}`} />
+                  <Label htmlFor={`credit-${dollars}`} className="flex-1 cursor-pointer text-sm font-normal flex items-center gap-2">
+                    ${dollars} (${dollars - 4.50} net after service fee)
+                    <span className="text-muted-foreground ml-2">{CREDIT_PRICES[dollars]}</span>
                   </Label>
                 </div>
               ))}
@@ -363,7 +373,7 @@ export default function AccountBillingStatus({ accountId, returnUrl, defaultTab 
               <Button
                 variant="outline"
                 onClick={() => {
-                  setTopUpAmount(300);
+                  setTopUpAmount(49);
                   setPaymentMethod('alipay');
                   setTopUpError(null);
                 }}

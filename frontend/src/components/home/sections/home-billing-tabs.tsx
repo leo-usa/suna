@@ -12,15 +12,15 @@ import { createCreditSession } from '@/lib/api';
 
 // Price mapping for display and Stripe price IDs
 const CREDIT_PRICE_IDS: Record<number, string> = {
-  30: 'price_1RQZVpP2cIDuyWfbF62E3dsi',   // $9 for 30 minutes
-  300: 'price_1RQZVpP2cIDuyWfbgUnmBizh',  // $49 for 5 hours
-  600: 'price_1RQZVpP2cIDuyWfbcceSm4gM',  // $99 for 10 hours
+  9: 'price_1RQZVpP2cIDuyWfbF62E3dsi',   // $9 (after service fee: $4.50)
+  49: 'price_1RQZVpP2cIDuyWfbgUnmBizh',  // $49 (after service fee: $44.50)
+  99: 'price_1RQZVpP2cIDuyWfbcceSm4gM',  // $99 (after service fee: $94.50)
 };
 
 const CREDIT_PRICES: Record<number, string> = {
-  30: '$9',
-  300: '$49',
-  600: '$99',
+  9: '$9',
+  49: '$49',
+  99: '$99',
 };
 
 // Inline AliPay and WeChat Pay SVG icons
@@ -34,8 +34,8 @@ const WeChatPayIcon = (props: React.SVGProps<SVGSVGElement>) => (
 
 export default function HomeBillingTabs() {
   const { session, isLoading: authLoading } = useAuth();
-  // Set default to 300 (5 hours, $49)
-  const [topUpAmount, setTopUpAmount] = useState(300);
+  // Set default to $49
+  const [topUpAmount, setTopUpAmount] = useState(49);
   const [paymentMethod, setPaymentMethod] = useState<'alipay' | 'wechat_pay' | 'card'>('alipay');
   const [isTopUpLoading, setIsTopUpLoading] = useState(false);
   const [topUpError, setTopUpError] = useState<string | null>(null);
@@ -117,21 +117,19 @@ export default function HomeBillingTabs() {
             <div className="text-center mb-8">
               <h3 className="text-2xl font-semibold mb-2">Pre-paid Credits</h3>
               <p className="text-muted-foreground">
-                Purchase credits to use agents without a subscription. Credits never expire.
+                Purchase credits to use agents without a subscription. Credits never expire. New purchases use dollar-based credits with a $4.50 service fee.
               </p>
             </div>
             
             <div className="max-w-md mx-auto bg-card border border-border rounded-xl p-6">
               <Label className="mb-2 font-medium">Select Credit Amount</Label>
               <RadioGroup value={String(topUpAmount)} onValueChange={v => setTopUpAmount(Number(v))} className="flex flex-col gap-2 mb-4">
-                {[30, 300, 600].map((minutes) => (
-                  <div key={minutes} className="flex items-center gap-3 rounded-lg border px-4 py-2 hover:bg-muted cursor-pointer transition">
-                    <RadioGroupItem value={String(minutes)} id={`credit-${minutes}`} />
-                    <Label htmlFor={`credit-${minutes}`} className="flex-1 cursor-pointer text-sm font-normal flex items-center gap-2">
-                      {minutes === 30 && '30 minutes'}
-                      {minutes === 300 && '5 hours'}
-                      {minutes === 600 && '10 hours'}
-                      <span className="text-muted-foreground ml-2">{CREDIT_PRICES[minutes]}</span>
+                {[9, 49, 99].map((dollars) => (
+                  <div key={dollars} className="flex items-center gap-3 rounded-lg border px-4 py-2 hover:bg-muted cursor-pointer transition">
+                    <RadioGroupItem value={String(dollars)} id={`credit-${dollars}`} />
+                    <Label htmlFor={`credit-${dollars}`} className="flex-1 cursor-pointer text-sm font-normal flex items-center gap-2">
+                      ${dollars} (${dollars - 4.50} net after service fee)
+                      <span className="text-muted-foreground ml-2">{CREDIT_PRICES[dollars]}</span>
                     </Label>
                   </div>
                 ))}
@@ -172,7 +170,7 @@ export default function HomeBillingTabs() {
                 <Button
                   variant="outline"
                   onClick={() => {
-                    setTopUpAmount(300);
+                    setTopUpAmount(49);
                     setPaymentMethod('alipay');
                     setTopUpError(null);
                   }}
