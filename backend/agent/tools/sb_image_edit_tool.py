@@ -17,6 +17,15 @@ class SandboxImageEditTool(SandboxToolsBase):
         self.thread_id = thread_id
         self.thread_manager = thread_manager
 
+    def _get_size_from_aspect_ratio(self, aspect_ratio: str) -> str:
+        """Map aspect ratio to OpenAI GPT Image 1 supported sizes."""
+        size_mapping = {
+            "square": "1024x1024",      # 1:1 aspect ratio
+            "portrait": "1024x1792",    # 9:16 aspect ratio  
+            "landscape": "1792x1024",   # 16:9 aspect ratio
+        }
+        return size_mapping.get(aspect_ratio, "1024x1024")  # Default to square if invalid
+
     @openapi_schema(
         {
             "type": "function",
@@ -39,6 +48,12 @@ class SandboxImageEditTool(SandboxToolsBase):
                             "type": "string",
                             "description": "(edit mode only) Path to the image file to edit, relative to /workspace. Required for 'edit'.",
                         },
+                        "aspect_ratio": {
+                            "type": "string",
+                            "enum": ["square", "portrait", "landscape"],
+                            "description": "Aspect ratio for the generated image. 'square' (1:1), 'portrait' (9:16), or 'landscape' (16:9). Defaults to 'square'.",
+                            "default": "square"
+                        },
                     },
                     "required": ["mode", "prompt"],
                 },
@@ -51,12 +66,14 @@ class SandboxImageEditTool(SandboxToolsBase):
             {"param_name": "mode", "node_type": "attribute", "path": "."},
             {"param_name": "prompt", "node_type": "attribute", "path": "."},
             {"param_name": "image_path", "node_type": "attribute", "path": "."},
+            {"param_name": "aspect_ratio", "node_type": "attribute", "path": "."},
         ],
         example="""
         <function_calls>
         <invoke name="image_edit_or_generate">
         <parameter name="mode">generate</parameter>
         <parameter name="prompt">A futuristic cityscape at sunset</parameter>
+        <parameter name="aspect_ratio">landscape</parameter>
         </invoke>
         </function_calls>
         """,
@@ -66,17 +83,21 @@ class SandboxImageEditTool(SandboxToolsBase):
         mode: str,
         prompt: str,
         image_path: Optional[str] = None,
+        aspect_ratio: str = "square",
     ) -> ToolResult:
         """Generate or edit images using OpenAI GPT Image 1 via OpenAI SDK (no mask support)."""
         try:
             await self._ensure_sandbox()
+
+            # Get the appropriate size based on aspect ratio
+            size = self._get_size_from_aspect_ratio(aspect_ratio)
 
             if mode == "generate":
                 response = await aimage_generation(
                     model="gpt-image-1",
                     prompt=prompt,
                     n=1,
-                    size="1024x1024",
+                    size=size,
                 )
             elif mode == "edit":
                 if not image_path:
@@ -97,7 +118,7 @@ class SandboxImageEditTool(SandboxToolsBase):
                     prompt=prompt,
                     model="gpt-image-1",
                     n=1,
-                    size="1024x1024",
+                    size=size,
                 )
             else:
                 return self.fail_response("Invalid mode. Use 'generate' or 'edit'.")
@@ -108,7 +129,7 @@ class SandboxImageEditTool(SandboxToolsBase):
                 return image_filename
 
             return self.success_response(
-                f"Successfully generated image using mode '{mode}'. Image saved as: {image_filename}. You can use the ask tool to display the image."
+                f"Successfully generated image using mode '{mode}' with {aspect_ratio} aspect ratio. Image saved as: {image_filename}. You can use the ask tool to display the image."
             )
 
         except Exception as e:
