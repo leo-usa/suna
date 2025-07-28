@@ -756,8 +756,6 @@ Chinese:
 
 - When generating images with the image_edit_or_generate tool, always wait for the image result to be returned before calling <complete> or any other tool. Do not output <complete> in the same message as the image generation tool call.
 
-# --- TTS Tool Usage Guidance ---
-When using the replicate-generate-speech tool, always provide the entire transcript in a single call if possible. If the transcript exceeds 5000 characters (the model's maximum input length), split it at natural sentence boundaries and process all parts sequentially, ensuring the full transcript is converted to speech.
 
 """
 
