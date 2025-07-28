@@ -558,50 +558,78 @@ export function useAgentStream(
       setAgentRunId(runId);
       currentRunIdRef.current = runId; // Set the ref immediately
 
-      try {
-        // *** Crucial check: Verify agent is running BEFORE connecting ***
-        const agentStatus = await getAgentStatus(runId);
-        if (!isMountedRef.current) return; // Check mount status after async call
+      // Retry logic to wait for agent to start
+      const maxRetries = 5;
+      const retryDelay = 1000; // 1 second
+      let retryCount = 0;
 
-        if (agentStatus.status !== 'running') {
-          console.warn(
-            `[useAgentStream] Agent run ${runId} is not in running state (status: ${agentStatus.status}). Cannot start stream.`,
+      const tryConnect = async (): Promise<void> => {
+        try {
+          // *** Crucial check: Verify agent is running BEFORE connecting ***
+          const agentStatus = await getAgentStatus(runId);
+          if (!isMountedRef.current) return; // Check mount status after async call
+
+          if (agentStatus.status !== 'running') {
+            console.warn(
+              `[useAgentStream] Agent run ${runId} is not in running state (status: ${agentStatus.status}). Retry ${retryCount + 1}/${maxRetries}`,
+            );
+            
+            // If we've exhausted retries, give up
+            if (retryCount >= maxRetries - 1) {
+              setError(`Agent run is not running (status: ${agentStatus.status})`);
+              finalizeStream(
+                mapAgentStatus(agentStatus.status) || 'agent_not_running',
+                runId,
+              );
+              return;
+            }
+
+            // Wait and retry
+            retryCount++;
+            await new Promise(resolve => setTimeout(resolve, retryDelay));
+            return tryConnect();
+          }
+
+          // Agent is running, proceed to create the stream
+          console.log(
+            `[useAgentStream] Agent run ${runId} confirmed running after ${retryCount} retries. Setting up EventSource.`,
           );
-          setError(`Agent run is not running (status: ${agentStatus.status})`);
-          finalizeStream(
-            mapAgentStatus(agentStatus.status) || 'agent_not_running',
-            runId,
+          const cleanup = streamAgent(runId, {
+            onMessage: handleStreamMessage,
+            onError: handleStreamError,
+            onClose: handleStreamClose,
+          });
+          streamCleanupRef.current = cleanup;
+          // Status will be updated to 'streaming' by the first message received in handleStreamMessage
+        } catch (err) {
+          if (!isMountedRef.current) return; // Check mount status after async call
+
+          const errorMessage = err instanceof Error ? err.message : String(err);
+          console.error(
+            `[useAgentStream] Error checking agent status for ${runId} (retry ${retryCount + 1}/${maxRetries}): ${errorMessage}`,
           );
-          return;
+
+          const isNotFoundError =
+            errorMessage.includes('not found') ||
+            errorMessage.includes('404') ||
+            errorMessage.includes('does not exist');
+
+          // If we've exhausted retries, give up
+          if (retryCount >= maxRetries - 1) {
+            setError(errorMessage);
+            finalizeStream(isNotFoundError ? 'agent_not_running' : 'error', runId);
+            return;
+          }
+
+          // Wait and retry
+          retryCount++;
+          await new Promise(resolve => setTimeout(resolve, retryDelay));
+          return tryConnect();
         }
+      };
 
-        // Agent is running, proceed to create the stream
-        console.log(
-          `[useAgentStream] Agent run ${runId} confirmed running. Setting up EventSource.`,
-        );
-        const cleanup = streamAgent(runId, {
-          onMessage: handleStreamMessage,
-          onError: handleStreamError,
-          onClose: handleStreamClose,
-        });
-        streamCleanupRef.current = cleanup;
-        // Status will be updated to 'streaming' by the first message received in handleStreamMessage
-      } catch (err) {
-        if (!isMountedRef.current) return; // Check mount status after async call
-
-        const errorMessage = err instanceof Error ? err.message : String(err);
-        console.error(
-          `[useAgentStream] Error initiating stream for ${runId}: ${errorMessage}`,
-        );
-        setError(errorMessage);
-
-        const isNotFoundError =
-          errorMessage.includes('not found') ||
-          errorMessage.includes('404') ||
-          errorMessage.includes('does not exist');
-
-        finalizeStream(isNotFoundError ? 'agent_not_running' : 'error', runId);
-      }
+      // Start the retry logic
+      tryConnect();
     },
     [
       updateStatus,
@@ -610,7 +638,7 @@ export function useAgentStream(
       handleStreamError,
       handleStreamClose,
     ],
-  ); // Add dependencies
+  );
 
   const stopStreaming = useCallback(async () => {
     if (!isMountedRef.current || !agentRunId) return;
