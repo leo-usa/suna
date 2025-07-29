@@ -21,8 +21,8 @@ class SandboxImageEditTool(SandboxToolsBase):
         """Map aspect ratio to OpenAI GPT Image 1 supported sizes."""
         size_mapping = {
             "square": "1024x1024",      # 1:1 aspect ratio
-            "portrait": "1024x1792",    # 9:16 aspect ratio  
-            "landscape": "1792x1024",   # 16:9 aspect ratio
+            "portrait": "1024x1536",    # 2:3 aspect ratio (closest to 9:16)
+            "landscape": "1536x1024",   # 3:2 aspect ratio (closest to 16:9)
         }
         return size_mapping.get(aspect_ratio, "1024x1024")  # Default to square if invalid
 
