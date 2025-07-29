@@ -1,3 +1,5 @@
+import time
+import asyncio
 from daytona_sdk import AsyncDaytona, DaytonaConfig, CreateSandboxFromImageParams, AsyncSandbox, SessionExecuteRequest, Resources, SandboxState
 from dotenv import load_dotenv
 from utils.logger import logger
@@ -54,6 +56,15 @@ async def get_or_start_sandbox(sandbox_id: str) -> AsyncSandbox:
                 logger.error(f"Error starting sandbox: {e}")
                 raise e
         
+        # Update the last used timestamp on the sandbox labels for LRU policy
+        try:
+            labels = sandbox.labels or {}
+            labels['last_used_ts'] = str(time.time())
+            await sandbox.set_labels(labels)
+            logger.info(f"Successfully updated labels for sandbox {sandbox_id}")
+        except Exception as e:
+            logger.error(f"Could not update labels for sandbox {sandbox_id}: {e}")
+        
         logger.info(f"Sandbox {sandbox_id} is ready")
         return sandbox
         
@@ -79,18 +90,34 @@ async def start_supervisord_session(sandbox: AsyncSandbox):
         raise e
 
 async def create_sandbox(password: str, project_id: str = None) -> AsyncSandbox:
-    """Create a new sandbox with all required services configured and running."""
+    """Create a new sandbox with all required services configured and running. Handles VM limit with LRU deletion."""
     
     logger.debug("Creating new Daytona sandbox environment")
     logger.debug("Configuring sandbox with browser-use image and environment variables")
     
+    # Sort by the last_used_ts label. Sandboxes without the label are treated as the oldest.
+    def get_sort_key(s):
+        if hasattr(s, 'labels') and s.labels and s.labels.get('last_used_ts'):
+            try:
+                return float(s.labels.get('last_used_ts'))
+            except (ValueError, TypeError):
+                # Label is malformed, treat as very old.
+                return 0
+        # No label, treat as very old to prioritize for deletion.
+        return 0
+
     labels = None
     if project_id:
         logger.debug(f"Using sandbox_id as label: {project_id}")
         labels = {'id': project_id}
+    
+    # Add a last_used timestamp as a label for our LRU policy.
+    if labels is None:
+        labels = {}
+    labels['last_used_ts'] = str(time.time())
         
     params = CreateSandboxFromImageParams(
-        image=Configuration.SANDBOX_IMAGE_NAME,
+        image=config.SANDBOX_IMAGE_NAME,
         public=True,
         labels=labels,
         env_vars={
@@ -109,21 +136,93 @@ async def create_sandbox(password: str, project_id: str = None) -> AsyncSandbox:
         resources=Resources(
             cpu=2,
             memory=4,
-            disk=5,
+            disk=3,
         ),
         auto_stop_interval=15,
         auto_archive_interval=2 * 60,
     )
     
-    # Create the sandbox
-    sandbox = await daytona.create(params)
-    logger.debug(f"Sandbox created with ID: {sandbox.id}")
-    
-    # Start supervisord in a session for new sandbox
-    await start_supervisord_session(sandbox)
-    
-    logger.debug(f"Sandbox environment successfully initialized")
-    return sandbox
+    try:
+        # Get current sandbox count
+        sandboxes = await daytona.list()
+        logger.info(f"Found {len(sandboxes)} existing sandboxes. Limit is {config.DAYTONA_MAX_SANDBOXES}")
+
+        # Log all sandbox states for debugging
+        state_counts = {}
+        for s in sandboxes:
+            state = s.state
+            state_counts[state] = state_counts.get(state, 0) + 1
+        logger.info(f"Sandbox states: {state_counts}")
+
+        # Count sandboxes that are not in terminal states (DESTROYED, ERROR, BUILD_FAILED)
+        # These are the ones that count towards our limit
+        active_states = [SandboxState.CREATING, SandboxState.RESTORING, SandboxState.STARTED, 
+                        SandboxState.STOPPED, SandboxState.STARTING, SandboxState.STOPPING, 
+                        SandboxState.PENDING_BUILD, SandboxState.BUILDING_SNAPSHOT, 
+                        SandboxState.UNKNOWN, SandboxState.PULLING_SNAPSHOT, 
+                        SandboxState.ARCHIVING, SandboxState.ARCHIVED]
+        
+        count_towards_limit = [s for s in sandboxes if s.state in active_states]
+        logger.info(f"Sandboxes counting towards limit: {len(count_towards_limit)} (out of {len(sandboxes)} total)")
+
+        # Check if we've reached the sandbox limit
+        while len(count_towards_limit) >= config.DAYTONA_MAX_SANDBOXES:
+            logger.warning(f"Sandbox limit ({config.DAYTONA_MAX_SANDBOXES}) reached. Current count: {len(count_towards_limit)}. Attempting to delete oldest non-active sandboxes.")
+            
+            # Filter for non-active sandboxes from the current list
+            non_active = [s for s in count_towards_limit if s.state in [SandboxState.ARCHIVED, SandboxState.STOPPED]]
+            logger.info(f"Found {len(non_active)} non-active sandboxes out of {len(count_towards_limit)} total")
+            
+            if not non_active:
+                logger.error("All sandboxes are active, but limit is reached. Cannot create new sandbox.")
+                raise RuntimeError("All agents are busy. Please wait for a slot to become available.")
+
+            # Log all candidates for deletion
+            for s in non_active:
+                last_used = s.labels.get('last_used_ts', 'N/A') if hasattr(s, 'labels') and s.labels else 'N/A'
+                logger.info(f"Non-active sandbox: id={getattr(s, 'id', 'N/A')}, state={s.state}, last_used_ts={last_used}")
+            
+            non_active.sort(key=get_sort_key)
+            
+            # Calculate how many to delete to get well under the limit
+            # Delete enough to get to 85 (5 below limit) to provide buffer
+            target_count = config.DAYTONA_MAX_SANDBOXES - 5
+            sandboxes_to_delete = len(count_towards_limit) - target_count
+            
+            # Delete multiple oldest sandboxes at once
+            sandboxes_to_delete = min(sandboxes_to_delete, len(non_active))
+            logger.info(f"Deleting {sandboxes_to_delete} oldest non-active sandboxes to reach target count of {target_count}")
+            
+            deleted_count = 0
+            for i in range(sandboxes_to_delete):
+                oldest = non_active[i]
+                logger.info(f"Deleting oldest non-active sandbox {i+1}/{sandboxes_to_delete}: {getattr(oldest, 'id', 'N/A')}")
+                await daytona.delete(oldest)
+                deleted_count += 1
+            
+            logger.info(f"Successfully deleted {deleted_count} sandboxes")
+            
+            # Wait for Daytona to free up the slots and then re-fetch the list
+            await asyncio.sleep(3)
+            sandboxes = await daytona.list()
+            count_towards_limit = [s for s in sandboxes if s.state in active_states]
+            logger.info(f"Re-checked sandbox count. Found {len(count_towards_limit)} sandboxes counting towards limit.")
+
+        # Create the new sandbox
+        logger.info(f"Creating new sandbox. Current count: {len(count_towards_limit)}, limit: {config.DAYTONA_MAX_SANDBOXES}")
+        sandbox = await daytona.create(params)
+        logger.debug(f"Sandbox created with ID: {sandbox.id}")
+        
+        # Start supervisord in a session for new sandbox
+        await start_supervisord_session(sandbox)
+        
+        logger.debug(f"Sandbox environment successfully initialized")
+        return sandbox
+
+    except Exception as e:
+        logger.error(f"An unexpected error occurred during sandbox creation: {str(e)}")
+        # Re-raise the exception after logging
+        raise e
 
 async def delete_sandbox(sandbox_id: str) -> bool:
     """Delete a sandbox by its ID."""

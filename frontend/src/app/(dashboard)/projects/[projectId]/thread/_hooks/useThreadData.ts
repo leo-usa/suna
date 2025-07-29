@@ -20,6 +20,8 @@ interface UseThreadDataReturn {
   isLoading: boolean;
   error: string | null;
   initialLoadCompleted: boolean;
+  sandboxMissing: boolean;
+  setSandboxMissing: React.Dispatch<React.SetStateAction<boolean>>;
   threadQuery: ReturnType<typeof useThreadQuery>;
   messagesQuery: ReturnType<typeof useMessagesQuery>;
   projectQuery: ReturnType<typeof useProjectQuery>;
@@ -35,6 +37,7 @@ export function useThreadData(threadId: string, projectId: string): UseThreadDat
   const [agentStatus, setAgentStatus] = useState<AgentStatus>('idle');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [sandboxMissing, setSandboxMissing] = useState<boolean>(false);
   
   const initialLoadCompleted = useRef<boolean>(false);
   const messagesLoadedRef = useRef(false);
@@ -45,6 +48,21 @@ export function useThreadData(threadId: string, projectId: string): UseThreadDat
   const messagesQuery = useMessagesQuery(threadId);
   const projectQuery = useProjectQuery(projectId);
   const agentRunsQuery = useAgentRunsQuery(threadId);
+
+  // Function to check if sandbox exists
+  const checkSandboxExists = async (sandboxId: string): Promise<boolean> => {
+    try {
+      const response = await fetch(`/api/sandbox/${sandboxId}/exists`);
+      if (!response.ok) {
+        return false;
+      }
+      const data = await response.json();
+      return data.exists === true;
+    } catch (error) {
+      console.error('Error checking sandbox existence:', error);
+      return false;
+    }
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -62,13 +80,27 @@ export function useThreadData(threadId: string, projectId: string): UseThreadDat
 
         if (projectQuery.data) {
           setProject(projectQuery.data);
+          let currentSandboxId: string | null = null;
+          
           if (typeof projectQuery.data.sandbox === 'string') {
-            setSandboxId(projectQuery.data.sandbox);
+            currentSandboxId = projectQuery.data.sandbox;
           } else if (projectQuery.data.sandbox?.id) {
-            setSandboxId(projectQuery.data.sandbox.id);
+            currentSandboxId = projectQuery.data.sandbox.id;
           }
 
+          setSandboxId(currentSandboxId);
           setProjectName(projectQuery.data.name || '');
+
+          // Check if sandbox exists when we have a sandbox ID
+          if (currentSandboxId && isMounted) {
+            const sandboxExists = await checkSandboxExists(currentSandboxId);
+            if (!sandboxExists) {
+              console.log('[SANDBOX] Sandbox not found, setting sandboxMissing to true');
+              setSandboxMissing(true);
+            } else {
+              setSandboxMissing(false);
+            }
+          }
         }
 
         if (messagesQuery.data && !messagesLoadedRef.current) {
@@ -178,6 +210,8 @@ export function useThreadData(threadId: string, projectId: string): UseThreadDat
     isLoading,
     error,
     initialLoadCompleted: initialLoadCompleted.current,
+    sandboxMissing,
+    setSandboxMissing,
     threadQuery,
     messagesQuery,
     projectQuery,

@@ -1,9 +1,9 @@
 import os
 import urllib.parse
-from typing import Optional
+from typing import Optional, List
 
 from fastapi import FastAPI, UploadFile, File, HTTPException, APIRouter, Form, Depends, Request
-from fastapi.responses import Response
+from fastapi.responses import Response, JSONResponse
 from pydantic import BaseModel
 from daytona_sdk import AsyncSandbox
 
@@ -389,3 +389,18 @@ async def ensure_project_sandbox_active(
     except Exception as e:
         logger.error(f"Error ensuring sandbox is active for project {project_id}: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/{sandbox_id}/exists")
+async def check_sandbox_exists(sandbox_id: str):
+    """Check if a sandbox exists and is accessible."""
+    try:
+        from sandbox.sandbox import daytona
+        
+        # Try to get the sandbox
+        sandbox = await daytona.get(sandbox_id)
+        
+        # If we can get the sandbox, it exists
+        return {"exists": True, "sandbox_id": sandbox_id}
+    except Exception as e:
+        logger.warning(f"Sandbox {sandbox_id} not found or not accessible: {str(e)}")
+        return {"exists": False, "sandbox_id": sandbox_id}

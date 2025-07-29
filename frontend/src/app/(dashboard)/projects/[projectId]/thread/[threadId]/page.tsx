@@ -22,6 +22,9 @@ import { useAddUserMessageMutation } from '@/hooks/react-query/threads/use-messa
 import { useStartAgentMutation, useStopAgentMutation } from '@/hooks/react-query/threads/use-agent-run';
 import { useSubscription } from '@/hooks/react-query/subscriptions/use-subscriptions';
 import { SubscriptionStatus } from '@/components/thread/chat-input/_use-model-selection';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { AlertTriangle } from 'lucide-react';
 
 import { UnifiedMessage, ApiMessageType, ToolCallInput, Project } from '../_types';
 import { useThreadData, useToolCalls, useBilling, useKeyboardShortcuts } from '../_hooks';
@@ -79,6 +82,8 @@ export default function ThreadPage({
     isLoading,
     error,
     initialLoadCompleted,
+    sandboxMissing,
+    setSandboxMissing,
     threadQuery,
     messagesQuery,
     projectQuery,
@@ -684,6 +689,35 @@ export default function ThreadPage({
         onOpenChange={setShowUpgradeDialog}
         onDismiss={handleDismissUpgradeDialog}
       />
+
+      {/* Sandbox Deletion Warning Modal */}
+      {sandboxMissing && (
+        <Dialog open={sandboxMissing}>
+          <DialogContent className="max-w-md rounded-xl p-8 text-center">
+            <DialogHeader>
+              <div className="flex flex-col items-center gap-2">
+                <div className="rounded-full bg-destructive/10 p-3 mb-2">
+                  <AlertTriangle className="h-8 w-8 text-destructive" />
+                </div>
+                <DialogTitle className="text-xl font-semibold text-destructive mb-1">
+                  Sandbox Deleted
+                </DialogTitle>
+              </div>
+            </DialogHeader>
+            <div className="text-base text-muted-foreground mb-4">
+              This project's sandbox has been deleted.<br />
+              <span className="font-medium text-foreground">All files and data are permanently lost.</span><br />
+              We will create a new sandbox for you to continue your work.<br />
+              <span className="font-medium text-foreground">We recommend starting a new project for best results.</span>
+            </div>
+            <DialogFooter className="flex flex-col gap-2">
+              <Button variant="default" className="w-full" onClick={() => setSandboxMissing(false)}>
+                Close
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </>
   );
 } 

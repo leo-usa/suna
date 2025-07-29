@@ -223,7 +223,8 @@ class Configuration:
     # Sandbox configuration
     SANDBOX_IMAGE_NAME = "kortix/suna:0.1.3"
     SANDBOX_ENTRYPOINT = "/usr/bin/supervisord -n -c /etc/supervisor/conf.d/supervisord.conf"
-
+    DAYTONA_MAX_SANDBOXES: int = 90  # Maximum number of sandboxes allowed
+    
     # LangFuse configuration
     LANGFUSE_PUBLIC_KEY: Optional[str] = None
     LANGFUSE_SECRET_KEY: Optional[str] = None
