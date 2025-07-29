@@ -31,7 +31,7 @@ class SandboxImageEditTool(SandboxToolsBase):
             "type": "function",
             "function": {
                 "name": "image_edit_or_generate",
-                "description": "Generate a new image from a prompt, or edit an existing image (no mask support) using OpenAI GPT Image 1 via OpenAI SDK. Stores the result in the thread context.",
+                "description": "Generate a new image from a prompt, or edit an existing image (no mask support) using OpenAI GPT Image 1 via OpenAI SDK. Stores the result in the thread context. IMPORTANT: Always specify the aspect_ratio parameter when the user requests a specific format (landscape, portrait, or square).",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -51,7 +51,7 @@ class SandboxImageEditTool(SandboxToolsBase):
                         "aspect_ratio": {
                             "type": "string",
                             "enum": ["square", "portrait", "landscape"],
-                            "description": "Aspect ratio for the generated image. 'square' (1:1), 'portrait' (9:16), or 'landscape' (16:9). Defaults to 'square'.",
+                            "description": "Aspect ratio for the generated image. 'square' (1:1), 'portrait' (9:16), or 'landscape' (16:9). ALWAYS specify this parameter when the user requests a specific format. Defaults to 'square' if not specified.",
                             "default": "square"
                         },
                     },
@@ -72,7 +72,7 @@ class SandboxImageEditTool(SandboxToolsBase):
         <function_calls>
         <invoke name="image_edit_or_generate">
         <parameter name="mode">generate</parameter>
-        <parameter name="prompt">A futuristic cityscape at sunset</parameter>
+        <parameter name="prompt">A futuristic cityscape at sunset with tall skyscrapers and golden light</parameter>
         <parameter name="aspect_ratio">landscape</parameter>
         </invoke>
         </function_calls>
