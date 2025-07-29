@@ -1,8 +1,10 @@
-from fastapi import APIRouter, HTTPException, Depends, Request, Body, File, UploadFile, Form, Query
+from fastapi import APIRouter, HTTPException, Depends, Request, Body, File, UploadFile, Form, Query, Response
 from fastapi.responses import StreamingResponse
 import asyncio
 import json
 import traceback
+import re
+import httpx
 from datetime import datetime, timezone
 import uuid
 from typing import Optional, List, Dict, Any
@@ -12,7 +14,7 @@ import tempfile
 import os
 
 from agentpress.thread_manager import ThreadManager
-from services.supabase import DBConnection
+from services.supabase import DBConnection, upload_file_to_storage
 from services import redis
 from utils.auth_utils import get_current_user_id_from_jwt, get_user_id_from_stream_auth, verify_thread_access
 from utils.logger import logger, structlog
@@ -95,6 +97,15 @@ class AgentUpdateRequest(BaseModel):
     is_default: Optional[bool] = None
     avatar: Optional[str] = None
     avatar_color: Optional[str] = None
+
+class CommunityShareRequest(BaseModel):
+    title: str
+    description: str = ""
+    html_content: str
+    thumbnail_path: str = ""
+
+class CommunityLikeRequest(BaseModel):
+    post_id: str
 
 class AgentResponse(BaseModel):
     agent_id: str
@@ -2390,4 +2401,247 @@ async def update_custom_mcp_tools_for_agent(
     except Exception as e:
         logger.error(f"Error updating custom MCP tools for agent {agent_id}: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
+
+
+# Community Gallery API Endpoints
+
+@router.post("/community/share")
+async def share_to_community(
+    body: CommunityShareRequest,
+    user_id: str = Depends(get_current_user_id_from_jwt)
+):
+    """Share all workspace files to the community gallery."""
+    client = await db.client
+    
+    user_name = None
+    try:
+        # This requires an authenticated client (service role) to access auth.users
+        supabase_admin = await db.admin_client
+        auth_user_res = await supabase_admin.auth.admin.get_user_by_id(user_id)
+        
+        # Try to get name from raw_user_meta_data (for OAuth and new signups)
+        meta_data = auth_user_res.user.user_metadata
+        user_name = meta_data.get('name') or meta_data.get('full_name')
+
+        # If still no name, fallback to email
+        if not user_name:
+            user_email = auth_user_res.user.email
+            user_name = user_email.split('@')[0] if user_email else 'Anonymous'
+        
+        logger.info(f"Using user name: '{user_name}'")
+
+    except Exception as e:
+        logger.error(f"Could not retrieve user details from auth: {e}")
+        user_name = 'Anonymous'
+
+    import uuid, datetime
+    post_id = str(uuid.uuid4())
+    html_path = f"community/{post_id}/index.html"
+    from agent.utils import extract_image_paths_from_html
+    from sandbox.sandbox import get_or_start_sandbox
+    html_content = body.html_content
+    # --- Helper: Recursively list all files in /workspace ---
+    async def list_all_files(sandbox, base="/workspace"):
+        files = []
+        stack = [base]
+        while stack:
+            current = stack.pop()
+            for f in sandbox.fs.list_files(current):
+                full_path = f"{current.rstrip('/')}/{f.name}"
+                rel_path = full_path[len("/workspace/"):] if full_path.startswith("/workspace/") else full_path
+                if getattr(f, 'is_dir', False):
+                    stack.append(full_path)
+                else:
+                    files.append((full_path, rel_path))
+        return files
+    # --- Get user's latest sandbox ---
+    project = await client.table('projects').select('sandbox').eq('account_id', user_id).order('created_at', desc=True).limit(1).maybe_single().execute()
+    if not project or not getattr(project, 'data', None):
+        raise HTTPException(status_code=400, detail="No project found for user")
+    sandbox_id = project.data['sandbox']['id']
+    sandbox = await get_or_start_sandbox(sandbox_id)
+    # --- List all files in workspace ---
+    all_files = await list_all_files(sandbox)
+    # --- Upload all files to Supabase Storage ---
+    bucket = "share"
+    supabase_url = config.SUPABASE_URL.rstrip('/')
+    import os, mimetypes
+    rel_to_url = {}
+    image_exts = {'.png', '.jpg', '.jpeg', '.webp', '.gif', '.svg', '.bmp'}
+    image_candidates = []
+    for full_path, rel_path in all_files:
+        try:
+            file_bytes = sandbox.fs.download_file(full_path)
+            # Guess content type
+            content_type, _ = mimetypes.guess_type(rel_path)
+            if not content_type:
+                content_type = "application/octet-stream"
+            storage_path = f"community/{post_id}/{rel_path}"
+            url = await upload_file_to_storage(bucket, storage_path, file_bytes, content_type=content_type)
+            rel_to_url[rel_path] = url
+            # Collect image candidates for thumbnail
+            ext = os.path.splitext(rel_path)[1].lower()
+            if ext in image_exts:
+                image_candidates.append(url)
+        except Exception as e:
+            logger.warning(f"Failed to upload {rel_path}: {e}")
+
+    # --- Rewrite asset references in JS files to public URLs ---
+    def rewrite_js_assets(js_content, rel_to_url):
+        def replacer(match):
+            asset_path = match.group(1)
+            # Remove leading ./ if present
+            asset_path = asset_path.lstrip('./')
+            if asset_path in rel_to_url:
+                return f'"{rel_to_url[asset_path]}"'
+            return match.group(0)
+        pattern = r'["\']([^"\']+\.(?:png|jpg|jpeg|gif|svg|webp|css|js))["\']'
+        return re.sub(pattern, replacer, js_content)
+
+    for full_path, rel_path in all_files:
+        if rel_path.lower().endswith('.js'):
+            try:
+                js_bytes = sandbox.fs.download_file(full_path)
+                js_content = js_bytes.decode('utf-8')
+                new_js_content = rewrite_js_assets(js_content, rel_to_url)
+                if new_js_content != js_content:
+                    # Upload the rewritten JS file to Supabase
+                    storage_path = f"community/{post_id}/{rel_path}"
+                    await upload_file_to_storage(bucket, storage_path, new_js_content.encode('utf-8'), content_type="application/javascript")
+            except Exception as e:
+                logger.warning(f"Failed to rewrite/upload JS asset refs for {rel_path}: {e}")
+
+    # --- Update HTML asset references to point to Supabase URLs ---
+    # Replace src/href in HTML to point to rel_to_url if present
+    def replace_asset_refs(html):
+        def normalize_path(path):
+            path = path.lstrip("./")
+            while '//' in path:
+                path = path.replace('//', '/')
+            return path
+        def repl(match):
+            attr = match.group(1)
+            path = match.group(2)
+            normalized_path = normalize_path(path)
+            if normalized_path in rel_to_url:
+                return f'{attr}="{rel_to_url[normalized_path]}"'
+            return match.group(0)
+        return re.sub(r'(src|href)=["\']([^"\']+)["\']', repl, html)
+    logger.info(f"HTML before asset ref replacement: {html_content[:1000]}")
+    html_content = replace_asset_refs(html_content)
+    logger.info(f"HTML after asset ref replacement: {html_content[:1000]}")
+    # --- Upload main HTML file (again, with updated refs) ---
+    await upload_file_to_storage(bucket, html_path, html_content.encode("utf-8"), content_type="text/html")
+    # --- Auto-select thumbnail if not provided ---
+    thumbnail_path = body.thumbnail_path
+    if not thumbnail_path and image_candidates:
+        thumbnail_path = image_candidates[0]
+    await client.table('community_posts').insert({
+        "id": post_id,
+        "user_id": user_id,
+        "user_name": user_name,
+        "title": body.title,
+        "html_path": html_path,
+        "description": body.description,
+        "thumbnail_path": thumbnail_path,
+        "created_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "like_count": 0,
+        "approved": True
+    }).execute()
+    return {"success": True, "post_id": post_id, "html_url": f"{supabase_url}/storage/v1/object/public/share/{html_path}"}
+
+@router.get("/community")
+async def list_community_posts(
+    sort_by: str = Query("created_at", description="Sort by 'created_at' or 'like_count'"),
+    order: str = Query("desc", description="Sort order: 'asc' or 'desc'"),
+    limit: int = Query(20, ge=1, le=100, description="Number of posts to return"),
+    offset: int = Query(0, ge=0, description="Offset for pagination")
+):
+    """List all approved community posts with metadata."""
+    client = await db.client
+    sort_field = sort_by if sort_by in ["created_at", "like_count"] else "created_at"
+    sort_order = order if order in ["asc", "desc"] else "desc"
+    posts = await client.table('community_posts')\
+        .select('*')\
+        .eq('approved', True)\
+        .order(sort_field, desc=(sort_order=="desc"))\
+        .range(offset, offset+limit-1)\
+        .execute()
+    # Get total count of approved posts
+    total_result = await client.table('community_posts').select('id', count='exact').eq('approved', True).execute()
+    total = total_result.count if hasattr(total_result, 'count') else 0
+    bucket = "share"
+    supabase_url = config.SUPABASE_URL.rstrip('/')
+    def make_html_url(html_path):
+        return f"{supabase_url}/storage/v1/object/public/{bucket}/{html_path}"
+    result = [
+        {
+            "id": p["id"],
+            "title": p["title"],
+            "user_name": p["user_name"],
+            "like_count": p["like_count"],
+            "description": p.get("description", ""),
+            "thumbnail_path": p.get("thumbnail_path", ""),
+            "created_at": p["created_at"],
+            "html_url": make_html_url(p["html_path"])
+        }
+        for p in posts.data or []
+    ]
+    return {"posts": result, "total": total}
+
+@router.post("/community/like")
+async def like_community_post(
+    body: CommunityLikeRequest,
+    user_id: str = Depends(get_current_user_id_from_jwt)
+):
+    """Like a community post (increments like_count)."""
+    client = await db.client
+    post_id = body.post_id
+    try:
+        # Increment like_count atomically
+        result = await client.rpc('increment_like_count', {'post_id': post_id}).execute()
+        if not result or not getattr(result, 'data', None):
+            raise Exception("Supabase RPC did not return data")
+        # Fetch the updated like count
+        post = await client.table('community_posts').select('like_count').eq('id', post_id).maybe_single().execute()
+        if not post or not getattr(post, 'data', None):
+            raise Exception("Could not fetch updated like count")
+        like_count = post.data['like_count']
+        return {"success": True, "post_id": post_id, "like_count": like_count}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to like post: {str(e)}")
+
+@router.get("/community/post/{post_id}")
+async def get_community_post(post_id: str):
+    client = await db.client
+    logger.info(f"[COMMUNITY POST DEBUG] Requested post_id: {post_id}")
+    post = await client.table('community_posts').select('*').eq('id', post_id).maybe_single().execute()
+    logger.info(f"[COMMUNITY POST DEBUG] Raw query result: {post}")
+    logger.info(f"[COMMUNITY POST DEBUG] post.data: {getattr(post, 'data', None)}")
+    if not post or not getattr(post, 'data', None):
+        logger.info(f"[COMMUNITY POST DEBUG] Post not found for id: {post_id}")
+        raise HTTPException(status_code=404, detail="Post not found")
+    p = post.data
+    supabase_url = config.SUPABASE_URL.rstrip('/')
+    html_url = f"{supabase_url}/storage/v1/object/public/share/{p['html_path']}"
+    return {
+        "id": p["id"],
+        "title": p["title"],
+        "user_name": p["user_name"],
+        "like_count": p["like_count"],
+        "description": p.get("description", ""),
+        "thumbnail_path": p.get("thumbnail_path", ""),
+        "created_at": p["created_at"],
+        "html_url": html_url
+    }
+
+@router.get("/public-html/{post_id}")
+async def serve_public_html(post_id: str):
+    """Proxy the HTML file from Supabase Storage and serve it as text/html."""
+    supabase_url = f"https://tsdrmlnyclxwkryqrjic.supabase.co/storage/v1/object/public/share/community/{post_id}/index.html"
+    async with httpx.AsyncClient() as client:
+        r = await client.get(supabase_url)
+        if r.status_code != 200:
+            raise HTTPException(status_code=404, detail="HTML file not found in Supabase Storage.")
+        return Response(content=r.content, media_type="text/html")
 

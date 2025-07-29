@@ -88,3 +88,27 @@ class DBConnection:
             logger.error("Database client is None after initialization")
             raise RuntimeError("Database not initialized")
         return self._client
+
+
+# --- Supabase Storage Helpers ---
+async def upload_file_to_storage(bucket: str, path: str, file_bytes: bytes, content_type: str = None) -> str:
+    """Upload a file to Supabase Storage and return the public URL."""
+    db = DBConnection()
+    client = await db.client
+    
+    # Try to delete the file if it exists (ignore errors)
+    try:
+        await client.storage.from_(bucket).remove([path])
+    except Exception:
+        pass
+    
+    # Upload the file
+    await client.storage.from_(bucket).upload(
+        path,
+        file_bytes,
+        {"content-type": content_type or "application/octet-stream"}
+    )
+    
+    # Get public URL
+    public_url = await client.storage.from_(bucket).get_public_url(path)
+    return public_url

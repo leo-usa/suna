@@ -2049,6 +2049,20 @@ export const getCreditBalanceLegacy = async (): Promise<number> => {
   return data.total_credits_dollars;
 };
 
+/**
+ * Fetch a single community post by postId.
+ * @param postId The community post ID
+ * @returns {Promise<any>} The post metadata
+ */
+export const getCommunityPost = async (postId: string): Promise<any> => {
+  if (!API_URL) throw new Error('Backend URL is not configured. Set NEXT_PUBLIC_BACKEND_URL in your environment.');
+  const response = await fetch(`${API_URL}/community/post/${postId}`);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch community post: ${response.statusText}`);
+  }
+  return response.json();
+};
+
 export const createCreditSession = async (params: {
   price_id?: string;
   amount_minutes?: number;

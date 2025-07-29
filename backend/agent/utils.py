@@ -1,5 +1,6 @@
 import json
-from typing import Optional
+import re
+from typing import Optional, List
 from utils.logger import logger
 from services import redis
 
@@ -74,4 +75,11 @@ async def stop_agent_run(db, agent_run_id: str, error_message: Optional[str] = N
     except Exception as e:
         logger.error(f"Failed to find or signal active instances for {agent_run_id}: {str(e)}")
 
-    logger.info(f"Successfully initiated stop process for agent run: {agent_run_id}") 
+    logger.info(f"Successfully initiated stop process for agent run: {agent_run_id}")
+
+
+def extract_image_paths_from_html(html_content: str) -> List[str]:
+    """Extract all image src paths from HTML content."""
+    # Match <img src="..."> and <img src='...'>
+    img_srcs = re.findall(r'<img[^>]+src=["\']([^"\']+)["\']', html_content)
+    return img_srcs 
