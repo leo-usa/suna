@@ -390,17 +390,4 @@ async def ensure_project_sandbox_active(
         logger.error(f"Error ensuring sandbox is active for project {project_id}: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/{sandbox_id}/exists")
-async def check_sandbox_exists(sandbox_id: str):
-    """Check if a sandbox exists and is accessible."""
-    try:
-        from sandbox.sandbox import daytona
-        
-        # Try to get the sandbox
-        sandbox = await daytona.get(sandbox_id)
-        
-        # If we can get the sandbox, it exists
-        return {"exists": True, "sandbox_id": sandbox_id}
-    except Exception as e:
-        logger.warning(f"Sandbox {sandbox_id} not found or not accessible: {str(e)}")
-        return {"exists": False, "sandbox_id": sandbox_id}
+
