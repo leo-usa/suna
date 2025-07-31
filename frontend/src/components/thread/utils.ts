@@ -1,4 +1,5 @@
 import type { ElementType } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   FileText,
   Terminal,
@@ -314,7 +315,7 @@ const TOOL_DISPLAY_NAMES = new Map([
   ['browser-wait', 'Waiting'],
 
   ['execute-data-provider-call', 'Calling data provider'],
-  ['execute_data_provider_call', 'Calling data provider'],
+  ['execute_data-provider_call', 'Calling data provider'],
   ['get-data-provider-endpoints', 'Getting endpoints'],
   
   ['deploy', 'Deploying'],
@@ -463,4 +464,28 @@ export function getUserFriendlyToolName(toolName: string): string {
     }
   }
   return TOOL_DISPLAY_NAMES.get(toolName) || toolName;
+}
+
+export function getUserFriendlyToolNameWithTranslation(toolName: string, t: any): string {
+  if (toolName.startsWith('mcp_')) {
+    const parts = toolName.split('_');
+    if (parts.length >= 3) {
+      const serverName = parts[1];
+      const toolNamePart = parts.slice(2).join('_');
+      return formatMCPToolName(serverName, toolNamePart);
+    }
+  }
+  if (toolName.includes('-') && !TOOL_DISPLAY_NAMES.has(toolName)) {
+    const parts = toolName.split('-');
+    if (parts.length >= 2) {
+      const serverName = parts[0];
+      const toolNamePart = parts.slice(1).join('-');
+      return formatMCPToolName(serverName, toolNamePart);
+    }
+  }
+  
+  // Use translation keys for common tool names
+  const translationKey = `toolNames.${toolName}`;
+  const translatedName = t(translationKey, TOOL_DISPLAY_NAMES.get(toolName) || toolName);
+  return translatedName;
 }

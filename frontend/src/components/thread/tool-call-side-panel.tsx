@@ -1,8 +1,9 @@
 'use client';
 
 import { Project } from '@/lib/api';
-import { getToolIcon, getUserFriendlyToolName } from '@/components/thread/utils';
-import React from 'react';
+import { getToolIcon, getUserFriendlyToolNameWithTranslation } from '@/components/thread/utils';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Slider } from '@/components/ui/slider';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ApiMessageType } from '@/components/thread/types';
@@ -74,6 +75,7 @@ export function ToolCallSidePanel({
   agentName,
   onFileClick,
 }: ToolCallSidePanelProps) {
+  const { t } = useTranslation();
   const [dots, setDots] = React.useState('');
   const [internalIndex, setInternalIndex] = React.useState(0);
   const [navigationMode, setNavigationMode] = React.useState<'live' | 'manual'>('live');
@@ -164,14 +166,21 @@ export function ToolCallSidePanel({
           const toolNameMatch = assistantContent.match(/tool_name="([^"]+)"/);
           if (toolNameMatch && toolNameMatch[1]) {
             const mcpToolName = toolNameMatch[1];
-            return getUserFriendlyToolName(mcpToolName);
+            return getUserFriendlyToolNameWithTranslation(mcpToolName, t);
           }
         } catch (e) {
+          // If parsing fails, try to extract tool name from the content
+          const toolNameMatch = assistantContent.match(/tool_name["\s]*[:=]["\s]*"([^"]+)"/);
+          if (toolNameMatch && toolNameMatch[1]) {
+            const mcpToolName = toolNameMatch[1];
+            return getUserFriendlyToolNameWithTranslation(mcpToolName, t);
+          }
         }
+        return 'External Tool';
       }
-      return 'External Tool';
+      return getUserFriendlyToolNameWithTranslation(rawName, t);
     }
-    return getUserFriendlyToolName(rawName);
+    return getUserFriendlyToolNameWithTranslation(rawName, t);
   };
 
   const completedToolCalls = toolCallSnapshots.filter(snapshot =>
@@ -338,7 +347,7 @@ export function ToolCallSidePanel({
             onClick={jumpToLatest}
           >
             <div className={`${dotClasses} bg-blue-500`} />
-            <span className={`${textClasses} text-blue-700 dark:text-blue-400`}>Jump to Latest</span>
+            <span className={`${textClasses} text-blue-700 dark:text-blue-400`}>{t('toolView.jumpToLatest', 'Jump to Latest')}</span>
           </div>
         );
       }
@@ -550,7 +559,7 @@ export function ToolCallSidePanel({
                     Tool is running
                   </h3>
                   <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed">
-                    {getUserFriendlyToolName(firstStreamingTool.toolCall.assistantCall.name || 'Tool')} is currently executing. Results will appear here when complete.
+                    {getUserFriendlyToolNameWithTranslation(firstStreamingTool.toolCall.assistantCall.name || 'Tool', t)} is currently executing. Results will appear here when complete.
                   </p>
                 </div>
               </div>
