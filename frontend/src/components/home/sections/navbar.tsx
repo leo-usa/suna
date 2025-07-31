@@ -140,7 +140,6 @@ export function Navbar() {
             <NavMenu />
 
             <div className="flex flex-row items-center gap-1 md:gap-3 shrink-0">
-              <LanguageSelector />
               <div className="flex items-center space-x-3">
                 {user ? (
                   <Link
@@ -158,6 +157,7 @@ export function Navbar() {
                   </Link>
                 )}
               </div>
+              <LanguageSelector />
               <ThemeToggle />
               <button
                 className="md:hidden border border-border size-8 rounded-md cursor-pointer flex items-center justify-center"
