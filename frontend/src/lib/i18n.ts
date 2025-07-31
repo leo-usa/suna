@@ -7,14 +7,64 @@ const zhTranslation = {
     subtitle: '让AI代理将你的想法变为行动。',
     cta: '立即开始'
   },
-  useCases: {
-    title: '应用场景',
-    subtitle: '了解 Dobby 能为你做什么。',
-    watchReplay: '观看回放',
-    none: '暂无可用的用例。',
-    sectionTitle: '看看 Dobby 的实际应用',
-    sectionSubtitle: '探索 Dobby 如何自主完成复杂任务的真实案例'
-  },
+        useCases: {
+        title: '应用场景',
+        subtitle: '了解 Dobby 能为你做什么。',
+        watchReplay: '观看回放',
+        none: '暂无可用的用例。',
+        sectionTitle: '看看 Dobby 的实际应用',
+        sectionSubtitle: '探索 Dobby 如何自主完成复杂任务的真实案例'
+      },
+      useCaseDetails: {
+        'competitor-analysis': {
+          title: '竞品分析',
+          description: '分析我在英国医疗行业新公司的市场。请给出主要竞争者、市场规模、优劣势，并附上他们的网站链接。完成后生成 PDF 报告。'
+        },
+        'vc-list': {
+          title: 'VC 基金列表',
+          description: '请根据资产规模，列出美国最重要的风险投资基金名单，并附上他们的网站和联系方式（如有）。'
+        },
+        'candidate-search': {
+          title: '人才搜寻',
+          description: '请在 LinkedIn 上帮我找 10 位目前可用（未在职）的初级软件工程师候选人，位于德国慕尼黑，拥有计算机相关学士学位及一年以上相关经验。'
+        },
+        'company-trip': {
+          title: '公司出行计划',
+          description: '为我的公司生成一份加州出行路线规划，共 8 人，出发地为法国巴黎，行程 7 天，出发日期为 2025 年 4 月 21 日。请详细安排每日活动。'
+        },
+        'excel-spreadsheet': {
+          title: 'Excel 表格处理',
+          description: '公司让我建立一个包含意大利彩票（Lotto、10eLotto、Million Day）所有信息的 Excel 表格。请整理并发送所有公开信息。'
+        },
+        'speaker-prospecting': {
+          title: '活动演讲嘉宾自动化搜寻',
+          description: '请找出过去一年在欧洲会议上发表过演讲的 20 位 AI 伦理专家，抓取会议网站、LinkedIn 和 YouTube，输出联系方式及演讲摘要。'
+        },
+        'scientific-papers': {
+          title: '科学论文总结与对比',
+          description: '研究并对比近 5 年关于酒精对人体影响的科学论文，生成关于该主题的重要论文报告。'
+        },
+        'lead-generation': {
+          title: '客户调研与首封邮件',
+          description: '在 LinkedIn 上调研我的潜在 B2B 客户（清洁技术行业），找出他们的网站和邮箱，并根据公司资料生成个性化首封邮件。'
+        },
+        'seo-analysis': {
+          title: 'SEO 分析',
+          description: '基于我的网站 DrPang.AI，生成 SEO 分析报告，找出按关键词聚类的高排名页面，并识别缺失主题。'
+        },
+        'personal-trip': {
+          title: '个人旅行规划',
+          description: '为我生成一份从曼谷出发前往伦敦的 10 天个人旅行计划，需在伦敦市中心预订 Google 评分不低于 4.5 的住宿。'
+        },
+        'funded-startups': {
+          title: '新获融资初创公司',
+          description: '请在 Crunchbase、Dealroom 和 TechCrunch 上筛选 SaaS 金融领域 A 轮融资公司，生成包含公司数据、创始人及联系方式的销售报告。'
+        },
+        'scrape-forums': {
+          title: '论坛信息抓取',
+          description: '我想找罗马最好的美容中心，请通过 Google 抓取相关公开论坛的讨论内容。'
+        }
+      },
   competitorAnalysis: {
     title: '竞品分析',
     description: '分析我在英国医疗行业新公司的市场。请给出主要竞争者、市场规模、优劣势，并附上他们的网站链接。完成后生成 PDF 报告。'
@@ -87,27 +137,37 @@ const zhTranslation = {
     button: '雇佣 Dobby',
     subtext: '无需信用卡。'
   },
-  footer: {
-    description: 'Dobby是你的AI打工狗，由庞博士提供',
-    links: {
-      Suna: 'Dobby',
-      Pricing: '价格',
-      Blog: 'Blog',
-      Company: 'Company',
-      About: '关于',
-      Careers: '招聘',
-      Contact: '联系',
-      Legal: '法律声明',
-      Privacy: '隐私政策',
-      Terms: '服务条款',
-    },
-    about: '关于',
-    contact: '联系',
-    careers: '招聘',
-    legal: '法律',
-    privacy: '隐私',
-    terms: '条款',
-  },
+        footer: {
+        description: 'Dobby是你的AI打工狗，由庞博士提供',
+        links: {
+          Suna: 'Dobby',
+          Pricing: '价格',
+          Blog: 'Blog',
+          Company: 'Company',
+          About: '关于',
+          Careers: '招聘',
+          Contact: '联系',
+          Legal: '法律声明',
+          Privacy: '隐私政策',
+          Terms: '服务条款',
+        },
+        about: '关于',
+        contact: '联系',
+        careers: '招聘',
+        legal: '法律',
+        privacy: '隐私',
+        terms: '条款',
+        footerSections: {
+          company: '庞博士.AI',
+          legal: '法律',
+          about: '关于',
+          contact: '联系',
+          careers: '招聘',
+          privacyPolicy: '隐私政策',
+          termsOfService: '服务条款',
+          license: 'Apache 2.0 许可证'
+        }
+      },
   nav: {
     Home: '首页',
     UseCases: '应用场景',
@@ -192,6 +252,56 @@ const resources = {
         sectionTitle: 'See Dobby in action',
         sectionSubtitle: 'Explore real-world examples of how Dobby completes complex tasks autonomously'
       },
+      useCaseDetails: {
+        'competitor-analysis': {
+          title: 'Competitor Analysis',
+          description: 'Analyze the market for my next company in the healthcare industry, located in the UK. Give me the major players, their market size, strengths, and weaknesses, and add their website URLs. Once done, generate a PDF report.'
+        },
+        'vc-list': {
+          title: 'VC List',
+          description: 'Give me the list of the most important VC Funds in the United States based on Assets Under Management. Give me website URLs, and if possible an email to reach them out.'
+        },
+        'candidate-search': {
+          title: 'Looking for Candidates',
+          description: 'Go on LinkedIn, and find 10 profiles available - they are not working right now - for a junior software engineer position, who are located in Munich, Germany. They should have at least one bachelor\'s degree in Computer Science or anything related to it, and 1-year of experience in any field/role.'
+        },
+        'company-trip': {
+          title: 'Company Trip Planning',
+          description: 'Generate a California trip itinerary for my company, 8 people, departing from Paris, France, 7 days, departure date April 21, 2025. Please detail daily activities.'
+        },
+        'excel-spreadsheet': {
+          title: 'Excel Spreadsheet Processing',
+          description: 'My company asked me to create an Excel spreadsheet containing all information about Italian lotteries (Lotto, 10eLotto, Million Day). Please organize and send all public information.'
+        },
+        'speaker-prospecting': {
+          title: 'Event Speaker Prospecting',
+          description: 'Find 20 AI ethics experts who have spoken at European conferences in the past year, scrape conference websites, LinkedIn and YouTube, output contact information and speech summaries.'
+        },
+        'scientific-papers': {
+          title: 'Scientific Paper Summary & Comparison',
+          description: 'Research and compare scientific papers on the effects of alcohol on the human body from the past 5 years, generate a report on important papers on this topic.'
+        },
+        'lead-generation': {
+          title: 'Lead Research & First Email',
+          description: 'Research my potential B2B customers (clean tech industry) on LinkedIn, find their websites and emails, and generate personalized first emails based on company profiles.'
+        },
+        'seo-analysis': {
+          title: 'SEO Analysis',
+          description: 'Generate an SEO analysis report based on my website DrPang.AI, find high-ranking pages clustered by keywords, and identify missing topics.'
+        },
+        'personal-trip': {
+          title: 'Personal Trip Planning',
+          description: 'Generate a 10-day personal trip plan from Bangkok to London, need to book accommodation in central London with Google rating no less than 4.5.'
+        },
+        'funded-startups': {
+          title: 'Newly Funded Startups',
+          description: 'Please filter Series A funded companies in SaaS fintech on Crunchbase, Dealroom and TechCrunch, generate a sales report including company data, founders and contact information.'
+        },
+        'scrape-forums': {
+          title: 'Forum Information Scraping',
+          description: 'I want to find the best beauty center in Rome, please scrape relevant public forum discussions through Google.'
+        }
+      },
       openSource: {
         title: 'Open Source',
         subtitle: 'Dobby is fully open source and transparent.',
@@ -242,6 +352,16 @@ const resources = {
         legal: 'Legal',
         privacy: 'Privacy',
         terms: 'Terms',
+        footerSections: {
+          company: 'Dr.Pang.AI',
+          legal: 'Legal',
+          about: 'About',
+          contact: 'Contact',
+          careers: 'Careers',
+          privacyPolicy: 'Privacy Policy',
+          termsOfService: 'Terms of Service',
+          license: 'License Apache 2.0'
+        }
       },
       pricing: {
         title: 'Choose the right plan for your needs',
@@ -474,6 +594,16 @@ const resources = {
         legal: '法律',
         privacy: '隱私',
         terms: '條款',
+        footerSections: {
+          company: '龐博士.AI',
+          legal: '法律',
+          about: '關於',
+          contact: '聯繫',
+          careers: '招聘',
+          privacyPolicy: '隱私政策',
+          termsOfService: '服務條款',
+          license: 'Apache 2.0 許可證'
+        }
       },
       nav: {
         Home: '首頁',
@@ -594,6 +724,16 @@ const resources = {
         legal: 'Rechtliches',
         privacy: 'Datenschutz',
         terms: 'AGB',
+        footerSections: {
+          company: 'Dr.Pang.AI',
+          legal: 'Rechtliches',
+          about: 'Über uns',
+          contact: 'Kontakt',
+          careers: 'Karriere',
+          privacyPolicy: 'Datenschutzrichtlinie',
+          termsOfService: 'Nutzungsbedingungen',
+          license: 'Apache 2.0 Lizenz'
+        }
       },
       nav: {
         Home: 'Startseite',
@@ -714,6 +854,16 @@ const resources = {
         legal: 'Legal',
         privacy: 'Privacidad',
         terms: 'Términos',
+        footerSections: {
+          company: 'Dr.Pang.AI',
+          legal: 'Legal',
+          about: 'Acerca de',
+          contact: 'Contacto',
+          careers: 'Carreras',
+          privacyPolicy: 'Política de Privacidad',
+          termsOfService: 'Términos de Servicio',
+          license: 'Licencia Apache 2.0'
+        }
       },
       nav: {
         Home: 'Inicio',

@@ -27,6 +27,38 @@ export function FooterSection() {
       ? '/dobby-logo-white.svg'
       : '/dobby-logo.svg';
 
+  // Create footer links with translations
+  const footerLinks = [
+    {
+      title: t('footer.footerSections.company', 'Dr.Pang.AI'),
+      links: [
+        { id: 1, title: t('footer.footerSections.about', 'About'), url: 'https://drpang.ai' },
+        { id: 3, title: t('footer.footerSections.contact', 'Contact'), url: 'mailto:hey@drpang.ai' },
+        { id: 4, title: t('footer.footerSections.careers', 'Careers'), url: 'https://drpang.ai/careers' },
+      ],
+    },
+    {
+      title: t('footer.footerSections.legal', 'Legal'),
+      links: [
+        {
+          id: 9,
+          title: t('footer.footerSections.privacyPolicy', 'Privacy Policy'),
+          url: 'https://dobby.ai/legal?tab=privacy',
+        },
+        {
+          id: 10,
+          title: t('footer.footerSections.termsOfService', 'Terms of Service'),
+          url: 'https://dobby.ai/legal?tab=terms',
+        },
+        {
+          id: 11,
+          title: t('footer.footerSections.license', 'License Apache 2.0'),
+          url: 'https://github.com/drpang/dobby/blob/main/LICENSE',
+        },
+      ],
+    },
+  ];
+
   return (
     <footer id="footer" className="w-full pb-0">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between p-10 max-w-6xl mx-auto">
@@ -58,7 +90,7 @@ export function FooterSection() {
         </div>
         <div className="pt-5 md:w-1/2">
           <div className="flex flex-col items-start justify-start md:flex-row md:items-center md:justify-between gap-y-5 lg:pl-10">
-            {siteConfig.footerLinks.map((column, columnIndex) => (
+            {footerLinks.map((column, columnIndex) => (
               <ul key={columnIndex} className="flex flex-col gap-y-2">
                 <li className="mb-2 text-sm font-semibold text-primary">
                   {column.title}

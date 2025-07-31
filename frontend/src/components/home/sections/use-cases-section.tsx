@@ -62,11 +62,11 @@ export function UseCasesSection() {
                     </svg>
                   </div>
                   <h3 className="text-lg font-medium line-clamp-1">
-                    {useCase.title}
+                    {t(`useCaseDetails.${useCase.id}.title`, useCase.title)}
                   </h3>
                 </div>
                 <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">
-                  {useCase.description}
+                  {t(`useCaseDetails.${useCase.id}.description`, useCase.description)}
                 </p>
               </div>
 
@@ -103,7 +103,7 @@ export function UseCasesSection() {
 
         {featuredUseCases.length === 0 && (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <p className="text-muted-foreground">No use cases available yet.</p>
+            <p className="text-muted-foreground">{t('useCases.none', 'No use cases available yet.')}</p>
           </div>
         )}
       </div>
