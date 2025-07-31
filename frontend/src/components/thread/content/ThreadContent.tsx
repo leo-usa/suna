@@ -7,10 +7,11 @@ import { FileAttachmentGrid } from '@/components/thread/file-attachment';
 import { useFilePreloader, FileCache } from '@/hooks/react-query/files';
 import { useAuth } from '@/components/AuthProvider';
 import { Project } from '@/lib/api';
+import { useTranslation } from 'react-i18next';
 import {
     extractPrimaryParam,
     getToolIcon,
-    getUserFriendlyToolName,
+    getUserFriendlyToolNameWithTranslation,
     safeJsonParse,
 } from '@/components/thread/utils';
 import { formatMCPToolDisplayName } from '@/components/thread/tool-views/mcp-tool/_utils';
@@ -55,7 +56,7 @@ const HIDE_STREAMING_XML_TAGS = new Set([
     'execute-data-provider-endpoint',
 ]);
 
-function getEnhancedToolDisplayName(toolName: string, rawXml?: string): string {
+function getEnhancedToolDisplayName(toolName: string, rawXml?: string, t?: any): string {
     if (toolName === 'call-mcp-tool' && rawXml) {
         const toolNameMatch = rawXml.match(/tool_name="([^"]+)"/);
         if (toolNameMatch) {
@@ -68,7 +69,7 @@ function getEnhancedToolDisplayName(toolName: string, rawXml?: string): string {
             }
         }
     }
-    return getUserFriendlyToolName(toolName);
+    return getUserFriendlyToolNameWithTranslation(toolName, t);
 }
 
 // Helper function to render attachments (keeping original implementation for now)
@@ -95,7 +96,8 @@ export function renderMarkdownContent(
     fileViewerHandler?: (filePath?: string, filePathList?: string[]) => void,
     sandboxId?: string,
     project?: Project,
-    debugMode?: boolean
+    debugMode?: boolean,
+    t?: any
 ) {
     // If in debug mode, just display raw content in a pre tag
     if (debugMode) {
@@ -190,7 +192,7 @@ export function renderMarkdownContent(
                                 <div className='border-2 bg-gradient-to-br from-neutral-200 to-neutral-300 dark:from-neutral-700 dark:to-neutral-800 flex items-center justify-center p-0.5 rounded-sm border-neutral-400/20 dark:border-neutral-600'>
                                     <IconComponent className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
                                 </div>
-                                <span className="font-mono text-xs text-foreground">{getUserFriendlyToolName(toolName)}</span>
+                                <span className="font-mono text-xs text-foreground">{getUserFriendlyToolNameWithTranslation(toolName, t)}</span>
                                 {paramDisplay && <span className="ml-1 text-muted-foreground truncate max-w-[200px]" title={paramDisplay}>{paramDisplay}</span>}
                             </button>
                         </div>
@@ -276,11 +278,11 @@ export function renderMarkdownContent(
                     {renderAttachments(attachments, fileViewerHandler, sandboxId, project)}
                 </div>
             );
-        } else {
+        } else if (HIDE_STREAMING_XML_TAGS.has(toolName)) {
+            // For tool calls, render as a button
             const IconComponent = getToolIcon(toolName);
             const paramDisplay = extractPrimaryParam(toolName, rawXml);
 
-            // Render tool button as a clickable element
             contentParts.push(
                 <div key={toolCallKey} className="my-1">
                     <button
@@ -290,23 +292,36 @@ export function renderMarkdownContent(
                         <div className='border-2 bg-gradient-to-br from-neutral-200 to-neutral-300 dark:from-neutral-700 dark:to-neutral-800 flex items-center justify-center p-0.5 rounded-sm border-neutral-400/20 dark:border-neutral-600'>
                             <IconComponent className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
                         </div>
-                        <span className="font-mono text-xs text-foreground">{getUserFriendlyToolName(toolName)}</span>
+                        <span className="font-mono text-xs text-foreground">{getUserFriendlyToolNameWithTranslation(toolName, t)}</span>
                         {paramDisplay && <span className="ml-1 text-muted-foreground truncate max-w-[200px]" title={paramDisplay}>{paramDisplay}</span>}
                     </button>
                 </div>
             );
+        } else {
+            // For other XML tags, just render the content as markdown
+            const contentMatch = rawXml.match(/<[^>]*>([\s\S]*?)<\/[^>]*>/);
+            const tagContent = contentMatch ? contentMatch[1] : '';
+            if (tagContent.trim()) {
+                contentParts.push(
+                    <Markdown key={`xml-${match.index}`} className="text-sm prose prose-sm dark:prose-invert chat-markdown max-w-none break-words">{tagContent}</Markdown>
+                );
+            }
         }
-        lastIndex = xmlRegex.lastIndex;
+
+        lastIndex = match.index + match[0].length;
     }
 
-    // Add text after the last tag
+    // Add any remaining text after the last XML tag
     if (lastIndex < content.length) {
-        contentParts.push(
-            <Markdown key={`md-${lastIndex}`} className="text-sm prose prose-sm dark:prose-invert chat-markdown max-w-none break-words">{content.substring(lastIndex)}</Markdown>
-        );
+        const remainingText = content.substring(lastIndex);
+        if (remainingText.trim()) {
+            contentParts.push(
+                <Markdown key={`md-${lastIndex}`} className="text-sm prose prose-sm dark:prose-invert chat-markdown max-w-none break-words">{remainingText}</Markdown>
+            );
+        }
     }
 
-    return contentParts;
+    return contentParts.length > 0 ? contentParts : <Markdown className="text-sm prose prose-sm dark:prose-invert chat-markdown max-w-none break-words">{content}</Markdown>;
 }
 
 export interface ThreadContentProps {
@@ -352,6 +367,7 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
     agentAvatar = <KortixLogo size={16} />,
     emptyStateComponent,
 }) => {
+    const { t } = useTranslation();
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const messagesContainerRef = useRef<HTMLDivElement>(null);
     const latestMessageRef = useRef<HTMLDivElement>(null);
@@ -732,7 +748,8 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                                                                             handleOpenFileViewer,
                                                                             sandboxId,
                                                                             project,
-                                                                            debugMode
+                                                                            debugMode,
+                                                                            t
                                                                         );
 
                                                                         elements.push(
@@ -806,7 +823,7 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                                                                                             <div className='border-2 bg-gradient-to-br from-neutral-200 to-neutral-300 dark:from-neutral-700 dark:to-neutral-800 flex items-center justify-center p-0.5 rounded-sm border-neutral-400/20 dark:border-neutral-600'>
                                                                                                 <CircleDashed className="h-3.5 w-3.5 text-primary flex-shrink-0 animate-spin animation-duration-2000" />
                                                                                             </div>
-                                                                                            <span className="font-mono text-xs text-primary">{getUserFriendlyToolName(detectedTag)}</span>
+                                                                                            <span className="font-mono text-xs text-primary">{getUserFriendlyToolNameWithTranslation(detectedTag, t)}</span>
                                                                                         </button>
                                                                                     </div>
                                                                                 )}
@@ -822,7 +839,7 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                                                                                             <span className="font-mono text-xs text-primary">
                                                                                                 {(() => {
                                                                                                     const extractedToolName = extractToolNameFromStream(streamingTextContent);
-                                                                                                    return extractedToolName ? getUserFriendlyToolName(extractedToolName) : 'Using Tool...';
+                                                                                                    return extractedToolName ? getUserFriendlyToolNameWithTranslation(extractedToolName, t) : 'Using Tool...';
                                                                                                 })()}
                                                                                             </span>
                                                                                         </button>
@@ -910,9 +927,9 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                                                                                                         {detectedTag === 'function_calls' ?
                                                                                                             (() => {
                                                                                                                 const extractedToolName = extractToolNameFromStream(streamingText);
-                                                                                                                return extractedToolName ? getUserFriendlyToolName(extractedToolName) : 'Using Tool...';
+                                                                                                                return extractedToolName ? getUserFriendlyToolNameWithTranslation(extractedToolName, t) : 'Using Tool...';
                                                                                                             })() :
-                                                                                                            getUserFriendlyToolName(detectedTag)
+                                                                                                            getUserFriendlyToolNameWithTranslation(detectedTag, t)
                                                                                                         }
                                                                                                     </span>
                                                                                                 </button>

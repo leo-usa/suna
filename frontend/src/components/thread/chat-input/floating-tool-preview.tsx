@@ -1,7 +1,8 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CircleDashed, Maximize2 } from 'lucide-react';
-import { getToolIcon, getUserFriendlyToolName } from '@/components/thread/utils';
+import { getToolIcon, getUserFriendlyToolNameWithTranslation } from '@/components/thread/utils';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
@@ -72,6 +73,7 @@ export const FloatingToolPreview: React.FC<FloatingToolPreviewProps> = ({
   onIndicatorClick,
 }) => {
   const [isExpanding, setIsExpanding] = React.useState(false);
+  const { t } = useTranslation();
   const currentToolCall = toolCalls[currentIndex];
   const totalCalls = toolCalls.length;
 
@@ -144,7 +146,7 @@ export const FloatingToolPreview: React.FC<FloatingToolPreviewProps> = ({
               <div className="flex-1 min-w-0" style={{ opacity: isExpanding ? 0 : 1 }}>
                 <motion.div layoutId="tool-title" className="flex items-center gap-2 mb-1">
                   <h4 className="text-sm font-medium text-foreground truncate">
-                    {getUserFriendlyToolName(toolName)}
+                    {getUserFriendlyToolNameWithTranslation(toolName, t)}
                   </h4>
                 </motion.div>
 
