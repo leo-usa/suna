@@ -11,6 +11,7 @@ import { useSubscription } from '@/hooks/react-query';
 import Link from 'next/link';
 import { OpenInNewWindowIcon } from '@radix-ui/react-icons';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { useTranslation } from 'react-i18next';
 
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
@@ -57,6 +58,7 @@ export default function AccountBillingStatus({ accountId, returnUrl, defaultTab 
     user_id: string;
   } | null>(null);
   const [isCreditLoading, setIsCreditLoading] = useState(true);
+  const { t } = useTranslation();
 
   const [topUpAmount, setTopUpAmount] = useState(49); // default $49
   const [paymentMethod, setPaymentMethod] = useState<'alipay' | 'wechat_pay' | 'card'>('alipay');
@@ -143,13 +145,13 @@ export default function AccountBillingStatus({ accountId, returnUrl, defaultTab 
   if (isLocalMode()) {
     return (
       <div className="rounded-xl border shadow-sm bg-card p-6">
-        <h2 className="text-xl font-semibold mb-4">Billing Status</h2>
+        <h2 className="text-xl font-semibold mb-4">{t('billing.billingStatus', 'Billing Status')}</h2>
         <div className="p-4 mb-4 bg-muted/30 border border-border rounded-lg text-center">
           <p className="text-sm text-muted-foreground">
-            Running in local development mode - billing features are disabled
+            {t('billing.localMode', 'Running in local development mode - billing features are disabled')}
           </p>
           <p className="text-xs text-muted-foreground mt-2">
-            Agent usage limits are not enforced in this environment
+            {t('billing.noLimits', 'Agent usage limits are not enforced in this environment')}
           </p>
         </div>
       </div>
@@ -160,7 +162,7 @@ export default function AccountBillingStatus({ accountId, returnUrl, defaultTab 
   if (isLoading || authLoading) {
     return (
       <div className="rounded-xl border shadow-sm bg-card p-6">
-        <h2 className="text-xl font-semibold mb-4">Billing Status</h2>
+        <h2 className="text-xl font-semibold mb-4">{t('billing.billingStatus', 'Billing Status')}</h2>
         <div className="space-y-4">
           <Skeleton className="h-20 w-full" />
           <Skeleton className="h-40 w-full" />
@@ -174,10 +176,10 @@ export default function AccountBillingStatus({ accountId, returnUrl, defaultTab 
   if (error || subscriptionQueryError) {
     return (
       <div className="rounded-xl border shadow-sm bg-card p-6">
-        <h2 className="text-xl font-semibold mb-4">Billing Status</h2>
+        <h2 className="text-xl font-semibold mb-4">{t('billing.billingStatus', 'Billing Status')}</h2>
         <div className="p-4 mb-4 bg-destructive/10 border border-destructive/20 rounded-lg text-center">
           <p className="text-sm text-destructive">
-            Error loading billing status:{' '}
+            {t('billing.errorLoading', 'Error loading billing status:')}{' '}
             {error || subscriptionQueryError.message}
           </p>
         </div>
@@ -199,7 +201,7 @@ export default function AccountBillingStatus({ accountId, returnUrl, defaultTab 
 
   return (
     <div className="rounded-xl border shadow-sm bg-card p-6">
-      <h2 className="text-xl font-semibold mb-4">Billing Status</h2>
+      <h2 className="text-xl font-semibold mb-4">{t('billing.billingStatus', 'Billing Status')}</h2>
 
       <Tabs defaultValue={defaultTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2">
@@ -222,7 +224,7 @@ export default function AccountBillingStatus({ accountId, returnUrl, defaultTab 
                     </span>
                     <Button variant='outline' asChild className='text-sm'>
                       <Link href="/settings/usage-logs">
-                        Usage logs
+                        {t('billing.usageLogs', 'Usage logs')}
                       </Link>
                     </Button>
                   </div>

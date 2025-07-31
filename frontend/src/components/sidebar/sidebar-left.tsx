@@ -170,7 +170,7 @@ export function SidebarLeft({
             })}>
               <Plus className="h-4 w-4 mr-1" />
               <span className="flex items-center justify-between w-full">
-                New Task
+                {t('sidebar.newTask', 'New Task')}
               </span>
             </SidebarMenuButton>
           </Link>
@@ -231,7 +231,7 @@ export function SidebarLeft({
               })}>
                 <Plug className="h-4 w-4 mr-1" />
                 <span className="flex items-center justify-between w-full">
-                  Integrations
+                  {t('sidebar.integrations', 'Integrations')}
                 </span>
               </SidebarMenuButton>
             </Link>

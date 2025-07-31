@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useTranslation } from 'react-i18next';
 import {
   BadgeCheck,
   Bell,
@@ -63,6 +64,7 @@ export function NavUserWithTeams({
   const { data: accounts } = useAccounts();
   const [showNewTeamDialog, setShowNewTeamDialog] = React.useState(false);
   const { theme, setTheme } = useTheme();
+  const { t } = useTranslation();
 
   // Prepare personal account and team accounts
   const personalAccount = React.useMemo(
@@ -207,7 +209,7 @@ export function NavUserWithTeams({
               {personalAccount && (
                 <>
                   <DropdownMenuLabel className="text-muted-foreground text-xs">
-                    Personal Account
+                    {t('sidebar.personalAccount', 'Personal Account')}
                   </DropdownMenuLabel>
                   <DropdownMenuItem
                     key={personalAccount.account_id}
@@ -283,7 +285,7 @@ export function NavUserWithTeams({
                 <DropdownMenuItem asChild>
                   <Link href="/settings/billing">
                     <CreditCard className="h-4 w-4" />
-                    Billing
+                    {t('sidebar.billing', 'Billing')}
                   </Link>
                 </DropdownMenuItem>
                 {/* <DropdownMenuItem asChild>
@@ -298,14 +300,14 @@ export function NavUserWithTeams({
                   <div className="flex items-center gap-2">
                     <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
                     <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-                    <span>Theme</span>
+                    <span>{t('sidebar.theme', 'Theme')}</span>
                   </div>
                 </DropdownMenuItem>
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
               <DropdownMenuItem className='text-destructive focus:text-destructive focus:bg-destructive/10' onClick={handleLogout}>
                 <LogOut className="h-4 w-4 text-destructive" />
-                Log out
+                {t('sidebar.logOut', 'Log out')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

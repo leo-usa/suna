@@ -258,6 +258,11 @@ const zhTranslation = {
         wechatPay: '微信支付',
         creditCard: '信用卡/借记卡',
         netAfterFee: '扣除服务费后净额',
+        billingStatus: '账单状态',
+        usageLogs: '使用记录',
+        noLimits: '在此环境中不强制执行代理使用限制',
+        errorLoading: '加载账单状态时出错',
+        loading: '加载中...',
         billingPeriod: {
           monthly: '月付',
           yearly: '年付'
@@ -279,6 +284,12 @@ const zhTranslation = {
     createNewAgent: '创建新智能体',
     createNewAgentDescription: '这将创建一个具有默认名称和描述的新智能体。',
     create: '创建',
+    newTask: '新建任务',
+    integrations: '集成',
+    personalAccount: '个人账户',
+    billing: '账单',
+    theme: '主题',
+    logOut: '退出登录',
   },
   dashboard: {
     greeting: '你好',
@@ -488,6 +499,8 @@ const resources = {
         localMode: 'Running in local development mode - billing features are disabled',
         noLimits: 'Agent usage limits are not enforced in this environment',
         errorLoading: 'Error loading billing status',
+        billingStatus: 'Billing Status',
+        usageLogs: 'Usage logs',
         loading: 'Loading...',
         subscription: 'Subscription',
         prepaidTab: 'Prepaid (WeChat & AliPay supported)',
@@ -545,6 +558,12 @@ const resources = {
         createNewAgent: 'Create New Agent',
         createNewAgentDescription: 'This will create a new agent with a default name and description.',
         create: 'Create',
+        newTask: 'New Task',
+        integrations: 'Integrations',
+        personalAccount: 'Personal Account',
+        billing: 'Billing',
+        theme: 'Theme',
+        logOut: 'Log out',
       },
       agentDetail: {
         streamError: 'Agent stream error',
@@ -847,6 +866,12 @@ const resources = {
         }
       },
       billing: {
+        billingStatus: 'Abrechnungsstatus',
+        usageLogs: 'Nutzungsprotokolle',
+        noLimits: 'Agent-Nutzungslimits werden in dieser Umgebung nicht durchgesetzt',
+        errorLoading: 'Fehler beim Laden des Abrechnungsstatus',
+        loading: 'Laden...',
+        localMode: 'Läuft im lokalen Entwicklungsmodus - Abrechnungsfunktionen sind deaktiviert',
         billingPeriod: {
           monthly: 'Monatlich',
           yearly: 'Jährlich'
@@ -884,6 +909,12 @@ const resources = {
         createNewAgent: 'Neuen Agenten erstellen',
         createNewAgentDescription: 'Dies wird einen neuen Agenten mit einem Standardnamen und einer Standardbeschreibung erstellen.',
         create: 'Erstellen',
+        newTask: 'Neue Aufgabe',
+        integrations: 'Integrationen',
+        personalAccount: 'Persönliches Konto',
+        billing: 'Abrechnung',
+        theme: 'Design',
+        logOut: 'Abmelden',
       },
       dashboard: {
         greeting: 'Hallo',
@@ -1018,6 +1049,12 @@ const resources = {
         }
       },
       billing: {
+        billingStatus: 'Estado de Facturación',
+        usageLogs: 'Registros de Uso',
+        noLimits: 'Los límites de uso de agentes no se aplican en este entorno',
+        errorLoading: 'Error al cargar el estado de facturación',
+        loading: 'Cargando...',
+        localMode: 'Ejecutando en modo de desarrollo local - las funciones de facturación están deshabilitadas',
         billingPeriod: {
           monthly: 'Mensual',
           yearly: 'Anual'
@@ -1055,6 +1092,12 @@ const resources = {
         createNewAgent: 'Crear Nuevo Agente',
         createNewAgentDescription: 'Esto creará un nuevo agente con un nombre y descripción predeterminados.',
         create: 'Crear',
+        newTask: 'Nueva Tarea',
+        integrations: 'Integraciones',
+        personalAccount: 'Cuenta Personal',
+        billing: 'Facturación',
+        theme: 'Tema',
+        logOut: 'Cerrar Sesión',
       },
       dashboard: {
         greeting: 'Hola',
