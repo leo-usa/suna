@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Database,
   CheckCircle,
@@ -82,6 +83,7 @@ export function ExecuteDataProviderCallToolView({
   isSuccess = true,
   isStreaming = false,
 }: ToolViewProps) {
+  const { t } = useTranslation();
 
   const {
     serviceName,
@@ -136,7 +138,7 @@ export function ExecuteDataProviderCallToolView({
               ) : (
                 <AlertTriangle className="h-3 w-3 mr-1" />
               )}
-              {actualIsSuccess ? 'Executed' : 'Failed'}
+              {actualIsSuccess ? t('toolView.executed', 'Executed') : t('toolView.failed', 'Failed')}
             </Badge>
           )}
         </div>
@@ -150,10 +152,10 @@ export function ExecuteDataProviderCallToolView({
                 <Loader2 className="h-8 w-8 animate-spin text-zinc-500 dark:text-zinc-400" />
               </div>
               <h3 className="text-base font-medium text-zinc-900 dark:text-zinc-100 mb-2">
-                Executing call...
+                {t('toolView.executingCall', 'Executing call...')}
               </h3>
               <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                Calling {serviceName || 'data provider'}
+                {t('toolView.callingDataProvider', 'Calling')} {serviceName || t('toolView.dataProvider', 'data provider')}
               </p>
             </div>
           </div>
@@ -174,7 +176,7 @@ export function ExecuteDataProviderCallToolView({
                 </h3>
                 {serviceName && (
                   <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                    Service: {serviceName}
+                    {t('toolView.service', 'Service')}: {serviceName}
                   </p>
                 )}
               </div>
@@ -191,7 +193,7 @@ export function ExecuteDataProviderCallToolView({
                 <div className="flex items-center gap-2 mb-2">
                   <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
                   <span className="text-sm font-medium text-red-800 dark:text-red-300">
-                    Execution Failed
+                    {t('toolView.executionFailed', 'Execution Failed')}
                   </span>
                 </div>
                 <p className="text-xs text-red-700 dark:text-red-300 font-mono">
@@ -204,7 +206,7 @@ export function ExecuteDataProviderCallToolView({
               <div className="space-y-4">
                 <div className="flex items-center gap-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
                   <Settings className="h-4 w-4" />
-                  <span>Call Parameters</span>
+                  <span>{t('toolView.callParameters', 'Call Parameters')}</span>
                   <ChevronRight className="h-3 w-3 text-zinc-400" />
                 </div>
                 <div className="grid gap-3">

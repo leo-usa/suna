@@ -1,15 +1,18 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Search,
   CheckCircle,
   AlertTriangle,
-  ExternalLink,
-  Image as ImageIcon,
-  Globe,
-  FileText,
   Clock,
-  BookOpen,
-  CalendarDays,
+  ExternalLink,
+  ImageIcon,
+  FileText,
+  Globe,
+  Video,
+  MapPin,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { ToolViewProps } from '../types';
 import { cleanUrl, formatTimestamp, getToolTitle } from '../utils';
@@ -33,6 +36,7 @@ export function WebSearchToolView({
 }: ToolViewProps) {
   const { resolvedTheme } = useTheme();
   const [expandedResults, setExpandedResults] = useState<Record<number, boolean>>({});
+  const { t } = useTranslation();
 
   const {
     query,
@@ -67,9 +71,9 @@ export function WebSearchToolView({
     if (url.includes('news') || url.includes('article') || title.includes('News')) {
       return { icon: FileText, label: 'Article' };
     } else if (url.includes('wiki')) {
-      return { icon: BookOpen, label: 'Wiki' };
+      return { icon: ChevronUp, label: 'Wiki' };
     } else if (url.includes('blog')) {
-      return { icon: CalendarDays, label: 'Blog' };
+      return { icon: ChevronDown, label: 'Blog' };
     } else {
       return { icon: Globe, label: 'Website' };
     }
@@ -104,7 +108,7 @@ export function WebSearchToolView({
               ) : (
                 <AlertTriangle className="h-3.5 w-3.5" />
               )}
-              {actualIsSuccess ? 'Search completed successfully' : 'Search failed'}
+              {actualIsSuccess ? t('toolView.searchCompletedSuccessfully', 'Search completed successfully') : t('toolView.searchFailed', 'Search failed')}
             </Badge>
           )}
         </div>
@@ -116,7 +120,7 @@ export function WebSearchToolView({
             icon={Search}
             iconColor="text-blue-500 dark:text-blue-400"
             bgColor="bg-gradient-to-b from-blue-100 to-blue-50 shadow-inner dark:from-blue-800/40 dark:to-blue-900/60 dark:shadow-blue-950/20"
-            title="Searching the web"
+            title={t('toolView.searchingTheWeb', 'Searching the web')}
             filePath={query}
             showProgress={true}
           />
@@ -127,7 +131,7 @@ export function WebSearchToolView({
                 <div className="mb-6">
                   <h3 className="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-3 flex items-center">
                     <ImageIcon className="h-4 w-4 mr-2 opacity-70" />
-                    Images
+                    {t('toolView.images', 'Images')}
                   </h3>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-1">
                     {images.slice(0, 6).map((image, idx) => (
@@ -158,7 +162,7 @@ export function WebSearchToolView({
                   </div>
                   {images.length > 6 && (
                     <Button variant="outline" size="sm" className="mt-2 text-xs">
-                      View {images.length - 6} more images
+                      {t('toolView.viewMoreImages', 'View')} {images.length - 6} {t('toolView.moreImages', 'more images')}
                     </Button>
                   )}
                 </div>
@@ -166,7 +170,7 @@ export function WebSearchToolView({
 
               {searchResults.length > 0 && (
                 <div className="text-sm font-medium text-zinc-800 dark:text-zinc-200 mb-4 flex items-center justify-between">
-                  <span>Search Results ({searchResults.length})</span>
+                  <span>{t('toolView.searchResults', 'Search Results')} ({searchResults.length})</span>
                   <Badge variant="outline" className="text-xs font-normal">
                     <Clock className="h-3 w-3 mr-1.5 opacity-70" />
                     {new Date().toLocaleDateString()}

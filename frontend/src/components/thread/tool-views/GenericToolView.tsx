@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   CheckCircle,
   AlertTriangle,
@@ -23,6 +24,7 @@ export function GenericToolView({
   isSuccess = true,
   isStreaming = false,
 }: ToolViewProps) {
+  const { t } = useTranslation();
   const toolTitle = getToolTitle(name);
 
   const formatContent = (content: any) => {
@@ -148,7 +150,7 @@ export function GenericToolView({
               ) : (
                 <AlertTriangle className="h-3.5 w-3.5" />
               )}
-              {isSuccess ? 'Tool executed successfully' : 'Tool execution failed'}
+              {isSuccess ? t('toolView.toolExecutedSuccessfully', 'Tool executed successfully') : t('toolView.toolExecutionFailed', 'Tool execution failed')}
             </Badge>
           )}
         </div>
@@ -160,7 +162,7 @@ export function GenericToolView({
             icon={Wrench}
             iconColor="text-orange-500 dark:text-orange-400"
             bgColor="bg-gradient-to-b from-orange-100 to-orange-50 shadow-inner dark:from-orange-800/40 dark:to-orange-900/60 dark:shadow-orange-950/20"
-            title="Executing tool"
+            title={t('toolView.executingTool', 'Executing tool')}
             filePath={name}
             showProgress={true}
           />
@@ -171,7 +173,7 @@ export function GenericToolView({
                 <div className="space-y-2">
                   <div className="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex items-center">
                     <Wrench className="h-4 w-4 mr-2 text-zinc-500 dark:text-zinc-400" />
-                    Input
+                    {t('toolView.input', 'Input')}
                   </div>
                   <div className="border-muted bg-muted/20 rounded-lg overflow-hidden border">
                     <div className="p-4">
@@ -187,7 +189,7 @@ export function GenericToolView({
                 <div className="space-y-2">
                   <div className="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex items-center">
                     <Wrench className="h-4 w-4 mr-2 text-zinc-500 dark:text-zinc-400" />
-                    Output
+                    {t('toolView.output', 'Output')}
                   </div>
                   <div className="border-muted bg-muted/20 rounded-lg overflow-hidden border">
                     <div className="p-4">
@@ -206,10 +208,10 @@ export function GenericToolView({
               <Wrench className="h-10 w-10 text-zinc-400 dark:text-zinc-600" />
             </div>
             <h3 className="text-xl font-semibold mb-2 text-zinc-900 dark:text-zinc-100">
-              No Content Available
+              {t('toolView.noContentAvailable', 'No Content Available')}
             </h3>
             <p className="text-sm text-zinc-500 dark:text-zinc-400 text-center max-w-md">
-              This tool execution did not produce any input or output content to display.
+              {t('toolView.toolExecutionNoContent', 'This tool execution did not produce any input or output content to display.')}
             </p>
           </div>
         )}
@@ -220,7 +222,7 @@ export function GenericToolView({
           {!isStreaming && (formattedAssistantContent || formattedToolContent) && (
             <Badge variant="outline" className="h-6 py-0.5 bg-zinc-50 dark:bg-zinc-900">
               <Wrench className="h-3 w-3" />
-              Tool
+              {t('toolView.tool', 'Tool')}
             </Badge>
           )}
         </div>
