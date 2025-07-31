@@ -20,6 +20,7 @@ import { useAuth } from '@/components/AuthProvider';
 import { useAuthMethodTracking } from '@/lib/stores/auth-tracking';
 import { toast } from 'sonner';
 import { useFeatureFlag } from '@/lib/feature-flags';
+import { useTranslation } from 'react-i18next';
 
 import {
   Dialog,
@@ -42,6 +43,7 @@ function LoginContent() {
   const returnUrl = searchParams.get('returnUrl');
   const message = searchParams.get('message');
   const { enabled: customAgentsEnabled } = useFeatureFlag("custom_agents");
+  const { t } = useTranslation();
 
   const isSignUp = mode === 'signup';
   const isMobile = useMediaQuery('(max-width: 768px)');
@@ -252,13 +254,13 @@ function LoginContent() {
                 href="/"
                 className="flex h-11 items-center justify-center px-6 text-center rounded-lg border border-border bg-background hover:bg-accent transition-colors"
               >
-                Return to home
+                {t('auth.backToHome', 'Return to home')}
               </Link>
               <button
                 onClick={resetRegistrationSuccess}
                 className="flex h-11 items-center justify-center px-6 text-center rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
               >
-                Back to sign in
+                {t('auth.backToSignIn', 'Back to sign in')}
               </button>
             </div>
           </div>
@@ -282,14 +284,14 @@ function LoginContent() {
                 className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4"
               >
                 <ArrowLeft className="h-4 w-4" />
-                Back to home
+                {t('auth.backToHome', 'Back to home')}
               </Link>
             </div>
             <div className="w-full max-w-sm">
               <div className="mb-4 flex items-center flex-col gap-4 justify-center">
                 {customAgentsEnabled && <ReleaseBadge className='mb-4' text="Custom Agents, Workflows, and more!" link="/changelog" />}
                 <h1 className="text-2xl font-semibold text-foreground">
-                  {isSignUp ? 'Create your account' : 'Log into your account'}
+                  {isSignUp ? t('auth.joinSuna', 'Join Dobby') : t('auth.welcomeBack', 'Welcome back')}
                 </h1>
               </div>
             <div className="space-y-3 mb-4">
@@ -302,7 +304,7 @@ function LoginContent() {
               </div>
               <div className="relative flex justify-center text-sm">
                 <span className="px-2 bg-background text-muted-foreground">
-                  or email
+                  {t('auth.orContinueWithEmail', 'or continue with email')}
                 </span>
               </div>
             </div>
@@ -311,7 +313,7 @@ function LoginContent() {
                 id="email"
                 name="email"
                 type="email"
-                placeholder="Email address"
+                placeholder={t('auth.emailAddress', 'Email address')}
                 className="h-10 rounded-lg"
                 required
               />
@@ -319,7 +321,7 @@ function LoginContent() {
                 id="password"
                 name="password"
                 type="password"
-                placeholder="Password"
+                placeholder={t('auth.password', 'Password')}
                 className="h-10 rounded-lg"
                 required
               />
@@ -328,7 +330,7 @@ function LoginContent() {
                   id="confirmPassword"
                   name="confirmPassword"
                   type="password"
-                  placeholder="Confirm password"
+                  placeholder={t('auth.confirmPassword', 'Confirm password')}
                   className="h-10 rounded-lg"
                   required
                 />
@@ -338,9 +340,9 @@ function LoginContent() {
                   <SubmitButton
                     formAction={isSignUp ? handleSignUp : handleSignIn}
                     className="w-full h-10 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors rounded-lg"
-                    pendingText={isSignUp ? "Creating account..." : "Signing in..."}
+                    pendingText={isSignUp ? t('auth.creatingAccount', 'Creating account...') : t('auth.signingIn', 'Signing in...')}
                   >
-                    {isSignUp ? 'Create account' : 'Sign in'}
+                    {isSignUp ? t('auth.signUp', 'Sign up') : t('auth.signIn', 'Sign in')}
                   </SubmitButton>
                   {wasEmailLastMethod && (
                     <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-background shadow-sm">
@@ -358,7 +360,7 @@ function LoginContent() {
                   onClick={() => setForgotPasswordOpen(true)}
                   className="text-primary hover:underline"
                 >
-                  Forgot password?
+                  {t('auth.forgotPassword', 'Forgot password?')}
                 </button>
               )}
               
@@ -371,8 +373,8 @@ function LoginContent() {
                   className="text-muted-foreground hover:text-foreground transition-colors"
                 >
                   {isSignUp 
-                    ? 'Already have an account? Sign in' 
-                    : "Don't have an account? Sign up"
+                    ? t('auth.backToSignIn', 'Back to sign in')
+                    : t('auth.createNewAccount', 'Create new account')
                   }
                 </Link>
               </div>
@@ -389,17 +391,17 @@ function LoginContent() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <div className="flex items-center justify-between">
-              <DialogTitle>Reset Password</DialogTitle>
+              <DialogTitle>{t('auth.resetPassword', 'Reset Password')}</DialogTitle>
             </div>
             <DialogDescription>
-              Enter your email address and we'll send you a link to reset your password.
+              {t('auth.enterEmailToReset', 'Enter your email address and we\'ll send you a link to reset your password.')}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleForgotPassword} className="space-y-4">
             <Input
               id="forgot-password-email"
               type="email"
-              placeholder="Email address"
+              placeholder={t('auth.emailAddress', 'Email address')}
               value={forgotPasswordEmail}
               onChange={(e) => setForgotPasswordEmail(e.target.value)}
               className="h-11 rounded-xl"
@@ -427,13 +429,13 @@ function LoginContent() {
                 onClick={() => setForgotPasswordOpen(false)}
                 className="h-10 px-4 border border-border bg-background hover:bg-accent transition-colors rounded-md"
               >
-                Cancel
+                {t('auth.cancel', 'Cancel')}
               </button>
               <button
                 type="submit"
                 className="h-10 px-4 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors rounded-md"
               >
-                Send Reset Link
+                {t('auth.sendResetLink', 'Send Reset Link')}
               </button>
             </DialogFooter>
           </form>
