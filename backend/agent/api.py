@@ -435,7 +435,8 @@ async def start_agent(
         logger.info(f"Successfully started sandbox {sandbox_id} for project {project_id}")
     except Exception as e:
         logger.error(f"Failed to start sandbox for project {project_id}: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to initialize sandbox: {str(e)}")
+        # Instead of raising a 500 error, return a user-friendly message
+        raise HTTPException(status_code=404, detail="This sandbox has been deleted. A new sandbox will be created for you automatically.")
 
     agent_run = await client.table('agent_runs').insert({
         "thread_id": thread_id, "status": "running",

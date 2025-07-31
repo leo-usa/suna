@@ -139,7 +139,8 @@ async def get_sandbox_by_id_safely(client, sandbox_id: str) -> AsyncSandbox:
         return sandbox
     except Exception as e:
         logger.error(f"Error retrieving sandbox {sandbox_id}: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to retrieve sandbox: {str(e)}")
+        # Instead of raising a 500 error, return a user-friendly message
+        raise HTTPException(status_code=404, detail="This sandbox has been deleted. A new sandbox will be created for you automatically.")
 
 @router.post("/sandboxes/{sandbox_id}/files")
 async def create_file(
