@@ -275,6 +275,10 @@ const zhTranslation = {
     recent: '最近',
     noResultsFound: '未找到结果',
     noAgentsYet: '还没有智能体',
+    myAgents: '我的智能体',
+    createNewAgent: '创建新智能体',
+    createNewAgentDescription: '这将创建一个具有默认名称和描述的新智能体。',
+    create: '创建',
   },
   dashboard: {
     greeting: '你好',
@@ -537,6 +541,10 @@ const resources = {
         recent: 'Recent',
         noResultsFound: 'No results found',
         noAgentsYet: 'No agents yet',
+        myAgents: 'My Agents',
+        createNewAgent: 'Create New Agent',
+        createNewAgentDescription: 'This will create a new agent with a default name and description.',
+        create: 'Create',
       },
       agentDetail: {
         streamError: 'Agent stream error',
@@ -872,6 +880,10 @@ const resources = {
         recent: 'Kürzlich',
         noResultsFound: 'Keine Ergebnisse gefunden',
         noAgentsYet: 'Noch keine Agenten',
+        myAgents: 'Meine Agenten',
+        createNewAgent: 'Neuen Agenten erstellen',
+        createNewAgentDescription: 'Dies wird einen neuen Agenten mit einem Standardnamen und einer Standardbeschreibung erstellen.',
+        create: 'Erstellen',
       },
       dashboard: {
         greeting: 'Hallo',
@@ -1039,6 +1051,10 @@ const resources = {
         recent: 'Reciente',
         noResultsFound: 'No se encontraron resultados',
         noAgentsYet: 'Aún no hay agentes',
+        myAgents: 'Mis Agentes',
+        createNewAgent: 'Crear Nuevo Agente',
+        createNewAgentDescription: 'Esto creará un nuevo agente con un nombre y descripción predeterminados.',
+        create: 'Crear',
       },
       dashboard: {
         greeting: 'Hola',

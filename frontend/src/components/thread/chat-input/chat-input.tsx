@@ -7,6 +7,7 @@ import React, {
   forwardRef,
   useImperativeHandle,
 } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { motion } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
@@ -107,10 +108,13 @@ export const ChatInput = forwardRef<ChatInputHandles, ChatInputProps>(
       onConfigureAgent,
       hideAgentSelection = false,
       defaultShowSnackbar = false,
-      showToLowCreditUsers = true,
+      showToLowCreditUsers = false,
     },
     ref,
   ) => {
+    const { t } = useTranslation();
+    const defaultPlaceholder = t('chatInput.placeholder', 'Describe what you need help with...');
+    const finalPlaceholder = placeholder === 'Describe what you need help with...' ? defaultPlaceholder : placeholder;
     const isControlled =
       controlledValue !== undefined && controlledOnChange !== undefined;
 
@@ -385,7 +389,7 @@ export const ChatInput = forwardRef<ChatInputHandles, ChatInputProps>(
                   onChange={handleChange}
                   onSubmit={handleSubmit}
                   onTranscription={handleTranscription}
-                  placeholder={placeholder}
+                  placeholder={finalPlaceholder}
                   loading={loading}
                   disabled={disabled}
                   isAgentRunning={isAgentRunning}

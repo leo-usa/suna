@@ -3,6 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { Bot, Menu, Store, Plus, Zap, Plug, ChevronRight, Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 import { NavAgents } from '@/components/sidebar/nav-agents';
 import { NavUserWithTeams } from '@/components/sidebar/nav-user-with-teams';
@@ -59,6 +60,7 @@ export function SidebarLeft({
 }: React.ComponentProps<typeof Sidebar>) {
   const { state, setOpen, setOpenMobile } = useSidebar();
   const isMobile = useIsMobile();
+  const { t } = useTranslation();
   const [user, setUser] = useState<{
     name: string;
     email: string;
@@ -181,10 +183,10 @@ export function SidebarLeft({
                 <SidebarMenuItem>
                   <CollapsibleTrigger asChild>
                     <SidebarMenuButton
-                      tooltip="Agents"
+                      tooltip={t('sidebar.agents', 'Agents')}
                     >
                       <Bot className="h-4 w-4 mr-1" />
-                      <span>Agents</span>
+                      <span>{t('sidebar.agents', 'Agents')}</span>
                       <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                     </SidebarMenuButton>
                   </CollapsibleTrigger>
@@ -204,7 +206,7 @@ export function SidebarLeft({
                           'bg-accent text-accent-foreground font-medium': pathname === '/agents' && (searchParams.get('tab') === 'my-agents' || searchParams.get('tab') === null),
                         })} asChild>
                           <Link href="/agents?tab=my-agents">
-                            <span>My Agents</span>
+                            <span>{t('sidebar.myAgents', 'My Agents')}</span>
                           </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
@@ -213,7 +215,7 @@ export function SidebarLeft({
                           onClick={() => setShowNewAgentDialog(true)}
                           className="cursor-pointer pl-3"
                         >
-                          <span>New Agent</span>
+                          <span>{t('sidebar.newAgent', 'New Agent')}</span>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
                     </SidebarMenuSub>
@@ -259,14 +261,14 @@ export function SidebarLeft({
       <AlertDialog open={showNewAgentDialog} onOpenChange={setShowNewAgentDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Create New Agent</AlertDialogTitle>
+            <AlertDialogTitle>{t('sidebar.createNewAgent', 'Create New Agent')}</AlertDialogTitle>
             <AlertDialogDescription>
-              This will create a new agent with a default name and description.
+              {t('sidebar.createNewAgentDescription', 'This will create a new agent with a default name and description.')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleCreateNewAgent}>Create</AlertDialogAction>
+            <AlertDialogCancel>{t('common.cancel', 'Cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleCreateNewAgent}>{t('sidebar.create', 'Create')}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
