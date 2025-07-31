@@ -227,7 +227,23 @@ const zhTranslation = {
         by: '作者：{{name}}',
         anonymous: '匿名',
         communitySub: '加入我们不断壮大的开源社区。',
-        none: '暂无社区作品。'
+        none: '暂无社区作品。',
+        pagination: {
+          previous: '上一页',
+          next: '下一页'
+        }
+      },
+      pricing: {
+        tabs: {
+          cloud: '云端',
+          selfHosted: '自托管'
+        }
+      },
+      billing: {
+        billingPeriod: {
+          monthly: '月付',
+          yearly: '年付'
+        }
       },
   pagination: {
     prev: '上一页',
@@ -323,7 +339,11 @@ const resources = {
         by: 'By {{name}}',
         anonymous: 'Anonymous',
         communitySub: 'Join our growing open source community.',
-        none: 'No community posts yet.'
+        none: 'No community posts yet.',
+        pagination: {
+          previous: 'Previous',
+          next: 'Next'
+        }
       },
       cta: {
         title: 'Ready to get started?',
@@ -452,6 +472,10 @@ const resources = {
         paymentRequired: 'Payment Required',
         noActiveSubscription: 'No active subscription or prepaid credits found.',
         '30mins': '30 mins',
+        billingPeriod: {
+          monthly: 'Monthly',
+          yearly: 'Yearly'
+        }
       },
       sidebar: {
         agents: 'Agents',
@@ -605,6 +629,18 @@ const resources = {
           license: 'Apache 2.0 許可證'
         }
       },
+      pricing: {
+        tabs: {
+          cloud: '雲端',
+          selfHosted: '自託管'
+        }
+      },
+      billing: {
+        billingPeriod: {
+          monthly: '月付',
+          yearly: '年付'
+        }
+      },
       nav: {
         Home: '首頁',
         UseCases: '應用場景',
@@ -664,7 +700,11 @@ const resources = {
         by: '作者：{{name}}',
         anonymous: '匿名',
         communitySub: '加入我們不斷壯大的開源社區。',
-        none: '暫無社區作品。'
+        none: '暫無社區作品。',
+        pagination: {
+          previous: '上一頁',
+          next: '下一頁'
+        }
       },
     }
   },
@@ -735,6 +775,18 @@ const resources = {
           license: 'Apache 2.0 Lizenz'
         }
       },
+      pricing: {
+        tabs: {
+          cloud: 'Cloud',
+          selfHosted: 'Self-hosted'
+        }
+      },
+      billing: {
+        billingPeriod: {
+          monthly: 'Monatlich',
+          yearly: 'Jährlich'
+        }
+      },
       nav: {
         Home: 'Startseite',
         UseCases: 'Anwendungsfälle',
@@ -794,7 +846,11 @@ const resources = {
         by: 'Von {{name}}',
         anonymous: 'Anonym',
         communitySub: 'Tritt unserer wachsenden Open-Source-Community bei.',
-        none: 'Noch keine Community-Beiträge.'
+        none: 'Noch keine Community-Beiträge.',
+        pagination: {
+          previous: 'Zurück',
+          next: 'Weiter'
+        }
       },
     }
   },
@@ -865,6 +921,18 @@ const resources = {
           license: 'Licencia Apache 2.0'
         }
       },
+      pricing: {
+        tabs: {
+          cloud: 'Nube',
+          selfHosted: 'Auto-hospedado'
+        }
+      },
+      billing: {
+        billingPeriod: {
+          monthly: 'Mensual',
+          yearly: 'Anual'
+        }
+      },
       nav: {
         Home: 'Inicio',
         UseCases: 'Casos de uso',
@@ -924,7 +992,11 @@ const resources = {
         by: 'Por {{name}}',
         anonymous: 'Anónimo',
         communitySub: 'Únete a nuestra creciente comunidad de código abierto.',
-        none: 'Aún no hay publicaciones de la comunidad.'
+        none: 'Aún no hay publicaciones de la comunidad.',
+        pagination: {
+          previous: 'Anterior',
+          next: 'Siguiente'
+        }
       },
     }
   },

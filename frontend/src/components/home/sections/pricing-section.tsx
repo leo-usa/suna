@@ -16,6 +16,7 @@ import {
 import { toast } from 'sonner';
 import { isLocalMode } from '@/lib/config';
 import { useSubscription } from '@/hooks/react-query';
+import { useTranslation } from 'react-i18next';
 
 // Constants
 export const SUBSCRIPTION_PLANS = {
@@ -61,6 +62,8 @@ interface PricingTierProps {
 
 // Components
 function PricingTabs({ activeTab, setActiveTab, className }: PricingTabsProps) {
+  const { t } = useTranslation();
+  
   return (
     <div
       className={cn(
@@ -98,7 +101,7 @@ function PricingTabs({ activeTab, setActiveTab, className }: PricingTabsProps) {
               activeTab === tab ? 'text-primary' : 'text-muted-foreground',
             )}
           >
-            {tab === 'cloud' ? 'Cloud' : 'Self-hosted'}
+            {tab === 'cloud' ? t('pricing.tabs.cloud', 'Cloud') : t('pricing.tabs.selfHosted', 'Self-hosted')}
           </span>
         </button>
       ))}
@@ -131,6 +134,8 @@ function BillingPeriodToggle({
   billingPeriod: 'monthly' | 'yearly';
   setBillingPeriod: (period: 'monthly' | 'yearly') => void;
 }) {
+  const { t } = useTranslation();
+  
   return (
     <div className="flex items-center justify-center gap-3">
       <div
@@ -143,14 +148,14 @@ function BillingPeriodToggle({
               ? 'bg-background text-foreground shadow-sm'
               : 'text-muted-foreground'
           )}>
-            Monthly
+            {t('billing.billingPeriod.monthly', 'Monthly')}
           </div>
           <div className={cn("px-3 py-1 rounded-full text-xs font-medium transition-all duration-200 flex items-center gap-1",
             billingPeriod === 'yearly'
               ? 'bg-background text-foreground shadow-sm'
               : 'text-muted-foreground'
           )}>
-            Yearly
+            {t('billing.billingPeriod.yearly', 'Yearly')}
             <span className="bg-green-600 text-green-50 dark:bg-green-500 dark:text-green-50 text-[10px] px-1.5 py-0.5 rounded-full font-semibold whitespace-nowrap">
               15% off
             </span>

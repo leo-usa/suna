@@ -155,7 +155,7 @@ export default function CommunityGallerySection() {
             {totalPages > 1 && (
               <div className="flex justify-center mt-8 gap-2">
                 <Button variant="outline" size="sm" disabled={page === 0} onClick={() => handlePageChange(page - 1)}>
-                  Previous
+                  {t('community.pagination.previous', 'Previous')}
                 </Button>
                 {Array.from({ length: totalPages }).map((_, idx) => (
                   <Button
@@ -168,7 +168,7 @@ export default function CommunityGallerySection() {
                   </Button>
                 ))}
                 <Button variant="outline" size="sm" disabled={page === totalPages - 1} onClick={() => handlePageChange(page + 1)}>
-                  Next
+                  {t('community.pagination.next', 'Next')}
                 </Button>
               </div>
             )}
