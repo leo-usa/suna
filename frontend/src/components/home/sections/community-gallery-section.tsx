@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from '@/components/AuthProvider';
 import React from "react";
+import { useTranslation } from 'react-i18next';
 
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || '';
 
@@ -17,6 +18,7 @@ interface CommunityPost {
 }
 
 export default function CommunityGallerySection() {
+  const { t } = useTranslation();
   const { session } = useAuth();
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [loading, setLoading] = useState(true);
@@ -80,11 +82,11 @@ export default function CommunityGallerySection() {
   return (
     <section id="community" className="w-full py-16 bg-muted/50" ref={sectionRef}>
       <div className="max-w-6xl mx-auto px-4">
-        <h2 className="text-3xl font-bold mb-8 text-center">Community Gallery</h2>
+        <h2 className="text-3xl font-bold mb-8 text-center">{t('community.gallery', 'Community Gallery')}</h2>
         {loading ? (
-          <div className="text-center text-muted-foreground">Loading...</div>
+          <div className="text-center text-muted-foreground">{t('common.loading', 'Loading...')}</div>
         ) : posts.length === 0 ? (
-          <div className="text-center text-muted-foreground">No community posts yet.</div>
+          <div className="text-center text-muted-foreground">{t('community.none', 'No community posts yet.')}</div>
         ) : (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">

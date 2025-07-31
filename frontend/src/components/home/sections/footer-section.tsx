@@ -8,8 +8,10 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export function FooterSection() {
+  const { t } = useTranslation();
   const tablet = useMediaQuery('(max-width: 1024px)');
   const { theme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -39,7 +41,7 @@ export function FooterSection() {
             />
           </Link>
           <p className="tracking-tight text-muted-foreground font-medium">
-            {siteConfig.hero.description}
+            {t('footer.description', 'Dobby is your AI employee. Provided by DrPang.AI.')}
           </p>
 
 

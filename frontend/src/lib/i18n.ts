@@ -157,10 +157,18 @@ const zhTranslation = {
     checkEmailForReset: '请检查你的电子邮件以获取密码重置链接',
     passwordUpdated: '密码已成功更新',
   },
-  common: {
-    close: '关闭',
-    and: '和',
-  },
+        common: {
+        close: '关闭',
+        and: '和',
+        loading: '加载中...',
+      },
+      community: {
+        gallery: '社区作品展示',
+        by: '作者：{{name}}',
+        anonymous: '匿名',
+        communitySub: '加入我们不断壮大的开源社区。',
+        none: '暂无社区作品。'
+      },
   pagination: {
     prev: '上一页',
     next: '下一页',
@@ -204,7 +212,8 @@ const resources = {
         gallery: 'Community Gallery',
         by: 'By {{name}}',
         anonymous: 'Anonymous',
-        communitySub: 'Join our growing open source community.'
+        communitySub: 'Join our growing open source community.',
+        none: 'No community posts yet.'
       },
       cta: {
         title: 'Ready to get started?',
@@ -227,12 +236,12 @@ const resources = {
           Terms: 'Terms',
           Suna: 'Dobby',
         },
-        about: '关于',
-        contact: '联系',
-        careers: '招聘',
-        legal: '法律',
-        privacy: '隐私',
-        terms: '条款',
+        about: 'About',
+        contact: 'Contact',
+        careers: 'Careers',
+        legal: 'Legal',
+        privacy: 'Privacy',
+        terms: 'Terms',
       },
       pricing: {
         title: 'Choose the right plan for your needs',
@@ -377,6 +386,7 @@ const resources = {
       common: {
         close: 'Close',
         and: 'and',
+        loading: 'Loading...',
       },
       nav: {
         Home: 'Home',
@@ -517,6 +527,14 @@ const resources = {
       common: {
         close: '關閉',
         and: '和',
+        loading: '載入中...',
+      },
+      community: {
+        gallery: '社區作品展示',
+        by: '作者：{{name}}',
+        anonymous: '匿名',
+        communitySub: '加入我們不斷壯大的開源社區。',
+        none: '暫無社區作品。'
       },
     }
   },
@@ -629,6 +647,14 @@ const resources = {
       common: {
         close: 'Schließen',
         and: 'und',
+        loading: 'Laden...',
+      },
+      community: {
+        gallery: 'Community Galerie',
+        by: 'Von {{name}}',
+        anonymous: 'Anonym',
+        communitySub: 'Tritt unserer wachsenden Open-Source-Community bei.',
+        none: 'Noch keine Community-Beiträge.'
       },
     }
   },
@@ -741,6 +767,14 @@ const resources = {
       common: {
         close: 'Cerrar',
         and: 'y',
+        loading: 'Cargando...',
+      },
+      community: {
+        gallery: 'Galería de la Comunidad',
+        by: 'Por {{name}}',
+        anonymous: 'Anónimo',
+        communitySub: 'Únete a nuestra creciente comunidad de código abierto.',
+        none: 'Aún no hay publicaciones de la comunidad.'
       },
     }
   },
