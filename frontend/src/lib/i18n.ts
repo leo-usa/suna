@@ -168,14 +168,16 @@ const zhTranslation = {
           license: 'Apache 2.0 许可证'
         }
       },
-  nav: {
-    Home: '首页',
-    UseCases: '应用场景',
-    OpenSource: '开源',
-    Pricing: '价格',
-    Dashboard: '仪表板',
-    Community: '社区',
-  },
+        nav: {
+        Home: '首页',
+        UseCases: '应用场景',
+        OpenSource: '开源',
+        Pricing: '价格',
+        Dashboard: '仪表板',
+        Community: '社区',
+        getStarted: '立即开始',
+        dashboard: '仪表板',
+      },
   chatInput: {
     placeholder: '描述你需要什么帮助...',
     attachFile: '附加文件',
@@ -561,6 +563,8 @@ const resources = {
         Pricing: 'Pricing',
         Dashboard: 'Dashboard',
         Community: 'Community',
+        getStarted: 'Get Started',
+        dashboard: 'Dashboard',
       },
       pagination: {
         prev: 'Previous',
@@ -670,6 +674,8 @@ const resources = {
         Pricing: '價格',
         Dashboard: '儀表板',
         Community: '社區',
+        getStarted: '立即開始',
+        dashboard: '儀表板',
       },
       chatInput: {
         placeholder: '描述你需要什麼幫助...',
@@ -816,6 +822,8 @@ const resources = {
         Pricing: 'Preise',
         Dashboard: 'Dashboard',
         Community: 'Community',
+        getStarted: 'Loslegen',
+        dashboard: 'Dashboard',
       },
       chatInput: {
         placeholder: 'Beschreibe, wobei du Hilfe brauchst...',
@@ -962,6 +970,8 @@ const resources = {
         Pricing: 'Precios',
         Dashboard: 'Panel',
         Community: 'Comunidad',
+        getStarted: 'Comenzar',
+        dashboard: 'Panel',
       },
       chatInput: {
         placeholder: 'Describe en qué necesitas ayuda...',
