@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Globe,
   CheckCircle,
@@ -39,6 +40,7 @@ export function WebCrawlToolView({
   const { resolvedTheme } = useTheme();
   const [progress, setProgress] = useState(0);
   const [copiedContent, setCopiedContent] = useState(false);
+  const { t } = useTranslation();
 
   // Try to extract data using the new parser first
   const assistantToolData = extractToolData(assistantContent);
@@ -155,7 +157,7 @@ export function WebCrawlToolView({
               ) : (
                 <AlertTriangle className="h-3.5 w-3.5" />
               )}
-              {isSuccess ? 'Crawling completed' : 'Crawling failed'}
+              {isSuccess ? t('toolView.crawlingCompleted', 'Crawling completed') : t('toolView.crawlingFailed', 'Crawling failed')}
             </Badge>
           )}
         </div>
@@ -169,13 +171,13 @@ export function WebCrawlToolView({
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
               <h3 className="text-lg font-medium text-zinc-900 dark:text-zinc-100 mb-2">
-                Crawling Webpage
+                {t('toolView.crawlingWebpage', 'Crawling Webpage')}
               </h3>
               <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6">
-                Fetching content from <span className="font-mono text-xs break-all">{domain}</span>
+                {t('toolView.fetchingContentFrom', 'Fetching content from')} <span className="font-mono text-xs break-all">{domain}</span>
               </p>
               <Progress value={progress} className="w-full h-1" />
-              <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-2">{progress}% complete</p>
+              <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-2">{progress}% {t('toolView.complete', 'complete')}</p>
             </div>
           </div>
         ) : url ? (
@@ -186,7 +188,7 @@ export function WebCrawlToolView({
               <div className="space-y-3 mb-6">
                 <div className="flex items-center gap-2 text-sm font-medium text-zinc-800 dark:text-zinc-200">
                   <Globe className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
-                  Source URL
+                  {t('toolView.sourceUrl', 'Source URL')}
                 </div>
                 <div className="group relative">
                   <div className="flex items-center gap-3 p-4 bg-zinc-50 dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors rounded-xl border border-zinc-200 dark:border-zinc-800">
@@ -223,15 +225,15 @@ export function WebCrawlToolView({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-sm font-medium text-zinc-800 dark:text-zinc-200">
                     <BookOpen className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
-                    Extracted Content
+                    {t('toolView.extractedContent', 'Extracted Content')}
                   </div>
                   {contentStats && (
                     <div className="flex items-center gap-2">
                       <Badge variant="outline" className="text-xs">
-                        {contentStats.wordCount} words
+                        {contentStats.wordCount} {t('toolView.words', 'words')}
                       </Badge>
                       <Badge variant="outline" className="text-xs">
-                        {contentStats.charCount} chars
+                        {contentStats.charCount} {t('toolView.chars', 'chars')}
                       </Badge>
                     </div>
                   )}
@@ -247,11 +249,11 @@ export function WebCrawlToolView({
                         </div>
                         <div>
                           <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                            Page Content
+                            {t('toolView.pageContent', 'Page Content')}
                           </p>
                           {contentStats && (
                             <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                              {contentStats.lineCount} lines
+                              {contentStats.lineCount} {t('toolView.lines', 'lines')}
                             </p>
                           )}
                         </div>
@@ -278,7 +280,7 @@ export function WebCrawlToolView({
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>
-                              <p>{copiedContent ? 'Copied!' : 'Copy content'}</p>
+                              <p>{copiedContent ? t('toolView.copied', 'Copied!') : t('toolView.copyContent', 'Copy content')}</p>
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
@@ -298,10 +300,10 @@ export function WebCrawlToolView({
                       <FileText className="h-8 w-8 text-zinc-400 dark:text-zinc-600" />
                     </div>
                     <h3 className="text-lg font-medium mb-2 text-zinc-900 dark:text-zinc-100">
-                      No Content Extracted
+                      {t('toolView.noContentExtracted', 'No Content Extracted')}
                     </h3>
                     <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-sm mx-auto">
-                      The webpage might be restricted, empty, or require JavaScript to load content
+                      {t('toolView.webpageRestrictedEmptyOrRequiresJs', 'The webpage might be restricted, empty, or require JavaScript to load content')}
                     </p>
                   </div>
                 )}
@@ -314,10 +316,10 @@ export function WebCrawlToolView({
               <Globe className="h-10 w-10 text-zinc-400 dark:text-zinc-600" />
             </div>
             <h3 className="text-xl font-semibold mb-2 text-zinc-900 dark:text-zinc-100">
-              No URL Detected
+              {t('toolView.noUrlDetected', 'No URL Detected')}
             </h3>
             <p className="text-zinc-500 dark:text-zinc-400 text-center max-w-sm">
-              Unable to extract a valid URL from the crawling request
+              {t('toolView.unableToExtractValidUrl', 'Unable to extract a valid URL from the crawling request')}
             </p>
           </div>
         )}
@@ -329,7 +331,7 @@ export function WebCrawlToolView({
           {!isStreaming && webpageContent?.text && (
             <Badge className="h-6 py-0.5">
               <div className="w-2 h-2 rounded-full bg-green-500 mr-1.5" />
-              Content extracted
+              {t('toolView.contentExtracted', 'Content extracted')}
             </Badge>
           )}
         </div>

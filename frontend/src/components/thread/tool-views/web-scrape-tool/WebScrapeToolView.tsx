@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Globe,
   CheckCircle,
@@ -38,6 +39,7 @@ export function WebScrapeToolView({
   const { resolvedTheme } = useTheme();
   const [progress, setProgress] = useState(0);
   const [copiedFile, setCopiedFile] = useState<string | null>(null);
+  const { t } = useTranslation();
 
   const {
     url,
@@ -214,10 +216,10 @@ export function WebScrapeToolView({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-sm font-medium text-zinc-800 dark:text-zinc-200">
                     <Zap className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
-                    Generated Files
+                    {t('toolView.generatedFiles', 'Generated Files')}
                   </div>
                   <Badge variant="outline" className="gap-1">
-                    {files.length} file{files.length !== 1 ? 's' : ''}
+                    {files.length} {t('toolView.file', 'file')}{files.length !== 1 ? t('toolView.files', 's') : ''}
                   </Badge>
                 </div>
 
@@ -281,7 +283,7 @@ export function WebScrapeToolView({
                                   </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                  <p>{isCopied ? 'Copied!' : 'Copy file path'}</p>
+                                  <p>{isCopied ? t('toolView.copied', 'Copied!') : t('toolView.copyFilePath', 'Copy file path')}</p>
                                 </TooltipContent>
                               </Tooltip>
                             </TooltipProvider>
@@ -293,7 +295,7 @@ export function WebScrapeToolView({
                 ) : (
                   <div className="text-center py-8 text-zinc-500 dark:text-zinc-400">
                     <FileText className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                    <p className="text-sm">No files generated</p>
+                    <p className="text-sm">{t('toolView.noFilesGenerated', 'No files generated')}</p>
                   </div>
                 )}
               </div>

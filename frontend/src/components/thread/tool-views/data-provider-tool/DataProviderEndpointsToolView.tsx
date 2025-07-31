@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Database,
   CheckCircle,
@@ -73,6 +74,7 @@ export function DataProviderEndpointsToolView({
   isSuccess = true,
   isStreaming = false,
 }: ToolViewProps) {
+  const { t } = useTranslation();
 
   const {
     serviceName,
@@ -139,10 +141,10 @@ export function DataProviderEndpointsToolView({
                 <Loader2 className="h-8 w-8 animate-spin text-zinc-500 dark:text-zinc-400" />
               </div>
               <h3 className="text-base font-medium text-zinc-900 dark:text-zinc-100 mb-2">
-                Loading provider...
+                {t('toolView.loadingProvider', 'Loading provider...')}
               </h3>
               <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                Connecting to data source
+                {t('toolView.connectingToDataSource', 'Connecting to data source')}
               </p>
             </div>
           </div>
@@ -162,7 +164,7 @@ export function DataProviderEndpointsToolView({
                   {providerConfig.name}
                 </h3>
                 <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                  {endpointCount > 0 ? `${endpointCount} endpoints loaded and ready` : 'Endpoints loaded and ready'}
+                  {endpointCount > 0 ? `${endpointCount} ${t('toolView.endpointsLoadedAndReady', 'endpoints loaded and ready')}` : t('toolView.endpointsLoadedAndReady', 'Endpoints loaded and ready')}
                 </p>
               </div>
 
@@ -180,13 +182,13 @@ export function DataProviderEndpointsToolView({
                 ) : (
                   <AlertTriangle className="h-3 w-3 mr-1" />
                 )}
-                {actualIsSuccess ? 'Connected' : 'Failed'}
+                {actualIsSuccess ? t('toolView.connected', 'Connected') : t('toolView.failed', 'Failed')}
               </Badge>
             </div>
             <div className="space-y-4">
               <div className="flex items-center gap-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
                 <Database className="h-4 w-4" />
-                <span>Provider Status</span>
+                <span>{t('toolView.providerStatus', 'Provider Status')}</span>
                 <ChevronRight className="h-3 w-3 text-zinc-400" />
               </div>
               <div className="grid gap-3">
@@ -194,7 +196,7 @@ export function DataProviderEndpointsToolView({
                   <div className="flex items-center gap-3">
                     <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
                     <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                      Connection Status
+                      {t('toolView.connectionStatus', 'Connection Status')}
                     </span>
                   </div>
                   <Badge
@@ -211,7 +213,7 @@ export function DataProviderEndpointsToolView({
                     ) : (
                       <AlertTriangle className="h-3 w-3 mr-1" />
                     )}
-                    {actualIsSuccess ? 'Active' : 'Inactive'}
+                    {actualIsSuccess ? t('toolView.active', 'Active') : t('toolView.inactive', 'Inactive')}
                   </Badge>
                 </div>
 
@@ -219,11 +221,11 @@ export function DataProviderEndpointsToolView({
                   <div className="flex items-center gap-3">
                     <div className="w-2 h-2 rounded-full bg-blue-500"></div>
                     <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                      Endpoints Available
+                      {t('toolView.endpointsAvailable', 'Endpoints Available')}
                     </span>
                   </div>
                   <Badge variant="outline" className="text-xs">
-                    {endpointCount > 0 ? `${endpointCount} endpoints` : 'Ready'}
+                    {endpointCount > 0 ? `${endpointCount} ${t('toolView.endpoints', 'endpoints')}` : t('toolView.ready', 'Ready')}
                   </Badge>
                 </div>
 
@@ -231,7 +233,7 @@ export function DataProviderEndpointsToolView({
                   <div className="flex items-center gap-3">
                     <div className="w-2 h-2 rounded-full bg-purple-500"></div>
                     <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                      Data Provider
+                      {t('toolView.dataProvider', 'Data Provider')}
                     </span>
                   </div>
                   <span className="text-sm text-zinc-600 dark:text-zinc-400 font-mono">
@@ -244,11 +246,11 @@ export function DataProviderEndpointsToolView({
                   <div className="flex items-center gap-2 mb-2">
                     <CheckCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400/70" />
                     <span className="text-sm font-medium text-emerald-800 dark:text-emerald-300/70">
-                      Provider Ready
+                      {t('toolView.providerReady', 'Provider Ready')}
                     </span>
                   </div>
                   <p className="text-xs text-emerald-700 dark:text-emerald-300/70">
-                    Data provider endpoints have been loaded successfully and are ready to process requests.
+                    {t('toolView.dataProviderEndpointsLoaded', 'Data provider endpoints have been loaded successfully and are ready to process requests.')}
                   </p>
                 </div>
               )}

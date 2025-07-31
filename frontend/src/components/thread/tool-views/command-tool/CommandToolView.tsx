@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Terminal,
   CheckCircle,
@@ -31,6 +32,7 @@ export function CommandToolView({
   const { resolvedTheme } = useTheme();
   const isDarkTheme = resolvedTheme === 'dark';
   const [showFullOutput, setShowFullOutput] = useState(true);
+  const { t } = useTranslation();
 
   const {
     command,
@@ -118,8 +120,8 @@ export function CommandToolView({
                 <AlertTriangle className="h-3.5 w-3.5 mr-1" />
               )}
               {actualIsSuccess ?
-                (name === 'check-command-output' ? 'Output retrieved successfully' : 'Command executed successfully') :
-                (name === 'check-command-output' ? 'Failed to retrieve output' : 'Command failed')
+                (name === 'check-command-output' ? t('toolView.outputRetrievedSuccessfully', 'Output retrieved successfully') : t('toolView.commandExecutedSuccessfully', 'Command executed successfully')) :
+                (name === 'check-command-output' ? t('toolView.failedToRetrieveOutput', 'Failed to retrieve output') : t('toolView.commandFailed', 'Command failed'))
               }
             </Badge>
           )}
@@ -132,8 +134,8 @@ export function CommandToolView({
             icon={Terminal}
             iconColor="text-purple-500 dark:text-purple-400"
             bgColor="bg-gradient-to-b from-purple-100 to-purple-50 shadow-inner dark:from-purple-800/40 dark:to-purple-900/60 dark:shadow-purple-950/20"
-            title={name === 'check-command-output' ? 'Checking command output' : 'Executing command'}
-            filePath={displayText || 'Processing command...'}
+            title={name === 'check-command-output' ? t('toolView.checkingCommandOutput', 'Checking command output') : t('toolView.executingCommand', 'Executing command')}
+            filePath={displayText || t('toolView.processingCommand', 'Processing command...')}
             showProgress={true}
           />
         ) : displayText ? (
@@ -149,12 +151,12 @@ export function CommandToolView({
                     <div className="bg-zinc-300 dark:bg-neutral-800 flex items-center justify-between dark:border-zinc-700/50">
                       <div className="bg-zinc-200 w-full dark:bg-zinc-800 px-4 py-2 flex items-center gap-2">
                         <TerminalIcon className="h-4 w-4 text-zinc-600 dark:text-zinc-400" />
-                        <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Terminal output</span>
+                        <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{t('toolView.terminalOutput', 'Terminal output')}</span>
                       </div>
                       {exitCode !== null && exitCode !== 0 && (
                         <Badge variant="outline" className="text-xs h-5 border-red-700/30 text-red-400">
                           <AlertTriangle className="h-3 w-3 mr-1" />
-                          Error
+                          {t('toolView.error', 'Error')}
                         </Badge>
                       )}
                     </div>
@@ -170,7 +172,7 @@ export function CommandToolView({
                         ))}
                         {!showFullOutput && hasMoreLines && (
                           <div className="text-zinc-500 mt-2 border-t border-zinc-700/30 pt-2">
-                            + {formattedOutput.length - 10} more lines
+                            + {formattedOutput.length - 10} {t('toolView.moreLines', 'more lines')}
                           </div>
                         )}
                       </pre>
@@ -183,7 +185,7 @@ export function CommandToolView({
                 <div className="bg-black rounded-lg overflow-hidden border border-zinc-700/20 shadow-md p-6 flex items-center justify-center">
                   <div className="text-center">
                     <CircleDashed className="h-8 w-8 text-zinc-500 mx-auto mb-2" />
-                    <p className="text-zinc-400 text-sm">No output received</p>
+                    <p className="text-zinc-400 text-sm">{t('toolView.noOutputReceived', 'No output received')}</p>
                   </div>
                 </div>
               )}
@@ -195,12 +197,12 @@ export function CommandToolView({
               <Terminal className="h-10 w-10 text-zinc-400 dark:text-zinc-600" />
             </div>
             <h3 className="text-xl font-semibold mb-2 text-zinc-900 dark:text-zinc-100">
-              {name === 'check-command-output' ? 'No Session Found' : 'No Command Found'}
+              {name === 'check-command-output' ? t('toolView.noSessionFound', 'No Session Found') : t('toolView.noCommandFound', 'No Command Found')}
             </h3>
             <p className="text-sm text-zinc-500 dark:text-zinc-400 text-center max-w-md">
               {name === 'check-command-output'
-                ? 'No session name was detected. Please provide a valid session name to check.'
-                : 'No command was detected. Please provide a valid command to execute.'
+                ? t('toolView.noSessionDetected', 'No session name was detected. Please provide a valid session name to check.')
+                : t('toolView.noCommandDetected', 'No command was detected. Please provide a valid command to execute.')
               }
             </p>
           </div>

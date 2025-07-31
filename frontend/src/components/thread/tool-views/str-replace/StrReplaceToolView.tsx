@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   FileDiff,
   CheckCircle,
@@ -127,19 +128,22 @@ const SplitDiffView: React.FC<{ lineDiff: LineDiff[] }> = ({ lineDiff }) => (
   </div>
 );
 
-const ErrorState: React.FC = () => (
-  <div className="flex flex-col items-center justify-center h-full py-12 px-6 bg-gradient-to-b from-white to-zinc-50 dark:from-zinc-950 dark:to-zinc-900">
-    <div className="text-center w-full max-w-xs">
-      <AlertTriangle className="h-16 w-16 mx-auto mb-6 text-amber-500" />
-      <h3 className="text-lg font-medium text-zinc-900 dark:text-zinc-100 mb-2">
-        Invalid String Replacement
-      </h3>
-      <p className="text-sm text-zinc-500 dark:text-zinc-400">
-        Could not extract the old string and new string from the request.
-      </p>
+const ErrorState: React.FC = () => {
+  const { t } = useTranslation();
+  return (
+    <div className="flex flex-col items-center justify-center h-full py-12 px-6 bg-gradient-to-b from-white to-zinc-50 dark:from-zinc-950 dark:to-zinc-900">
+      <div className="text-center w-full max-w-xs">
+        <AlertTriangle className="h-16 w-16 mx-auto mb-6 text-amber-500" />
+        <h3 className="text-lg font-medium text-zinc-900 dark:text-zinc-100 mb-2">
+          {t('toolView.invalidStringReplacement', 'Invalid String Replacement')}
+        </h3>
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          {t('toolView.couldNotExtractStrings', 'Could not extract the old string and new string from the request.')}
+        </p>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export function StrReplaceToolView({
   name = 'str-replace',
@@ -150,6 +154,9 @@ export function StrReplaceToolView({
   isSuccess = true,
   isStreaming = false,
 }: ToolViewProps): JSX.Element {
+  const [showFullDiff, setShowFullDiff] = useState(false);
+  const [diffView, setDiffView] = useState<'unified' | 'split'>('unified');
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState<boolean>(true);
   const [viewMode, setViewMode] = useState<'unified' | 'split'>('unified');
 
@@ -245,14 +252,14 @@ export function StrReplaceToolView({
               ) : (
                 <AlertTriangle className="h-3.5 w-3.5 mr-1" />
               )}
-              {actualIsSuccess ? 'Replacement completed' : 'Replacement failed'}
+              {actualIsSuccess ? t('toolView.replacementCompleted', 'Replacement completed') : t('toolView.replacementFailed', 'Replacement failed')}
             </Badge>
           )}
 
           {isStreaming && (
             <Badge className="bg-gradient-to-b from-blue-200 to-blue-100 text-blue-700 dark:from-blue-800/50 dark:to-blue-900/60 dark:text-blue-300">
               <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />
-              Processing replacement
+              {t('toolView.processingReplacement', 'Processing replacement')}
             </Badge>
           )}
         </div>
@@ -264,10 +271,10 @@ export function StrReplaceToolView({
             icon={FileDiff}
             iconColor="text-purple-500 dark:text-purple-400"
             bgColor="bg-gradient-to-b from-purple-100 to-purple-50 shadow-inner dark:from-purple-800/40 dark:to-purple-900/60 dark:shadow-purple-950/20"
-            title="Processing String Replacement"
-            filePath={filePath || 'Processing file...'}
-            progressText="Analyzing text patterns"
-            subtitle="Please wait while the replacement is being processed"
+            title={t('toolView.processingStringReplacement', 'Processing String Replacement')}
+            filePath={filePath || t('toolView.processingFile', 'Processing file...')}
+            progressText={t('toolView.analyzingTextPatterns', 'Analyzing text patterns')}
+            subtitle={t('toolView.pleaseWaitWhileReplacementProcessed', 'Please wait while the replacement is being processed')}
           />
         ) : shouldShowError ? (
           <ErrorState />
@@ -279,7 +286,7 @@ export function StrReplaceToolView({
                   <div className="flex items-center">
                     <File className="h-4 w-4 mr-2 text-zinc-500 dark:text-zinc-400" />
                     <code className="text-xs font-mono text-zinc-700 dark:text-zinc-300">
-                      {filePath || 'Unknown file'}
+                      {filePath || t('toolView.unknownFile', 'Unknown file')}
                     </code>
                   </div>
 
@@ -308,7 +315,7 @@ export function StrReplaceToolView({
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent>
-                          <p>{expanded ? 'Collapse' : 'Expand'}</p>
+                          <p>{expanded ? t('toolView.collapse', 'Collapse') : t('toolView.expand', 'Expand')}</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
@@ -320,8 +327,8 @@ export function StrReplaceToolView({
                     <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as 'unified' | 'split')} className="w-auto">
                       <div className="border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 p-2 flex justify-end">
                         <TabsList className="h-7 p-0.5">
-                          <TabsTrigger value="unified" className="text-xs h-6 px-2">Unified</TabsTrigger>
-                          <TabsTrigger value="split" className="text-xs h-6 px-2">Split</TabsTrigger>
+                          <TabsTrigger value="unified" className="text-xs h-6 px-2">{t('toolView.unified', 'Unified')}</TabsTrigger>
+                          <TabsTrigger value="split" className="text-xs h-6 px-2">{t('toolView.split', 'Split')}</TabsTrigger>
                         </TabsList>
                       </div>
 
