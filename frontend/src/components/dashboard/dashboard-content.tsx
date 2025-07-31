@@ -31,6 +31,7 @@ import { useModal } from '@/hooks/use-modal-store';
 import { Examples } from './examples';
 import { useThreadQuery } from '@/hooks/react-query/threads/use-threads';
 import { normalizeFilenameToNFC } from '@/lib/utils/unicode';
+import { useTranslation } from 'react-i18next';
 
 const PENDING_PROMPT_KEY = 'pendingAgentPrompt';
 
@@ -51,6 +52,7 @@ export function DashboardContent() {
   const chatInputRef = useRef<ChatInputHandles>(null);
   const initiateAgentMutation = useInitiateAgentWithInvalidation();
   const { onOpen } = useModal();
+  const { t } = useTranslation();
 
   // Fetch agents to get the selected agent's name
   const { data: agentsResponse } = useAgents({
@@ -196,10 +198,10 @@ export function DashboardContent() {
                   onClick={() => setOpenMobile(true)}
                 >
                   <Menu className="h-4 w-4" />
-                  <span className="sr-only">Open menu</span>
+                  <span className="sr-only">{t('dashboard.openMenu', 'Open menu')}</span>
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Open menu</TooltipContent>
+              <TooltipContent>{t('dashboard.openMenu', 'Open menu')}</TooltipContent>
             </Tooltip>
           </div>
         )}
@@ -219,7 +221,7 @@ export function DashboardContent() {
               </h1>
             </div> */}
             <p className="tracking-tight text-3xl font-normal text-muted-foreground/80 mt-2">
-              What would you like to do today?
+              {t('dashboard.subtitle', 'What would you like to do today?')}
             </p>
           </div>
           <div className={cn(
@@ -231,7 +233,7 @@ export function DashboardContent() {
               ref={chatInputRef}
               onSubmit={handleSubmit}
               loading={isSubmitting}
-              placeholder="Describe what you need help with..."
+              placeholder={t('dashboard.inputPlaceholder', 'Describe what you need help with...')}
               value={inputValue}
               onChange={setInputValue}
               hideAttachments={false}

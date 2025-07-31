@@ -16,6 +16,7 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 import { usePathname, useRouter } from "next/navigation"
+import { useTranslation } from 'react-i18next';
 
 import {
   DropdownMenu,
@@ -61,6 +62,7 @@ export function NavAgents() {
   const { performDelete } = useDeleteOperation();
   const isPerformingActionRef = useRef(false);
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   const [selectedThreads, setSelectedThreads] = useState<Set<string>>(new Set());
   const [deleteProgress, setDeleteProgress] = useState(0);

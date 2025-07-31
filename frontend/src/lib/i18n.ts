@@ -264,6 +264,24 @@ const zhTranslation = {
         }
       },
 
+  sidebar: {
+    agents: '智能体',
+    newAgent: '新建智能体',
+    tooltipNewAgent: '创建一个新的智能体',
+    noAgents: '还没有智能体',
+    toggleSidebar: '切换侧边栏 (CMD+B)',
+    expandSidebar: '展开侧边栏 (CMD+B)',
+    searchResults: '搜索结果',
+    recent: '最近',
+    noResultsFound: '未找到结果',
+    noAgentsYet: '还没有智能体',
+  },
+  dashboard: {
+    greeting: '你好',
+    subtitle: '你今天想让 Dobby 做什么？',
+    inputPlaceholder: '描述你需要帮助的内容……',
+    openMenu: '打开菜单',
+  },
   pagination: {
     prev: '上一页',
     next: '下一页',
@@ -502,6 +520,12 @@ const resources = {
           yearly: 'Yearly'
         }
       },
+      dashboard: {
+        greeting: 'Hey',
+        subtitle: 'What would you like Dobby to do today?',
+        inputPlaceholder: 'Describe what you need help with...',
+        openMenu: 'Open menu',
+      },
       sidebar: {
         agents: 'Agents',
         newAgent: 'New Agent',
@@ -509,6 +533,10 @@ const resources = {
         noAgents: 'No agents yet',
         toggleSidebar: 'Toggle sidebar (CMD+B)',
         expandSidebar: 'Expand sidebar (CMD+B)',
+        searchResults: 'Search Results',
+        recent: 'Recent',
+        noResultsFound: 'No results found',
+        noAgentsYet: 'No agents yet',
       },
       agentDetail: {
         streamError: 'Agent stream error',
@@ -833,6 +861,24 @@ const resources = {
         stop: 'Stop',
         working: 'Dobby arbeitet...'
       },
+      sidebar: {
+        agents: 'Agenten',
+        newAgent: 'Neuer Agent',
+        tooltipNewAgent: 'Einen neuen Agenten erstellen',
+        noAgents: 'Noch keine Agenten',
+        toggleSidebar: 'Sidebar umschalten (CMD+B)',
+        expandSidebar: 'Sidebar erweitern (CMD+B)',
+        searchResults: 'Suchergebnisse',
+        recent: 'Kürzlich',
+        noResultsFound: 'Keine Ergebnisse gefunden',
+        noAgentsYet: 'Noch keine Agenten',
+      },
+      dashboard: {
+        greeting: 'Hallo',
+        subtitle: 'Was möchtest du, dass Dobby heute macht?',
+        inputPlaceholder: 'Beschreibe, wobei du Hilfe brauchst...',
+        openMenu: 'Menü öffnen',
+      },
       auth: {
         welcomeBack: 'Willkommen zurück',
         signInToContinue: 'Melde dich in deinem Konto an, um fortzufahren',
@@ -981,6 +1027,24 @@ const resources = {
         start: 'Iniciar',
         stop: 'Detener',
         working: 'Dobby está trabajando...'
+      },
+      sidebar: {
+        agents: 'Agentes',
+        newAgent: 'Nuevo Agente',
+        tooltipNewAgent: 'Crear un nuevo agente',
+        noAgents: 'Aún no hay agentes',
+        toggleSidebar: 'Alternar barra lateral (CMD+B)',
+        expandSidebar: 'Expandir barra lateral (CMD+B)',
+        searchResults: 'Resultados de búsqueda',
+        recent: 'Reciente',
+        noResultsFound: 'No se encontraron resultados',
+        noAgentsYet: 'Aún no hay agentes',
+      },
+      dashboard: {
+        greeting: 'Hola',
+        subtitle: '¿Qué te gustaría que Dobby haga hoy?',
+        inputPlaceholder: 'Describe en qué necesitas ayuda...',
+        openMenu: 'Abrir menú',
       },
       auth: {
         welcomeBack: 'Bienvenido de vuelta',

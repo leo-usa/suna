@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Search, X, FileText, Loader2 } from 'lucide-react';
 import { useRouter, usePathname } from 'next/navigation';
 import { format } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 
 import {
   SidebarGroup,
@@ -36,6 +37,7 @@ export function SidebarSearch() {
   const router = useRouter();
   const pathname = usePathname();
   const { state } = useSidebar();
+  const { t } = useTranslation();
 
   // Use React Query hooks
   const { data: projects = [], isLoading: projectsLoading } = useProjects();
@@ -185,7 +187,7 @@ export function SidebarSearch() {
 
       {/* Search results */}
       <SidebarGroupLabel>
-        {query ? 'Search Results' : 'Recent'}
+        {query ? t('sidebar.searchResults', 'Search Results') : t('sidebar.recent', 'Recent')}
       </SidebarGroupLabel>
       <SidebarMenu className="overflow-y-auto max-h-[calc(100vh-270px)] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
         {isLoading ? (
@@ -259,7 +261,7 @@ export function SidebarSearch() {
           <SidebarMenuItem>
             <SidebarMenuButton className="text-sidebar-foreground/70">
               <FileText className="h-4 w-4" />
-              <span>{query ? 'No results found' : 'No agents yet'}</span>
+              <span>{query ? t('sidebar.noResultsFound', 'No results found') : t('sidebar.noAgentsYet', 'No agents yet')}</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         )}
