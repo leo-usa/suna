@@ -551,6 +551,7 @@ export function PricingSection({
     'cloud',
   );
   const { data: subscriptionData, isLoading: isFetchingPlan, error: subscriptionQueryError, refetch: refetchSubscription } = useSubscription();
+  const { t } = useTranslation();
 
   // Derive authentication and subscription status from the hook data
   const isAuthenticated = !!subscriptionData && subscriptionQueryError === null;
@@ -624,7 +625,7 @@ export function PricingSection({
     return (
       <div className="p-4 bg-muted/30 border border-border rounded-lg text-center">
         <p className="text-sm text-muted-foreground">
-          Running in local development mode - billing features are disabled
+          {t('billing.localMode', 'Running in local development mode - billing features are disabled')}
         </p>
       </div>
     );

@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Loader2, CreditCard } from 'lucide-react';
 import { useAuth } from '@/components/AuthProvider';
 import { createCreditSession } from '@/lib/api';
+import { useTranslation } from 'react-i18next';
 
 // Price mapping for display and Stripe price IDs
 const CREDIT_PRICE_IDS: Record<number, string> = {
@@ -39,6 +40,7 @@ export default function HomeBillingTabs() {
   const [paymentMethod, setPaymentMethod] = useState<'alipay' | 'wechat_pay' | 'card'>('alipay');
   const [isTopUpLoading, setIsTopUpLoading] = useState(false);
   const [topUpError, setTopUpError] = useState<string | null>(null);
+  const { t } = useTranslation();
 
   // Prepaid top-up handler
   const handleTopUp = async () => {
@@ -85,10 +87,10 @@ export default function HomeBillingTabs() {
     <section className="flex flex-col items-center justify-center gap-10 w-full relative pb-12">
       <div className="text-center">
         <h2 className="text-3xl md:text-4xl font-medium tracking-tighter text-center text-balance">
-          Choose the right plan for your needs
+          {t('pricing.title', 'Choose the right plan for your needs')}
         </h2>
         <p className="text-muted-foreground text-center text-balance font-medium mt-2">
-          Start with our free plan or upgrade for more AI token credits
+          {t('pricing.subtitle', 'Start with our free plan or upgrade for more AI token credits')}
         </p>
       </div>
 
@@ -99,13 +101,13 @@ export default function HomeBillingTabs() {
               value="subscription"
               className="rounded-t-lg border border-b-0 border-border bg-background px-6 py-2 mr-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:hover:bg-primary/90 data-[state=active]:border-b-card"
             >
-              Subscription
+              {t('billing.subscription', 'Subscription')}
             </TabsTrigger>
             <TabsTrigger
               value="prepaid"
               className="rounded-t-lg border border-b-0 border-border bg-background px-6 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:hover:bg-primary/90 data-[state=active]:border-b-card"
             >
-              Pre-paid Credits
+              {t('billing.prepaidCredits', 'Pre-paid Credits')}
             </TabsTrigger>
           </TabsList>
           
@@ -115,47 +117,47 @@ export default function HomeBillingTabs() {
           
           <TabsContent value="prepaid">
             <div className="text-center mb-8">
-              <h3 className="text-2xl font-semibold mb-2">Pre-paid Credits</h3>
+              <h3 className="text-2xl font-semibold mb-2">{t('billing.prepaidCredits', 'Pre-paid Credits')}</h3>
               <p className="text-muted-foreground">
-                Purchase credits to use agents without a subscription. Credits never expire. New purchases use dollar-based credits with a $4.50 service fee.
+                {t('billing.prepaidDescription', 'Purchase credits to use agents without a subscription. Credits never expire. New purchases use dollar-based credits with a $4.50 service fee.')}
               </p>
             </div>
             
             <div className="max-w-md mx-auto bg-card border border-border rounded-xl p-6">
-              <Label className="mb-2 font-medium">Select Credit Amount</Label>
+              <Label className="mb-2 font-medium">{t('billing.selectCreditAmount', 'Select Credit Amount')}</Label>
               <RadioGroup value={String(topUpAmount)} onValueChange={v => setTopUpAmount(Number(v))} className="flex flex-col gap-2 mb-4">
                 {[9, 49, 99].map((dollars) => (
                   <div key={dollars} className="flex items-center gap-3 rounded-lg border px-4 py-2 hover:bg-muted cursor-pointer transition">
                     <RadioGroupItem value={String(dollars)} id={`credit-${dollars}`} />
                     <Label htmlFor={`credit-${dollars}`} className="flex-1 cursor-pointer text-sm font-normal flex items-center gap-2">
-                      ${dollars} (${dollars - 4.50} net after service fee)
+                      ${dollars} (${dollars - 4.50} {t('billing.netAfterFee', 'net after service fee')})
                       <span className="text-muted-foreground ml-2">{CREDIT_PRICES[dollars]}</span>
                     </Label>
                   </div>
                 ))}
               </RadioGroup>
               
-              <Label className="mb-2 mt-4 font-medium">Select Payment Method</Label>
+              <Label className="mb-2 mt-4 font-medium">{t('billing.selectPaymentMethod', 'Select Payment Method')}</Label>
               <RadioGroup value={paymentMethod} onValueChange={v => setPaymentMethod(v as any)} className="flex flex-col gap-2 mb-4">
                 <div className="flex items-center gap-3 rounded-lg border px-4 py-2 hover:bg-muted cursor-pointer transition">
                   <RadioGroupItem value="alipay" id="pm-alipay" />
                   <Label htmlFor="pm-alipay" className="flex-1 cursor-pointer text-sm font-normal flex items-center gap-2">
                     <AliPayIcon />
-                    AliPay
+                    {t('billing.alipay', 'AliPay')}
                   </Label>
                 </div>
                 <div className="flex items-center gap-3 rounded-lg border px-4 py-2 hover:bg-muted cursor-pointer transition">
                   <RadioGroupItem value="wechat_pay" id="pm-wechat" />
                   <Label htmlFor="pm-wechat" className="flex-1 cursor-pointer text-sm font-normal flex items-center gap-2">
                     <WeChatPayIcon />
-                    WeChat Pay
+                    {t('billing.wechatPay', 'WeChat Pay')}
                   </Label>
                 </div>
                 <div className="flex items-center gap-3 rounded-lg border px-4 py-2 hover:bg-muted cursor-pointer transition">
                   <RadioGroupItem value="card" id="pm-card" />
                   <Label htmlFor="pm-card" className="flex-1 cursor-pointer text-sm font-normal flex items-center gap-2">
                     <CreditCard className="w-5 h-5" />
-                    Credit/Debit Card
+                    {t('billing.creditCard', 'Credit/Debit Card')}
                   </Label>
                 </div>
               </RadioGroup>
@@ -175,14 +177,13 @@ export default function HomeBillingTabs() {
                     setTopUpError(null);
                   }}
                 >
-                  Cancel
+                  {t('billing.cancel', 'Cancel')}
                 </Button>
                 <Button
                   onClick={handleTopUp}
                   disabled={isTopUpLoading}
                 >
-                  {isTopUpLoading ? <Loader2 className="animate-spin h-4 w-4 mr-2 inline" /> : null}
-                  Pay Now
+                  {isTopUpLoading ? t('common.loading', 'Loading...') : t('billing.payNow', 'Pay Now')}
                 </Button>
               </div>
             </div>
@@ -192,9 +193,7 @@ export default function HomeBillingTabs() {
       
       <div className="mt-4 p-4 bg-primary/5 dark:bg-primary/10 border border-primary/20 dark:border-primary/30 rounded-lg max-w-2xl mx-auto">
         <p className="text-sm text-foreground dark:text-foreground text-center">
-          <strong>What are AI tokens?</strong> Tokens are units of text that AI models process. 
-          Your plan includes credits to spend on various AI models - the more complex the task, 
-          the more tokens used.
+          <strong>{t('What are AI tokens?')}</strong> {t('Tokens are units of text that AI models process. Your plan includes credits to spend on various AI models - the more complex the task, the more tokens used.')}
         </p>
       </div>
     </section>

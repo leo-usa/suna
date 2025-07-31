@@ -234,12 +234,27 @@ const zhTranslation = {
         }
       },
       pricing: {
+        title: '选择适合你需求的方案',
+        subtitle: '从免费方案开始，或升级获得更多AI代币积分',
         tabs: {
           cloud: '云端',
           selfHosted: '自托管'
         }
       },
       billing: {
+        subscription: '订阅',
+        prepaidCredits: '预付费积分',
+        localMode: '本地开发模式运行 - 计费功能已禁用',
+        whatAreTokens: '什么是AI代币？代币是AI模型处理的文本单位。你的方案包含用于各种AI模型的积分 - 任务越复杂，使用的代币越多。',
+        prepaidDescription: '购买积分以在无订阅的情况下使用代理。积分永不过期。新购买使用基于美元的积分，服务费为4.50美元。',
+        selectCreditAmount: '选择积分金额',
+        selectPaymentMethod: '选择支付方式',
+        cancel: '取消',
+        payNow: '立即支付',
+        alipay: '支付宝',
+        wechatPay: '微信支付',
+        creditCard: '信用卡/借记卡',
+        netAfterFee: '扣除服务费后净额',
         billingPeriod: {
           monthly: '月付',
           yearly: '年付'
@@ -385,7 +400,7 @@ const resources = {
       },
       pricing: {
         title: 'Choose the right plan for your needs',
-        subtitle: 'Start with our free plan or upgrade to a premium plan for more usage hours',
+        subtitle: 'Start with our free plan or upgrade for more AI token credits',
         tabs: {
           cloud: 'Cloud',
           selfHosted: 'Self-hosted',
@@ -451,7 +466,12 @@ const resources = {
         subscription: 'Subscription',
         prepaidTab: 'Prepaid (WeChat & AliPay supported)',
         topUp: 'Top Up Credits',
-        prepaidCredits: 'Prepaid Credits',
+        prepaidCredits: 'Pre-paid Credits',
+        whatAreTokens: 'What are AI tokens? Tokens are units of text that AI models process. Your plan includes credits to spend on various AI models - the more complex the task, the more tokens used.',
+        prepaidDescription: 'Purchase credits to use agents without a subscription. Credits never expire. New purchases use dollar-based credits with a $4.50 service fee.',
+        selectCreditAmount: 'Select Credit Amount',
+        selectPaymentMethod: 'Select Payment Method',
+        netAfterFee: 'net after service fee',
         selectAmount: 'Select Credit Package',
         selectPayment: 'Select Payment Method',
         cancel: 'Cancel',
