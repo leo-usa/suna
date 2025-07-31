@@ -37,6 +37,7 @@ import { normalizeFilenameToNFC } from '@/lib/utils/unicode';
 import { createQueryHook } from '@/hooks/use-query';
 import { agentKeys } from '@/hooks/react-query/agents/keys';
 import { getAgents } from '@/hooks/react-query/agents/utils';
+import { useTranslation } from 'react-i18next';
 
 // Custom dialog overlay with blur effect
 const BlurredDialogOverlay = () => (
@@ -67,6 +68,7 @@ export function HeroSection() {
   const [initiatedThreadId, setInitiatedThreadId] = useState<string | null>(null);
   const threadQuery = useThreadQuery(initiatedThreadId || '');
   const chatInputRef = useRef<ChatInputHandles>(null);
+  const { t } = useTranslation();
 
   // Fetch agents for selection
   const { data: agentsResponse } = createQueryHook(
@@ -300,10 +302,10 @@ export function HeroSection() {
           <div className="flex flex-col items-center justify-center gap-5 pt-16">
             <h1 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-medium tracking-tighter text-balance text-center">
               <span className="text-secondary">Dobby</span>
-              <span className="text-primary">, your AI Employee.</span>
+              <span className="text-primary">{t('hero.title').replace('Dobby, ', ', ')}</span>
             </h1>
             <p className="text-base md:text-lg text-center text-muted-foreground font-medium text-balance leading-relaxed tracking-tight">
-              {hero.description}
+              {t('hero.subtitle')}
             </p>
           </div>
 
@@ -313,7 +315,7 @@ export function HeroSection() {
                 <ChatInput
                   ref={chatInputRef}
                   onSubmit={handleChatInputSubmit}
-                  placeholder="Describe what you need help with..."
+                  placeholder={t('chatInput.placeholder')}
                   loading={isSubmitting}
                   disabled={isSubmitting}
                   value={inputValue}
@@ -338,19 +340,19 @@ export function HeroSection() {
         <DialogContent className="sm:max-w-md rounded-xl bg-background border border-border">
           <DialogHeader>
             <div className="flex items-center justify-between">
-              <DialogTitle className="text-xl font-medium">
-                Sign in to continue
-              </DialogTitle>
-              {/* <button 
-                onClick={() => setAuthDialogOpen(false)}
-                className="rounded-full p-1 hover:bg-muted transition-colors"
-              >
-                <X className="h-4 w-4 text-muted-foreground" />
-              </button> */}
-            </div>
-            <DialogDescription className="text-muted-foreground">
-              Sign in or create an account to talk with Dobby
-            </DialogDescription>
+                          <DialogTitle className="text-xl font-medium">
+              {t('auth.signInToContinue')}
+            </DialogTitle>
+            {/* <button 
+              onClick={() => setAuthDialogOpen(false)}
+              className="rounded-full p-1 hover:bg-muted transition-colors"
+            >
+              <X className="h-4 w-4 text-muted-foreground" />
+            </button> */}
+          </div>
+          <DialogDescription className="text-muted-foreground">
+            {t('auth.orContinueWithEmail')}
+          </DialogDescription>
           </DialogHeader>
 
 
@@ -368,7 +370,7 @@ export function HeroSection() {
             </div>
             <div className="relative flex justify-center text-sm">
               <span className="px-2 bg-[#F3F4F6] dark:bg-[#F9FAFB]/[0.02] text-muted-foreground">
-                or continue with email
+                {t('auth.orContinueWithEmail')}
               </span>
             </div>
           </div>
@@ -380,7 +382,7 @@ export function HeroSection() {
               className="flex h-12 items-center justify-center w-full text-center rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-md"
               onClick={() => setAuthDialogOpen(false)}
             >
-              Sign in with email
+              {t('auth.signIn')}
             </Link>
 
             <Link
@@ -388,18 +390,18 @@ export function HeroSection() {
               className="flex h-12 items-center justify-center w-full text-center rounded-full border border-border bg-background hover:bg-accent/20 transition-all"
               onClick={() => setAuthDialogOpen(false)}
             >
-              Create new account
+              {t('auth.createNewAccount')}
             </Link>
           </div>
 
           <div className="mt-4 text-center text-xs text-muted-foreground">
-            By continuing, you agree to our{' '}
+            {t('auth.byContinuing')}{' '}
             <Link href="/terms" className="text-primary hover:underline">
-              Terms of Service
+              {t('auth.termsOfService')}
             </Link>{' '}
-            and{' '}
+            {t('common.and')}{' '}
             <Link href="/privacy" className="text-primary hover:underline">
-              Privacy Policy
+              {t('auth.privacyPolicy')}
             </Link>
           </div>
         </DialogContent>

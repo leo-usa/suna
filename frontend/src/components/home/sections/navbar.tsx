@@ -12,6 +12,7 @@ import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { useTheme } from 'next-themes';
 import { useAuth } from '@/components/AuthProvider';
+import { LanguageSelector } from '@/components/LanguageSelector';
 
 const INITIAL_WIDTH = '70rem';
 const MAX_WIDTH = '800px';
@@ -139,6 +140,7 @@ export function Navbar() {
             <NavMenu />
 
             <div className="flex flex-row items-center gap-1 md:gap-3 shrink-0">
+              <LanguageSelector />
               <div className="flex items-center space-x-3">
                 {user ? (
                   <Link

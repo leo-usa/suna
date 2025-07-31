@@ -9,30 +9,33 @@ import HomeBillingTabs from '@/components/home/sections/home-billing-tabs';
 import { UseCasesSection } from '@/components/home/sections/use-cases-section';
 import { ModalProviders } from '@/providers/modal-providers';
 import CommunityGallerySection from '@/components/home/sections/community-gallery-section';
+import I18nProvider from '@/components/I18nProvider';
 
 export default function Home() {
   return (
-    <>
-      <ModalProviders />
-      <main className="flex flex-col items-center justify-center min-h-screen w-full">
-        <div className="w-full divide-y divide-border">
-          <HeroSection />
-          <UseCasesSection />
-          {/* <CompanyShowcase /> */}
-          {/* <BentoSection /> */}
-          {/* <QuoteSection /> */}
-          {/* <FeatureSection /> */}
-          {/* <GrowthSection /> */}
-          <CommunityGallerySection />
-          <div className='flex flex-col items-center px-4'>
-            <HomeBillingTabs />
+    <I18nProvider>
+      <>
+        <ModalProviders />
+        <main className="flex flex-col items-center justify-center min-h-screen w-full">
+          <div className="w-full divide-y divide-border">
+            <HeroSection />
+            <UseCasesSection />
+            {/* <CompanyShowcase /> */}
+            {/* <BentoSection /> */}
+            {/* <QuoteSection /> */}
+            {/* <FeatureSection /> */}
+            {/* <GrowthSection /> */}
+            <CommunityGallerySection />
+            <div className='flex flex-col items-center px-4'>
+              <HomeBillingTabs />
+            </div>
+            {/* <TestimonialSection /> */}
+            {/* <FAQSection /> */}
+            <CTASection />
+            <FooterSection />
           </div>
-          {/* <TestimonialSection /> */}
-          {/* <FAQSection /> */}
-          <CTASection />
-          <FooterSection />
-        </div>
-      </main>
-    </>
+        </main>
+      </>
+    </I18nProvider>
   );
 }
