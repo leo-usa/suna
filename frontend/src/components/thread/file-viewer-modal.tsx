@@ -168,6 +168,9 @@ export function FileViewerModal({
 
   // Unified edit mode state
   const [isEditing, setIsEditing] = useState(false);
+  
+  // Cache busting state for file content updates
+  const [contentVersion, setContentVersion] = useState(0);
 
   // Setup project with sandbox URL if not provided directly
   useEffect(() => {
@@ -1186,6 +1189,7 @@ export function FileViewerModal({
         // Update local state to reflect the save without a full reload
         setRawContent(newContent);
         setTextContentForRenderer(newContent);
+        setContentVersion(prev => prev + 1); // Force re-render of FileRenderer
 
     } catch (error) {
         console.error("Failed to save file:", error);
@@ -1606,7 +1610,7 @@ export function FileViewerModal({
 
                     return (
                       <FileRenderer
-                        key={selectedFilePath}
+                        key={`${selectedFilePath}-${contentVersion}`}
                         content={isBinaryFile ? null : textContentForRenderer}
                         binaryUrl={blobUrlForRenderer}
                         fileName={selectedFilePath}

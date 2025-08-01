@@ -163,18 +163,24 @@ export function FileRenderer({
 
   // Create blob URL for HTML content if needed
   const blobHtmlUrl = React.useMemo(() => {
-    if (isHtmlFile && content && !project?.sandbox?.sandbox_url) {
+    if (isHtmlFile && content) {
       const blob = new Blob([content], { type: 'text/html' });
       return URL.createObjectURL(blob);
     }
     return undefined;
-  }, [isHtmlFile, content, project?.sandbox?.sandbox_url]);
+  }, [isHtmlFile, content]);
 
   // Construct HTML file preview URL if we have a sandbox and the file is HTML
-  const htmlPreviewUrl =
-    isHtmlFile && project?.sandbox?.sandbox_url && fileName
-      ? constructHtmlPreviewUrl(project.sandbox.sandbox_url, fileName)
-      : blobHtmlUrl; // Use blob URL as fallback
+  const htmlPreviewUrl = React.useMemo(() => {
+    if (isHtmlFile && project?.sandbox?.sandbox_url && fileName) {
+      // Add cache-busting parameter to force refresh
+      const baseUrl = constructHtmlPreviewUrl(project.sandbox.sandbox_url, fileName);
+      return `${baseUrl}?v=${Date.now()}`;
+    }
+    return blobHtmlUrl; // Use blob URL as fallback
+  }, [isHtmlFile, project?.sandbox?.sandbox_url, fileName, blobHtmlUrl]);
+
+
 
   // Clean up blob URL on unmount
   React.useEffect(() => {
