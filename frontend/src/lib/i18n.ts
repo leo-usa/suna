@@ -452,8 +452,9 @@ const zhTranslation = {
     pleaseLoginToAttachFiles: '请登录以附加文件',
     clickToStopRecording: '点击停止录音',
     processing: '处理中...',
-    recordVoiceMessage: '录制语音消息',
-  },
+            recordVoiceMessage: '录制语音消息',
+        chooseModel: '选择模型',
+      },
   pagination: {
     prev: '上一页',
     next: '下一页',
@@ -1477,6 +1478,7 @@ const resources = {
         clickToStopRecording: 'Klicken, um Aufnahme zu stoppen',
         processing: 'Verarbeitung...',
         recordVoiceMessage: 'Sprachnachricht aufnehmen',
+        chooseModel: 'Modell auswählen',
         expandSidebar: 'Sidebar erweitern (CMD+B)',
         searchResults: 'Suchergebnisse',
         recent: 'Kürzlich',
@@ -1768,6 +1770,7 @@ const resources = {
         clickToStopRecording: 'Haga clic para detener la grabación',
         processing: 'Procesando...',
         recordVoiceMessage: 'Grabar mensaje de voz',
+        chooseModel: 'Elegir un modelo',
       },
     }
   },
@@ -2133,6 +2136,7 @@ const resources = {
         clickToStopRecording: 'Click to stop recording',
         processing: 'Processing...',
         recordVoiceMessage: 'Record voice message',
+        chooseModel: 'Choose a model',
       },
       // Add marketplace translations
     }

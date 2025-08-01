@@ -529,7 +529,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
               </DropdownMenuTrigger>
             </TooltipTrigger>
             <TooltipContent side="top" className="text-xs">
-              <p>Choose a model</p>
+              <p>{t('tooltips.chooseModel', 'Choose a model')}</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
