@@ -403,6 +403,27 @@ const zhTranslation = {
     next: '下一页',
     page: '第{{page}}页',
   },
+  // Add marketplace translations
+  marketplace: {
+    searchAgents: '搜索智能体...',
+    filterAgents: '筛选智能体',
+    allAgents: '所有智能体',
+    kortixVerified: 'Kortix 认证',
+    community: '社区',
+    noTemplatesFound: '未找到符合您条件的模板。请尝试调整搜索或筛选条件。',
+    noTemplatesAvailable: '市场目前没有可用的智能体模板。',
+    verifiedByKortix: 'Kortix 认证',
+    officialAgentsMaintained: '官方智能体，维护和支持',
+    aiAgents: 'AI 智能体',
+    aiEmployees: 'AI 员工',
+    exploreAndCreate: '探索并创建您自己的自定义智能体，结合',
+    integrations: '集成',
+    instructions: '指令',
+    knowledge: '知识',
+    triggers: '触发器',
+    and: '和',
+    workflows: '工作流',
+  },
 };
 
 const resources = {
