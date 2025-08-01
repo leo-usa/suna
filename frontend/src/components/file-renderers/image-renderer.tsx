@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import {
   ZoomIn,
@@ -18,6 +19,7 @@ interface ImageRendererProps {
 }
 
 export function ImageRenderer({ url, className }: ImageRendererProps) {
+  const { t } = useTranslation();
   const [zoom, setZoom] = useState(1);
   const [rotation, setRotation] = useState(0);
   const [isPanning, setIsPanning] = useState(false);
@@ -142,7 +144,7 @@ export function ImageRenderer({ url, className }: ImageRendererProps) {
             size="sm"
             className="h-8 w-8 p-0"
             onClick={handleZoomOut}
-            title="Zoom out"
+            title={t('tooltips.zoomOut', 'Zoom out')}
             disabled={imgError}
           >
             <ZoomOut className="h-4 w-4" />
@@ -153,7 +155,7 @@ export function ImageRenderer({ url, className }: ImageRendererProps) {
             size="sm"
             className="h-8 w-8 p-0"
             onClick={handleZoomIn}
-            title="Zoom in"
+            title={t('tooltips.zoomIn', 'Zoom in')}
             disabled={imgError}
           >
             <ZoomIn className="h-4 w-4" />
@@ -163,7 +165,7 @@ export function ImageRenderer({ url, className }: ImageRendererProps) {
             size="sm"
             className="h-8 w-8 p-0"
             onClick={handleRotate}
-            title="Rotate"
+            title={t('tooltips.rotate', 'Rotate')}
             disabled={imgError}
           >
             <RotateCw className="h-4 w-4" />
@@ -176,7 +178,7 @@ export function ImageRenderer({ url, className }: ImageRendererProps) {
             size="sm"
             className="h-8 w-8 p-0"
             onClick={() => setShowInfo(!showInfo)}
-            title="Image information"
+            title={t('tooltips.imageInfo', 'Image information')}
           >
             <Info className="h-4 w-4" />
           </Button>
@@ -185,7 +187,7 @@ export function ImageRenderer({ url, className }: ImageRendererProps) {
             size="sm"
             className="h-8 w-8 p-0"
             onClick={toggleFitToScreen}
-            title={isFitToScreen ? 'Actual size' : 'Fit to screen'}
+            title={isFitToScreen ? t('tooltips.actualSize', 'Actual size') : t('tooltips.fitToScreen', 'Fit to screen')}
             disabled={imgError}
           >
             {isFitToScreen ? (

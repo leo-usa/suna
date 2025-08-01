@@ -47,6 +47,7 @@ import {
 } from '@/hooks/react-query/files';
 import JSZip from 'jszip';
 import { normalizeFilenameToNFC } from '@/lib/utils/unicode';
+import { useTranslation } from 'react-i18next';
 
 // Define API_URL
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || '';
@@ -68,6 +69,7 @@ export function FileViewerModal({
   project,
   filePathList,
 }: FileViewerModalProps) {
+  const { t } = useTranslation();
   // Safely handle initialFilePath to ensure it's a string or null
   const safeInitialFilePath = typeof initialFilePath === 'string' ? initialFilePath : null;
 
@@ -1236,7 +1238,7 @@ export function FileViewerModal({
                     onClick={navigatePrevious}
                     disabled={currentFileIndex <= 0}
                     className="h-8 w-8 p-0"
-                    title="Previous file (←)"
+                    title={t('tooltips.previousFile', 'Previous file (←)')}
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
@@ -1249,7 +1251,7 @@ export function FileViewerModal({
                     onClick={navigateNext}
                     disabled={currentFileIndex >= (filePathList?.length || 0) - 1}
                     className="h-8 w-8 p-0"
-                    title="Next file (→)"
+                    title={t('tooltips.nextFile', 'Next file (→)')}
                   >
                     <ChevronRight className="h-4 w-4" />
                   </Button>
@@ -1265,7 +1267,7 @@ export function FileViewerModal({
             size="icon"
             onClick={navigateHome}
             className="h-8 w-8"
-            title="Go to home directory"
+                            title={t('tooltips.goToHomeDirectory', 'Go to home directory')}
           >
             <Home className="h-4 w-4" />
           </Button>
