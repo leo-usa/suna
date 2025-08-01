@@ -15,7 +15,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { ToolViewProps } from '../types';
-import { formatTimestamp } from '../utils';
+import { formatTimestamp, getToolTitle } from '../utils';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -107,7 +107,7 @@ export function DataProviderEndpointsToolView({
             </div>
             <div>
               <CardTitle className="text-base font-medium text-zinc-900 dark:text-zinc-100">
-                Data Provider
+                {getToolTitle(serviceName || 'data-provider', t)}
               </CardTitle>
             </div>
           </div>
@@ -127,7 +127,7 @@ export function DataProviderEndpointsToolView({
               ) : (
                 <AlertTriangle className="h-3 w-3 mr-1" />
               )}
-              {actualIsSuccess ? 'Loaded' : 'Failed'}
+              {actualIsSuccess ? t('toolView.loaded', 'Loaded') : t('toolView.failed', 'Failed')}
             </Badge>
           )}
         </div>
