@@ -104,15 +104,15 @@ function extractDeployData(assistantContent: any, toolContent: any): {
 }
 
 export function DeployToolView({
-    name = 'deploy',
-    assistantContent,
-    toolContent,
-    assistantTimestamp,
-    toolTimestamp,
-    isSuccess = true,
-    isStreaming = false,
+  name = 'deploy',
+  assistantContent,
+  toolContent,
+  assistantTimestamp,
+  toolTimestamp,
+  isSuccess = true,
+  isStreaming = false,
 }: ToolViewProps) {
-    const { t } = useTranslation();
+  const { t } = useTranslation();
     const { name: deployName, directoryPath, deployResult, rawContent } = extractDeployData(assistantContent, toolContent);
     const toolTitle = getToolTitle(name, t);
     const actualIsSuccess = deployResult?.success !== undefined ? deployResult.success : isSuccess;
@@ -171,7 +171,7 @@ export function DeployToolView({
                         icon={Rocket}
                         iconColor="text-orange-500 dark:text-orange-400"
                         bgColor="bg-gradient-to-b from-orange-100 to-orange-50 shadow-inner dark:from-orange-800/40 dark:to-orange-900/60 dark:shadow-orange-950/20"
-                        title="Deploying website"
+                        title={t('tooltips.deployingWebsite', 'Deploying website')}
                         filePath={deployName || 'Processing deployment...'}
                         showProgress={true}
                     />

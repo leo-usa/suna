@@ -166,7 +166,7 @@ export function BrowserToolView({
     return (
       <iframe
         src={vncPreviewUrl}
-        title="Browser preview"
+        title={t('tooltips.browserPreview', 'Browser preview')}
         className="w-full h-full border-0 min-h-[600px]"
         style={{ width: '100%', height: '100%', minHeight: '600px' }}
       />

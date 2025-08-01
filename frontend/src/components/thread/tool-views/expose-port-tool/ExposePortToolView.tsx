@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { LoadingState } from '../shared/LoadingState';
+import { useTranslation } from 'react-i18next';
 
 export function ExposePortToolView({
   assistantContent,
@@ -23,6 +24,7 @@ export function ExposePortToolView({
   assistantTimestamp,
   toolTimestamp,
 }: ToolViewProps) {
+  const { t } = useTranslation();
 
   const {
     port,
@@ -79,7 +81,7 @@ export function ExposePortToolView({
             icon={Computer}
             iconColor="text-emerald-500 dark:text-emerald-400"
             bgColor="bg-gradient-to-b from-emerald-100 to-emerald-50 shadow-inner dark:from-emerald-800/40 dark:to-emerald-900/60 dark:shadow-emerald-950/20"
-            title="Exposing port"
+            title={t('tooltips.exposingPort', 'Exposing port')}
             filePath={port?.toString()}
             showProgress={true}
           />

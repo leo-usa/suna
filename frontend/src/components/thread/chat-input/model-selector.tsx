@@ -32,6 +32,7 @@ import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 import { isLocalMode } from '@/lib/config';
 import { CustomModelDialog, CustomModelFormData } from './custom-model-dialog';
+import { useTranslation } from 'react-i18next';
 
 interface CustomModel {
   id: string;
@@ -62,6 +63,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
   setBillingModalOpen,
   hasBorder = false,
 }) => {
+  const { t } = useTranslation();
   const [paywallOpen, setPaywallOpen] = useState(false);
   const [lockedModel, setLockedModel] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
@@ -741,7 +743,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
         <PaywallDialog
           open={true}
           onDialogClose={closeDialog}
-          title="Premium Model"
+          title={t('tooltips.premiumModel', 'Premium Model')}
           description={
             lockedModel
               ? `Subscribe to access ${modelOptions.find(
