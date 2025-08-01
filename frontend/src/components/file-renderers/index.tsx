@@ -35,6 +35,7 @@ interface FileRendererProps {
   markdownRef?: React.RefObject<HTMLDivElement>;
   onDownload?: () => void;
   isDownloading?: boolean;
+  onEdit?: () => void;
 }
 
 // Helper function to determine file type from extension
@@ -154,6 +155,7 @@ export function FileRenderer({
   markdownRef,
   onDownload,
   isDownloading,
+  onEdit,
 }: FileRendererProps) {
   const fileType = getFileTypeFromExtension(fileName);
   const language = getLanguageFromExtension(fileName);
@@ -200,6 +202,7 @@ export function FileRenderer({
           content={content || ''}
           previewUrl={htmlPreviewUrl || ''}
           className="w-full h-full"
+          onEdit={onEdit}
         />
       ) : fileType === 'code' || fileType === 'text' ? (
         <CodeRenderer

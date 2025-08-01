@@ -4,18 +4,20 @@ import React, { useState } from 'react';
 import { CodeRenderer } from './code-renderer';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Monitor, Code, ExternalLink } from 'lucide-react';
+import { Monitor, Code, ExternalLink, Pencil } from 'lucide-react';
 
 interface HtmlRendererProps {
   content: string;
   previewUrl: string;
   className?: string;
+  onEdit?: () => void;
 }
 
 export function HtmlRenderer({
   content,
   previewUrl,
   className,
+  onEdit,
 }: HtmlRendererProps) {
   // Always default to 'preview' mode
   const [viewMode, setViewMode] = useState<'preview' | 'code'>('preview');
@@ -50,15 +52,26 @@ export function HtmlRenderer({
             <Code className="h-4 w-4" />
             Code
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="flex items-center gap-2 bg-background/80 backdrop-blur-sm hover:bg-background/90"
-            onClick={() => window.open(previewUrl, '_blank')}
-          >
-            <ExternalLink className="h-4 w-4" />
-            Open
-          </Button>
+                      <Button
+              variant="ghost"
+              size="sm"
+              className="flex items-center gap-2 bg-background/80 backdrop-blur-sm hover:bg-background/90"
+              onClick={() => window.open(previewUrl, '_blank')}
+            >
+              <ExternalLink className="h-4 w-4" />
+              Open
+            </Button>
+            {onEdit && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="flex items-center gap-2 bg-background/80 backdrop-blur-sm hover:bg-background/90"
+                onClick={onEdit}
+              >
+                <Pencil className="h-4 w-4" />
+                Edit
+              </Button>
+            )}
         </div>
 
         {viewMode === 'preview' ? (
