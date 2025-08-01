@@ -107,7 +107,7 @@ export function DataProviderEndpointsToolView({
             </div>
             <div>
               <CardTitle className="text-base font-medium text-zinc-900 dark:text-zinc-100">
-                {getToolTitle(serviceName || 'data-provider', t)}
+                {getToolTitle('data-provider', t)}
               </CardTitle>
             </div>
           </div>
