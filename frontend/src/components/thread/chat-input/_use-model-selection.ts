@@ -58,6 +58,12 @@ export const MODELS = {
     recommended: false,
     lowQuality: false
   },
+  'z-ai/glm-4.5': { 
+    tier: 'free', 
+    priority: 98,
+    recommended: false,
+    lowQuality: false
+  },
   'grok-4': { 
     tier: 'premium', 
     priority: 98,

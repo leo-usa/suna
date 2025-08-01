@@ -50,6 +50,14 @@ MODELS = {
         },
         "tier_availability": ["free", "paid"]
     },
+    "openrouter/z-ai/glm-4.5": {
+        "aliases": ["z-ai/glm-4.5"],
+        "pricing": {
+            "input_cost_per_million_tokens": 0.60,
+            "output_cost_per_million_tokens": 2.20
+        },
+        "tier_availability": ["free", "paid"]
+    },
     "xai/grok-4": {
         "aliases": ["grok-4"],
         "pricing": {
