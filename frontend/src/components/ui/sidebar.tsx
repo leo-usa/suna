@@ -282,6 +282,7 @@ function SidebarTrigger({
 }
 
 function SidebarRail({ className, ...props }: React.ComponentProps<'button'>) {
+  const { t } = useTranslation();
   const { toggleSidebar } = useSidebar();
 
   return (
