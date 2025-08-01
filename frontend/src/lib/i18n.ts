@@ -460,6 +460,12 @@ const zhTranslation = {
         code: '代码',
         open: '打开',
         edit: '编辑',
+        html: 'HTML',
+        text: '文本',
+        save: '保存',
+        cancel: '取消',
+        unsavedChanges: '未保存的更改',
+        placeholder: '输入纯文本内容...',
       },
   pagination: {
     prev: '上一页',
@@ -830,7 +836,12 @@ const resources = {
         code: 'Code',
         open: 'Open',
         edit: 'Edit',
+        html: 'HTML',
+        text: 'Text',
         save: 'Save',
+        cancel: 'Cancel',
+        unsavedChanges: 'Unsaved changes',
+        placeholder: 'Enter plain text content...',
         discard: 'Discard',
       },
       sandboxModal: {
@@ -1016,12 +1027,6 @@ const resources = {
         processing: 'Processing...',
         recordVoiceMessage: 'Record voice message',
         chooseModel: 'Choose a model',
-      },
-      editor: {
-        preview: 'Preview',
-        code: 'Code',
-        open: 'Open',
-        edit: 'Edit',
       },
       // Add tool name translations
       toolNames: {
@@ -1809,6 +1814,12 @@ const resources = {
         code: 'Code',
         open: 'Öffnen',
         edit: 'Bearbeiten',
+        html: 'HTML',
+        text: 'Text',
+        save: 'Speichern',
+        cancel: 'Abbrechen',
+        unsavedChanges: 'Ungespeicherte Änderungen',
+        placeholder: 'Geben Sie reinen Textinhalt ein...',
       },
     }
   },
@@ -2181,6 +2192,12 @@ const resources = {
         code: 'Código',
         open: 'Abrir',
         edit: 'Editar',
+        html: 'HTML',
+        text: 'Texto',
+        save: 'Guardar',
+        cancel: 'Cancelar',
+        unsavedChanges: 'Cambios sin guardar',
+        placeholder: 'Ingrese contenido de texto plano...',
       },
       // Add marketplace translations
     }

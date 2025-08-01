@@ -25,7 +25,9 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   FileRenderer,
+  getFileTypeFromExtension,
 } from '@/components/file-renderers';
+import InlineContentEditor from '@/components/file-renderers/inline-content-editor';
 import {
   listSandboxFiles,
   type FileInfo,
@@ -161,6 +163,9 @@ export function FileViewerModal({
     total: number;
     currentFile: string;
   } | null>(null);
+
+  // Unified edit mode state
+  const [isEditing, setIsEditing] = useState(false);
 
   // Setup project with sandbox URL if not provided directly
   useEffect(() => {
@@ -1116,10 +1121,66 @@ export function FileViewerModal({
   const handleEdit = useCallback(() => {
     if (!selectedFilePath) return;
     
-    // For now, just show a toast message
-    // In the future, this could open an editor or trigger a file edit action
-    toast.info(`Edit functionality for ${selectedFilePath} - Coming soon!`);
+    // Check if file is editable (HTML or text files)
+    const fileType = getFileTypeFromExtension(selectedFilePath);
+    if (fileType === 'code' || fileType === 'text') {
+      setIsEditing(true);
+    } else {
+      toast.info(`Edit functionality for ${selectedFilePath} - Coming soon!`);
+    }
   }, [selectedFilePath]);
+
+  // Handle file save
+  const handleSave = async (newContent: string) => {
+    if (!selectedFilePath) return;
+    
+    setIsEditing(false); // Optimistically close the editor
+
+    console.log(`Saving file: ${selectedFilePath}`);
+    try {
+        const supabase = createClient();
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+            throw new Error("User not authenticated");
+        }
+        
+        // Convert the string content to a Blob to be sent as a file
+        const fileBlob = new Blob([newContent], { type: 'text/plain' });
+        const formData = new FormData();
+        formData.append('path', selectedFilePath);
+        // The third argument to append is the file name
+        formData.append('file', fileBlob, selectedFilePath.split('/').pop() || 'file.txt');
+
+        const response = await fetch(`${API_URL}/sandboxes/${sandboxId}/files`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${session.access_token}`
+            },
+            body: formData
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || "Failed to save file");
+        }
+
+        toast.success("File saved successfully!");
+        
+        // Update local state to reflect the save without a full reload
+        setRawContent(newContent);
+        setTextContentForRenderer(newContent);
+
+    } catch (error) {
+        console.error("Failed to save file:", error);
+        toast.error(error instanceof Error ? error.message : "An unknown error occurred");
+        setIsEditing(true); // Re-open editor on failure
+    }
+  };
+
+  // Handle edit cancel
+  const handleCancel = () => {
+    setIsEditing(false);
+  };
 
   // Handle file upload - Define after helpers
   const handleUpload = useCallback(() => {
@@ -1497,6 +1558,14 @@ export function FileViewerModal({
                     </div>
                   </div>
                 </div>
+              ) : isEditing ? (
+                <InlineContentEditor
+                  html={textContentForRenderer || ''}
+                  onSave={handleSave}
+                  onCancel={handleCancel}
+                  project={projectWithSandbox}
+                  fileName={selectedFilePath}
+                />
               ) : (
                 <div className="h-full w-full relative">
                   {(() => {
