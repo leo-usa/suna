@@ -148,7 +148,7 @@ export function WebScrapeToolView({
               ) : (
                 <AlertTriangle className="h-3.5 w-3.5" />
               )}
-              {actualIsSuccess ? 'Scraping completed' : 'Scraping failed'}
+              {actualIsSuccess ? t('toolView.crawlingCompleted', 'Scraping completed') : t('toolView.crawlingFailed', 'Scraping failed')}
             </Badge>
           )}
         </div>
@@ -179,7 +179,7 @@ export function WebScrapeToolView({
               <div className="space-y-3 mb-6">
                 <div className="flex items-center gap-2 text-sm font-medium text-zinc-800 dark:text-zinc-200">
                   <Globe className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
-                  Source URL
+                  {t('toolView.sourceUrl', 'Source URL')}
                 </div>
                 <div className="group relative">
                   <div className="flex items-center gap-3 p-4 bg-zinc-50 dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors rounded-xl border border-zinc-200 dark:border-zinc-800">

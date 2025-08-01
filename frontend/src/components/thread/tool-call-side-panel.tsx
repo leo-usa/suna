@@ -325,7 +325,7 @@ export function ToolCallSidePanel({
         return (
           <div className={`${baseClasses} bg-neutral-50 dark:bg-neutral-900/20 border border-neutral-200 dark:border-neutral-800`}>
             <div className={`${dotClasses} bg-neutral-500`} />
-            <span className={`${textClasses} text-neutral-700 dark:text-neutral-400`}>Latest Tool</span>
+            <span className={`${textClasses} text-neutral-700 dark:text-neutral-400`}>{t('toolView.latestTool', 'Latest Tool')}</span>
           </div>
         );
       }

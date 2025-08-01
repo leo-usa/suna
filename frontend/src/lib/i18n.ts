@@ -409,6 +409,7 @@ const zhTranslation = {
     dobbyComputer: 'Dobby 的计算机',
     computer: '的计算机',
     loaded: '已加载',
+    latestTool: '最新工具',
   },
   pagination: {
     prev: '上一页',
@@ -920,6 +921,7 @@ const resources = {
         dobbyComputer: 'Dobby\'s Computer',
         computer: '\'s Computer',
         loaded: 'Loaded',
+        latestTool: 'Latest Tool',
       },
       // Add tool name translations
       toolNames: {
@@ -1214,6 +1216,8 @@ const resources = {
         preview: '预览',
         dobbyComputer: 'Dobby 的计算机',
         computer: '的计算机',
+        loaded: '已加载',
+        latestTool: '最新工具',
       },
       // Add marketplace translations
       marketplace: {
@@ -1597,6 +1601,7 @@ const resources = {
         dobbyComputer: 'Dobbys Computer',
         computer: 's Computer',
         loaded: 'Geladen',
+        latestTool: 'Neuestes Tool',
       },
     }
   },
@@ -1918,6 +1923,7 @@ const resources = {
         dobbyComputer: 'Computadora de Dobby',
         computer: 's Computadora',
         loaded: 'Cargado',
+        latestTool: 'Último Tool',
       },
       // Add marketplace translations
     }

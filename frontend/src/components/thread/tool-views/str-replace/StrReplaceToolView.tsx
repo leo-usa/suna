@@ -359,8 +359,8 @@ export function StrReplaceToolView({
               )}
               <span>
                 {actualIsSuccess
-                  ? 'String replacement successful'
-                  : 'String replacement failed'}
+                  ? t('toolView.replacementCompleted', 'String replacement successful')
+                  : t('toolView.replacementFailed', 'String replacement failed')}
               </span>
             </div>
           )}
