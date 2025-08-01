@@ -240,13 +240,13 @@ export function FileViewerModal({
 
     try {
       setIsDownloadingAll(true);
-      setDownloadProgress({ current: 0, total: 0, currentFile: 'Discovering files...' });
+              setDownloadProgress({ current: 0, total: 0, currentFile: t('fileViewer.discoveringFiles', 'Discovering files...') });
 
       // Step 1: Discover all files
       const { files } = await discoverAllFiles();
 
       if (files.length === 0) {
-        toast.error('No files found to download');
+                  toast.error(t('fileViewer.noFilesFound', 'No files found to download'));
         return;
       }
 
@@ -254,7 +254,7 @@ export function FileViewerModal({
 
       // Step 2: Create zip and load files
       const zip = new JSZip();
-      setDownloadProgress({ current: 0, total: files.length, currentFile: 'Creating archive...' });
+              setDownloadProgress({ current: 0, total: files.length, currentFile: t('fileViewer.creatingArchive', 'Creating archive...') });
 
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
@@ -366,7 +366,7 @@ export function FileViewerModal({
       // Clean up
       setTimeout(() => URL.revokeObjectURL(url), 10000);
 
-      toast.success(`Downloaded ${files.length} files as zip archive`);
+              toast.success(t('fileViewer.downloadedFiles', 'Downloaded {{count}} files as zip archive', { count: files.length }));
       console.log(`[DOWNLOAD ALL] Successfully created zip with ${files.length} files`);
 
     } catch (error) {
@@ -1119,7 +1119,7 @@ export function FileViewerModal({
       activeDownloadUrls.current.delete(url);
     }, 10000);
 
-    toast.success('Download started');
+            toast.success(t('fileViewer.downloadStarted', 'Download started'));
   };
 
   // Handle file edit
@@ -1169,7 +1169,7 @@ export function FileViewerModal({
             throw new Error(errorData.detail || "Failed to save file");
         }
 
-        toast.success("File saved successfully!");
+        toast.success(t('fileViewer.fileSavedSuccessfully', 'File saved successfully!'));
         
         // Invalidate the file content cache to force a refresh
         if (selectedFilePath) {
@@ -1193,7 +1193,7 @@ export function FileViewerModal({
 
     } catch (error) {
         console.error("Failed to save file:", error);
-        toast.error(error instanceof Error ? error.message : "An unknown error occurred");
+        toast.error(error instanceof Error ? error.message : t('fileViewer.failedToSaveFile', 'Failed to save file'));
         setIsEditing(true); // Re-open editor on failure
     }
   };
@@ -1286,7 +1286,7 @@ export function FileViewerModal({
       <DialogContent className="sm:max-w-[90vw] md:max-w-[1200px] w-[95vw] h-[90vh] max-h-[900px] flex flex-col p-0 gap-0 overflow-hidden">
         <DialogHeader className="px-4 py-2 border-b flex-shrink-0 flex flex-row gap-4 items-center">
           <DialogTitle className="text-lg font-semibold">
-            Workspace Files
+            {t('fileViewer.workspaceFiles', 'Workspace Files')}
           </DialogTitle>
 
           {/* Download progress display */}
@@ -1294,12 +1294,12 @@ export function FileViewerModal({
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <div className="flex items-center gap-1">
                 <Loader className="h-3 w-3 animate-spin" />
-                <span>
-                  {downloadProgress.total > 0
-                    ? `${downloadProgress.current}/${downloadProgress.total}`
-                    : 'Preparing...'
-                  }
-                </span>
+                                  <span>
+                    {downloadProgress.total > 0
+                      ? `${downloadProgress.current}/${downloadProgress.total}`
+                      : t('fileViewer.preparing', 'Preparing...')
+                    }
+                  </span>
               </div>
               <span className="max-w-[200px] truncate">
                 {downloadProgress.currentFile}
@@ -1370,7 +1370,7 @@ export function FileViewerModal({
               className="h-7 px-2 text-sm font-medium min-w-fit flex-shrink-0"
               onClick={navigateHome}
             >
-              home
+              {t('fileViewer.home', 'home')}
             </Button>
 
             {currentPath !== '/workspace' && (
@@ -1418,7 +1418,7 @@ export function FileViewerModal({
                   ) : (
                     <Download className="h-4 w-4" />
                   )}
-                  <span className="hidden sm:inline">Download</span>
+                  <span className="hidden sm:inline">{t('fileViewer.download', 'Download')}</span>
                 </Button>
 
                 {/* Replace the Export as PDF button with a dropdown */}
@@ -1440,7 +1440,7 @@ export function FileViewerModal({
                         ) : (
                           <FileText className="h-4 w-4" />
                         )}
-                        <span className="hidden sm:inline">Export as PDF</span>
+                        <span className="hidden sm:inline">{t('fileViewer.exportAsPdf', 'Export as PDF')}</span>
                         <ChevronDown className="h-3 w-3 ml-1" />
                       </Button>
                     </DropdownMenuTrigger>
@@ -1449,13 +1449,13 @@ export function FileViewerModal({
                         onClick={() => handleExportPdf('portrait')}
                         className="flex items-center gap-2 cursor-pointer"
                       >
-                        <span className="rotate-90">⬌</span> Portrait
+                        <span className="rotate-90">⬌</span> {t('fileViewer.portrait', 'Portrait')}
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => handleExportPdf('landscape')}
                         className="flex items-center gap-2 cursor-pointer"
                       >
-                        <span>⬌</span> Landscape
+                        <span>⬌</span> {t('fileViewer.landscape', 'Landscape')}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -1479,7 +1479,7 @@ export function FileViewerModal({
                     ) : (
                       <Archive className="h-4 w-4" />
                     )}
-                    <span className="hidden sm:inline">Download All</span>
+                    <span className="hidden sm:inline">{t('fileViewer.downloadAll', 'Download All')}</span>
                   </Button>
                 )}
 
@@ -1495,7 +1495,7 @@ export function FileViewerModal({
                   ) : (
                     <Upload className="h-4 w-4" />
                   )}
-                  <span className="hidden sm:inline">Upload</span>
+                  <span className="hidden sm:inline">{t('fileViewer.upload', 'Upload')}</span>
                 </Button>
               </>
             )}
@@ -1639,7 +1639,7 @@ export function FileViewerModal({
                 <div className="h-full w-full flex flex-col items-center justify-center">
                   <Folder className="h-12 w-12 mb-2 text-muted-foreground opacity-30" />
                   <p className="text-sm text-muted-foreground">
-                    Directory is empty
+                    {t('fileViewer.directoryIsEmpty', 'Directory is empty')}
                   </p>
                 </div>
               ) : (
