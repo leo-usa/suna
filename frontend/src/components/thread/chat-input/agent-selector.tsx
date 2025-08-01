@@ -21,6 +21,7 @@ import { useAgents, useCreateNewAgent } from '@/hooks/react-query/agents/use-age
 
 import { useRouter } from 'next/navigation';
 import { cn, truncateString } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 interface PredefinedAgent {
   id: string;
@@ -58,6 +59,7 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({
   onAgentSelect,
   disabled = false,
 }) => {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
@@ -281,7 +283,7 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({
               </DropdownMenuTrigger>
             </TooltipTrigger>
             <TooltipContent>
-              <p>Select Agent</p>
+              <p>{t('tooltips.selectAgent', 'Select Agent')}</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>

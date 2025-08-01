@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/tooltip';
 import { UploadedFile } from './chat-input';
 import { normalizeFilenameToNFC } from '@/lib/utils/unicode';
+import { useTranslation } from 'react-i18next';
 
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || '';
 
@@ -201,6 +202,7 @@ export const FileUploadHandler = forwardRef<
     },
     ref,
   ) => {
+    const { t } = useTranslation();
     const queryClient = useQueryClient();
     // Clean up object URLs when component unmounts
     useEffect(() => {
@@ -269,7 +271,7 @@ export const FileUploadHandler = forwardRef<
               </span>
             </TooltipTrigger>
             <TooltipContent side="top">
-              <p>{isLoggedIn ? 'Attach files' : 'Please login to attach files'}</p>
+              <p>{isLoggedIn ? t('tooltips.attachFiles', 'Attach files') : t('tooltips.pleaseLoginToAttachFiles', 'Please login to attach files')}</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>

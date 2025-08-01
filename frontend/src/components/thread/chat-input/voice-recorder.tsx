@@ -8,6 +8,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { useTranscription } from '@/hooks/react-query/transcription/use-transcription';
+import { useTranslation } from 'react-i18next';
 
 interface VoiceRecorderProps {
     onTranscription: (text: string) => void;
@@ -20,6 +21,7 @@ export const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
     onTranscription,
     disabled = false,
 }) => {
+    const { t } = useTranslation();
     const [state, setState] = useState<'idle' | 'recording' | 'processing'>('idle');
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const chunksRef = useRef<Blob[]>([]);
@@ -180,10 +182,10 @@ export const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
                 <TooltipContent side="top" className="text-xs">
                     <p>
                         {state === 'recording' 
-                            ? 'Click to stop recording' 
+                            ? t('tooltips.clickToStopRecording', 'Click to stop recording') 
                             : state === 'processing' 
-                                ? 'Processing...' 
-                                : 'Record voice message'
+                                ? t('tooltips.processing', 'Processing...') 
+                                : t('tooltips.recordVoiceMessage', 'Record voice message')
                         }
                     </p>
                 </TooltipContent>
