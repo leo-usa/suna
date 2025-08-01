@@ -17,8 +17,10 @@ import { GenericToolView } from '../GenericToolView';
 import { useAuth } from '@/components/AuthProvider';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useTranslation } from 'react-i18next';
 
 function SafeImage({ src, alt, filePath, className }: { src: string; alt: string; filePath: string; className?: string }) {
+  const { t } = useTranslation();
   const [imgSrc, setImgSrc] = useState<string | null>(null);
   const [error, setError] = useState(false);
   const [attempts, setAttempts] = useState(0);
@@ -205,7 +207,7 @@ function SafeImage({ src, alt, filePath, className }: { src: string; alt: string
             size="icon"
             className="h-8 w-8 rounded-md bg-white dark:bg-zinc-800"
             onClick={handleDownload}
-            title="Download image"
+            title={t('tooltips.downloadImage', 'Download image')}
           >
             <Download className="h-4 w-4" />
           </Button>
@@ -225,6 +227,7 @@ export function SeeImageToolView({
   name,
   project,
 }: ToolViewProps) {
+  const { t } = useTranslation();
   const [progress, setProgress] = useState(0);
 
   const {
