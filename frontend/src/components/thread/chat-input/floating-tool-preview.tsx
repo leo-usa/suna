@@ -163,8 +163,8 @@ export const FloatingToolPreview: React.FC<FloatingToolPreviewProps> = ({
                     {isStreaming
                       ? `${agentName || 'Dobby'} is working...`
                       : isSuccess
-                        ? "Success"
-                        : "Failed"
+                        ? t('toolView.success', 'Success')
+                        : t('toolView.failed', 'Failed')
                     }
                   </span>
                 </motion.div>

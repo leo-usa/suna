@@ -410,6 +410,8 @@ const zhTranslation = {
     computer: '的计算机',
     loaded: '已加载',
     latestTool: '最新工具',
+    success: '成功',
+    userInteraction: '用户交互',
   },
   pagination: {
     prev: '上一页',
@@ -922,6 +924,8 @@ const resources = {
         computer: '\'s Computer',
         loaded: 'Loaded',
         latestTool: 'Latest Tool',
+        success: 'Success',
+        userInteraction: 'User Interaction',
       },
       // Add tool name translations
       toolNames: {
@@ -1218,6 +1222,8 @@ const resources = {
         computer: '的计算机',
         loaded: '已加载',
         latestTool: '最新工具',
+        success: '成功',
+        userInteraction: '用户交互',
       },
       // Add marketplace translations
       marketplace: {
@@ -1602,6 +1608,8 @@ const resources = {
         computer: 's Computer',
         loaded: 'Geladen',
         latestTool: 'Neuestes Tool',
+        success: 'Erfolgreich',
+        userInteraction: 'Benutzerinteraktion',
       },
     }
   },
@@ -1924,6 +1932,8 @@ const resources = {
         computer: 's Computadora',
         loaded: 'Cargado',
         latestTool: 'Último Tool',
+        success: 'Éxito',
+        userInteraction: 'Interacción del Usuario',
       },
       // Add marketplace translations
     }

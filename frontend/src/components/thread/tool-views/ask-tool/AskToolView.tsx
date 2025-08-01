@@ -100,7 +100,7 @@ export function AskToolView({
               ) : (
                 <AlertTriangle className="h-3.5 w-3.5 mr-1" />
               )}
-              {actualIsSuccess ? 'Success' : 'Failed'}
+              {actualIsSuccess ? t('toolView.success', 'Success') : t('toolView.failed', 'Failed')}
             </Badge>
           )}
 
@@ -215,7 +215,7 @@ export function AskToolView({
         <div className="h-full flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
           <Badge className="h-6 py-0.5" variant="outline">
             <MessageCircleQuestion className="h-3 w-3" />
-            User Interaction
+            {t('toolView.userInteraction', 'User Interaction')}
           </Badge>
         </div>
 
