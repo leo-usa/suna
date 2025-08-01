@@ -445,6 +445,7 @@ const zhTranslation = {
       noToolActivity: '无工具活动',
       noToolActivityDescription: '工具调用和计算机交互将在此处显示。',
       running: '运行中',
+      toggleSidebar: '切换侧边栏',
     },
   },
   pagination: {
@@ -993,6 +994,7 @@ const resources = {
           noToolActivity: 'No tool activity',
           noToolActivityDescription: 'Tool calls and computer interactions will appear here when they\'re being executed.',
           running: 'Running',
+          toggleSidebar: 'Toggle Sidebar',
         },
       },
       // Add tool name translations
@@ -1325,6 +1327,7 @@ const resources = {
           noToolActivity: '无工具活动',
           noToolActivityDescription: '工具调用和计算机交互将在此处显示。',
           running: '运行中',
+          toggleSidebar: '切换侧边栏',
         },
       },
       // Add marketplace translations
@@ -1745,6 +1748,7 @@ const resources = {
           noToolActivity: 'Keine Tool-Aktivität',
           noToolActivityDescription: 'Tool-Aufrufe und Computer-Interaktionen werden hier angezeigt, wenn sie ausgeführt werden.',
           running: 'Läuft',
+          toggleSidebar: 'Toggle Sidebar',
         },
       },
     }
@@ -2103,6 +2107,7 @@ const resources = {
           noToolActivity: 'Sin actividad de herramientas',
           noToolActivityDescription: 'Las llamadas a herramientas e interacciones del ordenador aparecerán aquí cuando se ejecuten.',
           running: 'Ejecutando',
+          toggleSidebar: 'Toggle Sidebar',
         },
       },
       // Add marketplace translations
