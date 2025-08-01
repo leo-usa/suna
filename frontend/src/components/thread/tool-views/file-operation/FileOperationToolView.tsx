@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   CheckCircle,
   AlertTriangle,
@@ -66,6 +67,7 @@ export function FileOperationToolView({
   project,
 }: ToolViewProps) {
   const { resolvedTheme } = useTheme();
+  const { t } = useTranslation();
   const isDarkTheme = resolvedTheme === 'dark';
 
   const operation = getOperationType(name, assistantContent);
@@ -295,11 +297,11 @@ export function FileOperationToolView({
               <TabsList className="-mr-2 h-7 bg-zinc-100/70 dark:bg-zinc-800/70 rounded-lg">
                 <TabsTrigger value="code" className="rounded-md data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-900 data-[state=active]:text-primary">
                   <Code className="h-4 w-4" />
-                  Source
+                  {t('toolView.source', 'Source')}
                 </TabsTrigger>
                 <TabsTrigger value="preview" className="rounded-md data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-900 data-[state=active]:text-primary">
                   <Eye className="h-4 w-4" />
-                  Preview
+                  {t('toolView.preview', 'Preview')}
                 </TabsTrigger>
               </TabsList>
             </div>
