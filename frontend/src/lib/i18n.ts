@@ -2127,7 +2127,6 @@ function getCookieLang() {
 let initialized = false;
 
 export function initI18n(langFromHeader?: string) {
-  if (initialized) return i18n;
   let lng = langFromHeader || getCookieLang() || 'en';
   if (typeof window !== 'undefined') {
     // Fallback to localStorage if cookie not set
