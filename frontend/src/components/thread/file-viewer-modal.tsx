@@ -1112,6 +1112,15 @@ export function FileViewerModal({
     toast.success('Download started');
   };
 
+  // Handle file edit
+  const handleEdit = useCallback(() => {
+    if (!selectedFilePath) return;
+    
+    // For now, just show a toast message
+    // In the future, this could open an editor or trigger a file edit action
+    toast.info(`Edit functionality for ${selectedFilePath} - Coming soon!`);
+  }, [selectedFilePath]);
+
   // Handle file upload - Define after helpers
   const handleUpload = useCallback(() => {
     if (fileInputRef.current) {
@@ -1522,6 +1531,7 @@ export function FileViewerModal({
                         }
                         onDownload={handleDownload}
                         isDownloading={isDownloading}
+                        onEdit={handleEdit}
                       />
                     );
                   })()}
