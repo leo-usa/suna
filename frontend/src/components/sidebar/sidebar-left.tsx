@@ -197,7 +197,7 @@ export function SidebarLeft({
                           'bg-accent text-accent-foreground font-medium': pathname === '/agents' && searchParams.get('tab') === 'marketplace',
                         })} asChild>
                           <Link href="/agents?tab=marketplace">
-                            <span>Explore</span>
+                            <span>{t('sidebar.explore', 'Explore')}</span>
                           </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>

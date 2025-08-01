@@ -281,6 +281,7 @@ const zhTranslation = {
     noResultsFound: '未找到结果',
     noAgentsYet: '还没有智能体',
     myAgents: '我的智能体',
+    explore: '探索',
     createNewAgent: '创建新智能体',
     createNewAgentDescription: '这将创建一个具有默认名称和描述的新智能体。',
     create: '创建',
@@ -655,6 +656,7 @@ const resources = {
         noResultsFound: 'No results found',
         noAgentsYet: 'No agents yet',
         myAgents: 'My Agents',
+        explore: 'Explore',
         createNewAgent: 'Create New Agent',
         createNewAgentDescription: 'This will create a new agent with a default name and description.',
         create: 'Create',
@@ -861,6 +863,18 @@ const resources = {
         'see_image': 'Image Edit Or Generate',
         'call-mcp-tool': 'External Tool',
         'call_mcp_tool': 'External Tool',
+      },
+      // Add marketplace translations
+      marketplace: {
+        searchAgents: '搜索智能体...',
+        filterAgents: '筛选智能体',
+        allAgents: '所有智能体',
+        kortixVerified: 'Kortix 认证',
+        community: '社区',
+        noTemplatesFound: '未找到符合您条件的模板。请尝试调整搜索或筛选条件。',
+        noTemplatesAvailable: '市场目前没有可用的智能体模板。',
+        verifiedByKortix: 'Kortix 认证',
+        officialAgentsMaintained: '官方智能体，维护和支持',
       },
     }
   },
@@ -1089,6 +1103,18 @@ const resources = {
         copyFilePath: '複製文件路徑',
         noFilesGenerated: '未生成文件',
       },
+      // Add marketplace translations
+      marketplace: {
+        searchAgents: '搜索智能体...',
+        filterAgents: '筛选智能体',
+        allAgents: '所有智能体',
+        kortixVerified: 'Kortix 认证',
+        community: '社区',
+        noTemplatesFound: '未找到符合您条件的模板。请尝试调整搜索或筛选条件。',
+        noTemplatesAvailable: '市场目前没有可用的智能体模板。',
+        verifiedByKortix: 'Kortix 认证',
+        officialAgentsMaintained: '官方智能体，维护和支持',
+      },
     }
   },
   de: {
@@ -1205,6 +1231,7 @@ const resources = {
         noResultsFound: 'Keine Ergebnisse gefunden',
         noAgentsYet: 'Noch keine Agenten',
         myAgents: 'Meine Agenten',
+        explore: 'Erkunden',
         createNewAgent: 'Neuen Agenten erstellen',
         createNewAgentDescription: 'Dies wird einen neuen Agenten mit einem Standardnamen und einer Standardbeschreibung erstellen.',
         create: 'Erstellen',
@@ -1271,6 +1298,18 @@ const resources = {
           previous: 'Zurück',
           next: 'Weiter'
         }
+      },
+      // Add marketplace translations
+      marketplace: {
+        searchAgents: 'Agenten suchen...',
+        filterAgents: 'Agenten filtern',
+        allAgents: 'Alle Agenten',
+        kortixVerified: 'Kortix verifiziert',
+        community: 'Community',
+        noTemplatesFound: 'Keine Templates gefunden, die Ihren Kriterien entsprechen. Versuchen Sie, Ihre Suche oder Filter anzupassen.',
+        noTemplatesAvailable: 'Derzeit sind keine Agent-Templates im Marketplace verfügbar.',
+        verifiedByKortix: 'Verifiziert von Kortix',
+        officialAgentsMaintained: 'Offizielle Agenten, gewartet und unterstützt',
       },
     }
   },
@@ -1388,6 +1427,7 @@ const resources = {
         noResultsFound: 'No se encontraron resultados',
         noAgentsYet: 'Aún no hay agentes',
         myAgents: 'Mis Agentes',
+        explore: 'Explorar',
         createNewAgent: 'Crear Nuevo Agente',
         createNewAgentDescription: 'Esto creará un nuevo agente con un nombre y descripción predeterminados.',
         create: 'Crear',
@@ -1454,6 +1494,18 @@ const resources = {
           previous: 'Anterior',
           next: 'Siguiente'
         }
+      },
+      // Add marketplace translations
+      marketplace: {
+        searchAgents: 'Buscar agentes...',
+        filterAgents: 'Filtrar agentes',
+        allAgents: 'Todos los Agentes',
+        kortixVerified: 'Verificado por Kortix',
+        community: 'Comunidad',
+        noTemplatesFound: 'No se encontraron plantillas que coincidan con sus criterios. Intente ajustar su búsqueda o filtros.',
+        noTemplatesAvailable: 'Actualmente no hay plantillas de agentes disponibles en el marketplace.',
+        verifiedByKortix: 'Verificado por Kortix',
+        officialAgentsMaintained: 'Agentes oficiales, mantenidos y soportados',
       },
     }
   },
