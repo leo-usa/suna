@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Plus, Filter, Globe, ChevronDown, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -76,6 +77,7 @@ export const MyAgentsTab = ({
   publishingAgentId
 }: MyAgentsTabProps) => {
   const [agentFilter, setAgentFilter] = useState<AgentFilter>('all');
+  const { t } = useTranslation();
 
   const filteredAgents = useMemo(() => {
     if (agentFilter === 'templates') {
@@ -158,7 +160,7 @@ export const MyAgentsTab = ({
     <div className="space-y-6 mt-8 flex flex-col min-h-full">
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-6">
         <SearchBar
-          placeholder="Search your agents..."
+          placeholder={t('marketplace.searchYourAgents', 'Search your agents...')}
           value={agentsSearchQuery}
           onChange={setAgentsSearchQuery}
         />
@@ -198,7 +200,7 @@ export const MyAgentsTab = ({
           
           <Button onClick={onCreateAgent} className='rounded-xl'>
             <Plus className="h-4 w-4" />
-            Create Agent
+            {t('marketplace.createAgent', 'Create Agent')}
           </Button>
         </div>
       </div>

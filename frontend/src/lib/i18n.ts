@@ -423,6 +423,10 @@ const zhTranslation = {
     triggers: '触发器',
     and: '和',
     workflows: '工作流',
+    explore: '探索',
+    myAgents: '我的智能体',
+    searchYourAgents: '搜索您的智能体...',
+    createAgent: '创建智能体',
   },
 };
 
@@ -905,6 +909,10 @@ const resources = {
         triggers: 'triggers',
         and: 'and',
         workflows: 'workflows',
+        explore: '探索',
+        myAgents: '我的智能体',
+        searchYourAgents: '搜索您的智能体...',
+        createAgent: '创建智能体',
       },
     }
   },
@@ -1153,6 +1161,10 @@ const resources = {
         triggers: '触发器',
         and: '和',
         workflows: '工作流',
+        explore: '探索',
+        myAgents: '我的智能体',
+        searchYourAgents: '搜索您的智能体...',
+        createAgent: '创建智能体',
       },
     }
   },
@@ -1358,6 +1370,10 @@ const resources = {
         triggers: 'Trigger',
         and: 'und',
         workflows: 'Workflows',
+        explore: 'Erkunden',
+        myAgents: 'Meine Agenten',
+        searchYourAgents: 'Ihre Agenten suchen...',
+        createAgent: 'Agent erstellen',
       },
     }
   },
@@ -1563,6 +1579,10 @@ const resources = {
         triggers: 'disparadores',
         and: 'y',
         workflows: 'flujos de trabajo',
+        explore: 'Explorar',
+        myAgents: 'Mis Agentes',
+        searchYourAgents: 'Buscar tus agentes...',
+        createAgent: 'Crear Agente',
       },
     }
   },
