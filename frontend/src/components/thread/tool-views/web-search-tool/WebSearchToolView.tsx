@@ -54,7 +54,7 @@ export function WebSearchToolView({
     assistantTimestamp
   );
 
-  const toolTitle = getToolTitle(name);
+  const toolTitle = getToolTitle(name, t);
 
   const getFavicon = (url: string) => {
     try {

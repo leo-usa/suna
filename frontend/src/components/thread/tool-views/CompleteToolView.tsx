@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   CheckCircle2,
   CheckCircle,
@@ -50,6 +51,7 @@ export function CompleteToolView({
   onFileClick,
   project,
 }: CompleteToolViewProps) {
+  const { t } = useTranslation();
   const [completeData, setCompleteData] = useState<CompleteContent>({});
   const [progress, setProgress] = useState(0);
 
@@ -104,22 +106,25 @@ export function CompleteToolView({
   }, [assistantContent]);
 
   useEffect(() => {
-    if (toolContent && !isStreaming) {
+    if (toolContent) {
       try {
         const contentStr = normalizeContentToString(toolContent);
         if (!contentStr) return;
-        
-        const toolResultMatch = contentStr.match(/ToolResult\([^)]*output=['"]([^'"]+)['"]/);
-        if (toolResultMatch) {
-          setCompleteData(prev => ({ ...prev, result: toolResultMatch[1] }));
-        } else {
-          setCompleteData(prev => ({ ...prev, result: contentStr }));
+
+        const resultMatch = contentStr.match(/result=["']([^"']*)["']/i);
+        if (resultMatch) {
+          setCompleteData(prev => ({ ...prev, result: resultMatch[1] }));
+        }
+
+        const outputMatch = contentStr.match(/final_output=["']([^"']*)["']/i);
+        if (outputMatch) {
+          setCompleteData(prev => ({ ...prev, finalOutput: outputMatch[1] }));
         }
       } catch (e) {
-        console.error('Error parsing tool response:', e);
+        console.error('Error parsing tool content:', e);
       }
     }
-  }, [toolContent, isStreaming]);
+  }, [toolContent]);
 
   useEffect(() => {
     if (isStreaming) {
@@ -148,7 +153,7 @@ export function CompleteToolView({
     return ext === 'html' || ext === 'htm' || ext === 'md' || ext === 'markdown' || ext === 'csv' || ext === 'tsv';
   };
 
-  const toolTitle = getToolTitle(name) || 'Task Complete';
+  const toolTitle = getToolTitle(name, t) || 'Task Complete';
 
   const handleFileClick = (filePath: string) => {
     if (onFileClick) {

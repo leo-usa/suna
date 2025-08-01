@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Globe,
   MonitorPlay,
@@ -35,6 +36,7 @@ export function BrowserToolView({
   currentIndex = 0,
   totalCalls = 1,
 }: ToolViewProps) {
+  const { t } = useTranslation();
   // Try to extract data using the new parser first
   const assistantToolData = extractToolData(assistantContent);
   const toolToolData = extractToolData(toolContent);
@@ -54,7 +56,7 @@ export function BrowserToolView({
   }
 
   const operation = extractBrowserOperation(name);
-  const toolTitle = getToolTitle(name);
+  const toolTitle = getToolTitle(name, t);
 
   let browserStateMessageId: string | undefined;
   let screenshotUrl: string | null = null;

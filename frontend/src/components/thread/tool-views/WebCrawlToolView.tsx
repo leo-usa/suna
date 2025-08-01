@@ -61,7 +61,7 @@ export function WebCrawlToolView({
   }
 
   const webpageContent = extractWebpageContent(toolContent);
-  const toolTitle = getToolTitle(name);
+  const toolTitle = getToolTitle(name, t);
 
   // Format domain for display
   const formatDomain = (url: string): string => {

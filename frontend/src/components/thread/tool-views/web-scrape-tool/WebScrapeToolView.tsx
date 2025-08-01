@@ -55,7 +55,7 @@ export function WebScrapeToolView({
     assistantTimestamp
   );
 
-  const toolTitle = getToolTitle(name);
+  const toolTitle = getToolTitle(name, t);
   const formatDomain = (url: string): string => {
     try {
       const urlObj = new URL(url);

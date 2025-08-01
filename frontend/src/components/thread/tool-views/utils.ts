@@ -28,7 +28,13 @@ export function formatTimestamp(isoString?: string): string {
 }
 
 // Get standardized tool title
-export function getToolTitle(toolName: string): string {
+export function getToolTitle(toolName: string, t?: any): string {
+  // If translation function is provided, use it
+  if (t) {
+    const translationKey = toolName.toLowerCase().replace(/-/g, '_').replace(/_/g, '-');
+    return t(`toolNames.${translationKey}`, toolName);
+  }
+
   // Normalize tool name
   const normalizedName = toolName.toLowerCase();
 

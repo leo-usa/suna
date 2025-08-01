@@ -213,7 +213,7 @@ export function StrReplaceToolView({
     newStr = newStr || assistantStrReplace.newStr || toolStrReplace.newStr;
   }
 
-  const toolTitle = getToolTitle(name);
+  const toolTitle = getToolTitle(name, t);
 
   // Generate diff data (only if we have both strings)
   const lineDiff = oldStr && newStr ? generateLineDiff(oldStr, newStr) : [];

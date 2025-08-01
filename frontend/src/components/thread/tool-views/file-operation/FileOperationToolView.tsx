@@ -105,7 +105,7 @@ export function FileOperationToolView({
       );
   }
 
-  const toolTitle = getToolTitle(name || `file-${operation}`);
+  const toolTitle = getToolTitle(name || `file-${operation}`, t);
   const processedFilePath = processFilePath(filePath);
   const fileName = getFileName(processedFilePath);
   const fileExtension = getFileExtension(fileName);

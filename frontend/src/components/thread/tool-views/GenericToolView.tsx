@@ -25,7 +25,7 @@ export function GenericToolView({
   isStreaming = false,
 }: ToolViewProps) {
   const { t } = useTranslation();
-  const toolTitle = getToolTitle(name);
+  const toolTitle = getToolTitle(name, t);
 
   const formatContent = (content: any) => {
     if (!content) return null;

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Terminal,
   CheckCircle,
@@ -31,6 +32,7 @@ export function TerminateCommandToolView({
   isStreaming = false,
 }: ToolViewProps) {
   const { resolvedTheme } = useTheme();
+  const { t } = useTranslation();
   const isDarkTheme = resolvedTheme === 'dark';
   const [progress, setProgress] = useState(0);
   const [showFullOutput, setShowFullOutput] = useState(true);
@@ -81,7 +83,7 @@ export function TerminateCommandToolView({
 
   const finalSessionName = rawSessionName?.trim() || sessionName;
 
-  const toolTitle = getToolTitle(name) || 'Terminate Session';
+  const toolTitle = getToolTitle(name, t) || 'Terminate Session';
 
   const terminationSuccess = React.useMemo(() => {
     if (!output) return false;

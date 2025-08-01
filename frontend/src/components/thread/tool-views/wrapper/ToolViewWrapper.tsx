@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { ToolViewProps } from '../types';
 import { formatTimestamp, getToolTitle } from '../utils';
 import { getToolIcon } from '../../utils';
@@ -37,7 +38,8 @@ export function ToolViewWrapper({
   showStatus = true,
   customStatus,
 }: ToolViewWrapperProps) {
-  const toolTitle = getToolTitle(name);
+  const { t } = useTranslation();
+  const toolTitle = getToolTitle(name, t);
   const Icon = getToolIcon(name);
 
   return (

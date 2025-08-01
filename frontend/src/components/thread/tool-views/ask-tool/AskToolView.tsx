@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   MessageCircleQuestion,
   CheckCircle,
@@ -35,6 +36,7 @@ export function AskToolView({
   onFileClick,
   project,
 }: AskToolViewProps) {
+  const { t } = useTranslation();
 
   const {
     text,
@@ -61,7 +63,7 @@ export function AskToolView({
     return ext === 'html' || ext === 'htm' || ext === 'md' || ext === 'markdown' || ext === 'csv' || ext === 'tsv';
   };
 
-  const toolTitle = getToolTitle(name) || 'Ask User';
+  const toolTitle = getToolTitle(name, t) || 'Ask User';
 
   const handleFileClick = (filePath: string) => {
     if (onFileClick) {

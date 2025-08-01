@@ -56,7 +56,7 @@ export function CommandToolView({
   const displayLabel = name === 'check-command-output' ? 'Session' : 'Command';
   const displayPrefix = name === 'check-command-output' ? 'tmux:' : '$';
 
-  const toolTitle = getToolTitle(name);
+  const toolTitle = getToolTitle(name, t);
 
   const formattedOutput = React.useMemo(() => {
     if (!output) return [];

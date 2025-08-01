@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
     Rocket,
     CheckCircle,
@@ -111,12 +112,9 @@ export function DeployToolView({
     isSuccess = true,
     isStreaming = false,
 }: ToolViewProps) {
-    const { name: projectName, directoryPath, deployResult, rawContent } = extractDeployData(
-        assistantContent,
-        toolContent
-    );
-
-    const toolTitle = getToolTitle(name);
+    const { t } = useTranslation();
+    const { name: deployName, directoryPath, deployResult, rawContent } = extractDeployData(assistantContent, toolContent);
+    const toolTitle = getToolTitle(name, t);
     const actualIsSuccess = deployResult?.success !== undefined ? deployResult.success : isSuccess;
 
     // Clean up terminal output for display
@@ -174,7 +172,7 @@ export function DeployToolView({
                         iconColor="text-orange-500 dark:text-orange-400"
                         bgColor="bg-gradient-to-b from-orange-100 to-orange-50 shadow-inner dark:from-orange-800/40 dark:to-orange-900/60 dark:shadow-orange-950/20"
                         title="Deploying website"
-                        filePath={projectName || 'Processing deployment...'}
+                        filePath={deployName || 'Processing deployment...'}
                         showProgress={true}
                     />
                 ) : (
