@@ -13,7 +13,7 @@ from utils.config import config, EnvMode
 from services.supabase import DBConnection
 from utils.auth_utils import get_current_user_id_from_jwt
 from pydantic import BaseModel, Field
-from utils.constants import MODEL_ACCESS_TIERS, MODEL_NAME_ALIASES, HARDCODED_MODEL_PRICES
+from utils.constants import MODEL_ACCESS_TIERS, MODEL_NAME_ALIASES, HARDCODED_MODEL_PRICES, IMAGE_PRICING
 from litellm.cost_calculator import cost_per_token
 import time
 
@@ -385,6 +385,13 @@ async def get_usage_logs(client, user_id: str, page: int = 0, items_per_page: in
                 model
             )
             
+            # Add image costs if present in metadata
+            if message.get('metadata') and message['metadata'].get('usage_data'):
+                for usage_item in message['metadata']['usage_data']:
+                    if 'image_cost' in usage_item:
+                        estimated_cost += usage_item['image_cost']
+                        logger.info(f"Added image cost: ${usage_item['image_cost']:.4f} for model {usage_item.get('model', 'unknown')}")
+            
             # Safely extract project_id from threads relationship
             project_id = 'unknown'
             if message.get('threads') and isinstance(message['threads'], list) and len(message['threads']) > 0:
@@ -482,6 +489,32 @@ def calculate_token_cost(prompt_tokens: int, completion_tokens: int, model: str)
         return message_cost * TOKEN_PRICE_MULTIPLIER
     except Exception as e:
         logger.error(f"Error calculating token cost for model {model}: {str(e)}")
+        return 0.0
+
+def calculate_image_cost(model: str, mode: str, size: str = "1024x1024") -> float:
+    """Calculate the cost for image generation/editing."""
+    try:
+        if model not in IMAGE_PRICING:
+            logger.warning(f"No pricing found for image model {model}")
+            return 0.0
+        
+        pricing = IMAGE_PRICING[model]
+        size_multiplier = pricing["sizes"].get(size, 1.0)
+        
+        if mode == "generate":
+            base_cost = pricing["generation_cost_per_image"]
+        elif mode == "edit":
+            base_cost = pricing["editing_cost_per_image"]
+        else:
+            logger.warning(f"Unknown image mode: {mode}")
+            return 0.0
+        
+        # Apply size multiplier and TOKEN_PRICE_MULTIPLIER
+        total_cost = base_cost * size_multiplier * TOKEN_PRICE_MULTIPLIER
+        return total_cost
+        
+    except Exception as e:
+        logger.error(f"Error calculating image cost for model {model}, mode {mode}: {str(e)}")
         return 0.0
 
 async def get_allowed_models_for_user(client, user_id: str):

@@ -89,9 +89,11 @@ class ToolResult:
     Attributes:
         success (bool): Whether the tool execution succeeded
         output (str): Output message or error description
+        usage_data (Optional[Dict[str, Any]]): Usage data for billing (costs, tokens, etc.)
     """
     success: bool
     output: str
+    usage_data: Optional[Dict[str, Any]] = None
 
 class Tool(ABC):
     """Abstract base class for all tools.
@@ -129,11 +131,12 @@ class Tool(ABC):
         """
         return self._schemas
 
-    def success_response(self, data: Union[Dict[str, Any], str]) -> ToolResult:
+    def success_response(self, data: Union[Dict[str, Any], str], usage_data: Optional[Dict[str, Any]] = None) -> ToolResult:
         """Create a successful tool result.
         
         Args:
             data: Result data (dictionary or string)
+            usage_data: Optional usage data for billing (costs, tokens, etc.)
             
         Returns:
             ToolResult with success=True and formatted output
@@ -143,7 +146,7 @@ class Tool(ABC):
         else:
             text = json.dumps(data, indent=2)
         logger.debug(f"Created success response for {self.__class__.__name__}")
-        return ToolResult(success=True, output=text)
+        return ToolResult(success=True, output=text, usage_data=usage_data)
 
     def fail_response(self, msg: str) -> ToolResult:
         """Create a failed tool result.

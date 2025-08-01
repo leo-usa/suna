@@ -118,6 +118,19 @@ MODELS = {
     },   
 }
 
+# Image generation pricing configuration
+IMAGE_PRICING = {
+    "gpt-image-1": {
+        "generation_cost_per_image": 0.040,  # $0.040 per image generation
+        "editing_cost_per_image": 0.080,     # $0.080 per image editing
+        "sizes": {
+            "1024x1024": 1.0,      # Base multiplier
+            "1024x1536": 1.0,      # Same cost
+            "1536x1024": 1.0       # Same cost
+        }
+    }
+}
+
 # Derived structures (auto-generated from MODELS)
 def _generate_model_structures():
     """Generate all model structures from the master MODELS dictionary."""

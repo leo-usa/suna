@@ -7,6 +7,7 @@ from io import BytesIO
 import uuid
 from litellm import aimage_generation, aimage_edit
 import base64
+from services.billing import calculate_image_cost
 
 
 class SandboxImageEditTool(SandboxToolsBase):
@@ -128,8 +129,21 @@ class SandboxImageEditTool(SandboxToolsBase):
             if isinstance(image_filename, ToolResult):  # Error occurred
                 return image_filename
 
+            # Calculate and store image cost
+            image_cost = calculate_image_cost("gpt-image-1", mode, size)
+            
+            # Create usage data for billing
+            usage_data = {
+                "image_cost": image_cost,
+                "model": "gpt-image-1",
+                "mode": mode,
+                "size": size,
+                "aspect_ratio": aspect_ratio
+            }
+
             return self.success_response(
-                f"Successfully generated image using mode '{mode}' with {aspect_ratio} aspect ratio. Image saved as: {image_filename}. You can use the ask tool to display the image."
+                f"Successfully generated image using mode '{mode}' with {aspect_ratio} aspect ratio. Image saved as: {image_filename}. You can use the ask tool to display the image.",
+                usage_data=usage_data
             )
 
         except Exception as e:

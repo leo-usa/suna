@@ -1615,6 +1615,16 @@ class ResponseProcessor:
             # Create the new structured tool result format
             structured_result = self._create_structured_tool_result(tool_call, result, parsing_details)
             
+            # Handle image usage data for billing
+            if hasattr(result, 'usage_data') and result.usage_data:
+                logger.info(f"Tool result contains usage data: {result.usage_data}")
+                self.trace.event(name="tool_result_contains_usage_data", level="DEFAULT", status_message=(f"Tool result contains usage data: {result.usage_data}"))
+                
+                # Store usage data in metadata for billing calculation
+                if 'usage_data' not in metadata:
+                    metadata['usage_data'] = []
+                metadata['usage_data'].append(result.usage_data)
+            
             # Add the message with the appropriate role to the conversation history
             # This allows the LLM to see the tool result in subsequent interactions
             result_message = {
