@@ -31,8 +31,24 @@ export function formatTimestamp(isoString?: string): string {
 export function getToolTitle(toolName: string, t?: any): string {
   // If translation function is provided, use it
   if (t) {
-    const translationKey = toolName.toLowerCase().replace(/-/g, '_').replace(/_/g, '-');
-    return t(`toolNames.${translationKey}`, toolName);
+    // Try multiple possible translation keys
+    const possibleKeys = [
+      toolName.toLowerCase(),
+      toolName.toLowerCase().replace(/-/g, '_'),
+      toolName.toLowerCase().replace(/_/g, '-'),
+      toolName.toLowerCase().replace(/[-\s]/g, '_'),
+      toolName.toLowerCase().replace(/[-\s]/g, '-'),
+    ];
+    
+    for (const key of possibleKeys) {
+      const translation = t(`toolNames.${key}`, null);
+      if (translation !== null && translation !== key) {
+        return translation;
+      }
+    }
+    
+    // If no translation found, return the original tool name
+    return toolName;
   }
 
   // Normalize tool name
