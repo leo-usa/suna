@@ -47,6 +47,7 @@ import {
   useFileContentQuery,
   FileCache
 } from '@/hooks/react-query/files';
+import { useQueryClient } from '@tanstack/react-query';
 import JSZip from 'jszip';
 import { normalizeFilenameToNFC } from '@/lib/utils/unicode';
 import { useTranslation } from 'react-i18next';
@@ -72,6 +73,7 @@ export function FileViewerModal({
   filePathList,
 }: FileViewerModalProps) {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   // Safely handle initialFilePath to ensure it's a string or null
   const safeInitialFilePath = typeof initialFilePath === 'string' ? initialFilePath : null;
 
@@ -1165,6 +1167,21 @@ export function FileViewerModal({
         }
 
         toast.success("File saved successfully!");
+        
+        // Invalidate the file content cache to force a refresh
+        if (selectedFilePath) {
+          // Invalidate all content types for this file
+          queryClient.invalidateQueries({
+            queryKey: ['files', 'content', sandboxId, selectedFilePath]
+          });
+          // Also invalidate the specific content type queries
+          const contentTypes = ['text', 'blob', 'json'];
+          contentTypes.forEach(contentType => {
+            queryClient.invalidateQueries({
+              queryKey: ['files', 'content', sandboxId, selectedFilePath, contentType]
+            });
+          });
+        }
         
         // Update local state to reflect the save without a full reload
         setRawContent(newContent);
