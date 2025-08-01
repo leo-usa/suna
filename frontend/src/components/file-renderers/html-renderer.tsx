@@ -5,6 +5,7 @@ import { CodeRenderer } from './code-renderer';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Monitor, Code, ExternalLink, Pencil } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface HtmlRendererProps {
   content: string;
@@ -19,6 +20,7 @@ export function HtmlRenderer({
   className,
   onEdit,
 }: HtmlRendererProps) {
+  const { t } = useTranslation();
   // Always default to 'preview' mode
   const [viewMode, setViewMode] = useState<'preview' | 'code'>('preview');
 
@@ -38,7 +40,7 @@ export function HtmlRenderer({
             onClick={() => setViewMode('preview')}
           >
             <Monitor className="h-4 w-4" />
-            Preview
+            {t('editor.preview', 'Preview')}
           </Button>
           <Button
             variant="ghost"
@@ -50,7 +52,7 @@ export function HtmlRenderer({
             onClick={() => setViewMode('code')}
           >
             <Code className="h-4 w-4" />
-            Code
+            {t('editor.code', 'Code')}
           </Button>
                       <Button
               variant="ghost"
@@ -59,7 +61,7 @@ export function HtmlRenderer({
               onClick={() => window.open(previewUrl, '_blank')}
             >
               <ExternalLink className="h-4 w-4" />
-              Open
+              {t('editor.open', 'Open')}
             </Button>
             {onEdit && (
               <Button
@@ -69,7 +71,7 @@ export function HtmlRenderer({
                 onClick={onEdit}
               >
                 <Pencil className="h-4 w-4" />
-                Edit
+                {t('editor.edit', 'Edit')}
               </Button>
             )}
         </div>
