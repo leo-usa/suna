@@ -251,7 +251,7 @@ export function SidebarLeft({
               <TooltipTrigger asChild>
                 <SidebarTrigger className="h-8 w-8" />
               </TooltipTrigger>
-              <TooltipContent>Expand sidebar (CMD+B)</TooltipContent>
+              <TooltipContent>{t('tooltips.expandSidebar', 'Expand sidebar (CMD+B)')}</TooltipContent>
             </Tooltip>
           </div>
         )}

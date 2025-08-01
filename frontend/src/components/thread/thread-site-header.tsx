@@ -29,6 +29,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useFeatureFlags } from "@/lib/feature-flags";
+import { useTranslation } from 'react-i18next';
 
 interface ThreadSiteHeaderProps {
   threadId: string;
@@ -51,6 +52,7 @@ export function SiteHeader({
   isMobileView,
   debugMode,
 }: ThreadSiteHeaderProps) {
+  const { t } = useTranslation();
   const pathname = usePathname()
   const [isEditing, setIsEditing] = useState(false)
   const [editName, setEditName] = useState(projectName)
@@ -186,7 +188,7 @@ export function SiteHeader({
             <div
               className="text-base font-medium text-muted-foreground hover:text-foreground cursor-pointer flex items-center"
               onClick={startEditing}
-              title="Click to rename project"
+              title={t('tooltips.renameProject', 'Click to rename project')}
             >
               {projectName}
             </div>
@@ -227,7 +229,7 @@ export function SiteHeader({
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>View Files in Task</p>
+                  <p>{t('tooltips.viewFiles', 'View Files in Task')}</p>
                 </TooltipContent>
               </Tooltip>
 
@@ -244,7 +246,7 @@ export function SiteHeader({
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Knowledge Base</p>
+                    <p>{t('tooltips.knowledgeBase', 'Knowledge Base')}</p>
                   </TooltipContent>
                 </Tooltip>
               )}
@@ -259,9 +261,9 @@ export function SiteHeader({
                     <Share2 className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>
-                  <p>Share Chat</p>
-                </TooltipContent>
+                                  <TooltipContent>
+                    <p>{t('tooltips.shareChat', 'Share Chat')}</p>
+                  </TooltipContent>
               </Tooltip>
 
               {/* <Tooltip>

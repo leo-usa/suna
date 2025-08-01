@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { useTranslation } from 'react-i18next';
 
 interface Agent {
   agent_id: string;
@@ -31,6 +32,7 @@ export const AgentsList = ({
   onToggleDefault,
   deleteAgentMutation 
 }: AgentsListProps) => {
+  const { t } = useTranslation();
   return (
     <div className="space-y-4">
       {agents.map((agent) => (
@@ -56,7 +58,7 @@ export const AgentsList = ({
                     size="sm"
                     className="h-8 w-8 p-0"
                     onClick={() => onEditAgent(agent.agent_id)}
-                    title="Edit agent"
+                    title={t('tooltips.editAgent', 'Edit agent')}
                   >
                     <Settings className="h-4 w-4 text-muted-foreground" />
                   </Button>
@@ -68,7 +70,7 @@ export const AgentsList = ({
                           size="sm"
                           className="h-8 w-8 p-0 hover:bg-destructive/10 hover:text-destructive"
                           disabled={deleteAgentMutation.isPending}
-                          title="Delete agent"
+                          title={t('tooltips.deleteAgent', 'Delete agent')}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

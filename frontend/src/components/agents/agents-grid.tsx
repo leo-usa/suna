@@ -9,6 +9,7 @@ import { getAgentAvatar } from '../../lib/utils/get-agent-style';
 import { useCreateTemplate, useUnpublishTemplate } from '@/hooks/react-query/secure-mcp/use-secure-mcp';
 import { toast } from 'sonner';
 import { AgentCard } from './custom-agents-page/agent-card';
+import { useTranslation } from 'react-i18next';
 
 interface Agent {
   agent_id: string;
@@ -209,6 +210,7 @@ export const AgentsGrid: React.FC<AgentsGridProps> = ({
   onPublish,
   publishingId: externalPublishingId
 }) => {
+  const { t } = useTranslation();
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [unpublishingId, setUnpublishingId] = useState<string | null>(null);
   const router = useRouter();
@@ -288,7 +290,7 @@ export const AgentsGrid: React.FC<AgentsGridProps> = ({
                         size="sm"
                         className="h-7 w-7 p-0 hover:bg-destructive/10 hover:text-destructive text-muted-foreground"
                         disabled={deleteAgentMutation.isPending}
-                        title="Delete agent"
+                        title={t('tooltips.deleteAgent', 'Delete agent')}
                         onClick={(e) => e.stopPropagation()}
                       >
                         <Trash2 className="h-3.5 w-3.5" />

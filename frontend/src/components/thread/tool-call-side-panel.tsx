@@ -452,7 +452,7 @@ export function ToolCallSidePanel({
                       size="icon"
                       onClick={handleClose}
                       className="h-8 w-8"
-                      title="Minimize to floating preview"
+                      title={t('tooltips.minimizeToFloatingPreview', 'Minimize to floating preview')}
                     >
                       <Minimize2 className="h-4 w-4" />
                     </Button>
@@ -635,7 +635,7 @@ export function ToolCallSidePanel({
                   size="icon"
                   onClick={handleClose}
                   className="h-8 w-8 ml-1"
-                  title="Minimize to floating preview"
+                  title={t('tooltips.minimizeToFloatingPreview', 'Minimize to floating preview')}
                 >
                   <Minimize2 className="h-4 w-4" />
                 </Button>
@@ -646,14 +646,14 @@ export function ToolCallSidePanel({
               <div className="flex items-center gap-2">
                 <div className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400 flex items-center gap-1.5">
                   <CircleDashed className="h-3 w-3 animate-spin" />
-                  <span>Running</span>
+                  <span>{t('tooltips.running', 'Running')}</span>
                 </div>
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={handleClose}
                   className="h-8 w-8 ml-1"
-                  title="Minimize to floating preview"
+                  title={t('tooltips.minimizeToFloatingPreview', 'Minimize to floating preview')}
                 >
                   <Minimize2 className="h-4 w-4" />
                 </Button>
@@ -666,7 +666,7 @@ export function ToolCallSidePanel({
                 size="icon"
                 onClick={handleClose}
                 className="h-8 w-8"
-                title="Minimize to floating preview"
+                title={t('tooltips.minimizeToFloatingPreview', 'Minimize to floating preview')}
               >
                 <Minimize2 className="h-4 w-4" />
               </Button>
