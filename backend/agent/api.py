@@ -2522,8 +2522,9 @@ async def share_to_community(
                     files.append((full_path, rel_path))
         return files
     # --- Get the specific project's sandbox ---
+    db_client = await db.client
     if body.project_id:
-        project = await client.table('projects').select('sandbox').eq('project_id', body.project_id).maybe_single().execute()
+        project = await db_client.table('projects').select('sandbox').eq('project_id', body.project_id).maybe_single().execute()
         if not project.data or not project.data.get('sandbox'):
             raise HTTPException(status_code=404, detail="Project or sandbox not found")
         sandbox_id = project.data['sandbox'].get('id') or project.data['sandbox'].get('sandbox_id')
@@ -2531,7 +2532,7 @@ async def share_to_community(
             raise HTTPException(status_code=404, detail="Sandbox ID not found for project")
     else:
         # Fallback to user's latest sandbox if no project_id provided
-        project = await client.table('projects').select('sandbox').eq('account_id', user_id).order('created_at', desc=True).limit(1).maybe_single().execute()
+        project = await db_client.table('projects').select('sandbox').eq('account_id', user_id).order('created_at', desc=True).limit(1).maybe_single().execute()
         if not project or not getattr(project, 'data', None):
             raise HTTPException(status_code=400, detail="No project found for user")
         sandbox_id = project.data['sandbox']['id']
@@ -2603,6 +2604,25 @@ async def share_to_community(
                 return f'{attr}="{rel_to_url[normalized_path]}"'
             return match.group(0)
         return re.sub(r'(src|href)=["\']([^"\']+)["\']', repl, html)
+    # --- If html_content is an iframe, extract the actual HTML from the iframe src ---
+    if html_content.strip().startswith('<iframe'):
+        # Extract the URL from the iframe src
+        import re
+        iframe_match = re.search(r'src=["\']([^"\']+)["\']', html_content)
+        if iframe_match:
+            iframe_url = iframe_match.group(1)
+            # Fetch the actual HTML content from the iframe URL
+            async with httpx.AsyncClient() as client:
+                try:
+                    response = await client.get(iframe_url)
+                    if response.status_code == 200:
+                        html_content = response.text
+                        logger.info(f"Extracted HTML content from iframe: {html_content[:500]}")
+                    else:
+                        logger.warning(f"Failed to fetch HTML from iframe URL: {iframe_url}")
+                except Exception as e:
+                    logger.error(f"Error fetching HTML from iframe: {e}")
+    
     logger.info(f"HTML before asset ref replacement: {html_content[:1000]}")
     html_content = replace_asset_refs(html_content)
     logger.info(f"HTML after asset ref replacement: {html_content[:1000]}")
@@ -2612,7 +2632,7 @@ async def share_to_community(
     thumbnail_path = body.thumbnail_path
     if not thumbnail_path and image_candidates:
         thumbnail_path = image_candidates[0]
-    await client.table('community_posts').insert({
+    await db_client.table('community_posts').insert({
         "id": post_id,
         "user_id": user_id,
         "user_name": user_name,
@@ -2714,7 +2734,15 @@ async def get_community_post(post_id: str):
 @router.get("/public-html/{post_id}")
 async def serve_public_html(post_id: str):
     """Proxy the HTML file from Supabase Storage and serve it as text/html."""
-    supabase_url = f"https://tsdrmlnyclxwkryqrjic.supabase.co/storage/v1/object/public/share/community/{post_id}/index.html"
+    # First, get the post details to find the correct html_path
+    client = await db.client
+    post = await client.table('community_posts').select('html_path').eq('id', post_id).maybe_single().execute()
+    if not post or not getattr(post, 'data', None):
+        raise HTTPException(status_code=404, detail="Post not found")
+    
+    html_path = post.data['html_path']
+    supabase_url = f"https://tsdrmlnyclxwkryqrjic.supabase.co/storage/v1/object/public/share/{html_path}"
+    
     async with httpx.AsyncClient() as client:
         r = await client.get(supabase_url)
         if r.status_code != 200:

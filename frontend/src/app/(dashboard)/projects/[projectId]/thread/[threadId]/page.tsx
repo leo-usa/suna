@@ -170,14 +170,14 @@ export default function ThreadPage({
 
     // Open a new tab immediately. It might be blocked by a popup blocker.
     const newTab = window.open('', '_blank');
-    if (!newTab) {
-      toast.error(t('communityShare.popupBlocked', "Could not open new tab. Please allow pop-ups for this site."));
-      return;
-    }
-    newTab.document.write(t('communityShare.generating', "Generating share link, please wait..."));
+          if (!newTab) {
+        toast.error(t('communityShare.popupBlocked'));
+        return;
+      }
+      newTab.document.write(t('communityShare.generating'));
 
     setCommunityLoading(true);
-    toast.info(t('communityShare.sharing', '正在分享...'));
+    toast.info(t('communityShare.sharing'));
     try {
       // Autofill title with project name
       const title = projectName || 'My Project';
@@ -188,7 +188,7 @@ export default function ThreadPage({
       console.log('Share result:', shareResult);
       
       if (!shareResult.shared || shareResult.shared.length === 0) {
-        throw new Error('No HTML files found to share');
+        throw new Error(t('communityShare.noHtmlFound'));
       }
       
       // Get the first HTML file
@@ -199,7 +199,7 @@ export default function ThreadPage({
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session?.access_token) {
-        throw new Error('No access token available');
+        throw new Error(t('communityShare.noAccessToken'));
       }
       
       const communityResponse = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/community/share`, {
@@ -218,7 +218,7 @@ export default function ThreadPage({
       });
       
       if (!communityResponse.ok) {
-        throw new Error(`Failed to share to community: ${communityResponse.statusText}`);
+        throw new Error(t('communityShare.failedToShare', { error: communityResponse.statusText }));
       }
       
       const communityResult = await communityResponse.json();
@@ -229,11 +229,11 @@ export default function ThreadPage({
       newTab.location.href = postUrl;
       
       setCommunityResult({ url: postUrl });
-      toast.success(t('communityShare.shared', 'Successfully shared to community!'));
+      toast.success(t('communityShare.shared'));
       
     } catch (error) {
       console.error('Community share error:', error);
-      toast.error(`Failed to share: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      toast.error(t('communityShare.error', { error: error instanceof Error ? error.message : 'Unknown error' }));
       newTab.close();
     } finally {
       setCommunityLoading(false);
@@ -721,9 +721,9 @@ export default function ThreadPage({
                   <Users className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>
-                <p>{t('communityShare.tooltip', 'Share to Community')}</p>
-              </TooltipContent>
+                        <TooltipContent>
+            <p>{t('communityShare.tooltip')}</p>
+          </TooltipContent>
             </Tooltip>
           </TooltipProvider>
         }
