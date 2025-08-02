@@ -368,11 +368,14 @@ const zhTranslation = {
         loading: '加载中...',
         usageThisMonth: '本月智能体使用情况',
         currentCreditBalance: '当前积分余额',
-        prepaidCreditsDescription: '预付费积分允许您在无订阅的情况下使用智能体。',
-        creditsConsumedDescription: '积分根据您的使用情况消耗，永不过期。新购买使用基于美元的积分。',
+        prepaidCreditsDescription: '预付费积分允许您在无订阅的情况下使用智能体。新购买使用基于美元的积分，服务费为4.50美元。',
+        creditsConsumedDescription: '积分根据您的使用情况消耗，永不过期。',
         reset: '重置',
         viewModelPricing: '查看模型定价',
         manageSubscription: '管理订阅',
+        creditAmount9: '$9 (扣除服务费后净额$4.50)',
+        creditAmount49: '$49 (扣除服务费后净额$44.50)',
+        creditAmount99: '$99 (扣除服务费后净额$94.50)',
         billingPeriod: {
           monthly: '月付',
           yearly: '年付'

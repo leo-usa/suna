@@ -208,8 +208,18 @@ export default function AccountBillingStatus({ accountId, returnUrl, defaultTab 
 
       <Tabs defaultValue={effectiveDefaultTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="subscription">{t('billing.subscription', 'Subscription')}</TabsTrigger>
-          <TabsTrigger value="prepaid">{t('billing.prepaidCredits', 'Pre-paid Credits')}</TabsTrigger>
+          <TabsTrigger 
+            value="subscription"
+            className="rounded-t-lg border border-b-0 border-border bg-background px-6 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:hover:bg-primary/90 data-[state=active]:border-b-card"
+          >
+            {t('billing.subscription', 'Subscription')}
+          </TabsTrigger>
+          <TabsTrigger 
+            value="prepaid"
+            className="rounded-t-lg border border-b-0 border-border bg-background px-6 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:hover:bg-primary/90 data-[state=active]:border-b-card"
+          >
+            {t('billing.prepaidCredits', 'Pre-paid Credits')}
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="subscription" className="space-y-4">
@@ -336,7 +346,7 @@ export default function AccountBillingStatus({ accountId, returnUrl, defaultTab 
                 <div key={dollars} className="flex items-center gap-3 rounded-lg border px-4 py-2 hover:bg-muted cursor-pointer transition">
                   <RadioGroupItem value={String(dollars)} id={`credit-${dollars}`} />
                   <Label htmlFor={`credit-${dollars}`} className="flex-1 cursor-pointer text-sm font-normal flex items-center gap-2">
-                    ${dollars} (${dollars - 4.50} net after service fee)
+                    {t(`billing.creditAmount${dollars}`, `$${dollars} ($${dollars - 4.50} net after service fee)`)}
                     <span className="text-muted-foreground ml-2">{CREDIT_PRICES[dollars]}</span>
                   </Label>
                 </div>
