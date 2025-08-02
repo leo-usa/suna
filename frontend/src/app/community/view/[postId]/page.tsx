@@ -43,6 +43,11 @@ export default function CommunityPostEmbedPage() {
         <div className="max-w-4xl w-full flex items-center justify-between px-4 py-3 mx-auto">
           <div className="flex flex-col gap-0.5">
             <div className="text-lg font-semibold truncate max-w-xs sm:max-w-md" title={post.title}>{post.title}</div>
+            {post.description && (
+              <div className="text-sm text-gray-600 truncate max-w-xs sm:max-w-md" title={post.description}>
+                {post.description}
+              </div>
+            )}
             <div className="text-xs text-gray-500">{createdAt}</div>
           </div>
           <div className="flex items-center gap-2">

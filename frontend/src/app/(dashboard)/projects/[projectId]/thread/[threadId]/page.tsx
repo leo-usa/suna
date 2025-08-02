@@ -181,7 +181,19 @@ export default function ThreadPage({
     try {
       // Autofill title with project name
       const title = projectName || 'My Project';
-      const description = 'Shared from Dobby';
+      
+      // Get the first user message as the description
+      const firstUserMsg = messages.find(m => m.type === 'user');
+      let description = 'Shared from Dobby'; // fallback
+      if (firstUserMsg) {
+        try {
+          // Try to parse the content if it's JSON, otherwise use as-is
+          const parsed = JSON.parse(firstUserMsg.content);
+          description = parsed.content || firstUserMsg.content;
+        } catch {
+          description = firstUserMsg.content;
+        }
+      }
       
       // First, share the report to get HTML content
       const shareResult = await shareReport(projectId);
