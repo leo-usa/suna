@@ -40,7 +40,10 @@ export default function HomeBillingTabs() {
   const [paymentMethod, setPaymentMethod] = useState<'alipay' | 'wechat_pay' | 'card'>('alipay');
   const [isTopUpLoading, setIsTopUpLoading] = useState(false);
   const [topUpError, setTopUpError] = useState<string | null>(null);
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  
+  // Show prepaid tab by default for Chinese users
+  const defaultTab = i18n.language === 'zh' ? 'prepaid' : 'subscription';
 
   // Prepaid top-up handler
   const handleTopUp = async () => {
@@ -95,7 +98,7 @@ export default function HomeBillingTabs() {
       </div>
 
       <div className="w-full max-w-6xl mx-auto px-6">
-        <Tabs defaultValue="subscription" className="w-full">
+        <Tabs defaultValue={defaultTab} className="w-full">
           <TabsList className="mb-6 border-b border-border bg-transparent px-0">
             <TabsTrigger
               value="subscription"

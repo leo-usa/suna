@@ -347,8 +347,8 @@ const zhTranslation = {
         }
       },
       billing: {
-        subscription: '订阅',
-        prepaidCredits: '预付费积分',
+        subscription: '订阅（只支持信用卡）',
+        prepaidCredits: '预付费（支持微信和支付宝）',
         localMode: '本地开发模式运行 - 计费功能已禁用',
         whatAreTokensQuestion: '什么是AI代币？',
         whatAreTokensExplanation: '代币是AI模型处理的文本单位。你的方案包含用于各种AI模型的积分 - 任务越复杂，使用的代币越多。',
