@@ -180,6 +180,7 @@ function PricingTier({
   insideDialog = false,
   billingPeriod = 'monthly',
 }: PricingTierProps) {
+  const { t } = useTranslation();
   // Auto-select the correct plan only on initial load - simplified since no more Custom tier
   const handleSubscribe = async (planStripePriceId: string) => {
     if (!isAuthenticated) {
@@ -289,18 +290,18 @@ function PricingTier({
 
   if (isAuthenticated) {
     if (isCurrentActivePlan) {
-      buttonText = 'Current Plan';
+      buttonText = t('pricing.plans.currentPlan');
       buttonDisabled = true;
       buttonVariant = 'secondary';
       ringClass = isCompact ? 'ring-1 ring-primary' : 'ring-2 ring-primary';
       buttonClassName = 'bg-primary/5 hover:bg-primary/10 text-primary';
       statusBadge = (
         <span className="bg-primary/10 text-primary text-[10px] font-medium px-1.5 py-0.5 rounded-full">
-          Current
+          {t('pricing.plans.current')}
         </span>
       );
     } else if (isScheduledTargetPlan) {
-      buttonText = 'Scheduled';
+      buttonText = t('pricing.plans.scheduled');
       buttonDisabled = true;
       buttonVariant = 'outline';
       ringClass = isCompact
@@ -310,17 +311,17 @@ function PricingTier({
         'bg-yellow-500/5 hover:bg-yellow-500/10 text-yellow-600 border-yellow-500/20';
       statusBadge = (
         <span className="bg-yellow-500/10 text-yellow-600 text-[10px] font-medium px-1.5 py-0.5 rounded-full">
-          Scheduled
+          {t('pricing.plans.scheduled')}
         </span>
       );
     } else if (isScheduled && currentSubscription?.price_id === tierPriceId) {
-      buttonText = 'Change Scheduled';
+      buttonText = t('pricing.plans.changeScheduled');
       buttonVariant = 'secondary';
       ringClass = isCompact ? 'ring-1 ring-primary' : 'ring-2 ring-primary';
       buttonClassName = 'bg-primary/5 hover:bg-primary/10 text-primary';
       statusBadge = (
         <span className="bg-yellow-500/10 text-yellow-600 text-[10px] font-medium px-1.5 py-0.5 rounded-full">
-          Downgrade Pending
+          {t('pricing.plans.downgradePending')}
         </span>
       );
     } else {
@@ -350,7 +351,7 @@ function PricingTier({
         targetAmount === 0 &&
         currentSubscription?.status !== 'no_subscription'
       ) {
-        buttonText = 'Select Plan';
+        buttonText = t('pricing.plans.selectPlan');
         buttonDisabled = true;
         buttonVariant = 'secondary';
         buttonClassName = 'bg-primary/5 hover:bg-primary/10 text-primary';
@@ -365,11 +366,11 @@ function PricingTier({
             buttonClassName =
               'opacity-50 cursor-not-allowed bg-muted text-muted-foreground';
           } else if (currentIsMonthly && targetIsYearly && targetAmount === currentAmount) {
-            buttonText = 'Switch to Yearly';
+            buttonText = t('pricing.plans.switchToYearly');
             buttonVariant = 'default';
             buttonClassName = 'bg-green-600 hover:bg-green-700 text-white';
           } else {
-            buttonText = 'Upgrade';
+            buttonText = t('pricing.plans.upgrade');
             buttonVariant = tier.buttonColor as ButtonVariant;
             buttonClassName = 'bg-primary hover:bg-primary/90 text-primary-foreground';
           }
@@ -393,7 +394,7 @@ function PricingTier({
             buttonClassName =
               'opacity-50 cursor-not-allowed bg-muted text-muted-foreground';
           } else {
-            buttonText = 'Select Plan';
+            buttonText = t('pricing.plans.selectPlan');
             buttonVariant = tier.buttonColor as ButtonVariant;
             buttonClassName =
               'bg-primary hover:bg-primary/90 text-primary-foreground';
@@ -408,11 +409,12 @@ function PricingTier({
     }
 
     if (isPlanLoading) {
-      buttonText = 'Loading...';
+      buttonText = t('pricing.plans.loading');
       buttonClassName = 'opacity-70 cursor-not-allowed';
     }
   } else {
     // Non-authenticated state styling
+    buttonText = t('pricing.plans.startFree');
     buttonVariant = tier.buttonColor as ButtonVariant;
     buttonClassName =
       tier.buttonColor === 'default'
@@ -441,7 +443,7 @@ function PricingTier({
           {tier.name}
           {tier.isPopular && (
             <span className="bg-gradient-to-b from-secondary/50 from-[1.92%] to-secondary to-[100%] text-white inline-flex w-fit items-center justify-center px-1.5 py-0.5 rounded-full text-[10px] font-medium shadow-[0px_6px_6px_-3px_rgba(0,0,0,0.08),0px_3px_3px_-1.5px_rgba(0,0,0,0.08),0px_1px_1px_-0.5px_rgba(0,0,0,0.08),0px_0px_0px_1px_rgba(255,255,255,0.12)_inset,0px_1px_0px_0px_rgba(255,255,255,0.12)_inset]">
-              Popular
+              {t('pricing.plans.popular')}
             </span>
           )}
           {/* Show upgrade badge for yearly plans when user is on monthly */}
@@ -450,7 +452,7 @@ function PricingTier({
             tier.yearlyStripePriceId && (currentTier.name === tier.name ||
               parseFloat(tier.price.slice(1)) >= parseFloat(currentTier.price.slice(1))) && (
               <span className="bg-green-500/10 text-green-700 text-[10px] font-medium px-1.5 py-0.5 rounded-full">
-                Recommended
+                {t('pricing.plans.recommended')}
               </span>
             )}
           {isAuthenticated && statusBadge}
@@ -467,14 +469,14 @@ function PricingTier({
                 )}
               </div>
               <div className="flex items-center gap-2 mt-1">
-                <span className="text-xs text-muted-foreground">/month</span>
-                <span className="text-xs text-muted-foreground">billed yearly</span>
+                <span className="text-xs text-muted-foreground">{t('pricing.plans.period')}</span>
+                <span className="text-xs text-muted-foreground">{t('pricing.plans.billingNote')}</span>
               </div>
             </div>
           ) : (
             <div className="flex items-baseline">
               <PriceDisplay price={displayPrice} isCompact={insideDialog} />
-              <span className="ml-2">{displayPrice !== '$0' ? '/month' : ''}</span>
+              <span className="ml-2">{displayPrice !== '$0' ? t('pricing.plans.period') : ''}</span>
             </div>
           )}
         </div>
@@ -482,7 +484,7 @@ function PricingTier({
 
         {billingPeriod === 'yearly' && tier.yearlyPrice && tier.discountPercentage ? (
           <div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-green-50 border-green-200 text-green-700 w-fit">
-            Save ${Math.round(parseFloat(tier.originalYearlyPrice?.slice(1) || '0') - parseFloat(tier.yearlyPrice.slice(1)))} per year
+            {t('pricing.plans.savings', { amount: Math.round(parseFloat(tier.originalYearlyPrice?.slice(1) || '0') - parseFloat(tier.yearlyPrice.slice(1))) })}
           </div>
         ) : (
           <div className="hidden items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-primary/10 border-primary/20 text-primary w-fit">

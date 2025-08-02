@@ -255,6 +255,82 @@ const zhTranslation = {
         tabs: {
           cloud: '云端',
           selfHosted: '自托管'
+        },
+        plans: {
+          free: {
+            name: '免费',
+            price: '$0',
+            originalPrice: '',
+            description: '包含5个免费AI代币',
+            features: [
+              '公开项目',
+              '基础模型',
+              '社区支持'
+            ],
+            button: '选择方案'
+          },
+          plus: {
+            name: 'Plus',
+            popular: '热门',
+            price: '$17',
+            originalPrice: '$20',
+            period: '/月',
+            billingNote: '年付',
+            savings: '每年节省$36',
+            description: '每月20个AI代币积分',
+            features: [
+              '私有项目',
+              '高级AI模型',
+              '社区支持'
+            ],
+            button: '升级'
+          },
+          pro: {
+            name: 'Pro',
+            price: '$43',
+            originalPrice: '$50',
+            period: '/月',
+            billingNote: '年付',
+            savings: '每年节省$90',
+            description: '每月50个AI代币积分',
+            features: [
+              '私有项目',
+              '高级AI模型',
+              '社区支持'
+            ],
+            button: '升级'
+          },
+          ultra: {
+            name: 'Ultra',
+            price: '$170',
+            originalPrice: '$200',
+            period: '/月',
+            billingNote: '年付',
+            savings: '每年节省$360',
+            description: '每月200个AI代币积分',
+            features: [
+              '私有项目',
+              '高级AI模型',
+              '优先支持'
+            ],
+            button: '升级'
+          },
+          // Button and status text
+          currentPlan: '当前方案',
+          current: '当前',
+          scheduled: '已安排',
+          changeScheduled: '更改安排',
+          downgradePending: '降级待处理',
+          selectPlan: '选择方案',
+          switchToYearly: '切换到年付',
+          upgrade: '升级',
+          loading: '加载中...',
+          startFree: '免费开始',
+          popular: '热门',
+          recommended: '推荐',
+          period: '/月',
+          billingNote: '年付',
+          savings: '每年节省${{amount}}'
         }
       },
       billing: {
