@@ -18,6 +18,7 @@ import {
 import { useAuth } from '@/components/AuthProvider';
 import { Skeleton } from '@/components/ui/skeleton';
 import { X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface BillingModalProps {
     open: boolean;
@@ -27,6 +28,7 @@ interface BillingModalProps {
 
 export function BillingModal({ open, onOpenChange, returnUrl = typeof window !== 'undefined' ? window?.location?.href || '/' : '/' }: BillingModalProps) {
     const { session, isLoading: authLoading } = useAuth();
+    const { t } = useTranslation();
     const [subscriptionData, setSubscriptionData] = useState<SubscriptionStatus | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -110,7 +112,7 @@ export function BillingModal({ open, onOpenChange, returnUrl = typeof window !==
                                 <div className="rounded-lg border bg-background p-4">
                                     <div className="flex justify-between items-center">
                                         <span className="text-sm font-medium text-foreground/90">
-                                            Agent Usage This Month
+                                            {t('billing.usageThisMonth', "This Month's Agent Usage")}
                                         </span>
                                         <span className="text-sm font-medium">
                                             ${subscriptionData.current_usage?.toFixed(2) || '0'} /{' '}

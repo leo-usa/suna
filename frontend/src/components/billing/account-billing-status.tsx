@@ -205,8 +205,8 @@ export default function AccountBillingStatus({ accountId, returnUrl, defaultTab 
 
       <Tabs defaultValue={defaultTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="subscription">Subscription</TabsTrigger>
-          <TabsTrigger value="prepaid">Pre-paid Credits</TabsTrigger>
+          <TabsTrigger value="subscription">{t('billing.subscription', 'Subscription')}</TabsTrigger>
+          <TabsTrigger value="prepaid">{t('billing.prepaidCredits', 'Pre-paid Credits')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="subscription" className="space-y-4">
@@ -216,7 +216,7 @@ export default function AccountBillingStatus({ accountId, returnUrl, defaultTab 
                 <div className="rounded-lg border bg-background p-4">
                   <div className="flex justify-between items-center gap-4">
                     <span className="text-sm font-medium text-foreground/90">
-                      Agent Usage This Month
+                      {t('billing.usageThisMonth', "This Month's Agent Usage")}
                     </span>
                     <span className="text-sm font-medium text-card-title">
                       ${subscriptionData.current_usage?.toFixed(2) || '0'} /{' '}
@@ -269,7 +269,7 @@ export default function AccountBillingStatus({ accountId, returnUrl, defaultTab 
 
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium text-foreground/90">
-                      Agent Usage This Month
+                      {t('billing.usageThisMonth', "This Month's Agent Usage")}
                     </span>
                     <span className="text-sm font-medium text-card-title">
                       ${subscriptionData?.current_usage?.toFixed(2) || '0'} /{' '}
