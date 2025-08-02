@@ -440,7 +440,7 @@ function PricingTier({
         insideDialog ? "p-3" : "p-4"
       )}>
         <p className="text-sm flex items-center gap-2">
-          {tier.name}
+          {t(`pricing.plans.${tier.name.toLowerCase()}.name`)}
           {tier.isPopular && (
             <span className="bg-gradient-to-b from-secondary/50 from-[1.92%] to-secondary to-[100%] text-white inline-flex w-fit items-center justify-center px-1.5 py-0.5 rounded-full text-[10px] font-medium shadow-[0px_6px_6px_-3px_rgba(0,0,0,0.08),0px_3px_3px_-1.5px_rgba(0,0,0,0.08),0px_1px_1px_-0.5px_rgba(0,0,0,0.08),0px_0px_0px_1px_rgba(255,255,255,0.12)_inset,0px_1px_0px_0px_rgba(255,255,255,0.12)_inset]">
               {t('pricing.plans.popular')}
@@ -502,14 +502,27 @@ function PricingTier({
       )}>
         {tier.features && tier.features.length > 0 && (
           <ul className="space-y-3">
-            {tier.features.map((feature) => (
-              <li key={feature} className="flex items-center gap-2">
-                <div className="size-5 min-w-5 rounded-full border border-primary/20 flex items-center justify-center">
-                  <CheckIcon className="size-3 text-primary" />
-                </div>
-                <span className="text-sm">{feature}</span>
-              </li>
-            ))}
+            {tier.features.map((feature, index) => {
+              // Map English features to translation keys
+              const featureKey = feature.toLowerCase()
+                .replace(/\$(\d+)\s+free\s+ai\s+tokens\s+included/, 'pricing.plans.free.description')
+                .replace(/\$(\d+)\s+ai\s+token\s+credits\/month/, 'pricing.plans.plus.description')
+                .replace(/public\s+projects/, 'pricing.plans.free.features.0')
+                .replace(/private\s+projects/, 'pricing.plans.plus.features.0')
+                .replace(/basic\s+models/, 'pricing.plans.free.features.1')
+                .replace(/premium\s+ai\s+models/, 'pricing.plans.plus.features.1')
+                .replace(/community\s+support/, 'pricing.plans.free.features.2')
+                .replace(/priority\s+support/, 'pricing.plans.ultra.features.2');
+              
+              return (
+                <li key={index} className="flex items-center gap-2">
+                  <div className="size-5 min-w-5 rounded-full border border-primary/20 flex items-center justify-center">
+                    <CheckIcon className="size-3 text-primary" />
+                  </div>
+                  <span className="text-sm">{t(featureKey) || feature}</span>
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>

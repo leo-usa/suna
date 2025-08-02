@@ -330,7 +330,20 @@ const zhTranslation = {
           recommended: '推荐',
           period: '/月',
           billingNote: '年付',
-          savings: '每年节省${{amount}}'
+          savings: '每年节省${{amount}}',
+          // Individual feature translations
+          'free.features.0': '公开项目',
+          'free.features.1': '基础模型',
+          'free.features.2': '社区支持',
+          'plus.features.0': '私有项目',
+          'plus.features.1': '高级AI模型',
+          'plus.features.2': '社区支持',
+          'pro.features.0': '私有项目',
+          'pro.features.1': '高级AI模型',
+          'pro.features.2': '社区支持',
+          'ultra.features.0': '私有项目',
+          'ultra.features.1': '高级AI模型',
+          'ultra.features.2': '优先支持'
         }
       },
       billing: {
