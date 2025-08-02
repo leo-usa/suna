@@ -205,4 +205,4 @@ dump.rdb
 
 # Local backup files
 my-local-changes.patch
-my-local-backups/
+my-local-backups/backend/.env.backup
