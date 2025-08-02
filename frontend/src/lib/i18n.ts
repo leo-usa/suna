@@ -1465,39 +1465,6 @@ const resources = {
         noPortInfoDescription: 'No port exposure information is available yet. Use the expose-port command to share a local port.',
         urlTemporaryWarning: 'This URL might only be temporarily available and could expire after some time.',
       },
-      sandboxModal: {
-        title: 'Sandbox Deleted',
-        deleted: 'This project\'s sandbox has been deleted.',
-        lost: 'All files and data are permanently lost.',
-        recovery: 'We will create a new sandbox for you to continue your work.',
-        recommend: 'We recommend starting a new project for best results.',
-      },
-      common: {
-        close: 'Close',
-        and: 'and',
-        loading: 'Loading...',
-      },
-      nav: {
-        Home: 'Home',
-        UseCases: 'Use Cases',
-        OpenSource: 'Open Source',
-        Pricing: 'Pricing',
-        Dashboard: 'Dashboard',
-        Community: 'Community',
-        getStarted: 'Get Started',
-        dashboard: 'Dashboard',
-      },
-      pagination: {
-        prev: 'Previous',
-        next: 'Next',
-        page: 'Page {{page}}',
-      },
-      settings: {
-        billing: 'Billing',
-      },
-      teamSettings: {
-        billing: 'Billing',
-      },
       // Add toolView translations
       toolView: {
         loadingProvider: 'Loading provider...',
