@@ -40,6 +40,7 @@ interface ThreadSiteHeaderProps {
   onProjectRenamed?: (newName: string) => void;
   isMobileView?: boolean;
   debugMode?: boolean;
+  rightActions?: React.ReactNode;
 }
 
 export function SiteHeader({
@@ -51,6 +52,7 @@ export function SiteHeader({
   onProjectRenamed,
   isMobileView,
   debugMode,
+  rightActions,
 }: ThreadSiteHeaderProps) {
   const { t } = useTranslation();
   const pathname = usePathname()
@@ -281,6 +283,8 @@ export function SiteHeader({
                   <p>Toggle Computer Preview (CMD+I)</p>
                 </TooltipContent>
               </Tooltip> */}
+              
+              {rightActions}
             </TooltipProvider>
           )}
         </div>

@@ -2050,6 +2050,44 @@ export const getCreditBalanceLegacy = async (): Promise<number> => {
 };
 
 /**
+ * Share a report to Supabase Storage and return public URLs.
+ * @param projectId The project ID
+ * @returns {Promise<{shared: Array<{html: string; images: string[]}>}>} The shared URLs
+ */
+export const shareReport = async (projectId: string): Promise<{ shared: Array<{ html: string; images: string[] }> }> => {
+  try {
+    const supabase = createClient();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    const url = new URL(`${API_URL}/share-report`);
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (session?.access_token) {
+      headers['Authorization'] = `Bearer ${session.access_token}`;
+    }
+
+    const response = await fetch(url.toString(), {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ project_id: projectId }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Error sharing report: ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Failed to share report:', error);
+    throw error;
+  }
+};
+
+/**
  * Fetch a single community post by postId.
  * @param postId The community post ID
  * @returns {Promise<any>} The post metadata

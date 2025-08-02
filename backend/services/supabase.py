@@ -89,6 +89,11 @@ class DBConnection:
             raise RuntimeError("Database not initialized")
         return self._client
 
+    @property
+    async def admin_client(self) -> AsyncClient:
+        """Get the Supabase admin client instance (same as regular client with service role key)."""
+        return await self.client
+
 
 # --- Supabase Storage Helpers ---
 async def upload_file_to_storage(bucket: str, path: str, file_bytes: bytes, content_type: str = None) -> str:

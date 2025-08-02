@@ -39,6 +39,7 @@ interface ThreadLayoutProps {
   isMobile: boolean;
   initialLoadCompleted: boolean;
   agentName?: string;
+  rightActions?: React.ReactNode;
 }
 
 export function ThreadLayout({
@@ -72,7 +73,8 @@ export function ThreadLayout({
   debugMode,
   isMobile,
   initialLoadCompleted,
-  agentName
+  agentName,
+  rightActions
 }: ThreadLayoutProps) {
   return (
     <div className="flex h-screen">
@@ -97,6 +99,7 @@ export function ThreadLayout({
           onProjectRenamed={onProjectRenamed}
           isMobileView={isMobile}
           debugMode={debugMode}
+          rightActions={rightActions}
         />
 
         {children}

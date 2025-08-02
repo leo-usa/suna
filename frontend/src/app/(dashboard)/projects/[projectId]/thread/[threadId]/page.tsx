@@ -22,6 +22,12 @@ import { useAddUserMessageMutation } from '@/hooks/react-query/threads/use-messa
 import { useStartAgentMutation, useStopAgentMutation } from '@/hooks/react-query/threads/use-agent-run';
 import { useSubscription } from '@/hooks/react-query/subscriptions/use-subscriptions';
 import { SubscriptionStatus } from '@/components/thread/chat-input/_use-model-selection';
+import { shareReport } from '@/lib/api';
+import { createClient } from '@/lib/supabase/client';
+import { useTranslation } from 'react-i18next';
+import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Users } from 'lucide-react';
 
 
 
@@ -54,6 +60,10 @@ export default function ThreadPage({
   const [debugMode, setDebugMode] = useState(false);
   const [initialPanelOpenAttempted, setInitialPanelOpenAttempted] = useState(false);
   const [selectedAgentId, setSelectedAgentId] = useState<string | undefined>(undefined);
+
+  // Community share state
+  const [communityLoading, setCommunityLoading] = useState(false);
+  const [communityResult, setCommunityResult] = useState<{url: string}|null>(null);
 
   // Refs
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -151,6 +161,84 @@ export default function ThreadPage({
 
   const handleProjectRenamed = useCallback((newName: string) => {
   }, []);
+
+  const { t } = useTranslation();
+
+  const handleCommunityShare = async () => {
+    console.log("Community share clicked");
+    if (communityLoading || communityResult) return;
+
+    // Open a new tab immediately. It might be blocked by a popup blocker.
+    const newTab = window.open('', '_blank');
+    if (!newTab) {
+      toast.error(t('communityShare.popupBlocked', "Could not open new tab. Please allow pop-ups for this site."));
+      return;
+    }
+    newTab.document.write(t('communityShare.generating', "Generating share link, please wait..."));
+
+    setCommunityLoading(true);
+    toast.info(t('communityShare.sharing', '正在分享...'));
+    try {
+      // Autofill title with project name
+      const title = projectName || 'My Project';
+      const description = 'Shared from Dobby';
+      
+      // First, share the report to get HTML content
+      const shareResult = await shareReport(projectId);
+      console.log('Share result:', shareResult);
+      
+      if (!shareResult.shared || shareResult.shared.length === 0) {
+        throw new Error('No HTML files found to share');
+      }
+      
+      // Get the first HTML file
+      const htmlUrl = shareResult.shared[0].html;
+      
+      // Create the community post
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.access_token) {
+        throw new Error('No access token available');
+      }
+      
+      const communityResponse = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/community/share`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          title,
+          description,
+          html_content: `<iframe src="${htmlUrl}" width="100%" height="600" frameborder="0"></iframe>`,
+          thumbnail_path: '',
+          project_id: projectId
+        }),
+      });
+      
+      if (!communityResponse.ok) {
+        throw new Error(`Failed to share to community: ${communityResponse.statusText}`);
+      }
+      
+      const communityResult = await communityResponse.json();
+      console.log('Community share result:', communityResult);
+      
+      // Navigate to the community post
+      const postUrl = `${window.location.origin}/community/view/${communityResult.post_id}`;
+      newTab.location.href = postUrl;
+      
+      setCommunityResult({ url: postUrl });
+      toast.success(t('communityShare.shared', 'Successfully shared to community!'));
+      
+    } catch (error) {
+      console.error('Community share error:', error);
+      toast.error(`Failed to share: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      newTab.close();
+    } finally {
+      setCommunityLoading(false);
+    }
+  };
 
   const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
     messagesEndRef.current?.scrollIntoView({ behavior });
@@ -619,6 +707,26 @@ export default function ThreadPage({
         isMobile={isMobile}
         initialLoadCompleted={initialLoadCompleted}
         agentName={agent && agent.name}
+        rightActions={
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleCommunityShare}
+                  disabled={communityLoading}
+                  className="h-9 w-9 cursor-pointer"
+                >
+                  <Users className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{t('communityShare.tooltip', 'Share to Community')}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        }
       >
         {/* {workflowId && (
           <div className="px-4 pt-4">

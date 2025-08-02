@@ -30,6 +30,7 @@ from .config_helper import extract_agent_config, build_unified_config, extract_t
 from .versioning.facade import version_manager
 from .versioning.api.routes import router as version_router
 from .versioning.infrastructure.dependencies import set_db_connection
+from .utils import extract_image_paths_from_html
 
 router = APIRouter()
 router.include_router(version_router)
@@ -98,11 +99,15 @@ class AgentUpdateRequest(BaseModel):
     avatar: Optional[str] = None
     avatar_color: Optional[str] = None
 
+class ShareReportRequest(BaseModel):
+    project_id: str
+
 class CommunityShareRequest(BaseModel):
     title: str
     description: str = ""
     html_content: str
     thumbnail_path: str = ""
+    project_id: str = ""
 
 class CommunityLikeRequest(BaseModel):
     post_id: str
@@ -2406,6 +2411,66 @@ async def update_custom_mcp_tools_for_agent(
 
 # Community Gallery API Endpoints
 
+@router.post("/share-report")
+async def share_report(
+    body: ShareReportRequest,
+    user_id: str = Depends(get_current_user_id_from_jwt)
+):
+    """Share the latest HTML report and its images to Supabase Storage and return public URLs."""
+    project_id = body.project_id
+    client = await db.client
+    project = await client.table('projects').select('sandbox').eq('project_id', project_id).maybe_single().execute()
+    if not project.data or not project.data.get('sandbox'):
+        raise HTTPException(status_code=404, detail="Project or sandbox not found")
+    sandbox_info = project.data['sandbox']
+    sandbox_id = sandbox_info.get('id') or sandbox_info.get('sandbox_id')
+    if not sandbox_id:
+        raise HTTPException(status_code=404, detail="Sandbox ID not found for project")
+    sandbox = await get_or_start_sandbox(sandbox_id)
+    files = await sandbox.fs.list_files("/workspace")
+    html_files = [f.name for f in files if f.name.endswith('.html')]
+    if not html_files:
+        raise HTTPException(status_code=404, detail="No HTML reports found in workspace.")
+    share_id = str(uuid.uuid4())[:8]
+    bucket = "share"
+    uploaded = []
+    for html_name in html_files:
+        html_path = f"/workspace/{html_name}"
+        html_content = (await sandbox.fs.download_file(html_path)).decode("utf-8")
+        img_paths = extract_image_paths_from_html(html_content)
+        img_url_map = {}
+        for idx, img_path in enumerate(img_paths):
+            if img_path.startswith("http://") or img_path.startswith("https://"):
+                continue
+            abs_img_path = f"/workspace/{img_path}" if not img_path.startswith("/workspace/") else img_path
+            try:
+                img_bytes = await sandbox.fs.download_file(abs_img_path)
+            except Exception:
+                continue
+            ext = os.path.splitext(img_path)[1] or ".webp"
+            storage_img_path = f"{user_id}/{project_id}/{share_id}/img_{idx}{ext}"
+            url = await upload_file_to_storage(bucket, storage_img_path, img_bytes, content_type="image/webp")
+            img_url_map[img_path] = url
+        def replace_asset_refs(html):
+            def normalize_path(path):
+                path = path.lstrip("./")
+                while '//' in path:
+                    path = path.replace('//', '/')
+                return path
+            def repl(match):
+                orig = match.group(2)
+                rel = normalize_path(orig)
+                return f'{match.group(1)}="{img_url_map.get(rel, orig)}"'
+            html = re.sub(r'(src|href)=["\"]([^"\"]+)["\"]', repl, html)
+            return html
+        logger.info(f"HTML before asset ref replacement: {html_content[:1000]}")
+        html_content = replace_asset_refs(html_content)
+        logger.info(f"HTML after asset ref replacement: {html_content[:1000]}")
+        storage_html_path = f"{user_id}/{project_id}/{share_id}/index.html"
+        url = await upload_file_to_storage(bucket, storage_html_path, html_content.encode("utf-8"), content_type="text/html")
+        uploaded.append({"html": url, "images": list(img_url_map.values())})
+    return {"shared": uploaded}
+
 @router.post("/community/share")
 async def share_to_community(
     body: CommunityShareRequest,
@@ -2447,7 +2512,8 @@ async def share_to_community(
         stack = [base]
         while stack:
             current = stack.pop()
-            for f in sandbox.fs.list_files(current):
+            files_list = await sandbox.fs.list_files(current)
+            for f in files_list:
                 full_path = f"{current.rstrip('/')}/{f.name}"
                 rel_path = full_path[len("/workspace/"):] if full_path.startswith("/workspace/") else full_path
                 if getattr(f, 'is_dir', False):
@@ -2455,11 +2521,20 @@ async def share_to_community(
                 else:
                     files.append((full_path, rel_path))
         return files
-    # --- Get user's latest sandbox ---
-    project = await client.table('projects').select('sandbox').eq('account_id', user_id).order('created_at', desc=True).limit(1).maybe_single().execute()
-    if not project or not getattr(project, 'data', None):
-        raise HTTPException(status_code=400, detail="No project found for user")
-    sandbox_id = project.data['sandbox']['id']
+    # --- Get the specific project's sandbox ---
+    if body.project_id:
+        project = await client.table('projects').select('sandbox').eq('project_id', body.project_id).maybe_single().execute()
+        if not project.data or not project.data.get('sandbox'):
+            raise HTTPException(status_code=404, detail="Project or sandbox not found")
+        sandbox_id = project.data['sandbox'].get('id') or project.data['sandbox'].get('sandbox_id')
+        if not sandbox_id:
+            raise HTTPException(status_code=404, detail="Sandbox ID not found for project")
+    else:
+        # Fallback to user's latest sandbox if no project_id provided
+        project = await client.table('projects').select('sandbox').eq('account_id', user_id).order('created_at', desc=True).limit(1).maybe_single().execute()
+        if not project or not getattr(project, 'data', None):
+            raise HTTPException(status_code=400, detail="No project found for user")
+        sandbox_id = project.data['sandbox']['id']
     sandbox = await get_or_start_sandbox(sandbox_id)
     # --- List all files in workspace ---
     all_files = await list_all_files(sandbox)
@@ -2472,7 +2547,7 @@ async def share_to_community(
     image_candidates = []
     for full_path, rel_path in all_files:
         try:
-            file_bytes = sandbox.fs.download_file(full_path)
+            file_bytes = await sandbox.fs.download_file(full_path)
             # Guess content type
             content_type, _ = mimetypes.guess_type(rel_path)
             if not content_type:
@@ -2502,7 +2577,7 @@ async def share_to_community(
     for full_path, rel_path in all_files:
         if rel_path.lower().endswith('.js'):
             try:
-                js_bytes = sandbox.fs.download_file(full_path)
+                js_bytes = await sandbox.fs.download_file(full_path)
                 js_content = js_bytes.decode('utf-8')
                 new_js_content = rewrite_js_assets(js_content, rel_to_url)
                 if new_js_content != js_content:
