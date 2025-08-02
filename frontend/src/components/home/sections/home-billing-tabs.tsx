@@ -43,7 +43,7 @@ export default function HomeBillingTabs() {
   const { t, i18n } = useTranslation();
   
   // Show prepaid tab by default for Chinese users
-  const defaultTab = i18n.language === 'zh' ? 'prepaid' : 'subscription';
+  const defaultTab = i18n.language === 'zh-CN' ? 'prepaid' : 'subscription';
 
   // Prepaid top-up handler
   const handleTopUp = async () => {
