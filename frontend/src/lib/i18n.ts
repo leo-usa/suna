@@ -1265,12 +1265,6 @@ const resources = {
           selfHosted: '自託管'
         }
       },
-      billing: {
-        billingPeriod: {
-          monthly: '月付',
-          yearly: '年付'
-        }
-      },
       nav: {
         Home: '首頁',
         UseCases: '應用場景',
@@ -1352,14 +1346,6 @@ const resources = {
         successMessage: '成功分享到社區！',
         errorMessage: '分享失敗：{{error}}'
       },
-      pricing: {
-        title: '選擇適合你需求的方案',
-        subtitle: '從免費方案開始，或升級獲得更多AI代幣積分',
-        tabs: {
-          cloud: '雲端',
-          selfHosted: '自託管'
-        }
-      },
       billing: {
         subscription: '訂閱',
         prepaidCredits: '預付費積分',
@@ -1428,20 +1414,6 @@ const resources = {
         sendAMessage: 'Send a message to start.',
         inputPlaceholder: 'Type your message...',
         noToolCallDetails: 'No tool call details available.',
-      },
-      communityShare: {
-        sharing: 'Sharing...',
-        shared: 'Shared to community!',
-        tooltip: 'Share to Community (recommended)\nShare your work with the Dobby community!',
-        popupBlocked: 'Could not open new tab. Please allow pop-ups for this site.',
-        generating: 'Generating share link, please wait...',
-        error: 'Failed to share: {{error}}',
-        noHtmlFound: 'No HTML files found to share',
-        noAccessToken: 'No access token available',
-        failedToShare: 'Failed to share to community: {{error}}',
-        loadingMessage: 'Generating share link, please wait...',
-        successMessage: 'Successfully shared to community!',
-        errorMessage: 'Failed to share: {{error}}'
       },
       communityPost: {
         copyLink: 'Copy link',
