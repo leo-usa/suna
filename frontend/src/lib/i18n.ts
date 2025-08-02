@@ -366,6 +366,13 @@ const zhTranslation = {
         noLimits: '在此环境中不强制执行代理使用限制',
         errorLoading: '加载账单状态时出错',
         loading: '加载中...',
+        usageThisMonth: '本月智能体使用情况',
+        currentCreditBalance: '当前积分余额',
+        prepaidCreditsDescription: '预付费积分允许您在无订阅的情况下使用智能体。',
+        creditsConsumedDescription: '积分根据您的使用情况消耗，永不过期。新购买使用基于美元的积分。',
+        reset: '重置',
+        viewModelPricing: '查看模型定价',
+        manageSubscription: '管理订阅',
         billingPeriod: {
           monthly: '月付',
           yearly: '年付'
@@ -983,7 +990,13 @@ const resources = {
         billingPeriod: {
           monthly: 'Monthly',
           yearly: 'Yearly'
-        }
+        },
+        currentCreditBalance: 'Current Credit Balance',
+        prepaidCreditsDescription: 'Pre-paid credits allow you to use agents without a subscription.',
+        creditsConsumedDescription: 'Credits are consumed based on your usage and never expire. New purchases use dollar-based credits.',
+        reset: 'Reset',
+        viewModelPricing: 'View Model Pricing',
+        manageSubscription: 'Manage Subscription'
       },
       dashboard: {
         greeting: 'Hey',

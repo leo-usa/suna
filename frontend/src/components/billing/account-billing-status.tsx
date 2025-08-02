@@ -46,7 +46,7 @@ const WeChatPayIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 32 32" width={24} height={24} {...props}><rect width="32" height="32" rx="6" fill="#07C160"/><circle cx="12" cy="16" r="6" fill="#fff"/><circle cx="20" cy="16" r="6" fill="#fff"/><circle cx="12" cy="16" r="1.2" fill="#07C160"/><circle cx="20" cy="16" r="1.2" fill="#07C160"/></svg>
 );
 
-export default function AccountBillingStatus({ accountId, returnUrl, defaultTab = "subscription" }: Props) {
+export default function AccountBillingStatus({ accountId, returnUrl, defaultTab }: Props) {
   const { session, isLoading: authLoading } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [isManaging, setIsManaging] = useState(false);
@@ -58,7 +58,10 @@ export default function AccountBillingStatus({ accountId, returnUrl, defaultTab 
     user_id: string;
   } | null>(null);
   const [isCreditLoading, setIsCreditLoading] = useState(true);
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+
+  // Show prepaid tab by default for zh-CN users
+  const effectiveDefaultTab = defaultTab || (i18n.language === 'zh-CN' ? 'prepaid' : 'subscription');
 
   const [topUpAmount, setTopUpAmount] = useState(49); // default $49
   const [paymentMethod, setPaymentMethod] = useState<'alipay' | 'wechat_pay' | 'card'>('alipay');
@@ -203,7 +206,7 @@ export default function AccountBillingStatus({ accountId, returnUrl, defaultTab 
     <div className="rounded-xl border shadow-sm bg-card p-6">
       <h2 className="text-xl font-semibold mb-4">{t('billing.billingStatus', 'Billing Status')}</h2>
 
-      <Tabs defaultValue={defaultTab} className="w-full">
+      <Tabs defaultValue={effectiveDefaultTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="subscription">{t('billing.subscription', 'Subscription')}</TabsTrigger>
           <TabsTrigger value="prepaid">{t('billing.prepaidCredits', 'Pre-paid Credits')}</TabsTrigger>
@@ -242,7 +245,7 @@ export default function AccountBillingStatus({ accountId, returnUrl, defaultTab 
                   className="border-border hover:bg-muted/50 shadow-sm hover:shadow-md transition-all whitespace-nowrap flex items-center"
                 >
                   <Link href="/model-pricing">
-                    View Model Pricing <OpenInNewWindowIcon className='w-4 h-4 inline ml-2' />
+                    {t('billing.viewModelPricing', 'View Model Pricing')} <OpenInNewWindowIcon className='w-4 h-4 inline ml-2' />
                   </Link>
                 </Button>
                 <Button
@@ -250,7 +253,7 @@ export default function AccountBillingStatus({ accountId, returnUrl, defaultTab 
                   disabled={isManaging}
                   className="bg-primary hover:bg-primary/90 shadow-md hover:shadow-lg transition-all"
                 >
-                  {isManaging ? 'Loading...' : 'Manage Subscription'}
+                  {isManaging ? t('billing.loading', 'Loading...') : t('billing.manageSubscription', 'Manage Subscription')}
                 </Button>
               </div>
             </>
@@ -289,14 +292,14 @@ export default function AccountBillingStatus({ accountId, returnUrl, defaultTab 
                   variant="outline"
                   className="w-full border-border hover:bg-muted/50 shadow-sm hover:shadow-md transition-all"
                 >
-                  View Model Pricing
+                  {t('billing.viewModelPricing', 'View Model Pricing')}
                 </Button>
                 <Button
                   onClick={handleManageSubscription}
                   disabled={isManaging}
                   className="w-full bg-primary text-white hover:bg-primary/90 shadow-md hover:shadow-lg transition-all"
                 >
-                  {isManaging ? 'Loading...' : 'Manage Subscription'}
+                  {isManaging ? t('billing.loading', 'Loading...') : t('billing.manageSubscription', 'Manage Subscription')}
                 </Button>
               </div>
             </>
@@ -308,7 +311,7 @@ export default function AccountBillingStatus({ accountId, returnUrl, defaultTab 
             <div className="rounded-lg border bg-background p-4">
               <div className="flex justify-between items-center gap-4">
                 <span className="text-sm font-medium text-foreground/90">
-                  Current Credit Balance
+                  {t('billing.currentCreditBalance', 'Current Credit Balance')}
                 </span>
                 <span className="text-sm font-medium text-card-title">
                   {isCreditLoading ? (
@@ -322,12 +325,12 @@ export default function AccountBillingStatus({ accountId, returnUrl, defaultTab 
           </div>
 
           <div className="text-center text-sm text-muted-foreground mb-6">
-                            <p>Pre-paid credits allow you to use agents without a subscription.</p>
-                <p className="mt-1">Credits are consumed based on your usage and never expire. New purchases use dollar-based credits.</p>
+            <p>{t('billing.prepaidCreditsDescription', 'Pre-paid credits allow you to use agents without a subscription.')}</p>
+            <p className="mt-1">{t('billing.creditsConsumedDescription', 'Credits are consumed based on your usage and never expire. New purchases use dollar-based credits.')}</p>
           </div>
 
           <div className="max-w-md mx-auto bg-card border border-border rounded-xl p-6">
-            <Label className="mb-2 font-medium">Select Credit Amount</Label>
+            <Label className="mb-2 font-medium">{t('billing.selectCreditAmount', 'Select Credit Amount')}</Label>
             <RadioGroup value={topUpAmount.toString()} onValueChange={(value) => setTopUpAmount(Number(value))} className="flex flex-col gap-2 mb-4">
               {[9, 49, 99].map((dollars) => (
                 <div key={dollars} className="flex items-center gap-3 rounded-lg border px-4 py-2 hover:bg-muted cursor-pointer transition">
@@ -340,27 +343,27 @@ export default function AccountBillingStatus({ accountId, returnUrl, defaultTab 
               ))}
             </RadioGroup>
             
-            <Label className="mb-2 mt-4 font-medium">Select Payment Method</Label>
+            <Label className="mb-2 mt-4 font-medium">{t('billing.selectPaymentMethod', 'Select Payment Method')}</Label>
             <RadioGroup value={paymentMethod} onValueChange={(value) => setPaymentMethod(value as any)} className="flex flex-col gap-2 mb-4">
               <div className="flex items-center gap-3 rounded-lg border px-4 py-2 hover:bg-muted cursor-pointer transition">
                 <RadioGroupItem value="alipay" id="pm-alipay" />
                 <Label htmlFor="pm-alipay" className="flex-1 cursor-pointer text-sm font-normal flex items-center gap-2">
                   <AliPayIcon />
-                  AliPay
+                  {t('billing.alipay', 'AliPay')}
                 </Label>
               </div>
               <div className="flex items-center gap-3 rounded-lg border px-4 py-2 hover:bg-muted cursor-pointer transition">
                 <RadioGroupItem value="wechat_pay" id="pm-wechat" />
                 <Label htmlFor="pm-wechat" className="flex-1 cursor-pointer text-sm font-normal flex items-center gap-2">
                   <WeChatPayIcon />
-                  WeChat Pay
+                  {t('billing.wechatPay', 'WeChat Pay')}
                 </Label>
               </div>
               <div className="flex items-center gap-3 rounded-lg border px-4 py-2 hover:bg-muted cursor-pointer transition">
                 <RadioGroupItem value="card" id="pm-card" />
                 <Label htmlFor="pm-card" className="flex-1 cursor-pointer text-sm font-normal flex items-center gap-2">
                   <CreditCard className="w-5 h-5" />
-                  Credit/Debit Card
+                  {t('billing.creditCard', 'Credit/Debit Card')}
                 </Label>
               </div>
             </RadioGroup>
@@ -380,16 +383,35 @@ export default function AccountBillingStatus({ accountId, returnUrl, defaultTab 
                   setTopUpError(null);
                 }}
               >
-                Reset
+                {t('billing.reset', 'Reset')}
               </Button>
               <Button
                 onClick={handleTopUp}
                 disabled={isTopUpLoading}
               >
                 {isTopUpLoading ? <Loader2 className="animate-spin h-4 w-4 mr-2 inline" /> : null}
-                Pay Now
+                {t('billing.payNow', 'Pay Now')}
               </Button>
             </div>
+          </div>
+
+          {/* Add the same buttons as subscription tab */}
+          <div className='flex justify-center items-center gap-4 mt-8'>
+            <Button
+              variant="outline"
+              className="border-border hover:bg-muted/50 shadow-sm hover:shadow-md transition-all whitespace-nowrap flex items-center"
+            >
+              <Link href="/model-pricing">
+                {t('billing.viewModelPricing', 'View Model Pricing')} <OpenInNewWindowIcon className='w-4 h-4 inline ml-2' />
+              </Link>
+            </Button>
+            <Button
+              onClick={handleManageSubscription}
+              disabled={isManaging}
+              className="bg-primary hover:bg-primary/90 shadow-md hover:shadow-lg transition-all"
+            >
+              {isManaging ? t('billing.loading', 'Loading...') : t('billing.manageSubscription', 'Manage Subscription')}
+            </Button>
           </div>
         </TabsContent>
       </Tabs>
