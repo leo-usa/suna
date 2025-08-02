@@ -860,6 +860,85 @@ const resources = {
           executing: 'Executing',
         },
         '30mins': '30 mins',
+        plans: {
+          free: {
+            name: 'Free',
+            price: '$0',
+            originalPrice: '',
+            description: '$5 free AI tokens included',
+            features: [
+              'Public projects',
+              'Basic Models',
+              'Community support'
+            ],
+            button: 'Select Plan'
+          },
+          plus: {
+            name: 'Plus',
+            price: '$17',
+            originalPrice: '$20',
+            description: '$20 AI token credits/month',
+            features: [
+              'Private projects',
+              'Premium AI Models',
+              'Community support'
+            ],
+            button: 'Upgrade'
+          },
+          pro: {
+            name: 'Pro',
+            price: '$43',
+            originalPrice: '$50',
+            description: '$50 AI token credits/month',
+            features: [
+              'Private projects',
+              'Premium AI Models',
+              'Community support'
+            ],
+            button: 'Upgrade'
+          },
+          ultra: {
+            name: 'Ultra',
+            price: '$170',
+            originalPrice: '$200',
+            description: '$200 AI token credits/month',
+            features: [
+              'Private projects',
+              'Premium AI Models',
+              'Priority support'
+            ],
+            button: 'Upgrade'
+          },
+          // Button and status text
+          currentPlan: 'Current Plan',
+          current: 'Current',
+          scheduled: 'Scheduled',
+          changeScheduled: 'Change Scheduled',
+          downgradePending: 'Downgrade Pending',
+          selectPlan: 'Select Plan',
+          switchToYearly: 'Switch to Yearly',
+          upgrade: 'Upgrade',
+          loading: 'Loading...',
+          startFree: 'Start Free',
+          popular: 'Popular',
+          recommended: 'Recommended',
+          period: '/month',
+          billingNote: 'billed yearly',
+          savings: 'Save ${{amount}} per year',
+          // Individual feature translations
+          'free.features.0': 'Public projects',
+          'free.features.1': 'Basic Models',
+          'free.features.2': 'Community support',
+          'plus.features.0': 'Private projects',
+          'plus.features.1': 'Premium AI Models',
+          'plus.features.2': 'Community support',
+          'pro.features.0': 'Private projects',
+          'pro.features.1': 'Premium AI Models',
+          'pro.features.2': 'Community support',
+          'ultra.features.0': 'Private projects',
+          'ultra.features.1': 'Premium AI Models',
+          'ultra.features.2': 'Priority support'
+        }
       },
       billing: {
         status: 'Billing Status',
@@ -873,9 +952,8 @@ const resources = {
         usageLogs: 'Usage logs',
         loading: 'Loading...',
         subscription: 'Subscription',
-        prepaidTab: 'Prepaid (WeChat & AliPay supported)',
-        topUp: 'Top Up Credits',
         prepaidCredits: 'Pre-paid Credits',
+        topUp: 'Top Up Credits',
         whatAreTokensQuestion: 'What are AI tokens?',
         whatAreTokensExplanation: 'Tokens are units of text that AI models process. Your plan includes credits to spend on various AI models - the more complex the task, the more tokens used.',
         prepaidDescription: 'Purchase credits to use agents without a subscription. Credits never expire. New purchases use dollar-based credits with a $4.50 service fee.',
