@@ -261,7 +261,7 @@ const zhTranslation = {
             name: '免费',
             price: '$0',
             originalPrice: '',
-            description: '包含5个免费AI代币',
+            description: '包含$5免费AI代币',
             features: [
               '公开项目',
               '基础模型',
@@ -277,7 +277,7 @@ const zhTranslation = {
             period: '/月',
             billingNote: '年付',
             savings: '每年节省$36',
-            description: '每月20个AI代币积分',
+            description: '每月$20 AI代币积分',
             features: [
               '私有项目',
               '高级AI模型',
@@ -292,7 +292,7 @@ const zhTranslation = {
             period: '/月',
             billingNote: '年付',
             savings: '每年节省$90',
-            description: '每月50个AI代币积分',
+            description: '每月$50 AI代币积分',
             features: [
               '私有项目',
               '高级AI模型',
@@ -307,7 +307,7 @@ const zhTranslation = {
             period: '/月',
             billingNote: '年付',
             savings: '每年节省$360',
-            description: '每月200个AI代币积分',
+            description: '每月$200 AI代币积分',
             features: [
               '私有项目',
               '高级AI模型',
