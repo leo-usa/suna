@@ -9,8 +9,9 @@ interface ReleaseBadgeProps {
     text: string;
     link: string;
     className?: string;
+    newText?: string;
 }
-export const ReleaseBadge = ({ text, link, className }: ReleaseBadgeProps) => {
+export const ReleaseBadge = ({ text, link, className, newText = 'New!' }: ReleaseBadgeProps) => {
     const router = useRouter();
   return (
     <div className="z-10 flex items-center justify-center">
@@ -22,7 +23,7 @@ export const ReleaseBadge = ({ text, link, className }: ReleaseBadgeProps) => {
         )}
       >
         <ShinyText className="text-sm inline-flex items-center justify-center px-4 py-1 transition ease-out hover:text-neutral-600 hover:duration-300 hover:dark:text-neutral-400">
-          <span className="text-blue-500 font-semibold mr-2">New!</span>
+          <span className="text-blue-500 font-semibold mr-2">{newText}</span>
           <span>{text}</span>
           <ArrowRight className="ml-1 size-3 transition-transform duration-300 ease-in-out group-hover:translate-x-0.5" />
         </ShinyText>

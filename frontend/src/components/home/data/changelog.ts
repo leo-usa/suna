@@ -4,18 +4,17 @@ export const changeLogData: ChangelogData[] = [
     {
       version: "Version 2.0.0",
       date: "July 2025",
-      title: "Introducing Custom Agents, Agent Marketplace, and much more!",
-      description:
-        "The most significant update for Dobby yet. Build, customize, and share AI agents. Connect any service, automate complex workflows, and discover a thriving marketplace of community-built agents.",
+      title: "changelog.2.0.0.title",
+      description: "changelog.2.0.0.description",
       items: [
-        "Custom Agent Builder - Create specialized AI agents with tailored system prompts and behaviors",
-        "Model Context Protocol (MCP) Integration - Connect agents to any external service",
-        "Agent Marketplace - Discover, install, and share agents with the community",
-        "Visual Workflow Designer - Build complex multi-step workflows with conditional logic",
-        "Unified Integrations Hub - Manage all your service connections in one place",
-        "Version Control for Agents - Track changes, create versions, and rollback safely",
-        "Advanced Agent Configuration - Fine-tune model parameters, tools, and capabilities",
-        "Enterprise-Grade Security - Encrypted credential management and secure agent execution"
+        "changelog.2.0.0.items.0",
+        "changelog.2.0.0.items.1",
+        "changelog.2.0.0.items.2",
+        "changelog.2.0.0.items.3",
+        "changelog.2.0.0.items.4",
+        "changelog.2.0.0.items.5",
+        "changelog.2.0.0.items.6",
+        "changelog.2.0.0.items.7",
       ],
     },
   ];

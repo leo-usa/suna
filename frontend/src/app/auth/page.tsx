@@ -289,7 +289,14 @@ function LoginContent() {
             </div>
             <div className="w-full max-w-sm">
               <div className="mb-4 flex items-center flex-col gap-4 justify-center">
-                {customAgentsEnabled && <ReleaseBadge className='mb-4' text="Custom Agents, Workflows, and more!" link="/changelog" />}
+                {customAgentsEnabled && (
+                  <ReleaseBadge
+                    className="mb-4"
+                    text={t('auth.releaseBadge.text')}
+                    link="/changelog"
+                    newText={t('auth.releaseBadge.new')}
+                  />
+                )}
                 <h1 className="text-2xl font-semibold text-foreground">
                   {isSignUp ? t('auth.joinSuna', 'Join Dobby') : t('auth.welcomeBack', 'Welcome back')}
                 </h1>

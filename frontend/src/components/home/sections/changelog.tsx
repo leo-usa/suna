@@ -5,6 +5,7 @@ import { ArrowUpRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { changeLogData } from "../data/changelog";
+import { useTranslation } from 'react-i18next';
 
 export type ChangelogData = {
   version: string;
@@ -27,19 +28,20 @@ export interface Changelog1Props {
 }
 
 export const Changelog = ({
-  title = "Changelog",
-  description = "The latest updates and improvements to Dobby.",
+  title = 'changelog.title',
+  description = 'changelog.description',
   data = changeLogData,
 }: Changelog1Props) => {
+  const { t } = useTranslation();
   return (
     <section id="changelog" className="py-32 px-10 lg:px-0">
       <div className="container">
         <div className="mx-auto max-w-3xl">
           <h1 className="mb-4 text-3xl font-bold tracking-tight md:text-5xl">
-            {title}
+            {t(title)}
           </h1>
           <p className="mb-6 text-base text-muted-foreground md:text-lg">
-            {description}
+            {t(description)}
           </p>
         </div>
         <div className="mx-auto mt-16 max-w-3xl space-y-16 md:mt-24 md:space-y-24">
@@ -58,16 +60,16 @@ export const Changelog = ({
               </div>
               <div className="flex flex-col">
                 <h2 className="mb-3 text-lg leading-tight font-bold text-foreground/90 md:text-2xl">
-                  {entry.title}
+                  {t(entry.title)}
                 </h2>
                 <p className="text-sm text-muted-foreground md:text-base">
-                  {entry.description}
+                  {t(entry.description)}
                 </p>
                 {entry.items && entry.items.length > 0 && (
                   <ul className="mt-4 ml-4 space-y-1.5 text-sm text-muted-foreground md:text-base">
                     {entry.items.map((item, itemIndex) => (
                       <li key={itemIndex} className="list-disc">
-                        {item}
+                        {t(item)}
                       </li>
                     ))}
                   </ul>
@@ -82,7 +84,7 @@ export const Changelog = ({
                 {entry.button && (
                   <Button variant="link" className="mt-4 self-end" asChild>
                     <a href={entry.button.url} target="_blank">
-                      {entry.button.text} <ArrowUpRight className="h-4 w-4" />
+                      {t(entry.button.text)} <ArrowUpRight className="h-4 w-4" />
                     </a>
                   </Button>
                 )}
