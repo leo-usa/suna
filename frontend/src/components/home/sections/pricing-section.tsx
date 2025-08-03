@@ -17,6 +17,7 @@ import { toast } from 'sonner';
 import { isLocalMode } from '@/lib/config';
 import { useSubscription } from '@/hooks/react-query';
 import { useTranslation } from 'react-i18next';
+import i18n from '@/lib/i18n';
 
 // Constants
 export const SUBSCRIPTION_PLANS = {
@@ -200,6 +201,7 @@ function PricingTier({
           price_id: planStripePriceId,
           success_url: returnUrl,
           cancel_url: returnUrl,
+          locale: i18n.language === 'zh-CN' ? 'zh-CN' : 'en',
         });
 
       console.log('Subscription action response:', response);

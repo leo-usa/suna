@@ -1590,6 +1590,7 @@ export interface CreateCheckoutSessionRequest {
   success_url: string;
   cancel_url: string;
   referral_id?: string;
+  locale?: string;
 }
 
 export interface CreatePortalSessionRequest {
