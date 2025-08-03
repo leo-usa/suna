@@ -15,7 +15,7 @@ interface UseCase {
   featured: boolean;
   icon: React.ReactNode;
   image: string;
-  url: string;
+  url?: string;
 }
 
 export function UseCasesSection() {
@@ -83,17 +83,19 @@ export function UseCasesSection() {
                       alt={`Dobby ${useCase.title}`}
                       className="w-full h-full object-cover"
                     />
-                    <a
-                      href={useCase.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 hover:opacity-100 transition-opacity flex items-end justify-start p-4 group"
-                    >
-                      <span className="flex items-center gap-2 text-sm text-white font-medium">
-                        {t('useCases.watchReplay', 'Watch replay')}
-                        <ArrowRight className="size-4 transform group-hover:translate-x-1 transition-transform" />
-                      </span>
-                    </a>
+                    {useCase.url && (
+                      <a
+                        href={useCase.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 hover:opacity-100 transition-opacity flex items-end justify-start p-4 group"
+                      >
+                        <span className="flex items-center gap-2 text-sm text-white font-medium">
+                          {t('useCases.watchReplay', 'Watch replay')}
+                          <ArrowRight className="size-4 transform group-hover:translate-x-1 transition-transform" />
+                        </span>
+                      </a>
+                    )}
                   </div>
                 </div>
               </div>
