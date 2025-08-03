@@ -130,7 +130,7 @@ export default function AccountBillingStatus({ accountId, returnUrl, defaultTab 
         payment_method: paymentMethod,
         success_url: `${window.location.origin}/settings/billing?success=true`,
         cancel_url: `${window.location.origin}/settings/billing?canceled=true`,
-        locale: i18n.language === 'zh-CN' ? 'zh-CN' : 'en',
+        locale: i18n.language === 'zh-CN' ? 'zh' : 'en',
       });
 
       if (url) {

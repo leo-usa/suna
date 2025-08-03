@@ -201,7 +201,7 @@ function PricingTier({
           price_id: planStripePriceId,
           success_url: returnUrl,
           cancel_url: returnUrl,
-          locale: i18n.language === 'zh-CN' ? 'zh-CN' : 'en',
+          locale: i18n.language === 'zh-CN' ? 'zh' : 'en',
         });
 
       console.log('Subscription action response:', response);

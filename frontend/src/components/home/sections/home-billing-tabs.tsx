@@ -71,7 +71,7 @@ export default function HomeBillingTabs() {
         payment_method: paymentMethod,
         success_url,
         cancel_url,
-        locale: i18n.language === 'zh-CN' ? 'zh-CN' : 'en'
+        locale: i18n.language === 'zh-CN' ? 'zh' : 'en'
       });
       
       if (res?.url) {
