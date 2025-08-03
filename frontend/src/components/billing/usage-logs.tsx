@@ -30,6 +30,7 @@ import Link from 'next/link';
 import { OpenInNewWindowIcon } from '@radix-ui/react-icons';
 import { useUsageLogs } from '@/hooks/react-query/subscriptions/use-billing';
 import { UsageLogEntry } from '@/lib/api';
+import { useTranslation } from 'react-i18next';
 
 
 
@@ -47,6 +48,7 @@ interface Props {
 }
 
 export default function UsageLogs({ accountId }: Props) {
+  const { t } = useTranslation();
   const [page, setPage] = useState(0);
   const [allLogs, setAllLogs] = useState<UsageLogEntry[]>([]);
   const [hasMore, setHasMore] = useState(true);
@@ -144,8 +146,8 @@ export default function UsageLogs({ accountId }: Props) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Usage Logs</CardTitle>
-          <CardDescription>Loading your token usage history...</CardDescription>
+          <CardTitle>{t('billing.usageLogs', 'Usage Logs')}</CardTitle>
+          <CardDescription>{t('billing.loadingTokenUsage', 'Loading your token usage history...')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -162,12 +164,12 @@ export default function UsageLogs({ accountId }: Props) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Usage Logs</CardTitle>
+          <CardTitle>{t('billing.usageLogs', 'Usage Logs')}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
             <p className="text-sm text-destructive">
-              Error: {error.message || 'Failed to load usage logs'}
+              Error: {error.message || t('billing.failedToLoadUsageLogs', 'Failed to load usage logs')}
             </p>
           </div>
         </CardContent>
@@ -180,7 +182,7 @@ export default function UsageLogs({ accountId }: Props) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Usage Logs</CardTitle>
+          <CardTitle>{t('billing.usageLogs', 'Usage Logs')}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="p-4 bg-muted/30 border border-border rounded-lg text-center">
@@ -205,13 +207,13 @@ export default function UsageLogs({ accountId }: Props) {
       {/* Usage Logs Accordion */}
       <Card>
         <CardHeader>
-          <CardTitle>Daily Usage Logs</CardTitle>
+          <CardTitle>{t('billing.dailyUsageLogs', 'Daily Usage Logs')}</CardTitle>
           <CardDescription>
             <div className='flex justify-between items-center'>
-              Your token usage organized by day, sorted by most recent.{" "}
+              {t('billing.yourTokenUsageOrganized', 'Your token usage organized by day, sorted by most recent.')}{" "}
               <Button variant='outline' asChild className='text-sm ml-4'>
                 <Link href="/model-pricing">
-                  View Model Pricing <OpenInNewWindowIcon className='w-4 h-4' />
+                  {t('billing.viewModelPricing', 'View Model Pricing')} <OpenInNewWindowIcon className='w-4 h-4' />
                 </Link>
               </Button>
             </div>
@@ -220,7 +222,7 @@ export default function UsageLogs({ accountId }: Props) {
         <CardContent>
           {dailyUsage.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-muted-foreground">No usage logs found.</p>
+              <p className="text-muted-foreground">{t('billing.noUsageLogsFound', 'No usage logs found.')}</p>
             </div>
           ) : (
             <>

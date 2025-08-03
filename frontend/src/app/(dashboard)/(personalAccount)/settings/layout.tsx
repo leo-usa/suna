@@ -3,6 +3,7 @@
 import { Separator } from '@/components/ui/separator';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
 
 export default function PersonalAccountSettingsPage({
   children,
@@ -10,11 +11,12 @@ export default function PersonalAccountSettingsPage({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const { t } = useTranslation();
   const items = [
     // { name: "Profile", href: "/settings" },
     // { name: "Teams", href: "/settings/teams" },
-    { name: 'Billing', href: '/settings/billing' },
-    { name: 'Usage Logs', href: '/settings/usage-logs' },
+    { name: t('billing.billing', 'Billing'), href: '/settings/billing' },
+    { name: t('billing.usageLogs', 'Usage Logs'), href: '/settings/usage-logs' },
   ];
   return (
     <>

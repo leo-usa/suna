@@ -2,6 +2,7 @@
 
 import { AlertCircle, Zap, Server, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useTranslation } from 'react-i18next';
 import {
   Card,
   CardContent,
@@ -137,6 +138,7 @@ const exampleTasks = [
 const DISABLE_EXAMPLES = true;
 
 export default function PricingPage() {
+  const { t } = useTranslation();
   const {
     data: modelsResponse,
     isLoading: loading,
@@ -216,7 +218,7 @@ export default function PricingPage() {
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
           <p className="text-sm text-muted-foreground">
-            Loading pricing data...
+            {t('billing.loadingPricingData', 'Loading pricing data...')}
           </p>
         </div>
       </div>
@@ -230,16 +232,16 @@ export default function PricingPage() {
           <AlertCircle className="w-12 h-12 text-red-500 mx-auto" />
           <div className="space-y-2">
             <h3 className="text-lg font-semibold text-foreground">
-              Pricing Unavailable
+              {t('billing.pricingUnavailable', 'Pricing Unavailable')}
             </h3>
             <p className="text-sm text-muted-foreground">
               {error instanceof Error
                 ? error.message
-                : 'Failed to fetch model pricing'}
+                : t('billing.failedToFetchModelPricing', 'Failed to fetch model pricing')}
             </p>
           </div>
           <Button onClick={() => refetch()} size="sm">
-            Try Again
+            {t('billing.tryAgain', 'Try Again')}
           </Button>
         </div>
       </div>
@@ -250,10 +252,9 @@ export default function PricingPage() {
     <div className="space-y-8 p-8 max-w-4xl mx-auto">
       {/* Header Section */}
       <div className="space-y-4">
-        <h1 className="text-3xl font-bold text-foreground">Token Pricing</h1>
+        <h1 className="text-3xl font-bold text-foreground">{t('billing.tokenPricing', 'Token Pricing')}</h1>
         <p className="text-lg text-muted-foreground max-w-3xl">
-          Understand how tokens work, explore pricing for AI models, and find
-          the right plan for your needs.
+          {t('billing.understandTokensCompute', 'Understand how tokens work, explore pricing for AI models, and find the right plan for your needs.')}
         </p>
       </div>
 
@@ -262,17 +263,12 @@ export default function PricingPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Zap className="w-5 h-5 text-blue-500" />
-            Understanding Tokens & Compute
+            {t('billing.understandTokensCompute', 'Understanding Tokens & Compute')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground">
-            Tokens are the fundamental units that AI models use to process text
-            - the more complex or lengthy your task, the more tokens it
-            requires. Compute usage is measured by both input tokens (your
-            prompts and context) and output tokens (the AI's responses), with
-            different models having varying computational requirements and costs
-            per token.
+            {t('billing.tokensFundamentalUnits', 'Tokens are the fundamental units that AI models use to process text - the more complex or lengthy your task, the more tokens it requires. Compute usage is measured by both input tokens (your prompts and context) and output tokens (the AI\'s responses), with different models having varying computational requirements and costs per token.')}
           </p>
         </CardContent>
       </Card>
@@ -282,16 +278,12 @@ export default function PricingPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Server className="w-5 h-5 text-green-500" />
-            How does pricing work?
+            {t('billing.howPricingWorks', 'How does pricing work?')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground">
-            Usage costs are calculated based on token consumption from AI model
-            interactions. We apply a 50% markup over direct model provider costs
-            to maintain our platform and services. Your total cost depends on
-            the specific model used and the number of tokens processed for both
-            input (prompts, context) and output (generated responses).
+            {t('billing.usageCostsCalculated', 'Usage costs are calculated based on token consumption from AI model interactions. We apply a 50% markup over direct model provider costs to maintain our platform and services. Your total cost depends on the specific model used and the number of tokens processed for both input (prompts, context) and output (generated responses).')}
           </p>
         </CardContent>
       </Card>
@@ -299,29 +291,28 @@ export default function PricingPage() {
       {/* Usage Examples Section */}
       {!DISABLE_EXAMPLES && (
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Globe className="w-5 h-5 text-orange-500" />
-              Usage Examples
-            </CardTitle>
-            <CardDescription>
-              Here are some examples demonstrating credits consumption across
-              different task types and complexity levels.
-            </CardDescription>
-          </CardHeader>
+                  <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Globe className="w-5 h-5 text-orange-500" />
+            {t('billing.usageExamples', 'Usage Examples')}
+          </CardTitle>
+          <CardDescription>
+            {t('billing.examplesDemonstratingCredits', 'Here are some examples demonstrating credits consumption across different task types and complexity levels.')}
+          </CardDescription>
+        </CardHeader>
           <CardContent>
             <div className="space-y-6">
               {/* Model Selection */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground">
-                  Select a model to see pricing:
+                  {t('billing.selectModelToSeePricing', 'Select a model to see pricing:')}
                 </label>
                 <Select
                   value={selectedModelId}
                   onValueChange={setSelectedModelId}
                 >
                   <SelectTrigger className="w-full max-w-md">
-                    <SelectValue placeholder="Choose a model to calculate costs" />
+                    <SelectValue placeholder={t('billing.chooseModelToCalculateCosts', 'Choose a model to calculate costs')} />
                   </SelectTrigger>
                   <SelectContent>
                     {models.map((model) => (
@@ -358,7 +349,7 @@ export default function PricingPage() {
                         <div className="space-y-2 text-sm mt-6">
                           <div className="flex justify-between">
                             <span className="text-muted-foreground">
-                              Model:
+                              {t('billing.model', 'Model:')}
                             </span>
                             <span>
                               {selectedModel?.display_name ||
@@ -367,25 +358,25 @@ export default function PricingPage() {
                           </div>
                           <div className="flex justify-between">
                             <span className="text-muted-foreground">
-                              Input Tokens:
+                              {t('billing.inputTokens', 'Input Tokens:')}
                             </span>
                             <span>{task.inputTokens.toLocaleString()}</span>
                           </div>
                           <div className="flex justify-between">
                             <span className="text-muted-foreground">
-                              Output Tokens:
+                              {t('billing.outputTokens', 'Output Tokens:')}
                             </span>
                             <span>{task.outputTokens.toLocaleString()}</span>
                           </div>
                           <div className="flex justify-between font-semibold">
-                            <span className="text-muted-foreground">Cost:</span>
+                            <span className="text-muted-foreground">{t('billing.cost', 'Cost:')}</span>
                             {calculatedCost !== null ? (
                               <span className="text-blue-600">
                                 ${calculatedCost.toFixed(2)}
                               </span>
                             ) : (
                               <span className="text-muted-foreground">
-                                Select model above
+                                {t('billing.selectModelAbove', 'Select model above')}
                               </span>
                             )}
                           </div>
@@ -404,7 +395,7 @@ export default function PricingPage() {
                     onClick={() => setShowAllTasks(!showAllTasks)}
                     className="gap-2"
                   >
-                    {showAllTasks ? 'Show Less' : `Show More`}
+                    {showAllTasks ? t('billing.showLess', 'Show Less') : t('billing.showMore', 'Show More')}
                   </Button>
                 </div>
               )}
@@ -416,20 +407,18 @@ export default function PricingPage() {
       {/* Model Pricing Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Compute Pricing by Model</CardTitle>
+          <CardTitle>{t('billing.computePricingByModel', 'Compute Pricing by Model')}</CardTitle>
           <CardDescription>
-            Detailed pricing information for available AI models. We apply a 50%
-            markup on direct LLM provider costs to maintain our service and
-            generate profit.
+            {t('billing.detailedPricingInformation', 'Detailed pricing information for available AI models. We apply a 50% markup on direct LLM provider costs to maintain our service and generate profit.')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="bg-card border border-border rounded-lg">
             <div className="px-6 py-4 border-b border-border">
               <div className="grid grid-cols-3 gap-4 text-sm font-medium text-muted-foreground">
-                <div className="col-span-1">Model</div>
-                <div className="col-span-1 text-center">Input Cost</div>
-                <div className="col-span-1 text-center">Output Cost</div>
+                <div className="col-span-1">{t('billing.model', 'Model')}</div>
+                <div className="col-span-1 text-center">{t('billing.inputCost', 'Input Cost')}</div>
+                <div className="col-span-1 text-center">{t('billing.outputCost', 'Output Cost')}</div>
               </div>
             </div>
 
@@ -466,7 +455,7 @@ export default function PricingPage() {
                               ${model.input_cost_per_million_tokens.toFixed(2)}
                             </div>
                             <div className="text-xs text-muted-foreground">
-                              per 1M tokens
+                              {t('billing.per1MTokens', 'per 1M tokens')}
                             </div>
                           </>
                         ) : (
@@ -487,7 +476,7 @@ export default function PricingPage() {
                               ${model.output_cost_per_million_tokens.toFixed(2)}
                             </div>
                             <div className="text-xs text-muted-foreground">
-                              per 1M tokens
+                              {t('billing.per1MTokens', 'per 1M tokens')}
                             </div>
                           </>
                         ) : (

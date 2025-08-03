@@ -379,7 +379,42 @@ const zhTranslation = {
         billingPeriod: {
           monthly: '月付',
           yearly: '年付'
-        }
+        },
+        // Usage logs page
+        dailyUsageLogs: '每日使用记录',
+        loadingTokenUsage: '正在加载您的代币使用历史...',
+        failedToLoadUsageLogs: '加载使用记录失败',
+        noUsageLogsFound: '未找到使用记录',
+        yourTokenUsageOrganized: '您的代币使用情况按天组织，按最近排序。',
+        request: '请求',
+        requests: '请求',
+        modelPricing: '模型定价',
+        // Model pricing page
+        tokenPricing: '代币定价',
+        understandTokensCompute: '了解代币和计算',
+        tokensFundamentalUnits: '代币是AI模型用来处理文本的基本单位 - 任务越复杂或冗长，需要的代币就越多。计算使用量通过输入代币（您的提示和上下文）和输出代币（AI的响应）来衡量，不同模型对每个代币有不同的计算要求和成本。',
+        howPricingWorks: '定价如何运作？',
+        usageCostsCalculated: '使用成本基于AI模型交互的代币消耗计算。我们对直接模型提供商成本应用50%的加价以维护我们的平台和服务。您的总成本取决于使用的特定模型以及为输入（提示、上下文）和输出（生成的响应）处理的代币数量。',
+        usageExamples: '使用示例',
+        examplesDemonstratingCredits: '以下是一些示例，展示了不同任务类型和复杂度级别的积分消耗。',
+        selectModelToSeePricing: '选择一个模型查看定价：',
+        chooseModelToCalculateCosts: '选择一个模型计算成本',
+        model: '模型',
+        inputTokens: '输入代币',
+        outputTokens: '输出代币',
+        cost: '成本',
+        selectModelAbove: '选择上面的模型',
+        showMore: '显示更多',
+        showLess: '显示更少',
+        computePricingByModel: '按模型计算定价',
+        detailedPricingInformation: '可用AI模型的详细定价信息。我们对直接LLM提供商成本应用50%的加价以维护我们的服务并产生利润。',
+        inputCost: '输入成本',
+        outputCost: '输出成本',
+        per1MTokens: '每100万代币',
+        pricingUnavailable: '定价不可用',
+        failedToFetchModelPricing: '获取模型定价失败',
+        tryAgain: '重试',
+        loadingPricingData: '正在加载定价数据...'
       },
 
   sidebar: {
