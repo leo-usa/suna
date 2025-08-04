@@ -421,8 +421,8 @@ const zhTranslation = {
         tryAgain: '重试',
         loadingPricingData: '正在加载定价数据...',
         upgradeDialog: {
-          title: '解锁完整的Suna体验',
-          description: '您目前正在使用Suna的免费版本，功能有限。立即升级以访问我们最强大的AI模型。',
+          title: '解锁完整的Dobby体验',
+          description: '您目前正在使用Dobby的免费版本，功能有限。立即升级以访问我们最强大的AI模型。',
           proBenefits: '专业版优势',
           advancedModels: {
             title: '高级AI模型',
@@ -1067,8 +1067,8 @@ const resources = {
         paymentRequired: 'Payment Required',
         noActiveSubscription: 'No active subscription or prepaid credits found.',
         upgradeDialog: {
-          title: 'Unlock the Full Suna Experience',
-          description: "You're currently using Suna's free tier with limited capabilities. Upgrade now to access our most powerful AI model.",
+          title: 'Unlock the Full Dobby Experience',
+          description: "You're currently using Dobby's free tier with limited capabilities. Upgrade now to access our most powerful AI model.",
           proBenefits: 'Pro Benefits',
           advancedModels: {
             title: 'Advanced AI Models',
