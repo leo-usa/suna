@@ -419,7 +419,26 @@ const zhTranslation = {
         pricingUnavailable: '定价不可用',
         failedToFetchModelPricing: '获取模型定价失败',
         tryAgain: '重试',
-        loadingPricingData: '正在加载定价数据...'
+        loadingPricingData: '正在加载定价数据...',
+        upgradeDialog: {
+          title: '解锁完整的Suna体验',
+          description: '您目前正在使用Suna的免费版本，功能有限。立即升级以访问我们最强大的AI模型。',
+          proBenefits: '专业版优势',
+          advancedModels: {
+            title: '高级AI模型',
+            description: '获得适合复杂任务的高级模型访问权限'
+          },
+          fasterResponses: {
+            title: '更快的响应',
+            description: '获得可以快速处理任务的更快模型访问权限'
+          },
+          higherUsageLimits: {
+            title: '更高的使用限制',
+            description: '享受更多对话和更长的运行时间'
+          },
+          maybeLater: '稍后再说',
+          upgradeNow: '立即升级'
+        }
       },
 
   sidebar: {
@@ -1047,6 +1066,25 @@ const resources = {
         upgradePlan: 'Upgrade Plan',
         paymentRequired: 'Payment Required',
         noActiveSubscription: 'No active subscription or prepaid credits found.',
+        upgradeDialog: {
+          title: 'Unlock the Full Suna Experience',
+          description: "You're currently using Suna's free tier with limited capabilities. Upgrade now to access our most powerful AI model.",
+          proBenefits: 'Pro Benefits',
+          advancedModels: {
+            title: 'Advanced AI Models',
+            description: 'Get access to advanced models suited for complex tasks'
+          },
+          fasterResponses: {
+            title: 'Faster Responses',
+            description: 'Get access to faster models that breeze through your tasks'
+          },
+          higherUsageLimits: {
+            title: 'Higher Usage Limits',
+            description: 'Enjoy more conversations and longer run durations'
+          },
+          maybeLater: 'Maybe Later',
+          upgradeNow: 'Upgrade Now'
+        },
         '30mins': '30 mins',
         billingPeriod: {
           monthly: 'Monthly',
