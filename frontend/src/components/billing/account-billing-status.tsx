@@ -72,6 +72,7 @@ export default function AccountBillingStatus({ accountId, returnUrl, defaultTab 
     data: subscriptionData,
     isLoading,
     error: subscriptionQueryError,
+    refetch: refetchSubscription,
   } = useSubscription();
 
   // Load credit balance
@@ -235,11 +236,21 @@ export default function AccountBillingStatus({ accountId, returnUrl, defaultTab 
                       ${subscriptionData.current_usage?.toFixed(2) || '0'} /{' '}
                       ${subscriptionData.cost_limit || '0'}
                     </span>
-                    <Button variant='outline' asChild className='text-sm'>
-                      <Link href="/settings/usage-logs">
-                        {t('billing.usageLogs', 'Usage logs')}
-                      </Link>
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant='outline' 
+                        size='sm'
+                        onClick={() => refetchSubscription()}
+                        disabled={isLoading}
+                      >
+                        {isLoading ? 'Refreshing...' : 'Refresh'}
+                      </Button>
+                      <Button variant='outline' asChild className='text-sm'>
+                        <Link href="/settings/usage-logs">
+                          {t('billing.usageLogs', 'Usage logs')}
+                        </Link>
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>
