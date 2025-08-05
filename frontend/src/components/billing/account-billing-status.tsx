@@ -332,6 +332,25 @@ export default function AccountBillingStatus({ accountId, returnUrl, defaultTab 
             <div className="rounded-lg border bg-background p-4">
               <div className="flex justify-between items-center gap-4">
                 <span className="text-sm font-medium text-foreground/90">
+                  {t('billing.usageThisMonth', "This Month's Agent Usage")}
+                </span>
+                <span className="text-sm font-medium text-card-title">
+                  ${subscriptionData?.current_usage?.toFixed(2) || '0'} /{' '}
+                  ${subscriptionData?.cost_limit || '0'}
+                </span>
+                <Button variant='outline' asChild className='text-sm'>
+                  <Link href="/settings/usage-logs">
+                    {t('billing.usageLogs', 'Usage logs')}
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <div className="mb-6">
+            <div className="rounded-lg border bg-background p-4">
+              <div className="flex justify-between items-center gap-4">
+                <span className="text-sm font-medium text-foreground/90">
                   {t('billing.currentCreditBalance', 'Current Credit Balance')}
                 </span>
                 <span className="text-sm font-medium text-card-title">
