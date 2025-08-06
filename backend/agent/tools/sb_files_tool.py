@@ -130,6 +130,14 @@ class SandboxFilesTool(SandboxToolsBase):
             if await self._file_exists(full_path):
                 return self.fail_response(f"File '{file_path}' already exists. Use update_file to modify existing files.")
             
+            # Check file size before attempting to create
+            content_size = len(file_contents.encode('utf-8'))
+            logger.info(f"Creating file '{file_path}' with size {content_size} bytes")
+            
+            # Warn if file is very large (over 1MB)
+            if content_size > 1024 * 1024:
+                logger.warning(f"Large file detected: {file_path} ({content_size} bytes)")
+            
             # Create parent directories if needed
             parent_dir = '/'.join(full_path.split('/')[:-1])
             if parent_dir:
@@ -139,9 +147,20 @@ class SandboxFilesTool(SandboxToolsBase):
             if isinstance(file_contents, dict):
                 file_contents = json.dumps(file_contents, indent=4)
             
-            # Write the file content
-            await self.sandbox.fs.upload_file(file_contents.encode(), full_path)
-            await self.sandbox.fs.set_file_permissions(full_path, permissions)
+            # Write the file content with timeout handling
+            try:
+                await self.sandbox.fs.upload_file(file_contents.encode(), full_path)
+                await self.sandbox.fs.set_file_permissions(full_path, permissions)
+                
+                # Verify the file was actually created
+                if not await self._file_exists(full_path):
+                    return self.fail_response(f"File creation failed: '{file_path}' was not created despite no errors")
+                
+                logger.info(f"Successfully created file '{file_path}' ({content_size} bytes)")
+                
+            except Exception as upload_error:
+                logger.error(f"Error during file upload for '{file_path}': {str(upload_error)}")
+                return self.fail_response(f"Error uploading file content: {str(upload_error)}")
             
             message = f"File '{file_path}' created successfully."
             
@@ -157,6 +176,7 @@ class SandboxFilesTool(SandboxToolsBase):
             
             return self.success_response(message)
         except Exception as e:
+            logger.error(f"Error creating file '{file_path}': {str(e)}")
             return self.fail_response(f"Error creating file: {str(e)}")
 
     @openapi_schema({
@@ -299,8 +319,28 @@ class SandboxFilesTool(SandboxToolsBase):
             if not await self._file_exists(full_path):
                 return self.fail_response(f"File '{file_path}' does not exist. Use create_file to create a new file.")
             
-            await self.sandbox.fs.upload_file(file_contents.encode(), full_path)
-            await self.sandbox.fs.set_file_permissions(full_path, permissions)
+            # Check file size before attempting to rewrite
+            content_size = len(file_contents.encode('utf-8'))
+            logger.info(f"Rewriting file '{file_path}' with size {content_size} bytes")
+            
+            # Warn if file is very large (over 1MB)
+            if content_size > 1024 * 1024:
+                logger.warning(f"Large file rewrite detected: {file_path} ({content_size} bytes)")
+            
+            # Write the file content with timeout handling
+            try:
+                await self.sandbox.fs.upload_file(file_contents.encode(), full_path)
+                await self.sandbox.fs.set_file_permissions(full_path, permissions)
+                
+                # Verify the file was actually updated
+                if not await self._file_exists(full_path):
+                    return self.fail_response(f"File rewrite failed: '{file_path}' was not updated despite no errors")
+                
+                logger.info(f"Successfully rewritten file '{file_path}' ({content_size} bytes)")
+                
+            except Exception as upload_error:
+                logger.error(f"Error during file rewrite for '{file_path}': {str(upload_error)}")
+                return self.fail_response(f"Error rewriting file content: {str(upload_error)}")
             
             message = f"File '{file_path}' completely rewritten successfully."
             
@@ -316,6 +356,7 @@ class SandboxFilesTool(SandboxToolsBase):
             
             return self.success_response(message)
         except Exception as e:
+            logger.error(f"Error rewriting file '{file_path}': {str(e)}")
             return self.fail_response(f"Error rewriting file: {str(e)}")
 
     @openapi_schema({
