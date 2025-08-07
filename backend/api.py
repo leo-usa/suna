@@ -153,6 +153,8 @@ if config.ENV_MODE == EnvMode.STAGING:
 if config.ENV_MODE == EnvMode.PRODUCTION:
     allowed_origins.append("https://dobby2.onrender.com")
     allowed_origins.append("https://dobby2-backend.onrender.com")
+    allowed_origins.append("https://dobby.now")
+    allowed_origins.append("https://www.dobby.now")
     # Allow any Render subdomain for flexibility
     allow_origin_regex = r"https://.*\.onrender\.com"
 
