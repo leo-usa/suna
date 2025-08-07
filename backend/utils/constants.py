@@ -115,6 +115,32 @@ MODELS = {
             "output_cost_per_million_tokens": 15.00
         },
         "tier_availability": ["paid"]
+    },
+    
+    # Latest OpenAI Open Source and Anthropic Models
+    "openrouter/openai/gpt-oss-120b": {
+        "aliases": ["gpt-oss-120b"],
+        "pricing": {
+            "input_cost_per_million_tokens": 0.09,
+            "output_cost_per_million_tokens": 0.45
+        },
+        "tier_availability": ["free", "paid"]
+    },
+    "openrouter/openai/gpt-oss-20b": {
+        "aliases": ["gpt-oss-20b"],
+        "pricing": {
+            "input_cost_per_million_tokens": 0.04,
+            "output_cost_per_million_tokens": 0.16
+        },
+        "tier_availability": ["free", "paid"]
+    },
+    "openrouter/anthropic/claude-opus-4.1": {
+        "aliases": ["claude-opus-4.1"],
+        "pricing": {
+            "input_cost_per_million_tokens": 15.00,
+            "output_cost_per_million_tokens": 75.00
+        },
+        "tier_availability": ["paid"]
     },   
 }
 
