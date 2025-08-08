@@ -230,7 +230,7 @@ const zhTranslation = {
         loading: '加载中...',
       },
       community: {
-        gallery: '社区画廊',
+        gallery: '社区：Dobby生成作品展示',
         by: '由 {{name}}',
         anonymous: '匿名',
         communitySub: '加入我们不断壮大的开源社区。',
