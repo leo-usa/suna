@@ -233,11 +233,17 @@ def prepare_params(
     is_anthropic = "anthropic" in effective_model_name.lower() or "claude" in effective_model_name.lower()
     is_xai = "xai" in effective_model_name.lower() or model_name.startswith("xai/")
     is_kimi_k2 = "kimi-k2" in effective_model_name.lower() or model_name.startswith("moonshotai/kimi-k2")
+    is_gpt5 = "gpt-5" in effective_model_name.lower() or model_name.startswith("openai/gpt-5")
 
     if is_kimi_k2:
         params["provider"] = {
             "order": ["baseten/fp8", "together/fp8", "novita/fp8", "moonshotai", "groq"]
         }
+
+    # GPT-5 models only support temperature=1 (default), not 0
+    if is_gpt5:
+        params["temperature"] = 1.0
+        logger.debug(f"GPT-5 model detected: {model_name}, using temperature=1.0")
 
     if is_anthropic and use_thinking:
         effort_level = reasoning_effort if reasoning_effort else 'low'
