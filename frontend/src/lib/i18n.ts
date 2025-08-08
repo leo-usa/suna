@@ -1524,6 +1524,7 @@ const resources = {
         '2.0.0': {
           title: 'Introducing GPT-5, MCP, Custom Agents, Agent Marketplace, and much more!',
           description: 'The most significant update for Dobby yet. Build, customize, and share AI agents. Connect any service, automate complex workflows, and discover a thriving marketplace of community-built agents.',
+          date: 'August 2024',
           items: [
             'New AI Models - Added support for GPT-5 models and latest open source models including OpenAI OSS 120B, 20B, Kimi-k2, GLM 4.5, and more',
             'Custom Agent Builder - Create specialized AI agents with tailored system prompts and behaviors',
@@ -1988,6 +1989,7 @@ const resources = {
         '2.0.0': {
           title: '全新 GPT-5、MCP、自定义智能体、代理市场等重磅功能上线！',
           description: 'Dobby 有史以来最重大的更新。构建、定制并分享你的 AI 智能体。连接任意服务，自动化复杂工作流，探索社区构建的丰富代理市场。',
+          date: '2025年8月',
           items: [
             '全新 AI 模型——新增 GPT-5 模型和最新开源模型支持，包括 OpenAI OSS 120B、20B、Kimi-k2、GLM 4.5 等',
             '自定义智能体构建器——用专属系统提示和行为创建个性化 AI 智能体',
@@ -2483,6 +2485,7 @@ const resources = {
         '2.0.0': {
           title: 'Einführung von GPT-5, MCP, benutzerdefinierten Agenten, Agent-Marktplatz und vieles mehr!',
           description: 'Das bedeutendste Update für Dobby bisher. Erstellen, anpassen und teilen Sie KI-Agenten. Verbinden Sie jeden Service, automatisieren Sie komplexe Workflows und entdecken Sie einen florierenden Marktplatz von Community-gestützten Agenten.',
+          date: 'August 2025',
           items: [
             'Neue KI-Modelle - Unterstützung für GPT-5-Modelle und neueste Open-Source-Modelle einschließlich OpenAI OSS 120B, 20B, Kimi-k2, GLM 4.5 und mehr',
             'Benutzerdefinierter Agent-Builder - Erstellen Sie spezialisierte KI-Agenten mit maßgeschneiderten System-Prompts und Verhaltensweisen',
@@ -2971,6 +2974,7 @@ const resources = {
         '2.0.0': {
           title: '¡Introduciendo GPT-5, MCP, Agentes Personalizados, Mercado de Agentes y mucho más!',
           description: 'La actualización más significativa para Dobby hasta ahora. Construye, personaliza y comparte agentes de IA. Conecta cualquier servicio, automatiza flujos de trabajo complejos y descubre un próspero mercado de agentes construidos por la comunidad.',
+          date: 'Agosto 2025',
           items: [
             'Nuevos Modelos de IA - Soporte agregado para modelos GPT-5 y los últimos modelos de código abierto incluyendo OpenAI OSS 120B, 20B, Kimi-k2, GLM 4.5 y más',
             'Constructor de Agentes Personalizados - Crea agentes de IA especializados con prompts de sistema y comportamientos personalizados',
