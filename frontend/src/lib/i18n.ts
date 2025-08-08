@@ -218,11 +218,11 @@ const zhTranslation = {
     accountCreatedCheckEmail: '账户已创建！请检查你的电子邮件以完成注册。',
     checkEmailForReset: '请检查你的电子邮件以获取密码重置链接',
     passwordUpdated: '密码已成功更新',
-    releaseBadge: {
-      new: '新功能！',
-      text: '自定义智能体、工作流等更多功能！',
-      changelog: '更新日志'
-    },
+            releaseBadge: {
+          new: '新功能！',
+          text: 'GPT-5、MCP、自定义智能体、工作流等更多功能！',
+          changelog: '更新日志'
+        },
   },
         common: {
         close: '关闭',
@@ -1139,7 +1139,7 @@ const resources = {
         returnToHome: 'Return to home',
         releaseBadge: {
           new: 'New!',
-          text: 'Custom agents, workflows, and more!',
+          text: 'GPT-5, MCP, custom agents, workflows, and more!',
           changelog: 'Changelog'
         },
       },
@@ -1522,9 +1522,10 @@ const resources = {
         title: 'Changelog',
         description: 'The latest updates and improvements to Dobby.',
         '2.0.0': {
-          title: 'Introducing Custom Agents, Agent Marketplace, and much more!',
+          title: 'Introducing GPT-5, MCP, Custom Agents, Agent Marketplace, and much more!',
           description: 'The most significant update for Dobby yet. Build, customize, and share AI agents. Connect any service, automate complex workflows, and discover a thriving marketplace of community-built agents.',
           items: [
+            'New AI Models - Added support for GPT-5 models and latest open source models including OpenAI OSS 120B, 20B, Kimi-k2, GLM 4.5, and more',
             'Custom Agent Builder - Create specialized AI agents with tailored system prompts and behaviors',
             'Model Context Protocol (MCP) Integration - Connect agents to any external service',
             'Agent Marketplace - Discover, install, and share agents with the community',
@@ -1670,6 +1671,11 @@ const resources = {
         accountCreatedCheckEmail: '帳戶已創建！請檢查你的電子郵件以完成註冊。',
         checkEmailForReset: '請檢查你的電子郵件以獲取密碼重置鏈接',
         passwordUpdated: '密碼已成功更新',
+        releaseBadge: {
+          new: '新功能！',
+          text: 'GPT-5、MCP、自定義智能體、工作流等更多功能！',
+          changelog: '更新日誌'
+        },
       },
       common: {
         close: '關閉',
@@ -1980,9 +1986,10 @@ const resources = {
         title: '更新日志',
         description: 'Dobby 的最新更新和改进。',
         '2.0.0': {
-          title: '全新自定义智能体、代理市场等重磅功能上线！',
+          title: '全新 GPT-5、MCP、自定义智能体、代理市场等重磅功能上线！',
           description: 'Dobby 有史以来最重大的更新。构建、定制并分享你的 AI 智能体。连接任意服务，自动化复杂工作流，探索社区构建的丰富代理市场。',
           items: [
+            '全新 AI 模型——新增 GPT-5 模型和最新开源模型支持，包括 OpenAI OSS 120B、20B、Kimi-k2、GLM 4.5 等',
             '自定义智能体构建器——用专属系统提示和行为创建个性化 AI 智能体',
             'MCP 协议集成——让智能体连接任意外部服务',
             '代理市场——发现、安装并与社区分享智能体',
@@ -2174,6 +2181,11 @@ const resources = {
         checkEmailForReset: 'Bitte überprüfen Sie Ihre E-Mail für den Passwort-Reset-Link',
         passwordUpdated: 'Passwort erfolgreich aktualisiert',
         returnToHome: 'Zurück zur Startseite',
+        releaseBadge: {
+          new: 'Neu!',
+          text: 'GPT-5, MCP, benutzerdefinierte Agenten, Workflows und mehr!',
+          changelog: 'Changelog'
+        },
       },
       common: {
         close: 'Schließen',
@@ -2465,6 +2477,25 @@ const resources = {
         noPortInfoDescription: 'Noch keine Port-Expositionsinformationen verfügbar. Verwenden Sie den expose-port Befehl, um einen lokalen Port zu teilen.',
         urlTemporaryWarning: 'Diese URL ist möglicherweise nur temporär verfügbar und könnte nach einiger Zeit ablaufen.',
       },
+      changelog: {
+        title: 'Changelog',
+        description: 'Die neuesten Updates und Verbesserungen an Dobby.',
+        '2.0.0': {
+          title: 'Einführung von GPT-5, MCP, benutzerdefinierten Agenten, Agent-Marktplatz und vieles mehr!',
+          description: 'Das bedeutendste Update für Dobby bisher. Erstellen, anpassen und teilen Sie KI-Agenten. Verbinden Sie jeden Service, automatisieren Sie komplexe Workflows und entdecken Sie einen florierenden Marktplatz von Community-gestützten Agenten.',
+          items: [
+            'Neue KI-Modelle - Unterstützung für GPT-5-Modelle und neueste Open-Source-Modelle einschließlich OpenAI OSS 120B, 20B, Kimi-k2, GLM 4.5 und mehr',
+            'Benutzerdefinierter Agent-Builder - Erstellen Sie spezialisierte KI-Agenten mit maßgeschneiderten System-Prompts und Verhaltensweisen',
+            'Model Context Protocol (MCP) Integration - Verbinden Sie Agenten mit jedem externen Service',
+            'Agent-Marktplatz - Entdecken, installieren und teilen Sie Agenten mit der Community',
+            'Visueller Workflow-Designer - Erstellen Sie komplexe mehrstufige Workflows mit bedingter Logik',
+            'Einheitliches Integrations-Hub - Verwalten Sie alle Ihre Service-Verbindungen an einem Ort',
+            'Versionskontrolle für Agenten - Verfolgen Sie Änderungen, erstellen Sie Versionen und rollen Sie sicher zurück',
+            'Erweiterte Agent-Konfiguration - Feintunen Sie Modellparameter, Tools und Fähigkeiten',
+            'Unternehmens-Sicherheit - Verschlüsselte Anmeldedaten-Verwaltung und sichere Agent-Ausführung',
+          ],
+        },
+      },
     }
   },
   es: {
@@ -2638,6 +2669,11 @@ const resources = {
         checkEmailForReset: 'Por favor revisa tu email para el enlace de restablecimiento de contraseña',
         passwordUpdated: 'Contraseña actualizada exitosamente',
         returnToHome: 'Volver al inicio',
+        releaseBadge: {
+          new: '¡Nuevo!',
+          text: 'GPT-5, MCP, agentes personalizados, flujos de trabajo y más!',
+          changelog: 'Changelog'
+        },
       },
       common: {
         close: 'Cerrar',
@@ -2929,7 +2965,25 @@ const resources = {
     'expose-port': 'Exponiendo Puerto',
     'expose_port': 'Exponiendo Puerto',
       },
-      // Add marketplace translations
+      changelog: {
+        title: 'Changelog',
+        description: 'Las últimas actualizaciones y mejoras a Dobby.',
+        '2.0.0': {
+          title: '¡Introduciendo GPT-5, MCP, Agentes Personalizados, Mercado de Agentes y mucho más!',
+          description: 'La actualización más significativa para Dobby hasta ahora. Construye, personaliza y comparte agentes de IA. Conecta cualquier servicio, automatiza flujos de trabajo complejos y descubre un próspero mercado de agentes construidos por la comunidad.',
+          items: [
+            'Nuevos Modelos de IA - Soporte agregado para modelos GPT-5 y los últimos modelos de código abierto incluyendo OpenAI OSS 120B, 20B, Kimi-k2, GLM 4.5 y más',
+            'Constructor de Agentes Personalizados - Crea agentes de IA especializados con prompts de sistema y comportamientos personalizados',
+            'Integración del Protocolo de Contexto del Modelo (MCP) - Conecta agentes a cualquier servicio externo',
+            'Mercado de Agentes - Descubre, instala y comparte agentes con la comunidad',
+            'Diseñador de Flujos de Trabajo Visual - Construye flujos de trabajo complejos de múltiples pasos con lógica condicional',
+            'Hub de Integraciones Unificado - Gestiona todas tus conexiones de servicio en un lugar',
+            'Control de Versiones para Agentes - Rastrea cambios, crea versiones y revierte de forma segura',
+            'Configuración Avanzada de Agentes - Ajusta finamente parámetros de modelo, herramientas y capacidades',
+            'Seguridad de Grado Empresarial - Gestión de credenciales encriptadas y ejecución segura de agentes',
+          ],
+        },
+      },
     }
   },
 };
