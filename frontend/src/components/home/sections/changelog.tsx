@@ -55,7 +55,7 @@ export const Changelog = ({
                   {entry.version}
                 </Badge>
                 <span className="text-xs font-medium text-muted-foreground">
-                  {entry.date}
+                  {t(entry.date)}
                 </span>
               </div>
               <div className="flex flex-col">

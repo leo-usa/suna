@@ -1526,7 +1526,7 @@ const resources = {
         '2.0.0': {
           title: 'Introducing GPT-5, MCP, Custom Agents, Agent Marketplace, and much more!',
           description: 'The most significant update for Dobby yet. Build, customize, and share AI agents. Connect any service, automate complex workflows, and discover a thriving marketplace of community-built agents.',
-          date: 'August 2024',
+          date: 'August 2025',
           items: [
             'New AI Models - Added support for GPT-5 models and latest open source models including OpenAI OSS 120B, 20B, Kimi-k2, GLM 4.5, and more',
             'Custom Agent Builder - Create specialized AI agents with tailored system prompts and behaviors',
