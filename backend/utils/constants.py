@@ -58,6 +58,38 @@ MODELS = {
         },
         "tier_availability": ["free", "paid"]
     },
+    "openai/gpt-5-chat": {
+        "aliases": ["gpt-5-chat"],
+        "pricing": {
+            "input_cost_per_million_tokens": 1.25,
+            "output_cost_per_million_tokens": 10.00
+        },
+        "tier_availability": ["free", "paid"]
+    },
+    "openai/gpt-5": {
+        "aliases": ["gpt-5"],
+        "pricing": {
+            "input_cost_per_million_tokens": 1.25,
+            "output_cost_per_million_tokens": 10.00
+        },
+        "tier_availability": ["free", "paid"]
+    },
+    "openai/gpt-5-mini": {
+        "aliases": ["gpt-5-mini"],
+        "pricing": {
+            "input_cost_per_million_tokens": 0.25,
+            "output_cost_per_million_tokens": 2.00
+        },
+        "tier_availability": ["free", "paid"]
+    },
+    "openai/gpt-5-nano": {
+        "aliases": ["gpt-5-nano"],
+        "pricing": {
+            "input_cost_per_million_tokens": 0.05,
+            "output_cost_per_million_tokens": 0.40
+        },
+        "tier_availability": ["free", "paid"]
+    },
     "xai/grok-4": {
         "aliases": ["grok-4"],
         "pricing": {
