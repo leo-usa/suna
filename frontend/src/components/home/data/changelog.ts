@@ -3,7 +3,7 @@ import { ChangelogData } from "../sections/changelog";
 export const changeLogData: ChangelogData[] = [
     {
       version: "Version 2.0.0",
-      date: "July 2025",
+      date: "August 2025",
       title: "changelog.2.0.0.title",
       description: "changelog.2.0.0.description",
       items: [
