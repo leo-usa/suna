@@ -306,6 +306,12 @@ export function HeroSection() {
             <p className="text-base md:text-lg text-center text-muted-foreground font-medium text-balance leading-relaxed tracking-tight">
               {t('hero.subtitle')}
             </p>
+            <div className="flex items-center justify-center gap-2 px-4 py-2 bg-primary/10 border border-primary/20 rounded-full text-sm font-medium text-primary">
+              <span className="text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-full font-bold">
+                {t('auth.releaseBadge.new')}
+              </span>
+              <span>{t('auth.releaseBadge.text')}</span>
+            </div>
           </div>
 
           <div className="flex items-center w-full max-w-4xl gap-2 flex-wrap justify-center">
