@@ -117,7 +117,7 @@ export const siteConfig = {
       price: '$0',
       description: 'Perfect for getting started',
       buttonText: 'Start Free',
-      buttonColor: 'bg-secondary text-white',
+      buttonColor: 'bg-primary text-white dark:text-black',
       isPopular: false,
       /** @deprecated */
       hours: '60 min',
@@ -160,7 +160,7 @@ export const siteConfig = {
       discountPercentage: 15,
       description: 'Ideal for growing businesses',
       buttonText: 'Start Free',
-      buttonColor: 'bg-secondary text-white',
+      buttonColor: 'bg-primary text-white dark:text-black',
       isPopular: false,
       /** @deprecated */
       hours: '6 hours',
@@ -182,7 +182,7 @@ export const siteConfig = {
       discountPercentage: 15,
       description: 'For established businesses',
       buttonText: 'Start Free',
-      buttonColor: 'bg-secondary text-white',
+      buttonColor: 'bg-primary text-white dark:text-black',
       isPopular: false,
       hours: '12 hours',
       features: [
@@ -225,7 +225,7 @@ export const siteConfig = {
       discountPercentage: 15,
       description: 'For large organizations',
       buttonText: 'Start Free',
-      buttonColor: 'bg-secondary text-white',
+      buttonColor: 'bg-primary text-white dark:text-black',
       isPopular: false,
       hours: '50 hours',
       features: [
@@ -250,7 +250,7 @@ export const siteConfig = {
       discountPercentage: 15,
       description: 'For scaling enterprises',
       buttonText: 'Start Free',
-      buttonColor: 'bg-secondary text-white',
+      buttonColor: 'bg-primary text-white dark:text-black',
       isPopular: false,
       hours: '125 hours',
       features: [
@@ -276,7 +276,7 @@ export const siteConfig = {
       discountPercentage: 15,
       description: 'For maximum scale and performance',
       buttonText: 'Start Free',
-      buttonColor: 'bg-secondary text-white',
+      buttonColor: 'bg-primary text-white dark:text-black',
       isPopular: false,
       hours: '200 hours',
       features: [
