@@ -122,7 +122,7 @@ export const siteConfig = {
       /** @deprecated */
       hours: '60 min',
       features: [
-        '$5 free AI tokens included',
+        '$1 free AI tokens included',
         'Public projects',
         'Basic Models',
         'Community support',

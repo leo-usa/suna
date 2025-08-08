@@ -266,7 +266,7 @@ const zhTranslation = {
             name: '免费',
             price: '$0',
             originalPrice: '',
-            description: '包含$5免费AI代币',
+            description: '包含$1免费AI代币',
             features: [
               '公开项目',
               '基础模型',
@@ -952,7 +952,7 @@ const resources = {
             name: 'Free',
             price: '$0',
             originalPrice: '',
-            description: '$5 free AI tokens included',
+            description: '$1 free AI tokens included',
             features: [
               'Public projects',
               'Basic Models',

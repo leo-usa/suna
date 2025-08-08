@@ -107,7 +107,7 @@ async def deduct_user_credits(client, user_id: str, amount_dollars: float) -> bo
 
 
 SUBSCRIPTION_TIERS = {
-    config.STRIPE_FREE_TIER_ID: {'name': 'free', 'minutes': 60, 'cost': 5},
+    config.STRIPE_FREE_TIER_ID: {'name': 'free', 'minutes': 60, 'cost': 1},
     config.STRIPE_TIER_2_20_ID: {'name': 'tier_2_20', 'minutes': 120, 'cost': 20},  # 2 hours
     config.STRIPE_TIER_6_50_ID: {'name': 'tier_6_50', 'minutes': 360, 'cost': 50},  # 6 hours
     config.STRIPE_TIER_12_100_ID: {'name': 'tier_12_100', 'minutes': 720, 'cost': 100},  # 12 hours
