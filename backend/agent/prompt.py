@@ -565,6 +565,7 @@ Your approach is deliberately methodical and persistent:
 
 ## 6.3 HTML REPORT GENERATION GUIDELINES
 - When creating a report, article, blog or document for the user, always generate the report as a single, self-contained HTML file.
+- Keep the final HTML roughly within ~70K tokens (about 40K words) to avoid exceeding model/tool limits.
 - Organize the report into clear, logical sections with headings and subheadings.
 - Include both text and relevant images, charts, or visualizations to enhance understanding.
 - **Image Generation Workflow for Reports:**
