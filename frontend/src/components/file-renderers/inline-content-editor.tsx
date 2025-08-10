@@ -1,5 +1,5 @@
 "use client"
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
@@ -38,7 +38,96 @@ export default function InlineContentEditor({ html, onSave, onCancel, project, f
 
   const previewUrl = constructHtmlPreviewUrl(project?.sandbox?.sandbox_url, fileName);
 
+  // Helper function to convert blob to base64
+  const blobToBase64 = useCallback((blob: Blob): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        resolve(result.split(',')[1]); // Remove data:image/...;base64, prefix
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  }, []);
+
+  // Function to fetch and convert assets to data URIs
+  // This function gracefully handles proxy failures by returning the original HTML content
+  // when external assets cannot be fetched, ensuring the HTML still renders correctly
+  const embedAssets = useCallback(async (htmlContent: string): Promise<string> => {
+    const sandboxUrl = project?.sandbox?.sandbox_url;
+    if (!sandboxUrl || !fileName) {
+      return htmlContent;
+    }
+
+    try {
+      // Extract relative asset references
+      const cssRegex = /href=["']([^"']*\.css)["']/g;
+      const imgRegex = /src=["']([^"']*\.(png|jpg|jpeg|gif|webp|svg))["']/g;
+      
+      let finalHtml = htmlContent;
+      let hasAssetErrors = false;
+      
+      // Replace CSS references
+      const cssMatches = [...htmlContent.matchAll(cssRegex)];
+      for (const match of cssMatches) {
+        const relativePath = match[1];
+        if (relativePath.startsWith('./') || relativePath.startsWith('../') || !relativePath.startsWith('http')) {
+          try {
+            const cssUrl = `${sandboxUrl}/${relativePath}`;
+            const response = await fetch(cssUrl);
+            if (response.ok) {
+              const cssContent = await response.text();
+              const dataUri = `data:text/css;base64,${btoa(cssContent)}`;
+              finalHtml = finalHtml.replace(`href="${relativePath}"`, `href="${dataUri}"`);
+            }
+          } catch (e) {
+            console.warn(`Failed to embed CSS ${relativePath}:`, e);
+            hasAssetErrors = true;
+          }
+        }
+      }
+      
+      // Replace image references
+      const imgMatches = [...htmlContent.matchAll(imgRegex)];
+      for (const match of imgMatches) {
+        const relativePath = match[1];
+        if (relativePath.startsWith('./') || relativePath.startsWith('../') || !relativePath.startsWith('http')) {
+          try {
+            const imgUrl = `${sandboxUrl}/${relativePath}`;
+            const response = await fetch(imgUrl);
+            if (response.ok) {
+              const blob = await response.blob();
+              const dataUri = `data:${blob.type};base64,${await blobToBase64(blob)}`;
+              finalHtml = finalHtml.replace(`src="${relativePath}"`, `src="${dataUri}"`);
+            }
+          } catch (e) {
+            console.warn(`Failed to embed image ${relativePath}:`, e);
+            hasAssetErrors = true;
+          }
+        }
+      }
+      
+      // If we had asset errors, the proxy might not be working
+      // In this case, return the original HTML content to avoid broken references
+      if (hasAssetErrors) {
+        console.warn('Some assets failed to load, using original HTML content');
+        return htmlContent;
+      }
+      
+      return finalHtml;
+    } catch (e) {
+      console.warn('Failed to embed assets, using original HTML content:', e);
+      return htmlContent;
+    }
+  }, [project?.sandbox?.sandbox_url, fileName, blobToBase64]);
+
   // This effect handles writing content to the iframe and making it editable
+  // This approach ensures HTML always renders correctly even when the Daytona proxy is down:
+  // 1. Immediately render the HTML content to ensure it shows up
+  // 2. Try to embed external assets (CSS/images) if the proxy is working
+  // 3. If asset embedding fails, keep the original content (which is already rendered)
+  // 4. Re-apply editable state after any re-rendering
   useEffect(() => {
     if (mode !== "html" || !iframeRef.current) return;
 
@@ -81,8 +170,32 @@ export default function InlineContentEditor({ html, onSave, onCancel, project, f
           setHasUnsavedChanges(true);
         });
       }
+
+      // 6. Try to embed assets and re-render if successful
+      embedAssets(html).then((enhancedHtml) => {
+        if (enhancedHtml !== html) {
+          // Only re-render if we actually enhanced the HTML
+          doc.open();
+          doc.write(enhancedHtml);
+          doc.close();
+          
+          // Re-apply editable state
+          if (doc.body) {
+            doc.body.contentEditable = 'true';
+            doc.body.focus();
+            
+            // Re-add the input listener
+            doc.body.addEventListener('input', () => {
+              setHasUnsavedChanges(true);
+            });
+          }
+        }
+      }).catch((error) => {
+        console.warn('Failed to embed assets, keeping original content:', error);
+        // Content is already rendered, no need to do anything
+      });
     }
-  }, [mode, html, project, fileName]);
+  }, [mode, html, project, fileName, embedAssets]);
 
   // Save all changes
   const saveChanges = () => {

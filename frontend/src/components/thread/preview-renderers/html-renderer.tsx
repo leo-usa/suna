@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Code, Monitor, ExternalLink, Pencil } from 'lucide-react';
@@ -80,7 +80,9 @@ export function HtmlRenderer({
     }, [project?.sandbox?.sandbox_url, fileName, content, blobHtmlUrl, previewUrl]);
 
     // Function to fetch and convert assets to data URIs
-    const embedAssets = async (htmlContent: string, project: any, fileName: string): Promise<string> => {
+    // This function gracefully handles proxy failures by returning the original HTML content
+    // when external assets cannot be fetched, ensuring the HTML still renders correctly
+    const embedAssets = useCallback(async (htmlContent: string, project: any, fileName: string): Promise<string> => {
         if (!project?.sandbox?.sandbox_url || !fileName) {
             return htmlContent;
         }
@@ -91,6 +93,7 @@ export function HtmlRenderer({
             const imgRegex = /src=["']([^"']*\.(png|jpg|jpeg|gif|webp|svg))["']/g;
             
             let finalHtml = htmlContent;
+            let hasAssetErrors = false;
             
             // Replace CSS references
             const cssMatches = [...htmlContent.matchAll(cssRegex)];
@@ -107,6 +110,7 @@ export function HtmlRenderer({
                         }
                     } catch (e) {
                         console.warn(`Failed to embed CSS ${relativePath}:`, e);
+                        hasAssetErrors = true;
                     }
                 }
             }
@@ -126,16 +130,24 @@ export function HtmlRenderer({
                         }
                     } catch (e) {
                         console.warn(`Failed to embed image ${relativePath}:`, e);
+                        hasAssetErrors = true;
                     }
                 }
             }
             
+            // If we had asset errors, the proxy might not be working
+            // In this case, return the original HTML content to avoid broken references
+            if (hasAssetErrors) {
+                console.warn('Some assets failed to load, using original HTML content');
+                return htmlContent;
+            }
+            
             return finalHtml;
         } catch (e) {
-            console.warn('Failed to embed assets:', e);
+            console.warn('Failed to embed assets, using original HTML content:', e);
             return htmlContent;
         }
-    };
+    }, []);
 
     // Helper function to convert blob to base64
     const blobToBase64 = (blob: Blob): Promise<string> => {
@@ -151,21 +163,54 @@ export function HtmlRenderer({
     };
 
     // Inject HTML content directly into iframe when in preview mode
+    // This approach ensures HTML always renders correctly even when the Daytona proxy is down:
+    // 1. Immediately render the HTML content to ensure it shows up
+    // 2. Try to embed external assets (CSS/images) if the proxy is working
+    // 3. If asset embedding fails, keep the original content (which is already rendered)
+    // 4. Fallback timeout ensures content is always displayed
     useEffect(() => {
         if (viewMode === 'preview' && iframeRef.current && content) {
             const iframe = iframeRef.current;
             const doc = iframe.contentDocument || iframe.contentWindow?.document;
 
             if (doc) {
-                // Embed assets to bypass proxy issues
+                let hasRendered = false;
+                
+                // Immediately render the HTML content to ensure it shows up
+                doc.open();
+                doc.write(content);
+                doc.close();
+                hasRendered = true;
+                
+                // Set a timeout to ensure we always render something
+                const timeoutId = setTimeout(() => {
+                    if (doc.body && !doc.body.innerHTML.trim()) {
+                        // If the iframe is still empty after timeout, write the content directly
+                        hasRendered = true;
+                        doc.open();
+                        doc.write(content);
+                        doc.close();
+                    }
+                }, 1000);
+
+                // Try to embed assets and re-render if successful
                 embedAssets(content, project, fileName).then((finalHtml) => {
-                    doc.open();
-                    doc.write(finalHtml);
-                    doc.close();
+                    if (hasRendered) {
+                        clearTimeout(timeoutId);
+                        doc.open();
+                        doc.write(finalHtml);
+                        doc.close();
+                    }
+                }).catch((error) => {
+                    if (hasRendered) {
+                        clearTimeout(timeoutId);
+                        console.warn('Failed to embed assets, keeping original content:', error);
+                        // Content is already rendered, no need to do anything
+                    }
                 });
             }
         }
-    }, [viewMode, content, project?.sandbox?.sandbox_url, fileName]);
+    }, [viewMode, content, project?.sandbox?.sandbox_url, fileName, embedAssets, project]);
 
     // Clean up blob URL on unmount
     useEffect(() => {
