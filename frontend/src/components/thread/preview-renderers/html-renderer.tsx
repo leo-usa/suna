@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Code, Monitor, ExternalLink, Pencil } from 'lucide-react';
@@ -27,6 +27,22 @@ export function HtmlRenderer({
     onEdit
 }: HtmlRendererProps) {
     const [viewMode, setViewMode] = useState<'preview' | 'code'>('preview');
+    const iframeRef = useRef<HTMLIFrameElement>(null);
+
+    // Inject HTML content directly into iframe when in preview mode
+    useEffect(() => {
+        if (viewMode === 'preview' && iframeRef.current && content) {
+            const iframe = iframeRef.current;
+            const doc = iframe.contentDocument || iframe.contentWindow?.document;
+
+            if (doc) {
+                // Write the HTML content directly to the iframe document
+                doc.open();
+                doc.write(content);
+                doc.close();
+            }
+        }
+    }, [viewMode, content]);
 
     // Get filename from the previewUrl
     const fileName = useMemo(() => {
@@ -134,7 +150,7 @@ export function HtmlRenderer({
             {viewMode === 'preview' ? (
                 <div className="w-full h-full">
                     <iframe
-                        src={htmlPreviewUrl}
+                        ref={iframeRef}
                         title="HTML Preview"
                         className="w-full h-full border-0"
                         sandbox="allow-same-origin allow-scripts"

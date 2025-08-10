@@ -151,11 +151,20 @@ export function FileOperationToolView({
       );
     }
 
-    if (isHtml && htmlPreviewUrl) {
+    if (isHtml && fileContent) {
       return (
         <div className="flex flex-col h-[calc(100vh-16rem)]">
           <iframe
-            src={htmlPreviewUrl}
+            ref={(iframe) => {
+              if (iframe && fileContent) {
+                const doc = iframe.contentDocument || iframe.contentWindow?.document;
+                if (doc) {
+                  doc.open();
+                  doc.write(fileContent);
+                  doc.close();
+                }
+              }
+            }}
             title={`HTML Preview of ${fileName}`}
             className="flex-grow border-0"
             sandbox="allow-same-origin allow-scripts"

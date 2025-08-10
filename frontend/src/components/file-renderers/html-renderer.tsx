@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { CodeRenderer } from './code-renderer';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -21,8 +21,23 @@ export function HtmlRenderer({
   onEdit,
 }: HtmlRendererProps) {
   const { t } = useTranslation();
-  // Always default to 'preview' mode
   const [viewMode, setViewMode] = useState<'preview' | 'code'>('preview');
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  // Inject HTML content directly into iframe when in preview mode
+  useEffect(() => {
+    if (viewMode === 'preview' && iframeRef.current && content) {
+      const iframe = iframeRef.current;
+      const doc = iframe.contentDocument || iframe.contentWindow?.document;
+
+      if (doc) {
+        // Write the HTML content directly to the iframe document
+        doc.open();
+        doc.write(content);
+        doc.close();
+      }
+    }
+  }, [viewMode, content]);
 
   return (
     <div className={cn('w-full h-full flex flex-col', className)}>
@@ -54,32 +69,32 @@ export function HtmlRenderer({
             <Code className="h-4 w-4" />
             {t('editor.code', 'Code')}
           </Button>
-                      <Button
+          <Button
+            variant="ghost"
+            size="sm"
+            className="flex items-center gap-2 bg-background/80 backdrop-blur-sm hover:bg-background/90"
+            onClick={() => window.open(previewUrl, '_blank')}
+          >
+            <ExternalLink className="h-4 w-4" />
+            {t('editor.open', 'Open')}
+          </Button>
+          {onEdit && (
+            <Button
               variant="ghost"
               size="sm"
               className="flex items-center gap-2 bg-background/80 backdrop-blur-sm hover:bg-background/90"
-              onClick={() => window.open(previewUrl, '_blank')}
+              onClick={onEdit}
             >
-              <ExternalLink className="h-4 w-4" />
-              {t('editor.open', 'Open')}
+              <Pencil className="h-4 w-4" />
+              {t('editor.edit', 'Edit')}
             </Button>
-            {onEdit && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="flex items-center gap-2 bg-background/80 backdrop-blur-sm hover:bg-background/90"
-                onClick={onEdit}
-              >
-                <Pencil className="h-4 w-4" />
-                {t('editor.edit', 'Edit')}
-              </Button>
-            )}
+          )}
         </div>
 
         {viewMode === 'preview' ? (
           <div className="absolute inset-0">
             <iframe
-              src={previewUrl}
+              ref={iframeRef}
               title="HTML Preview"
               className="w-full h-full border-0"
               sandbox="allow-same-origin allow-scripts"
