@@ -31,13 +31,36 @@ export function HtmlRenderer({
       const doc = iframe.contentDocument || iframe.contentWindow?.document;
 
       if (doc) {
+        // Calculate the base URL for relative assets
+        let baseUrl = '';
+        if (previewUrl) {
+          try {
+            const url = new URL(previewUrl);
+            baseUrl = url.origin + url.pathname.substring(0, url.pathname.lastIndexOf('/') + 1);
+          } catch (e) {
+            console.warn('Could not parse preview URL for base tag:', e);
+          }
+        }
+
+        // Inject the <base> tag into the HTML string
+        let finalHtml = content;
+        if (baseUrl) {
+          const headTag = /<head[^>]*>/i;
+          if (headTag.test(finalHtml)) {
+            finalHtml = finalHtml.replace(headTag, `$&<base href="${baseUrl}">`);
+          } else {
+            // Fallback if no head tag exists
+            finalHtml = `<head><base href="${baseUrl}"></head>` + finalHtml;
+          }
+        }
+
         // Write the HTML content directly to the iframe document
         doc.open();
-        doc.write(content);
+        doc.write(finalHtml);
         doc.close();
       }
     }
-  }, [viewMode, content]);
+  }, [viewMode, content, previewUrl]);
 
   return (
     <div className={cn('w-full h-full flex flex-col', className)}>

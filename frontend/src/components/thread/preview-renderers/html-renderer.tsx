@@ -29,21 +29,6 @@ export function HtmlRenderer({
     const [viewMode, setViewMode] = useState<'preview' | 'code'>('preview');
     const iframeRef = useRef<HTMLIFrameElement>(null);
 
-    // Inject HTML content directly into iframe when in preview mode
-    useEffect(() => {
-        if (viewMode === 'preview' && iframeRef.current && content) {
-            const iframe = iframeRef.current;
-            const doc = iframe.contentDocument || iframe.contentWindow?.document;
-
-            if (doc) {
-                // Write the HTML content directly to the iframe document
-                doc.open();
-                doc.write(content);
-                doc.close();
-            }
-        }
-    }, [viewMode, content]);
-
     // Get filename from the previewUrl
     const fileName = useMemo(() => {
         try {
@@ -91,6 +76,44 @@ export function HtmlRenderer({
         // 3. Fallback to original preview URL
         return previewUrl;
     }, [project?.sandbox?.sandbox_url, fileName, content, blobHtmlUrl, previewUrl]);
+
+    // Inject HTML content directly into iframe when in preview mode
+    useEffect(() => {
+        if (viewMode === 'preview' && iframeRef.current && content) {
+            const iframe = iframeRef.current;
+            const doc = iframe.contentDocument || iframe.contentWindow?.document;
+
+            if (doc) {
+                // Calculate the base URL for relative assets
+                let baseUrl = '';
+                if (htmlPreviewUrl) {
+                    try {
+                        const url = new URL(htmlPreviewUrl);
+                        baseUrl = url.origin + url.pathname.substring(0, url.pathname.lastIndexOf('/') + 1);
+                    } catch (e) {
+                        console.warn('Could not parse preview URL for base tag:', e);
+                    }
+                }
+
+                // Inject the <base> tag into the HTML string
+                let finalHtml = content;
+                if (baseUrl) {
+                    const headTag = /<head[^>]*>/i;
+                    if (headTag.test(finalHtml)) {
+                        finalHtml = finalHtml.replace(headTag, `$&<base href="${baseUrl}">`);
+                    } else {
+                        // Fallback if no head tag exists
+                        finalHtml = `<head><base href="${baseUrl}"></head>` + finalHtml;
+                    }
+                }
+
+                // Write the HTML content directly to the iframe document
+                doc.open();
+                doc.write(finalHtml);
+                doc.close();
+            }
+        }
+    }, [viewMode, content, htmlPreviewUrl]);
 
     // Clean up blob URL on unmount
     useEffect(() => {
