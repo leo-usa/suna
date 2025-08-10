@@ -159,34 +159,12 @@ export function FileOperationToolView({
               if (iframe && fileContent) {
                 const doc = iframe.contentDocument || iframe.contentWindow?.document;
                 if (doc) {
-                  // Calculate the base URL for relative assets using sandbox URL
-                  let baseUrl = '';
-                  if (project?.sandbox?.sandbox_url && fileName) {
-                    try {
-                      const sandboxUrl = constructHtmlPreviewUrl(project.sandbox.sandbox_url, fileName);
-                      const url = new URL(sandboxUrl);
-                      baseUrl = url.origin + url.pathname.substring(0, url.pathname.lastIndexOf('/') + 1);
-                    } catch (e) {
-                      console.warn('Could not parse sandbox URL for base tag:', e);
-                    }
-                  }
-
-                  // Inject the <base> tag into the HTML string
-                  let finalHtml = fileContent;
-                  if (baseUrl) {
-                    const headTag = /<head[^>]*>/i;
-                    if (headTag.test(finalHtml)) {
-                      finalHtml = finalHtml.replace(headTag, `$&<base href="${baseUrl}">`);
-                    } else {
-                      // Fallback if no head tag exists
-                      finalHtml = `<head><base href="${baseUrl}"></head>` + finalHtml;
-                    }
-                  }
-
-                  // Write the HTML content directly to the iframe document
-                  doc.open();
-                  doc.write(finalHtml);
-                  doc.close();
+                  // Embed assets to bypass proxy issues
+                  embedAssets(fileContent, project, fileName).then((finalHtml) => {
+                    doc.open();
+                    doc.write(finalHtml);
+                    doc.close();
+                  });
                 }
               }
             }}
@@ -302,6 +280,77 @@ export function FileOperationToolView({
         <div className="table-row h-4"></div>
       </div>
     );
+  };
+
+  // Function to fetch and convert assets to data URIs
+  const embedAssets = async (htmlContent: string, project: any, fileName: string): Promise<string> => {
+    if (!project?.sandbox?.sandbox_url || !fileName) {
+      return htmlContent;
+    }
+
+    try {
+      // Extract relative asset references
+      const cssRegex = /href=["']([^"']*\.css)["']/g;
+      const imgRegex = /src=["']([^"']*\.(png|jpg|jpeg|gif|webp|svg))["']/g;
+      
+      let finalHtml = htmlContent;
+      
+      // Replace CSS references
+      const cssMatches = [...htmlContent.matchAll(cssRegex)];
+      for (const match of cssMatches) {
+        const relativePath = match[1];
+        if (relativePath.startsWith('./') || relativePath.startsWith('../') || !relativePath.startsWith('http')) {
+          try {
+            const cssUrl = `${project.sandbox.sandbox_url}/${relativePath}`;
+            const response = await fetch(cssUrl);
+            if (response.ok) {
+              const cssContent = await response.text();
+              const dataUri = `data:text/css;base64,${btoa(cssContent)}`;
+              finalHtml = finalHtml.replace(`href="${relativePath}"`, `href="${dataUri}"`);
+            }
+          } catch (e) {
+            console.warn(`Failed to embed CSS ${relativePath}:`, e);
+          }
+        }
+      }
+      
+      // Replace image references
+      const imgMatches = [...htmlContent.matchAll(imgRegex)];
+      for (const match of imgMatches) {
+        const relativePath = match[1];
+        if (relativePath.startsWith('./') || relativePath.startsWith('../') || !relativePath.startsWith('http')) {
+          try {
+            const imgUrl = `${project.sandbox.sandbox_url}/${relativePath}`;
+            const response = await fetch(imgUrl);
+            if (response.ok) {
+              const blob = await response.blob();
+              const dataUri = `data:${blob.type};base64,${await blobToBase64(blob)}`;
+              finalHtml = finalHtml.replace(`src="${relativePath}"`, `src="${dataUri}"`);
+            }
+          } catch (e) {
+            console.warn(`Failed to embed image ${relativePath}:`, e);
+          }
+        }
+      }
+      
+      return finalHtml;
+    } catch (e) {
+      console.warn('Failed to embed assets:', e);
+      return htmlContent;
+    }
+  };
+
+  // Helper function to convert blob to base64
+  const blobToBase64 = (blob: Blob): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        resolve(result.split(',')[1]); // Remove data:image/...;base64, prefix
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
   };
 
   return (

@@ -212,6 +212,8 @@ export function FileRenderer({
           content={content || ''}
           previewUrl={htmlPreviewUrl || ''}
           sandboxUrl={project?.sandbox?.sandbox_url ? constructHtmlPreviewUrl(project.sandbox.sandbox_url, fileName) : undefined}
+          project={project}
+          fileName={fileName}
           className="w-full h-full"
           onEdit={onEdit}
         />
