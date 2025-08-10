@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 interface HtmlRendererProps {
   content: string;
   previewUrl: string;
+  sandboxUrl?: string; // Add sandbox URL for base tag extraction
   className?: string;
   onEdit?: () => void;
 }
@@ -17,6 +18,7 @@ interface HtmlRendererProps {
 export function HtmlRenderer({
   content,
   previewUrl,
+  sandboxUrl,
   className,
   onEdit,
 }: HtmlRendererProps) {
@@ -33,7 +35,17 @@ export function HtmlRenderer({
       if (doc) {
         // Calculate the base URL for relative assets
         let baseUrl = '';
-        if (previewUrl) {
+        
+        // Prioritize sandboxUrl for base tag extraction
+        if (sandboxUrl) {
+          try {
+            const url = new URL(sandboxUrl);
+            baseUrl = url.origin + url.pathname.substring(0, url.pathname.lastIndexOf('/') + 1);
+          } catch (e) {
+            console.warn('Could not parse sandbox URL for base tag:', e);
+          }
+        } else if (previewUrl && !previewUrl.startsWith('blob:')) {
+          // Fallback to previewUrl if it's not a blob URL
           try {
             const url = new URL(previewUrl);
             baseUrl = url.origin + url.pathname.substring(0, url.pathname.lastIndexOf('/') + 1);
@@ -60,7 +72,7 @@ export function HtmlRenderer({
         doc.close();
       }
     }
-  }, [viewMode, content, previewUrl]);
+  }, [viewMode, content, previewUrl, sandboxUrl]);
 
   return (
     <div className={cn('w-full h-full flex flex-col', className)}>

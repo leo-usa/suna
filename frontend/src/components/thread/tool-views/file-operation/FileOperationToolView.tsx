@@ -159,14 +159,15 @@ export function FileOperationToolView({
               if (iframe && fileContent) {
                 const doc = iframe.contentDocument || iframe.contentWindow?.document;
                 if (doc) {
-                  // Calculate the base URL for relative assets
+                  // Calculate the base URL for relative assets using sandbox URL
                   let baseUrl = '';
-                  if (htmlPreviewUrl) {
+                  if (project?.sandbox?.sandbox_url && fileName) {
                     try {
-                      const url = new URL(htmlPreviewUrl);
+                      const sandboxUrl = constructHtmlPreviewUrl(project.sandbox.sandbox_url, fileName);
+                      const url = new URL(sandboxUrl);
                       baseUrl = url.origin + url.pathname.substring(0, url.pathname.lastIndexOf('/') + 1);
                     } catch (e) {
-                      console.warn('Could not parse preview URL for base tag:', e);
+                      console.warn('Could not parse sandbox URL for base tag:', e);
                     }
                   }
 

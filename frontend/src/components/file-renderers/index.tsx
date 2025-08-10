@@ -177,6 +177,10 @@ export function FileRenderer({
       const baseUrl = constructHtmlPreviewUrl(project.sandbox.sandbox_url, fileName);
       return `${baseUrl}?v=${Date.now()}`;
     }
+    // Even when using blob content, try to construct a sandbox URL for base tag purposes
+    if (isHtmlFile && project?.sandbox?.sandbox_url && fileName) {
+      return constructHtmlPreviewUrl(project.sandbox.sandbox_url, fileName);
+    }
     return blobHtmlUrl; // Use blob URL as fallback
   }, [isHtmlFile, project?.sandbox?.sandbox_url, fileName, blobHtmlUrl]);
 
@@ -207,6 +211,7 @@ export function FileRenderer({
         <HtmlRenderer
           content={content || ''}
           previewUrl={htmlPreviewUrl || ''}
+          sandboxUrl={project?.sandbox?.sandbox_url ? constructHtmlPreviewUrl(project.sandbox.sandbox_url, fileName) : undefined}
           className="w-full h-full"
           onEdit={onEdit}
         />
