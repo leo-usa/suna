@@ -2,6 +2,7 @@
 
 import React, { useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 import {
   AlertDialog,
@@ -32,6 +33,8 @@ export function DeleteConfirmationDialog({
   threadName,
   isDeleting,
 }: DeleteConfirmationDialogProps) {
+  const { t } = useTranslation();
+
   // Reset pointer events when dialog opens
   useEffect(() => {
     if (isOpen) {
@@ -43,16 +46,16 @@ export function DeleteConfirmationDialog({
     <AlertDialog open={isOpen} onOpenChange={onClose}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete conversation</AlertDialogTitle>
+          <AlertDialogTitle>{t('dashboard.deleteConversation.title', 'Delete conversation')}</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to delete the conversation{' '}
+            {t('dashboard.deleteConversation.description', 'Are you sure you want to delete the conversation')}{' '}
             <span className="font-semibold">"{threadName}"</span>?
             <br />
-            This action cannot be undone.
+            {t('dashboard.deleteConversation.cannotUndone', 'This action cannot be undone.')}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={isDeleting}>{t('dashboard.deleteConversation.cancel', 'Cancel')}</AlertDialogCancel>
           <AlertDialogAction
             onClick={(e) => {
               e.preventDefault();
@@ -64,10 +67,10 @@ export function DeleteConfirmationDialog({
             {isDeleting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Deleting...
+                {t('dashboard.deleteConversation.deleting', 'Deleting...')}
               </>
             ) : (
-              'Delete'
+              t('dashboard.deleteConversation.delete', 'Delete')
             )}
           </AlertDialogAction>
         </AlertDialogFooter>
