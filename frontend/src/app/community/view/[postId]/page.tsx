@@ -5,8 +5,10 @@ import { getCommunityPost } from '@/lib/api';
 import { Link } from "lucide-react";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 import { toast } from "sonner";
+import { useTranslation } from 'react-i18next';
 
 export default function CommunityPostEmbedPage() {
+  const { t } = useTranslation();
   const { postId } = useParams();
   const [post, setPost] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -20,9 +22,9 @@ export default function CommunityPostEmbedPage() {
       .finally(() => setLoading(false));
   }, [postId]);
 
-  if (!postId) return <div className="p-8 text-center">Loading...</div>;
-  if (loading) return <div className="p-8 text-center">Loading...</div>;
-  if (!post) return <div className="p-8 text-center">Post not found.</div>;
+  if (!postId) return <div className="p-8 text-center">{t('common.loading')}</div>;
+  if (loading) return <div className="p-8 text-center">{t('common.loading')}</div>;
+  if (!post) return <div className="p-8 text-center">{t('communityPost.postNotFound')}</div>;
 
   const htmlUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000'}/public-html/${postId}`;
   const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
@@ -30,7 +32,7 @@ export default function CommunityPostEmbedPage() {
     if (typeof window !== 'undefined') {
       navigator.clipboard.writeText(shareUrl);
       setCopied(true);
-      toast.success("Link copied to clipboard");
+      toast.success(t('communityShare.linkCopiedSuccess'));
       setTimeout(() => setCopied(false), 1500);
     }
   };
@@ -57,12 +59,12 @@ export default function CommunityPostEmbedPage() {
                   <button
                     onClick={handleCopy}
                     className="rounded h-9 w-9 flex items-center justify-center text-gray-500 hover:bg-gray-100 transition"
-                    aria-label="Copy link"
+                    aria-label={t('communityPost.copyLink')}
                   >
                     <Link className="h-4 w-4" />
                   </button>
                 </TooltipTrigger>
-                <TooltipContent>Copy link</TooltipContent>
+                <TooltipContent>{t('communityPost.copyLink')}</TooltipContent>
               </Tooltip>
             </TooltipProvider>
           </div>
@@ -85,11 +87,11 @@ export default function CommunityPostEmbedPage() {
         style={{ pointerEvents: 'auto', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}
       >
         <img src="/dobby-logo.svg" alt="Dobby Logo" className="h-16 w-16 mb-0.5" />
-        <span className="text-center leading-tight">本研究报告由Robby智能体做研究和生成</span>
-        <span className="text-center leading-tight">Dobby，你的AI打工狗</span>
-        <span className="text-center leading-tight">帮你做研究，写报告，建网站，做PPT</span>
-        <span className="text-center leading-tight underline">点我到Dobby主页</span>
-        <span className="text-center text-[10px] font-normal mt-0.5">网址：https://dobby.now</span>
+        <span className="text-center leading-tight">{t('communityPost.floatingBar.researchReport')}</span>
+        <span className="text-center leading-tight">{t('communityPost.floatingBar.tagline')}</span>
+        <span className="text-center leading-tight">{t('communityPost.floatingBar.description')}</span>
+        <span className="text-center leading-tight underline">{t('communityPost.floatingBar.visitHomepage')}</span>
+        <span className="text-center text-[10px] font-normal mt-0.5">{t('communityPost.floatingBar.website')}</span>
         <style jsx>{`
           .dobby-bounce {
             animation: dobby-bounce-keyframes 3.5s cubic-bezier(0.4,0,0.6,1) infinite;
