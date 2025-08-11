@@ -150,7 +150,7 @@ export function ShareModal({ isOpen, onClose, threadId, projectId }: ShareModalP
 
   const socialOptions: SocialShareOption[] = [
     {
-      name: "LinkedIn",
+      name: t('shareModal.socialMedia.linkedin'),
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-4 w-4">
           <path
@@ -162,14 +162,14 @@ export function ShareModal({ isOpen, onClose, threadId, projectId }: ShareModalP
       onClick: () => {
         if (shareLink) {
           window.open(
-            `https://www.linkedin.com/shareArticle?url=${encodeURIComponent(shareLink)}&text=Shared conversation`,
+            `https://www.linkedin.com/shareArticle?url=${encodeURIComponent(shareLink)}&text=${encodeURIComponent(t('shareModal.socialMedia.sharedConversation'))}`,
             "_blank",
           )
         }
       },
     },
     {
-      name: "X",
+      name: t('shareModal.socialMedia.x'),
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-4 w-4">
           <path
@@ -181,7 +181,7 @@ export function ShareModal({ isOpen, onClose, threadId, projectId }: ShareModalP
       onClick: () => {
         if (shareLink) {
           window.open(
-            `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareLink)}&text=Shared conversation`,
+            `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareLink)}&text=${encodeURIComponent(t('shareModal.socialMedia.sharedConversation'))}`,
             "_blank",
           )
         }

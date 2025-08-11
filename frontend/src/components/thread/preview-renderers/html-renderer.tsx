@@ -234,7 +234,7 @@ export function HtmlRenderer({
                     onClick={() => setViewMode('preview')}
                 >
                     <Monitor className="h-4 w-4" />
-                    Preview
+                    {t('editor.preview', 'Preview')}
                 </Button>
                 <Button
                     variant="ghost"
@@ -243,7 +243,7 @@ export function HtmlRenderer({
                     onClick={() => setViewMode('code')}
                 >
                     <Code className="h-4 w-4" />
-                    Code
+                    {t('editor.code', 'Code')}
                 </Button>
                 <Button
                     variant="ghost"
@@ -252,7 +252,7 @@ export function HtmlRenderer({
                     onClick={() => window.open(htmlPreviewUrl, '_blank')}
                 >
                     <ExternalLink className="h-4 w-4" />
-                    Open
+                    {t('editor.open', 'Open')}
                 </Button>
                 {onEdit && (
                     <Button
@@ -262,7 +262,7 @@ export function HtmlRenderer({
                         onClick={onEdit}
                     >
                         <Pencil className="h-4 w-4" />
-                        Edit
+                        {t('editor.edit', 'Edit')}
                     </Button>
                 )}
             </div>

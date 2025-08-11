@@ -749,6 +749,29 @@ const zhTranslation = {
     searchYourAgents: '搜索您的智能体...',
     createAgent: '创建智能体',
   },
+  shareModal: {
+    title: '分享聊天',
+    publicAccessAlert: '此聊天是公開可訪問的。任何擁有鏈接的人都可以查看此對話。',
+    shareLink: '分享鏈接',
+    copyLink: '複製鏈接',
+    shareOnSocial: '在社交媒體上分享',
+    removeLink: '移除鏈接',
+    removing: '正在移除...',
+    shareThisChat: '分享此聊天',
+    createShareableDescription: '創建一個可分享的鏈接，允許其他人公開查看此對話。',
+    createShareableLink: '創建可分享鏈接',
+    creating: '正在創建...',
+    linkCreatedSuccess: '可分享鏈接創建成功',
+    linkRemovedSuccess: '可分享鏈接已移除',
+    failedToCreateLink: '創建可分享鏈接失敗',
+    failedToRemoveLink: '移除可分享鏈接失敗',
+    linkCopiedSuccess: '鏈接已複製到剪貼板',
+    socialMedia: {
+      linkedin: '領英',
+      x: 'X',
+      sharedConversation: '分享的對話'
+    }
+  },
   changelog: {
     title: '更新日志',
     description: 'Dobby 的最新更新和改进。',
@@ -1268,7 +1291,12 @@ const resources = {
         linkRemovedSuccess: 'Shareable link removed',
         failedToCreateLink: 'Failed to create shareable link',
         failedToRemoveLink: 'Failed to remove shareable link',
-        linkCopiedSuccess: 'Link copied to clipboard'
+        linkCopiedSuccess: 'Link copied to clipboard',
+        socialMedia: {
+          linkedin: 'LinkedIn',
+          x: 'X',
+          sharedConversation: 'Shared conversation'
+        }
       },
       communityPost: {
         copyLink: 'Copy link',
@@ -1750,7 +1778,12 @@ const resources = {
         linkRemovedSuccess: '可分享鏈接已移除',
         failedToCreateLink: '創建可分享鏈接失敗',
         failedToRemoveLink: '移除可分享鏈接失敗',
-        linkCopiedSuccess: '鏈接已複製到剪貼板'
+        linkCopiedSuccess: '鏈接已複製到剪貼板',
+        socialMedia: {
+          linkedin: '領英',
+          x: 'X',
+          sharedConversation: '分享的對話'
+        }
       },
       billing: {
         subscription: '訂閱',
@@ -1801,7 +1834,6 @@ const resources = {
         logOut: '退出登錄',
         tasks: '任務',
         noTasksYet: '還沒有任務',
-        shareChat: '分享聊天',
         openInNewTab: '在新標籤頁中打開',
         delete: '刪除',
         deleting: '正在刪除',
@@ -1980,7 +2012,6 @@ const resources = {
         expandSidebar: 'Expand Sidebar (CMD+B)',
         viewFiles: 'View files in task',
         knowledgeBase: 'Knowledge Base',
-        shareChat: 'Share chat',
         toggleComputerPreview: 'Toggle computer preview (CMD+I)',
         minimizeToFloatingPreview: 'Minimize to floating preview',
         renameProject: 'Click to rename project',
@@ -2455,12 +2486,12 @@ const resources = {
         userInteraction: 'Benutzerinteraktion',
       },
       // Tooltip translations
-      tooltips: {
-        expandSidebar: 'Sidebar erweitern (CMD+B)',
-        viewFiles: 'Dateien in Aufgabe anzeigen',
-        knowledgeBase: 'Wissensdatenbank',
-        shareChat: 'Chat teilen',
-        toggleComputerPreview: 'Computer-Vorschau umschalten (CMD+I)',
+              tooltips: {
+          expandSidebar: 'Sidebar erweitern (CMD+B)',
+          viewFiles: 'Dateien in Aufgabe anzeigen',
+          knowledgeBase: 'Wissensdatenbank',
+          shareChat: 'Chat teilen',
+          toggleComputerPreview: 'Computer-Vorschau umschalten (CMD+I)',
         minimizeToFloatingPreview: 'Zu schwebender Vorschau minimieren',
         renameProject: 'Klicken zum Umbenennen des Projekts',
         deleteAgent: 'Agent löschen',
@@ -2943,12 +2974,12 @@ const resources = {
         userInteraction: 'Interacción del Usuario',
       },
       // Tooltip translations
-      tooltips: {
-        expandSidebar: 'Expandir barra lateral (CMD+B)',
-        viewFiles: 'Ver archivos en tarea',
-        knowledgeBase: 'Base de conocimientos',
-        shareChat: 'Compartir chat',
-        toggleComputerPreview: 'Alternar vista previa del ordenador (CMD+I)',
+              tooltips: {
+          expandSidebar: 'Expandir barra lateral (CMD+B)',
+          viewFiles: 'Ver archivos en tarea',
+          knowledgeBase: 'Base de conocimientos',
+          shareChat: 'Compartir chat',
+          toggleComputerPreview: 'Alternar vista previa del ordenador (CMD+I)',
         minimizeToFloatingPreview: 'Minimizar a vista previa flotante',
         renameProject: 'Hacer clic para renombrar proyecto',
         deleteAgent: 'Eliminar agente',
