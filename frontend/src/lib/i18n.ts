@@ -475,6 +475,14 @@ const zhTranslation = {
     subtitle: '你今天想让 Dobby 做什么？',
     inputPlaceholder: '描述你需要帮助的内容……',
     openMenu: '打开菜单',
+    deleteConversation: {
+      title: '删除对话',
+      description: '你确定要删除对话',
+      cannotUndone: '此操作无法撤销。',
+      cancel: '取消',
+      delete: '删除',
+      deleting: '正在删除...'
+    },
   },
   // Add toolView translations
   toolView: {
@@ -1104,6 +1112,14 @@ const resources = {
         subtitle: 'What would you like Dobby to do today?',
         inputPlaceholder: 'Describe what you need help with...',
         openMenu: 'Open menu',
+        deleteConversation: {
+          title: 'Delete conversation',
+          description: 'Are you sure you want to delete the conversation',
+          cannotUndone: 'This action cannot be undone.',
+          cancel: 'Cancel',
+          delete: 'Delete',
+          deleting: 'Deleting...'
+        },
       },
       auth: {
         welcomeBack: 'Welcome back',
@@ -1253,14 +1269,6 @@ const resources = {
         failedToCreateLink: 'Failed to create shareable link',
         failedToRemoveLink: 'Failed to remove shareable link',
         linkCopiedSuccess: 'Link copied to clipboard'
-      },
-      deleteConversation: {
-        title: 'Delete conversation',
-        description: 'Are you sure you want to delete the conversation',
-        cannotUndone: 'This action cannot be undone.',
-        cancel: 'Cancel',
-        delete: 'Delete',
-        deleting: 'Deleting...'
       },
       communityPost: {
         copyLink: 'Copy link',
@@ -1794,14 +1802,6 @@ const resources = {
         tasks: '任務',
         noTasksYet: '還沒有任務',
         shareChat: '分享聊天',
-        deleteConversation: {
-          title: '删除对话',
-          description: '你确定要删除对话',
-          cannotUndone: '此操作无法撤销。',
-          cancel: '取消',
-          delete: '删除',
-          deleting: '正在删除...'
-        },
         openInNewTab: '在新標籤頁中打開',
         delete: '刪除',
         deleting: '正在刪除',
@@ -2190,6 +2190,14 @@ const resources = {
         subtitle: 'Was möchtest du, dass Dobby heute macht?',
         inputPlaceholder: 'Beschreibe, wobei du Hilfe brauchst...',
         openMenu: 'Menü öffnen',
+        deleteConversation: {
+          title: 'Konversation löschen',
+          description: 'Sind Sie sicher, dass Sie die Konversation löschen möchten',
+          cannotUndone: 'Diese Aktion kann nicht rückgängig gemacht werden.',
+          cancel: 'Abbrechen',
+          delete: 'Löschen',
+          deleting: 'Löschen...'
+        },
       },
       auth: {
         welcomeBack: 'Willkommen zurück',
@@ -2682,14 +2690,6 @@ const resources = {
         tasks: 'Tareas',
         noTasksYet: 'Aún no hay tareas',
         shareChat: 'Compartir Chat',
-        deleteConversation: {
-          title: 'Eliminar conversación',
-          description: '¿Estás seguro de que quieres eliminar la conversación',
-          cannotUndone: 'Esta acción no se puede deshacer.',
-          cancel: 'Cancelar',
-          delete: 'Eliminar',
-          deleting: 'Eliminando...'
-        },
         openInNewTab: 'Abrir en Nueva Pestaña',
         delete: 'Eliminar',
         deleting: 'Eliminando',
@@ -2699,6 +2699,14 @@ const resources = {
         subtitle: '¿Qué te gustaría que Dobby haga hoy?',
         inputPlaceholder: 'Describe en qué necesitas ayuda...',
         openMenu: 'Abrir menú',
+        deleteConversation: {
+          title: 'Eliminar conversación',
+          description: '¿Estás seguro de que quieres eliminar la conversación',
+          cannotUndone: 'Esta acción no se puede deshacer.',
+          cancel: 'Cancelar',
+          delete: 'Eliminar',
+          deleting: 'Eliminando...'
+        },
       },
       auth: {
         welcomeBack: 'Bienvenido de vuelta',
