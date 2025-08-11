@@ -266,7 +266,7 @@ export const FileUploadHandler = forwardRef<
                   ) : (
                     <Paperclip className="h-4 w-4" />
                   )}
-                  <span className="text-sm">Attach</span>
+                  <span className="text-sm">{t('chatInput.attachFile')}</span>
                 </Button>
               </span>
             </TooltipTrigger>
