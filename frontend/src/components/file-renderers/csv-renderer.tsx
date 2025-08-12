@@ -273,6 +273,59 @@ export function CsvRenderer({
     const containerRef = useRef<HTMLDivElement>(null);
     const [containerHeight, setContainerHeight] = useState(400);
 
+    // Move all hooks to the top to avoid conditional calling
+    const { visibleRange, setScrollTop, totalHeight, startOffset } = useVirtualScrolling(
+        parsedData?.data || [],
+        40, // row height
+        containerHeight - 200 // account for header and controls
+    );
+
+    const processedData = useMemo(() => {
+        if (!parsedData?.data) return [];
+        
+        let filtered = parsedData.data;
+
+        if (searchTerm) {
+            filtered = filtered.filter((row: any) =>
+                Object.values(row).some(value =>
+                    String(value).toLowerCase().includes(searchTerm.toLowerCase())
+                )
+            );
+        }
+
+        if (sortConfig.column && sortConfig.direction) {
+            filtered = [...filtered].sort((a: any, b: any) => {
+                const aVal = a[sortConfig.column];
+                const bVal = b[sortConfig.column];
+                
+                if (aVal == null && bVal == null) return 0;
+                if (aVal == null) return sortConfig.direction === 'asc' ? -1 : 1;
+                if (bVal == null) return sortConfig.direction === 'asc' ? 1 : -1;
+                
+                if (typeof aVal === 'number' && typeof bVal === 'number') {
+                    return sortConfig.direction === 'asc' ? aVal - bVal : bVal - aVal;
+                }
+                
+                const aStr = String(aVal).toLowerCase();
+                const bStr = String(bVal).toLowerCase();
+                
+                if (aStr < bStr) return sortConfig.direction === 'asc' ? -1 : 1;
+                if (aStr > bStr) return sortConfig.direction === 'asc' ? 1 : -1;
+                return 0;
+            });
+        }
+
+        return filtered;
+    }, [parsedData?.data, searchTerm, sortConfig]);
+
+    const visibleHeaders = useMemo(() => {
+        return parsedData?.headers?.filter(header => !hiddenColumns.has(header)) || [];
+    }, [parsedData?.headers, hiddenColumns]);
+
+    const visibleData = useMemo(() => {
+        return processedData.slice(visibleRange.start, visibleRange.end);
+    }, [processedData, visibleRange.start, visibleRange.end]);
+
     // Parse CSV data on mount
     useEffect(() => {
         const parseData = async () => {
@@ -397,52 +450,6 @@ export function CsvRenderer({
 
     const { headers, data, totalRows, isLargeFile, fileSizeMB } = parsedData;
     const isEmpty = data.length === 0;
-
-    // Use virtual scrolling for large datasets
-    const { visibleRange, setScrollTop, totalHeight, startOffset } = useVirtualScrolling(
-        data,
-        40, // row height
-        containerHeight - 200 // account for header and controls
-    );
-
-    const processedData = useMemo(() => {
-        let filtered = data;
-
-        if (searchTerm) {
-            filtered = filtered.filter((row: any) =>
-                Object.values(row).some(value =>
-                    String(value).toLowerCase().includes(searchTerm.toLowerCase())
-                )
-            );
-        }
-
-        if (sortConfig.column && sortConfig.direction) {
-            filtered = [...filtered].sort((a: any, b: any) => {
-                const aVal = a[sortConfig.column];
-                const bVal = b[sortConfig.column];
-                
-                if (aVal == null && bVal == null) return 0;
-                if (aVal == null) return sortConfig.direction === 'asc' ? -1 : 1;
-                if (bVal == null) return sortConfig.direction === 'asc' ? 1 : -1;
-                
-                if (typeof aVal === 'number' && typeof bVal === 'number') {
-                    return sortConfig.direction === 'asc' ? aVal - bVal : bVal - aVal;
-                }
-                
-                const aStr = String(aVal).toLowerCase();
-                const bStr = String(bVal).toLowerCase();
-                
-                if (aStr < bStr) return sortConfig.direction === 'asc' ? -1 : 1;
-                if (aStr > bStr) return sortConfig.direction === 'asc' ? 1 : -1;
-                return 0;
-            });
-        }
-
-        return filtered;
-    }, [data, searchTerm, sortConfig]);
-
-    const visibleHeaders = headers.filter(header => !hiddenColumns.has(header));
-    const visibleData = processedData.slice(visibleRange.start, visibleRange.end);
 
     const handleSort = (column: string) => {
         setSortConfig(prev => {
