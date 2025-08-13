@@ -186,9 +186,11 @@ async def create_sandbox(password: str, project_id: str = None) -> AsyncSandbox:
         while len(count_towards_limit) >= effective_limit:
             logger.warning(f"Effective sandbox limit ({effective_limit}) reached. Current count: {len(count_towards_limit)}. Original limit: {config.DAYTONA_MAX_SANDBOXES}. Attempting to delete oldest non-active sandboxes.")
             
-            # Filter for non-active sandboxes from the current list
-            non_active = [s for s in count_towards_limit if s.state in [SandboxState.ARCHIVED, SandboxState.STOPPED]]
-            logger.info(f"Found {len(non_active)} non-active sandboxes out of {len(count_towards_limit)} total")
+            # Filter for non-active sandboxes from the FULL sandbox list (including stuck ones)
+            # Then exclude stuck ones from deletion candidates
+            all_non_active = [s for s in sandboxes if s.state in [SandboxState.ARCHIVED, SandboxState.STOPPED]]
+            non_active = [s for s in all_non_active if s.state not in problematic_states]
+            logger.info(f"Found {len(non_active)} deletable non-active sandboxes out of {len(all_non_active)} total non-active (excluding {len(all_non_active) - len(non_active)} stuck ones)")
             
             if not non_active:
                 logger.error("All sandboxes are active, but limit is reached. Cannot create new sandbox.")
