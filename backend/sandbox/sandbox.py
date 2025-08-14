@@ -145,97 +145,91 @@ async def create_sandbox(password: str, project_id: str = None) -> AsyncSandbox:
     try:
         # Get current sandbox count
         sandboxes = await daytona.list()
-        logger.info(f"Found {len(sandboxes)} existing sandboxes. Limit is {config.DAYTONA_MAX_SANDBOXES}")
-
-        # Log all sandbox states for debugging
+        
+        # Log state distribution for debugging (but don't use for counting)
         state_counts = {}
         for s in sandboxes:
             state = s.state
             state_counts[state] = state_counts.get(state, 0) + 1
-        logger.info(f"Sandbox states: {state_counts}")
+        logger.info(f"Sandbox state distribution: {state_counts}")
+        
+        # Count ALL sandboxes (not just active ones)
+        total_sandboxes = len(sandboxes)
+        logger.info(f"Found {total_sandboxes} total sandboxes. Limit is {config.DAYTONA_MAX_SANDBOXES}")
 
-        # Count sandboxes that are not in terminal states (DESTROYED, ERROR, BUILD_FAILED)
-        # These are the ones that count towards our limit
-        active_states = [SandboxState.CREATING, SandboxState.RESTORING, SandboxState.STARTED, 
-                        SandboxState.STOPPED, SandboxState.STARTING, SandboxState.STOPPING, 
-                        SandboxState.PENDING_BUILD, SandboxState.BUILDING_SNAPSHOT, 
-                        SandboxState.UNKNOWN, SandboxState.PULLING_SNAPSHOT, 
-                        SandboxState.ARCHIVING, SandboxState.ARCHIVED]
+        # Check if we've reached the sandbox limit
+        max_retries = 5
+        retry_count = 0
         
-        # Define problematic states that should NOT count toward the limit
-        # These are sandboxes that are stuck and can't be deleted
-        problematic_states = [SandboxState.DESTROYING, SandboxState.ERROR, SandboxState.BUILD_FAILED]
+        if total_sandboxes >= config.DAYTONA_MAX_SANDBOXES:
+            logger.warning(f"Sandbox limit ({config.DAYTONA_MAX_SANDBOXES}) reached. Current count: {total_sandboxes}. Will attempt to free up space.")
         
-        # Count sandboxes that count toward limit (exclude problematic stuck states)
-        count_towards_limit = [s for s in sandboxes if s.state in active_states and s.state not in problematic_states]
-        
-        # Log stuck sandboxes for monitoring
-        stuck_sandboxes = [s for s in sandboxes if s.state in problematic_states]
-        if stuck_sandboxes:
-            logger.warning(f"Found {len(stuck_sandboxes)} stuck sandboxes in problematic states: {[s.state for s in stuck_sandboxes]}")
-            for s in stuck_sandboxes:
-                logger.warning(f"Stuck sandbox: id={getattr(s, 'id', 'N/A')}, state={s.state}")
-        logger.info(f"Sandboxes counting towards limit: {len(count_towards_limit)} (out of {len(sandboxes)} total)")
-        
-        # Show effective limit calculation
-        stuck_count = len(stuck_sandboxes)
-        effective_limit = config.DAYTONA_MAX_SANDBOXES - stuck_count
-        logger.info(f"Stuck sandboxes: {stuck_count}, Effective limit: {effective_limit} (original: {config.DAYTONA_MAX_SANDBOXES})")
-
-        # Check if we've reached the effective sandbox limit
-        while len(count_towards_limit) >= effective_limit:
-            logger.warning(f"Effective sandbox limit ({effective_limit}) reached. Current count: {len(count_towards_limit)}. Original limit: {config.DAYTONA_MAX_SANDBOXES}. Attempting to delete oldest non-active sandboxes.")
+        while total_sandboxes >= config.DAYTONA_MAX_SANDBOXES and retry_count < max_retries:
+            retry_count += 1
+            logger.warning(f"Attempt {retry_count}/{max_retries}: Attempting to delete oldest non-active sandboxes.")
             
-            # Filter for non-active sandboxes from the FULL sandbox list (including stuck ones)
-            # Then exclude stuck ones from deletion candidates
-            all_non_active = [s for s in sandboxes if s.state in [SandboxState.ARCHIVED, SandboxState.STOPPED]]
-            non_active = [s for s in all_non_active if s.state not in problematic_states]
-            logger.info(f"Found {len(non_active)} deletable non-active sandboxes out of {len(all_non_active)} total non-active (excluding {len(all_non_active) - len(non_active)} stuck ones)")
+            # Find deletable sandboxes (stopped or archived)
+            deletable_sandboxes = [s for s in sandboxes if s.state in [SandboxState.ARCHIVED, SandboxState.STOPPED]]
+            logger.info(f"Found {len(deletable_sandboxes)} deletable sandboxes (stopped/archived)")
             
-            if not non_active:
-                logger.error("All sandboxes are active, but limit is reached. Cannot create new sandbox.")
+            if not deletable_sandboxes:
+                logger.error("No deletable sandboxes found. Cannot create new sandbox.")
                 raise RuntimeError("All agents are busy. Please wait for a slot to become available.")
 
-            # Log all candidates for deletion
-            for s in non_active:
-                last_used = s.labels.get('last_used_ts', 'N/A') if hasattr(s, 'labels') and s.labels else 'N/A'
-                logger.info(f"Non-active sandbox: id={getattr(s, 'id', 'N/A')}, state={s.state}, last_used_ts={last_used}")
+            # Sort by oldest first (using last_used_ts label)
+            deletable_sandboxes.sort(key=get_sort_key)
             
-            non_active.sort(key=get_sort_key)
-            
-            # Calculate how many to delete to get well under the effective limit
-            # Delete enough to get to 5 below effective limit to provide buffer
-            target_count = effective_limit - 5
-            sandboxes_to_delete = len(count_towards_limit) - target_count
-            
-            # Delete multiple oldest sandboxes at once
-            sandboxes_to_delete = min(sandboxes_to_delete, len(non_active))
-            logger.info(f"Deleting {sandboxes_to_delete} oldest non-active sandboxes to reach target count of {target_count}")
+            # Delete up to 5 oldest sandboxes
+            sandboxes_to_delete = min(5, len(deletable_sandboxes))
+            logger.info(f"Deleting {sandboxes_to_delete} oldest non-active sandboxes")
             
             deleted_count = 0
+            failed_count = 0
             for i in range(sandboxes_to_delete):
-                oldest = non_active[i]
-                logger.info(f"Deleting oldest non-active sandbox {i+1}/{sandboxes_to_delete}: {getattr(oldest, 'id', 'N/A')}")
-                await daytona.delete(oldest)
-                deleted_count += 1
+                oldest = deletable_sandboxes[i]
+                last_used = oldest.labels.get('last_used_ts', 'N/A') if hasattr(oldest, 'labels') and oldest.labels else 'N/A'
+                logger.info(f"Deleting oldest non-active sandbox {i+1}/{sandboxes_to_delete}: id={getattr(oldest, 'id', 'N/A')}, state={oldest.state}, last_used={last_used}")
+                try:
+                    await daytona.delete(oldest)
+                    deleted_count += 1
+                except Exception as e:
+                    logger.error(f"Failed to delete sandbox {getattr(oldest, 'id', 'N/A')}: {e}")
+                    failed_count += 1
+                    # Continue with next sandbox instead of breaking
             
-            logger.info(f"Successfully deleted {deleted_count} sandboxes")
+            logger.info(f"Deletion attempt completed: {deleted_count} successful, {failed_count} failed")
             
-            # Wait for Daytona to free up the slots and then re-fetch the list
-            await asyncio.sleep(3)
+            # Re-fetch sandbox list and count
             sandboxes = await daytona.list()
-            count_towards_limit = [s for s in sandboxes if s.state in active_states]
-            logger.info(f"Re-checked sandbox count. Found {len(count_towards_limit)} sandboxes counting towards limit.")
+            total_sandboxes = len(sandboxes)
+            logger.info(f"After deletion: {total_sandboxes} total sandboxes")
+            
+            # If we're now under the limit, break out of the loop
+            if total_sandboxes < config.DAYTONA_MAX_SANDBOXES:
+                logger.info(f"Successfully freed up space. Current count: {total_sandboxes}, limit: {config.DAYTONA_MAX_SANDBOXES}")
+                break
+            else:
+                logger.warning(f"Still over limit after deletion. Current count: {total_sandboxes}, limit: {config.DAYTONA_MAX_SANDBOXES}")
+        
+        # Check if we still can't create a sandbox after all retries
+        if total_sandboxes >= config.DAYTONA_MAX_SANDBOXES:
+            logger.error(f"Failed to free up space after {max_retries} attempts. Current count: {total_sandboxes}, limit: {config.DAYTONA_MAX_SANDBOXES}")
+            raise RuntimeError("No sandbox slots available. Please wait a while and try again.")
+
+        # Final verification that we're under the limit
+        if total_sandboxes >= config.DAYTONA_MAX_SANDBOXES:
+            logger.error(f"Unexpected state: count ({total_sandboxes}) still >= limit ({config.DAYTONA_MAX_SANDBOXES}) after deletion loop")
+            raise RuntimeError("Failed to free up sandbox slots. Please try again later.")
 
         # Create the new sandbox
-        logger.info(f"Creating new sandbox. Current count: {len(count_towards_limit)}, effective limit: {effective_limit}, original limit: {config.DAYTONA_MAX_SANDBOXES}")
+        logger.info(f"Proceeding to create new sandbox. Current count: {total_sandboxes}, limit: {config.DAYTONA_MAX_SANDBOXES}")
         sandbox = await daytona.create(params)
         logger.debug(f"Sandbox created with ID: {sandbox.id}")
         
         # Start supervisord in a session for new sandbox
         await start_supervisord_session(sandbox)
         
-        logger.debug(f"Sandbox environment successfully initialized")
+        logger.info(f"Sandbox environment successfully initialized with ID: {sandbox.id}")
         return sandbox
 
     except Exception as e:
