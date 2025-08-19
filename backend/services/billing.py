@@ -90,15 +90,24 @@ async def deduct_user_credits(client, user_id: str, amount_dollars: float) -> bo
         new_minutes = max(0, current_minutes - amount_minutes)
         new_dollars = max(0, current_dollars - amount_dollars)
         
+        logger.info(f"Deducting credits: user_id={user_id}, current_dollars={current_dollars}, deducting={amount_dollars}, new_total={new_dollars}")
+        
         # Update both balances
-        await client.schema('basejump').from_('billing_credits') \
-            .upsert({
-                'account_id': user_id,
-                'balance_minutes': new_minutes,
-                'balance_dollars': new_dollars,
-                'last_updated': datetime.now(timezone.utc).isoformat()
-            }) \
-            .execute()
+        try:
+            await client.schema('basejump').from_('billing_credits') \
+                .upsert({
+                    'account_id': user_id,
+                    'balance_minutes': new_minutes,
+                    'balance_dollars': new_dollars,
+                    'last_updated': datetime.now(timezone.utc).isoformat()
+                }, on_conflict='account_id') \
+                .execute()
+            
+            logger.info(f"Successfully deducted credits from user {user_id}: ${amount_dollars} dollars, {amount_minutes} minutes")
+        except Exception as upsert_error:
+            logger.error(f"Failed to upsert billing credits for user {user_id}: {str(upsert_error)}")
+            logger.error(f"Upsert data: account_id={user_id}, balance_dollars={new_dollars}, balance_minutes={new_minutes}")
+            raise upsert_error
         
         return True
     except Exception as e:
@@ -1240,18 +1249,25 @@ async def stripe_webhook(request: Request):
                 # Keep minutes unchanged (existing customers keep their old credits)
                 new_minutes = current_minutes
                 
-                await client.schema('basejump').from_('billing_credits') \
-                    .upsert({
-                        'account_id': user_id,
-                        'balance_dollars': new_dollars,
-                        'balance_minutes': new_minutes,
-                        'last_updated': datetime.now(timezone.utc).isoformat(),
-                        'source': 'prepaid_purchase',
-                        'transaction_id': session.id
-                    }) \
-                    .execute()
+                logger.info(f"Processing credit purchase: user_id={user_id}, current_dollars={current_dollars}, adding={net_credits_dollars}, new_total={new_dollars}")
                 
-                logger.info(f"Added ${net_credits_dollars:.2f} credits to user {user_id} (gross: ${gross_dollars:.2f}, service fee: ${service_fee:.2f})")
+                try:
+                    await client.schema('basejump').from_('billing_credits') \
+                        .upsert({
+                            'account_id': user_id,
+                            'balance_dollars': new_dollars,
+                            'balance_minutes': new_minutes,
+                            'last_updated': datetime.now(timezone.utc).isoformat(),
+                            'source': 'prepaid_purchase',
+                            'transaction_id': session.id
+                        }, on_conflict='account_id') \
+                        .execute()
+                    
+                    logger.info(f"Successfully added ${net_credits_dollars:.2f} credits to user {user_id} (gross: ${gross_dollars:.2f}, service fee: ${service_fee:.2f})")
+                except Exception as upsert_error:
+                    logger.error(f"Failed to upsert billing credits for user {user_id}: {str(upsert_error)}")
+                    logger.error(f"Upsert data: account_id={user_id}, balance_dollars={new_dollars}, balance_minutes={new_minutes}")
+                    raise upsert_error
         
         return {"status": "success"}
         
