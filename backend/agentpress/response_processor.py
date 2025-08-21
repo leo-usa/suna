@@ -114,6 +114,29 @@ class ResponseProcessor:
             return format_for_yield(message_obj)
         return None
 
+    async def _handle_credit_deduction(self, thread_id: str, usage_content: dict, model: str) -> None:
+        """Handle credit deduction for pre-paid users."""
+        try:
+            from utils.auth_utils import get_account_id_from_thread
+            from services.supabase import DBConnection
+            
+            db = DBConnection()
+            client = await db.client
+            user_id = await get_account_id_from_thread(client, thread_id)
+            
+            if user_id:
+                usage = usage_content.get('usage', {})
+                prompt_tokens = usage.get('prompt_tokens', 0)
+                completion_tokens = usage.get('completion_tokens', 0)
+                cost = calculate_token_cost(prompt_tokens, completion_tokens, model)
+                
+                if cost > 0:
+                    await deduct_user_credits(client, user_id, cost)
+                    logger.info(f"Deducted ${cost:.4f} from user {user_id} credits")
+        except Exception as e:
+            logger.error(f"Error handling credit deduction: {str(e)}")
+            # Don't break the response flow
+
     async def _add_message_with_agent_info(
         self,
         thread_id: str,
@@ -741,26 +764,7 @@ class ResponseProcessor:
                         logger.info("Assistant response end saved for stream (before termination)")
                         
                         # Handle credit deduction for pre-paid users
-                        try:
-                            from utils.auth_utils import get_account_id_from_thread
-                            from services.supabase import DBConnection
-                            
-                            db = DBConnection()
-                            client = await db.client
-                            user_id = await get_account_id_from_thread(client, thread_id)
-                            
-                            if user_id:
-                                usage = assistant_end_content.get('usage', {})
-                                prompt_tokens = usage.get('prompt_tokens', 0)
-                                completion_tokens = usage.get('completion_tokens', 0)
-                                cost = calculate_token_cost(prompt_tokens, completion_tokens, llm_model)
-                                
-                                if cost > 0:
-                                    await deduct_user_credits(client, user_id, cost)
-                                    logger.info(f"Deducted ${cost:.4f} from user {user_id} credits")
-                        except Exception as e:
-                            logger.error(f"Error handling credit deduction: {str(e)}")
-                            # Don't break the response flow
+                        await self._handle_credit_deduction(thread_id, assistant_end_content, llm_model)
                     except Exception as e:
                         logger.error(f"Error saving assistant response end for stream (before termination): {str(e)}")
                         self.trace.event(name="error_saving_assistant_response_end_for_stream_before_termination", level="ERROR", status_message=(f"Error saving assistant response end for stream (before termination): {str(e)}"))
@@ -815,26 +819,7 @@ class ResponseProcessor:
                     logger.info("Assistant response end saved for stream")
                     
                     # Handle credit deduction for pre-paid users
-                    try:
-                        from utils.auth_utils import get_account_id_from_thread
-                        from services.supabase import DBConnection
-                        
-                        db = DBConnection()
-                        client = await db.client
-                        user_id = await get_account_id_from_thread(client, thread_id)
-                        
-                        if user_id:
-                            usage = assistant_end_content.get('usage', {})
-                            prompt_tokens = usage.get('prompt_tokens', 0)
-                            completion_tokens = usage.get('completion_tokens', 0)
-                            cost = calculate_token_cost(prompt_tokens, completion_tokens, llm_model)
-                            
-                            if cost > 0:
-                                await deduct_user_credits(client, user_id, cost)
-                                logger.info(f"Deducted ${cost:.4f} from user {user_id} credits")
-                    except Exception as e:
-                        logger.error(f"Error handling credit deduction: {str(e)}")
-                        # Don't break the response flow
+                    await self._handle_credit_deduction(thread_id, assistant_end_content, llm_model)
                 except Exception as e:
                     logger.error(f"Error saving assistant response end for stream: {str(e)}")
                     self.trace.event(name="error_saving_assistant_response_end_for_stream", level="ERROR", status_message=(f"Error saving assistant response end for stream: {str(e)}"))
@@ -1040,26 +1025,7 @@ class ResponseProcessor:
                     logger.info("Assistant response end saved for non-stream")
                     
                     # Handle credit deduction for pre-paid users
-                    try:
-                        from utils.auth_utils import get_account_id_from_thread
-                        from services.supabase import DBConnection
-                        
-                        db = DBConnection()
-                        client = await db.client
-                        user_id = await get_account_id_from_thread(client, thread_id)
-                        
-                        if user_id:
-                            usage = llm_response.get('usage', {})
-                            prompt_tokens = usage.get('prompt_tokens', 0)
-                            completion_tokens = usage.get('completion_tokens', 0)
-                            cost = calculate_token_cost(prompt_tokens, completion_tokens, llm_model)
-                            
-                            if cost > 0:
-                                await deduct_user_credits(client, user_id, cost)
-                                logger.info(f"Deducted ${cost:.4f} from user {user_id} credits")
-                    except Exception as e:
-                        logger.error(f"Error handling credit deduction: {str(e)}")
-                        # Don't break the response flow
+                    await self._handle_credit_deduction(thread_id, llm_response, llm_model)
                 except Exception as e:
                     logger.error(f"Error saving assistant response end for non-stream: {str(e)}")
                     self.trace.event(name="error_saving_assistant_response_end_for_non_stream", level="ERROR", status_message=(f"Error saving assistant response end for non-stream: {str(e)}"))
