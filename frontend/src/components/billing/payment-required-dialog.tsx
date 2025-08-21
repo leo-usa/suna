@@ -9,11 +9,13 @@ import {
 import { Zap } from 'lucide-react';
 import { useModal } from '@/hooks/use-modal-store';
 import { PricingSection } from '../home/sections/pricing-section';
+import { useTranslation } from 'react-i18next';
 
 const returnUrl = process.env.NEXT_PUBLIC_URL as string;
 
 export const PaymentRequiredDialog = () => {
     const { isOpen, type, onClose } = useModal();
+    const { t } = useTranslation();
     const isModalOpen = isOpen && type === 'paymentRequiredDialog';
     
     return (
@@ -21,10 +23,10 @@ export const PaymentRequiredDialog = () => {
         <DialogContent className="w-[95vw] max-w-[750px] max-h-[90vh] overflow-hidden flex flex-col p-0">
             <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 flex-shrink-0">
               <DialogTitle>
-                Upgrade Required
+                {t('billing.upgradeRequired', 'Upgrade Required')}
               </DialogTitle>
               <DialogDescription>
-                You've reached your plan's usage limit. Upgrade to continue enjoying our premium features.
+                {t('billing.upgradeRequiredDescription', "You've reached your plan's usage limit. Upgrade to continue enjoying our premium features.")}
               </DialogDescription>
             </DialogHeader>
             
@@ -36,9 +38,9 @@ export const PaymentRequiredDialog = () => {
                       <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-destructive" />
                     </div>
                     <div className="text-xs sm:text-sm min-w-0">
-                      <p className="font-medium text-destructive">Usage Limit Reached</p>
+                      <p className="font-medium text-destructive">{t('billing.usageLimitReached', 'Usage Limit Reached')}</p>
                       <p className="text-destructive break-words">
-                        Your current plan has been exhausted for this billing period.
+                        {t('billing.planExhaustedMessage', 'Your current plan has been exhausted for this billing period.')}
                       </p>
                     </div>
                   </div>

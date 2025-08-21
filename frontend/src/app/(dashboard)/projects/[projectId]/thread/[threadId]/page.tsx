@@ -407,7 +407,7 @@ export default function ThreadPage({
             setBillingData({
               currentUsage: error.detail.currentUsage as number | undefined,
               limit: error.detail.limit as number | undefined,
-              message: error.detail.message || 'Monthly usage limit reached. Please upgrade.',
+              message: error.detail.message || t('billing.monthlyUsageLimitReached', 'Monthly usage limit reached. Please upgrade.'),
               accountId: project?.account_id || null
             });
             setShowBillingAlert(true);

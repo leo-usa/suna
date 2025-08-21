@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { isLocalMode } from '@/lib/config';
 import { useBillingStatusQuery } from '@/hooks/react-query/threads/use-billing-status';
 import { BillingData, AgentStatus } from '../_types';
+import { useTranslation } from 'react-i18next';
 
 interface UseBillingReturn {
   showBillingAlert: boolean;
@@ -21,6 +22,7 @@ export function useBilling(
   const [billingData, setBillingData] = useState<BillingData>({});
   const previousAgentStatus = useRef<AgentStatus>('idle');
   const billingStatusQuery = useBillingStatusQuery();
+  const { t } = useTranslation();
 
   const checkBillingLimits = useCallback(async () => {
     if (isLocalMode()) {
@@ -38,7 +40,7 @@ export function useBilling(
         setBillingData({
           currentUsage: result.subscription?.minutes_limit || 0,
           limit: result.subscription?.minutes_limit || 0,
-          message: result.message || 'Usage limit reached',
+          message: result.message || t('billing.usageLimitReached', 'Usage limit reached'),
           accountId: projectAccountId || null,
         });
         setShowBillingAlert(true);
@@ -49,7 +51,7 @@ export function useBilling(
       console.error('Error checking billing status:', err);
       return false;
     }
-  }, [projectAccountId, billingStatusQuery]);
+  }, [projectAccountId, billingStatusQuery, t]);
 
   useEffect(() => {
     const previousStatus = previousAgentStatus.current;
