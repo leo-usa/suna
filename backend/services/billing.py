@@ -57,7 +57,7 @@ async def get_user_credits(client, user_id: str) -> float:
             minutes_as_dollars = minutes * config.MINUTES_TO_DOLLAR_RATE
             
             # Return the higher value (prioritize the system with more credits)
-            return max(dollars, minutes_as_dollars)
+            return min(dollars, minutes_as_dollars)
         return 0.0
     except Exception as e:
         logger.error(f"Error getting user credits: {str(e)}")
@@ -307,6 +307,28 @@ async def calculate_monthly_usage(client, user_id: str) -> float:
     logger.info(f"Calculate monthly usage took {execution_time:.3f} seconds, total cost: {total_cost}")
     
     return total_cost
+
+
+async def process_credit_deduction_for_response(client, user_id: str, usage_content: dict, model: str) -> bool:
+    """Process credit deduction for a single agent response."""
+    try:
+        usage = usage_content.get('usage', {})
+        prompt_tokens = usage.get('prompt_tokens', 0)
+        completion_tokens = usage.get('completion_tokens', 0)
+        cost = calculate_token_cost(prompt_tokens, completion_tokens, model)
+        
+        if cost > 0:
+            success = await deduct_user_credits(client, user_id, cost)
+            if success:
+                logger.info(f"Deducted ${cost:.4f} from user {user_id} credits")
+                return True
+            else:
+                logger.warning(f"Failed to deduct ${cost:.4f} from user {user_id}")
+                return False
+        return True
+    except Exception as e:
+        logger.error(f"Error processing credit deduction: {str(e)}")
+        return False
 
 
 async def get_usage_logs(client, user_id: str, page: int = 0, items_per_page: int = 1000) -> Dict:
