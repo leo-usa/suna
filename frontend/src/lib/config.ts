@@ -31,11 +31,25 @@ export interface SubscriptionTiers {
   TIER_200_1000_YEARLY: SubscriptionTierData;
 }
 
+// Credit price structure
+export interface CreditPriceData {
+  priceId: string;
+  amount: number;
+}
+
+// Credit prices structure
+export interface CreditPrices {
+  CREDIT_9: CreditPriceData;
+  CREDIT_49: CreditPriceData;
+  CREDIT_99: CreditPriceData;
+}
+
 // Configuration object
 interface Config {
   ENV_MODE: EnvMode;
   IS_LOCAL: boolean;
   SUBSCRIPTION_TIERS: SubscriptionTiers;
+  CREDIT_PRICES: CreditPrices;
 }
 
 // Production tier IDs
@@ -100,6 +114,22 @@ const PROD_TIERS: SubscriptionTiers = {
   TIER_200_1000_YEARLY: {
     priceId: 'price_1ReH8qG6l1KZGqIrK1akY90q',
     name: '200h/$10200/year',
+  },
+} as const;
+
+// Production credit prices
+const PROD_CREDIT_PRICES: CreditPrices = {
+  CREDIT_9: {
+    priceId: 'price_1RQZVpP2cIDuyWfbF62E3dsi',
+    amount: 9,
+  },
+  CREDIT_49: {
+    priceId: 'price_1RQZVpP2cIDuyWfbgUnmBizh',
+    amount: 49,
+  },
+  CREDIT_99: {
+    priceId: 'price_1RQZVpP2cIDuyWfbcceSm4gM',
+    amount: 99,
   },
 } as const;
 
@@ -168,6 +198,22 @@ const STAGING_TIERS: SubscriptionTiers = {
   },
 } as const;
 
+// Staging credit prices
+const STAGING_CREDIT_PRICES: CreditPrices = {
+  CREDIT_9: {
+    priceId: 'price_1ReHB5G6l1KZGqIrD70I1xqM',
+    amount: 9,
+  },
+  CREDIT_49: {
+    priceId: 'price_1ReHB5G6l1KZGqIrCRu0E4Gi',
+    amount: 49,
+  },
+  CREDIT_99: {
+    priceId: 'price_1ReHB5G6l1KZGqIrvjlz5p5V',
+    amount: 99,
+  },
+} as const;
+
 // Determine the environment mode from environment variables
 const getEnvironmentMode = (): EnvMode => {
   // Get the environment mode from the environment variable, if set
@@ -206,6 +252,8 @@ export const config: Config = {
   IS_LOCAL: currentEnvMode === EnvMode.LOCAL,
   SUBSCRIPTION_TIERS:
     currentEnvMode === EnvMode.STAGING ? STAGING_TIERS : PROD_TIERS,
+  CREDIT_PRICES:
+    currentEnvMode === EnvMode.STAGING ? STAGING_CREDIT_PRICES : PROD_CREDIT_PRICES,
 };
 
 // Helper function to check if we're in local mode (for component conditionals)

@@ -238,6 +238,35 @@ class Configuration:
     DOLLAR_TO_MINUTES_RATE: float = 6.0  # $1 = 6 minutes (conversion rate)
     MINUTES_TO_DOLLAR_RATE: float = 1/6.0  # 1 minute = $0.167 (inverse conversion)
     
+    # Credit price IDs - Production
+    CREDIT_PRICE_9_PROD: str = 'price_1RQZVpP2cIDuyWfbF62E3dsi'      # $9 credits
+    CREDIT_PRICE_49_PROD: str = 'price_1RQZVpP2cIDuyWfbgUnmBizh'     # $49 credits
+    CREDIT_PRICE_99_PROD: str = 'price_1RQZVpP2cIDuyWfbcceSm4gM'     # $99 credits
+    
+    # Credit price IDs - Staging
+    CREDIT_PRICE_9_STAGING: str = 'price_1ReHB5G6l1KZGqIrD70I1xqM'   # $9 credits
+    CREDIT_PRICE_49_STAGING: str = 'price_1ReHB5G6l1KZGqIrCRu0E4Gi'  # $49 credits
+    CREDIT_PRICE_99_STAGING: str = 'price_1ReHB5G6l1KZGqIrvjlz5p5V'  # $99 credits
+    
+    # Computed credit price IDs based on environment
+    @property
+    def CREDIT_PRICE_9(self) -> str:
+        if self.ENV_MODE == EnvMode.STAGING:
+            return self.CREDIT_PRICE_9_STAGING
+        return self.CREDIT_PRICE_9_PROD
+    
+    @property
+    def CREDIT_PRICE_49(self) -> str:
+        if self.ENV_MODE == EnvMode.STAGING:
+            return self.CREDIT_PRICE_49_STAGING
+        return self.CREDIT_PRICE_49_PROD
+    
+    @property
+    def CREDIT_PRICE_99(self) -> str:
+        if self.ENV_MODE == EnvMode.STAGING:
+            return self.CREDIT_PRICE_99_STAGING
+        return self.CREDIT_PRICE_99_PROD
+    
     @property
     def STRIPE_PRODUCT_ID(self) -> str:
         if self.ENV_MODE == EnvMode.STAGING:

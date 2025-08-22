@@ -16,6 +16,7 @@ import { useTranslation } from 'react-i18next';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Loader2, CreditCard, Landmark, QrCode } from 'lucide-react';
+import { config } from '@/lib/config';
 
 type Props = {
   accountId: string;
@@ -23,11 +24,11 @@ type Props = {
   defaultTab?: "subscription" | "prepaid";
 };
 
-// Mapping from dollar amounts to Stripe price IDs
+// Mapping from dollar amounts to Stripe price IDs - now using config
 const CREDIT_PRICE_IDS: Record<number, string> = {
-  9: 'price_1RQZVpP2cIDuyWfbF62E3dsi',   // $9 (after service fee: $4.50)
-  49: 'price_1RQZVpP2cIDuyWfbgUnmBizh',  // $49 (after service fee: $44.50)
-  99: 'price_1RQZVpP2cIDuyWfbcceSm4gM',  // $99 (after service fee: $94.50)
+  9: config.CREDIT_PRICES.CREDIT_9.priceId,
+  49: config.CREDIT_PRICES.CREDIT_49.priceId,
+  99: config.CREDIT_PRICES.CREDIT_99.priceId,
 };
 
 // Add price mapping for display

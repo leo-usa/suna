@@ -16,12 +16,13 @@ import { Button } from '@/components/ui/button';
 import { createCreditSession } from '@/lib/api';
 import { siteConfig } from '@/lib/home';
 import { cn } from '@/lib/utils';
+import { config } from '@/lib/config';
 
-// Constants for credit pricing
+// Constants for credit pricing - now using config
 const CREDIT_PRICE_IDS: Record<number, string> = {
-  9: 'price_1RQZVpP2cIDuyWfbF62E3dsi',   // $9 (after service fee: $4.50)
-  49: 'price_1RQZVpP2cIDuyWfbgUnmBizh',  // $49 (after service fee: $44.50)
-  99: 'price_1RQZVpP2cIDuyWfbcceSm4gM',  // $99 (after service fee: $94.50)
+  9: config.CREDIT_PRICES.CREDIT_9.priceId,
+  49: config.CREDIT_PRICES.CREDIT_49.priceId,
+  99: config.CREDIT_PRICES.CREDIT_99.priceId,
 };
 
 const CREDIT_PRICES: Record<number, string> = {

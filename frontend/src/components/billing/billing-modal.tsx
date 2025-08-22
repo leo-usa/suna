@@ -25,12 +25,13 @@ import { CreditCard, Check } from 'lucide-react';
 import { createCreditSession } from '@/lib/api';
 import { siteConfig } from '@/lib/home';
 import { cn } from '@/lib/utils';
+import { config } from '@/lib/config';
 
-// Constants for credit pricing
+// Constants for credit pricing - now using config
 const CREDIT_PRICE_IDS: Record<number, string> = {
-  9: 'price_1ReHB5G6l1KZGqIrD70I1xqM',
-  49: 'price_1ReHB5G6l1KZGqIrCRu0E4Gi',
-  99: 'price_1ReHB5G6l1KZGqIrvjlz5p5V',
+  9: config.CREDIT_PRICES.CREDIT_9.priceId,
+  49: config.CREDIT_PRICES.CREDIT_49.priceId,
+  99: config.CREDIT_PRICES.CREDIT_99.priceId,
 };
 
 const CREDIT_PRICES: Record<number, string> = {

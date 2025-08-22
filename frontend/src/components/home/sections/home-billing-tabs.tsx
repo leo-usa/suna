@@ -9,13 +9,14 @@ import { Label } from '@/components/ui/label';
 import { Loader2, CreditCard } from 'lucide-react';
 import { useAuth } from '@/components/AuthProvider';
 import { createCreditSession } from '@/lib/api';
+import { config } from '@/lib/config';
 import { useTranslation } from 'react-i18next';
 
-// Price mapping for display and Stripe price IDs
+// Mapping from dollar amounts to Stripe price IDs - now using config
 const CREDIT_PRICE_IDS: Record<number, string> = {
-  9: 'price_1RQZVpP2cIDuyWfbF62E3dsi',   // $9 (after service fee: $4.50)
-  49: 'price_1RQZVpP2cIDuyWfbgUnmBizh',  // $49 (after service fee: $44.50)
-  99: 'price_1RQZVpP2cIDuyWfbcceSm4gM',  // $99 (after service fee: $94.50)
+  9: config.CREDIT_PRICES.CREDIT_9.priceId,
+  49: config.CREDIT_PRICES.CREDIT_49.priceId,
+  99: config.CREDIT_PRICES.CREDIT_99.priceId,
 };
 
 const CREDIT_PRICES: Record<number, string> = {
