@@ -57,7 +57,7 @@ async def get_user_credits(client, user_id: str) -> float:
             minutes_as_dollars = minutes * config.MINUTES_TO_DOLLAR_RATE
             
             # Return the higher value (prioritize the system with more credits)
-            return min(dollars, minutes_as_dollars)
+            return max(dollars, minutes_as_dollars)
         return 0.0
     except Exception as e:
         logger.error(f"Error getting user credits: {str(e)}")
@@ -1133,10 +1133,14 @@ async def check_status(
         
         can_run, message, subscription = await check_billing_status(client, current_user_id)
         
+        # Get user credits to include in response
+        credits = await get_user_credits(client, current_user_id)
+        
         return {
             "can_run": can_run,
             "message": message,
-            "subscription": subscription
+            "subscription": subscription,
+            "credits": credits
         }
         
     except Exception as e:

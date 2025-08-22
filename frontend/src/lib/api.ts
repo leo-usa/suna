@@ -1623,6 +1623,7 @@ export interface BillingStatusResponse {
     plan_name: string;
     minutes_limit?: number;
   };
+  credits: number;
 }
 
 export interface Model {

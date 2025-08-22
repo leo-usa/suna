@@ -619,11 +619,15 @@ export default function ThreadPage({
       hasCheckedUpgradeDialog.current = true;
       const hasSeenUpgradeDialog = localStorage.getItem('suna_upgrade_dialog_displayed');
       const isFreeTier = subscriptionStatus === 'no_subscription';
-      if (!hasSeenUpgradeDialog && isFreeTier && !isLocalMode()) {
+      
+      // Check if user has credits - if they do, don't show upgrade dialog
+      const hasCredits = billingStatusQuery.data?.credits && billingStatusQuery.data.credits > 0;
+      
+      if (!hasSeenUpgradeDialog && isFreeTier && !isLocalMode() && !hasCredits) {
         setShowUpgradeDialog(true);
       }
     }
-  }, [subscriptionData, subscriptionStatus, initialLoadCompleted]);
+  }, [subscriptionData, subscriptionStatus, initialLoadCompleted, billingStatusQuery.data]);
 
   const handleDismissUpgradeDialog = () => {
     setShowUpgradeDialog(false);
