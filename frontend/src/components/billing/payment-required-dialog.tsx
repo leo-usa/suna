@@ -17,6 +17,7 @@ import { createCreditSession } from '@/lib/api';
 import { siteConfig } from '@/lib/home';
 import { cn } from '@/lib/utils';
 import { config } from '@/lib/config';
+import { createCheckoutSession } from '@/lib/api';
 
 // Constants for credit pricing - now using config
 const CREDIT_PRICE_IDS: Record<number, string> = {
@@ -235,11 +236,21 @@ export const PaymentRequiredDialog = () => {
                                             
                                             <Button 
                                                 className="w-full bg-red-600 hover:bg-red-700"
-                                                onClick={() => {
-                                                    // Handle subscription upgrade
+                                                onClick={async () => {
+                                                    // Handle subscription upgrade using proper API call
                                                     const priceId = billingPeriod === 'yearly' ? tier.yearlyStripePriceId : tier.stripePriceId;
                                                     if (priceId) {
-                                                        window.location.href = `/api/billing/create-checkout-session?price_id=${priceId}&return_url=${encodeURIComponent(`${returnUrl}/dashboard`)}`;
+                                                        try {
+                                                            const { url } = await createCheckoutSession({
+                                                                price_id: priceId,
+                                                                success_url: `${returnUrl}/dashboard?success=true`,
+                                                                cancel_url: `${returnUrl}/dashboard?canceled=true`,
+                                                            });
+                                                            window.location.href = url;
+                                                        } catch (error) {
+                                                            console.error('Failed to create checkout session:', error);
+                                                            // You could add error handling here if needed
+                                                        }
                                                     }
                                                 }}
                                             >
@@ -323,7 +334,7 @@ export const PaymentRequiredDialog = () => {
                                     {isTopUpLoading ? t('billing.loading', 'Loading...') : t('billing.payNow', 'Pay Now')}
                                 </Button>
                             </div>
-                        </div>
+                </div>
                     </TabsContent>
                 </Tabs>
               </div>

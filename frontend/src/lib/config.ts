@@ -55,64 +55,64 @@ interface Config {
 // Production tier IDs
 const PROD_TIERS: SubscriptionTiers = {
   FREE: {
-    priceId: 'price_1RILb4G6l1KZGqIrK4QLrx9i',
+    priceId: 'price_1RMBu0P2cIDuyWfbQGxAsOZ7',
     name: 'Free',
   },
   TIER_2_20: {
-    priceId: 'price_1RILb4G6l1KZGqIrhomjgDnO',
+    priceId: 'price_1RMBKOP2cIDuyWfbH6DrdJoH',
     name: '2h/$20',
   },
   TIER_6_50: {
-    priceId: 'price_1RILb4G6l1KZGqIr5q0sybWn',
+    priceId: 'price_1RMBRfP2cIDuyWfbmh1dYuQg',
     name: '6h/$50',
   },
   TIER_12_100: {
-    priceId: 'price_1RILb4G6l1KZGqIr5Y20ZLHm',
+    priceId: 'price_1RMBRfP2cIDuyWfbMUDqfrgy',
     name: '12h/$100',
   },
   TIER_25_200: {
-    priceId: 'price_1RILb4G6l1KZGqIrGAD8rNjb',
+    priceId: 'price_1RMBRfP2cIDuyWfby99jVvXT',
     name: '25h/$200',
   },
   TIER_50_400: {
-    priceId: 'price_1RILb4G6l1KZGqIruNBUMTF1',
+    priceId: 'price_1RMBRfP2cIDuyWfbHMBX01JN',
     name: '50h/$400',
   },
   TIER_125_800: {
-    priceId: 'price_1RILb3G6l1KZGqIrbJA766tN',
+    priceId: 'price_1RMBRfP2cIDuyWfbVPuRpDkq',
     name: '125h/$800',
   },
   TIER_200_1000: {
-    priceId: 'price_1RILb3G6l1KZGqIrmauYPOiN',
+    priceId: 'price_1RMBRfP2cIDuyWfbJZh9gNHu',
     name: '200h/$1000',
   },
   // Yearly plans with 15% discount (12x monthly price with 15% off)
   TIER_2_20_YEARLY: {
-    priceId: 'price_1ReHB5G6l1KZGqIrD70I1xqM',
+    priceId: 'price_1RnOhYP2cIDuyWfbryEigAqQ',
     name: '2h/$204/year',
   },
   TIER_6_50_YEARLY: {
-    priceId: 'price_1ReHAsG6l1KZGqIrlAog487C',
+    priceId: 'price_1RnOjXP2cIDuyWfbP2eZnMOE',
     name: '6h/$510/year',
   },
   TIER_12_100_YEARLY: {
-    priceId: 'price_1ReHAWG6l1KZGqIrBHer2PQc',
+    priceId: 'price_1RnOl0P2cIDuyWfb0M8AFcf0',
     name: '12h/$1020/year',
   },
   TIER_25_200_YEARLY: {
-    priceId: 'price_1ReH9uG6l1KZGqIrsvMLHViC',
+    priceId: 'price_1RnOljP2cIDuyWfbnXSXPVNR',
     name: '25h/$2040/year',
   },
   TIER_50_400_YEARLY: {
-    priceId: 'price_1ReH9fG6l1KZGqIrsPtu5KIA',
+    priceId: 'price_1RnOnUP2cIDuyWfbTBzltbAK',
     name: '50h/$4080/year',
   },
   TIER_125_800_YEARLY: {
-    priceId: 'price_1ReH9GG6l1KZGqIrfgqaJyat',
+    priceId: 'price_1RnOoDP2cIDuyWfbaWewDX98',
     name: '125h/$8160/year',
   },
   TIER_200_1000_YEARLY: {
-    priceId: 'price_1ReH8qG6l1KZGqIrK1akY90q',
+    priceId: 'price_1RnOokP2cIDuyWfbEzXTcgCN',
     name: '200h/$10200/year',
   },
 } as const;
