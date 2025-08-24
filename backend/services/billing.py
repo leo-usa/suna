@@ -84,13 +84,24 @@ async def deduct_user_credits(client, user_id: str, amount_dollars: float) -> bo
         
         # Check if user has enough credits (either minutes or dollars)
         if current_minutes < amount_minutes and current_dollars < amount_dollars:
+            logger.warning(f"User {user_id} has insufficient credits: needs ${amount_dollars} or {amount_minutes} minutes, but has ${current_dollars} and {current_minutes} minutes")
             return False
         
-        # Deduct from both systems for cross-compatibility
-        new_minutes = max(0, current_minutes - amount_minutes)
-        new_dollars = max(0, current_dollars - amount_dollars)
+        # Deduct from the system with more credits first, then from the other if needed
+        if current_dollars >= amount_dollars:
+            # User has enough dollars, deduct from dollars first
+            new_dollars = current_dollars - amount_dollars
+            new_minutes = current_minutes  # Keep minutes unchanged
+        elif current_minutes >= amount_minutes:
+            # User has enough minutes, deduct from minutes first
+            new_minutes = current_minutes - amount_minutes
+            new_dollars = current_dollars  # Keep dollars unchanged
+        else:
+            # This shouldn't happen due to the check above, but just in case
+            new_minutes = 0
+            new_dollars = 0
         
-        logger.info(f"Deducting credits: user_id={user_id}, current_dollars={current_dollars}, deducting={amount_dollars}, new_total={new_dollars}")
+        logger.info(f"Deducting credits: user_id={user_id}, current_dollars={current_dollars}, current_minutes={current_minutes}, deducting=${amount_dollars} ({amount_minutes} minutes), new_dollars={new_dollars}, new_minutes={new_minutes}")
         
         # Update both balances
         try:
@@ -103,7 +114,7 @@ async def deduct_user_credits(client, user_id: str, amount_dollars: float) -> bo
                 }, on_conflict='account_id') \
                 .execute()
             
-            logger.info(f"Successfully deducted credits from user {user_id}: ${amount_dollars} dollars, {amount_minutes} minutes")
+            logger.info(f"Successfully deducted credits from user {user_id}: ${amount_dollars} dollars ({amount_minutes} minutes). New balance: ${new_dollars} dollars, {new_minutes} minutes")
         except Exception as upsert_error:
             logger.error(f"Failed to upsert billing credits for user {user_id}: {str(upsert_error)}")
             logger.error(f"Upsert data: account_id={user_id}, balance_dollars={new_dollars}, balance_minutes={new_minutes}")
