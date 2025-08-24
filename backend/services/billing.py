@@ -57,6 +57,7 @@ async def get_user_credits(client, user_id: str) -> float:
             minutes_as_dollars = minutes * config.MINUTES_TO_DOLLAR_RATE
             
             # Return the higher value (prioritize the system with more credits)
+            # This will include negative values, which is what we want
             return max(dollars, minutes_as_dollars)
         return 0.0
     except Exception as e:
@@ -82,11 +83,7 @@ async def deduct_user_credits(client, user_id: str, amount_dollars: float) -> bo
         # Convert dollars to minutes for comparison
         amount_minutes = amount_dollars * config.DOLLAR_TO_MINUTES_RATE
         
-        # Check if user has enough credits (either minutes or dollars)
-        if current_minutes < amount_minutes and current_dollars < amount_dollars:
-            logger.warning(f"User {user_id} has insufficient credits: needs ${amount_dollars} or {amount_minutes} minutes, but has ${current_dollars} and {current_minutes} minutes")
-            return False
-        
+        # ALWAYS deduct first, then check if we can allow the operation
         # Deduct from the system with more credits first, then from the other if needed
         if current_dollars >= amount_dollars:
             # User has enough dollars, deduct from dollars first
@@ -97,13 +94,14 @@ async def deduct_user_credits(client, user_id: str, amount_dollars: float) -> bo
             new_minutes = current_minutes - amount_minutes
             new_dollars = current_dollars  # Keep dollars unchanged
         else:
-            # This shouldn't happen due to the check above, but just in case
-            new_minutes = 0
-            new_dollars = 0
+            # User doesn't have enough in either system, but we still deduct
+            # This will result in negative balances, which is fine
+            new_dollars = current_dollars - amount_dollars
+            new_minutes = current_minutes - amount_minutes
         
         logger.info(f"Deducting credits: user_id={user_id}, current_dollars={current_dollars}, current_minutes={current_minutes}, deducting=${amount_dollars} ({amount_minutes} minutes), new_dollars={new_dollars}, new_minutes={new_minutes}")
         
-        # Update both balances
+        # Update both balances (including negative values - this is intentional)
         try:
             await client.schema('basejump').from_('billing_credits') \
                 .upsert({
@@ -620,8 +618,16 @@ async def check_billing_status(client, user_id: str) -> Tuple[bool, str, Optiona
     # Get current subscription
     subscription = await get_user_subscription(user_id)
     
-    # Get current credits
+    # Get current credits (this will include negative balances)
     credits = await get_user_credits(client, user_id)
+    
+    # Check if user has negative balance (they've been running without sufficient credits)
+    if credits < 0:
+        return False, f"Account has negative balance: ${credits:.4f}. Please purchase credits to continue.", {
+            "credits": credits,
+            "subscription": subscription,
+            "negative_balance": True
+        }
     
     # If user has credits, they can run regardless of subscription status
     if credits > 0:
@@ -1281,6 +1287,7 @@ async def stripe_webhook(request: Request):
                     current_dollars = 0.0
                 
                 # Add to dollar balance (new system)
+                # If user has negative balance, this will reduce the debt first
                 new_dollars = current_dollars + net_credits_dollars
                 
                 # Keep minutes unchanged (existing customers keep their old credits)

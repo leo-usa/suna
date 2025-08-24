@@ -49,7 +49,11 @@ export function BillingErrorAlert({
                 <X className="h-4 w-4" />
               </Button>
             </div>
-            <p className="text-sm text-muted-foreground mb-3">{message}</p>
+            <p className="text-sm text-muted-foreground mb-3">
+              {message && message.toLowerCase().includes('payment required')
+                ? t('billing.paymentRequired', 'Payment Required')
+                : message}
+            </p>
 
             <div className="flex gap-2">
               <Button

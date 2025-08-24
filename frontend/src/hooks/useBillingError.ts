@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { isLocalMode } from '@/lib/config';
+import { useTranslation } from 'react-i18next';
 
 interface BillingErrorState {
   message: string;
