@@ -851,6 +851,24 @@ const zhTranslation = {
       ],
     },
   },
+  agentLoader: {
+    'initializing-neural': '初始化神经网络...',
+    'analyzing-query': '分析查询复杂度...',
+    'assembling-cognitive': '组装认知框架...',
+    'orchestrating-thoughts': '编排思维过程...',
+    'synthesizing-context': '综合上下文理解...',
+    'calibrating-parameters': '校准响应参数...',
+    'engaging-reasoning': '启动推理算法...',
+    'processing-semantic': '处理语义结构...',
+    'formulating-strategy': '制定策略方法...',
+    'optimizing-pathways': '优化解决方案路径...',
+    'harmonizing-streams': '协调数据流...',
+    'architecting-response': '构建智能响应...',
+    'fine-tuning-models': '微调认知模型...',
+    'weaving-narratives': '编织叙述线索...',
+    'crystallizing-insights': '结晶洞察...',
+    'preparing-analysis': '准备综合分析...'
+  },
 };
 
 const resources = {
@@ -3366,24 +3384,6 @@ const resources = {
             'Seguridad de Grado Empresarial - Gestión de credenciales encriptadas y ejecución segura de agentes',
           ],
         },
-      },
-      agentLoader: {
-        'initializing-neural': '初始化神经网络...',
-        'analyzing-query': '分析查询复杂度...',
-        'assembling-cognitive': '组装认知框架...',
-        'orchestrating-thoughts': '编排思维过程...',
-        'synthesizing-context': '综合上下文理解...',
-        'calibrating-parameters': '校准响应参数...',
-        'engaging-reasoning': '启动推理算法...',
-        'processing-semantic': '处理语义结构...',
-        'formulating-strategy': '制定策略方法...',
-        'optimizing-pathways': '优化解决方案路径...',
-        'harmonizing-streams': '协调数据流...',
-        'architecting-response': '构建智能响应...',
-        'fine-tuning-models': '微调认知模型...',
-        'weaving-narratives': '编织叙述线索...',
-        'crystallizing-insights': '结晶洞察...',
-        'preparing-analysis': '准备综合分析...'
       },
       shareModal: {
         title: 'Compartir Chat',
