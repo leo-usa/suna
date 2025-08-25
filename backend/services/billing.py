@@ -618,25 +618,7 @@ async def check_billing_status(client, user_id: str) -> Tuple[bool, str, Optiona
     # Get current subscription
     subscription = await get_user_subscription(user_id)
     
-    # Get current credits (this will include negative balances)
-    credits = await get_user_credits(client, user_id)
-    
-    # Check if user has negative balance (they've been running without sufficient credits)
-    if credits < 0:
-        return False, f"Account has negative balance: ${credits:.4f}. Please purchase credits to continue.", {
-            "credits": credits,
-            "subscription": subscription,
-            "negative_balance": True
-        }
-    
-    # If user has credits, they can run regardless of subscription status
-    if credits > 0:
-        return True, f"OK - ${credits:.2f} of credits available", {
-            "credits": credits,
-            "subscription": subscription
-        }
-    
-    # If no subscription and no credits, they can use free tier
+    # If no subscription, default to free tier
     if not subscription:
         subscription = {
             'price_id': config.STRIPE_FREE_TIER_ID,  # Free tier
@@ -659,11 +641,18 @@ async def check_billing_status(client, user_id: str) -> Tuple[bool, str, Optiona
     # Calculate current month's usage
     current_usage = await calculate_monthly_usage(client, user_id)
     
-    # Check if within limits
+    # Check if within monthly limits first
     if current_usage >= tier_info['cost']:
         return False, f"Monthly limit of {tier_info['cost']} dollars reached. Please upgrade your plan, purchase credits, or wait until next month.", subscription
     
-    return True, "OK", subscription
+    # If monthly limit not reached, user can use the service regardless of credit balance
+    # This allows free tier users to continue using their remaining allowance even with negative credits
+    return True, f"OK - Monthly usage: ${current_usage:.2f}/{tier_info['cost']}", {
+        "credits": await get_user_credits(client, user_id),
+        "subscription": subscription,
+        "monthly_usage": current_usage,
+        "monthly_limit": tier_info['cost']
+    }
 
 # API endpoints
 @router.post("/create-checkout-session")
