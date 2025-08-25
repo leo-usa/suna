@@ -951,6 +951,24 @@ const resources = {
         button: 'Hire Dobby',
         subtext: 'No credit card required.'
       },
+      agentLoader: {
+        'initializing-neural': 'Initializing neural pathways...',
+        'analyzing-query': 'Analyzing query complexity...',
+        'assembling-cognitive': 'Assembling cognitive framework...',
+        'orchestrating-thoughts': 'Orchestrating thought processes...',
+        'synthesizing-context': 'Synthesizing contextual understanding...',
+        'calibrating-parameters': 'Calibrating response parameters...',
+        'engaging-reasoning': 'Engaging reasoning algorithms...',
+        'processing-semantic': 'Processing semantic structures...',
+        'formulating-strategy': 'Formulating strategic approach...',
+        'optimizing-pathways': 'Optimizing solution pathways...',
+        'harmonizing-streams': 'Harmonizing data streams...',
+        'architecting-response': 'Architecting intelligent response...',
+        'fine-tuning-models': 'Fine-tuning cognitive models...',
+        'weaving-narratives': 'Weaving narrative threads...',
+        'crystallizing-insights': 'Crystallizing insights...',
+        'preparing-analysis': 'Preparing comprehensive analysis...'
+      },
       footer: {
         description: 'Dobby is your AI employee. Provided by DrPang.AI.',
         links: {
@@ -3348,6 +3366,24 @@ const resources = {
             'Seguridad de Grado Empresarial - Gestión de credenciales encriptadas y ejecución segura de agentes',
           ],
         },
+      },
+      agentLoader: {
+        'initializing-neural': '初始化神经网络...',
+        'analyzing-query': '分析查询复杂度...',
+        'assembling-cognitive': '组装认知框架...',
+        'orchestrating-thoughts': '编排思维过程...',
+        'synthesizing-context': '综合上下文理解...',
+        'calibrating-parameters': '校准响应参数...',
+        'engaging-reasoning': '启动推理算法...',
+        'processing-semantic': '处理语义结构...',
+        'formulating-strategy': '制定策略方法...',
+        'optimizing-pathways': '优化解决方案路径...',
+        'harmonizing-streams': '协调数据流...',
+        'architecting-response': '构建智能响应...',
+        'fine-tuning-models': '微调认知模型...',
+        'weaving-narratives': '编织叙述线索...',
+        'crystallizing-insights': '结晶洞察...',
+        'preparing-analysis': '准备综合分析...'
       },
       shareModal: {
         title: 'Compartir Chat',

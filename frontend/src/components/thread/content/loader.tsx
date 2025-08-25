@@ -1,28 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AnimatedShinyText } from '@/components/ui/animated-shiny-text';
+import { useTranslation } from 'react-i18next';
 
 const items = [
-    { id: 1, content: "Initializing neural pathways..." },
-    { id: 2, content: "Analyzing query complexity..." },
-    { id: 3, content: "Assembling cognitive framework..." },
-    { id: 4, content: "Orchestrating thought processes..." },
-    { id: 5, content: "Synthesizing contextual understanding..." },
-    { id: 6, content: "Calibrating response parameters..." },
-    { id: 7, content: "Engaging reasoning algorithms..." },
-    { id: 8, content: "Processing semantic structures..." },
-    { id: 9, content: "Formulating strategic approach..." },
-    { id: 10, content: "Optimizing solution pathways..." },
-    { id: 11, content: "Harmonizing data streams..." },
-    { id: 12, content: "Architecting intelligent response..." },
-    { id: 13, content: "Fine-tuning cognitive models..." },
-    { id: 14, content: "Weaving narrative threads..." },
-    { id: 15, content: "Crystallizing insights..." },
-    { id: 16, content: "Preparing comprehensive analysis..." }
+    { id: 1, key: 'initializing-neural' },
+    { id: 2, key: 'analyzing-query' },
+    { id: 3, key: 'assembling-cognitive' },
+    { id: 4, key: 'orchestrating-thoughts' },
+    { id: 5, key: 'synthesizing-context' },
+    { id: 6, key: 'calibrating-parameters' },
+    { id: 7, key: 'engaging-reasoning' },
+    { id: 8, key: 'processing-semantic' },
+    { id: 9, key: 'formulating-strategy' },
+    { id: 10, key: 'optimizing-pathways' },
+    { id: 11, key: 'harmonizing-streams' },
+    { id: 12, key: 'architecting-response' },
+    { id: 13, key: 'fine-tuning-models' },
+    { id: 14, key: 'weaving-narratives' },
+    { id: 15, key: 'crystallizing-insights' },
+    { id: 16, key: 'preparing-analysis' }
   ];
 
 export const AgentLoader = () => {
+  const { t } = useTranslation();
   const [index, setIndex] = useState(0);
+  
   useEffect(() => {
     const id = setInterval(() => {
       setIndex((state) => {
@@ -46,7 +49,7 @@ export const AgentLoader = () => {
                 style={{ position: "absolute" }}
                 className='ml-7'
             >
-                <AnimatedShinyText>{items[index].content}</AnimatedShinyText>
+                <AnimatedShinyText>{t(`agentLoader.${items[index].key}`)}</AnimatedShinyText>
             </motion.div>
             </AnimatePresence>
         </div>
