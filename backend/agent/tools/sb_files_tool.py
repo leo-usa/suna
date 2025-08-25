@@ -5,6 +5,8 @@ from agentpress.thread_manager import ThreadManager
 from utils.logger import logger
 import os
 import json
+import asyncio
+import time
 
 class SandboxFilesTool(SandboxToolsBase):
     """Tool for executing file system operations in a Daytona sandbox. All operations are performed relative to the /workspace directory."""
@@ -21,6 +23,34 @@ class SandboxFilesTool(SandboxToolsBase):
     def _should_exclude_file(self, rel_path: str) -> bool:
         """Check if a file should be excluded based on path, name, or extension"""
         return should_exclude_file(rel_path)
+
+    async def _retry_with_backoff(self, operation, max_retries=3, base_delay=1.0):
+        """Retry an operation with exponential backoff, specifically handling timeout errors"""
+        last_exception = None
+        
+        for attempt in range(max_retries):
+            try:
+                return await operation()
+            except Exception as e:
+                last_exception = e
+                error_str = str(e).lower()
+                
+                # Check if this is a timeout-related error
+                is_timeout = any(keyword in error_str for keyword in [
+                    'timeout', 'timed out', 'read timeout', 'connection timeout'
+                ])
+                
+                if is_timeout and attempt < max_retries - 1:
+                    delay = base_delay * (2 ** attempt)  # Exponential backoff
+                    logger.warning(f"Timeout error on attempt {attempt + 1}/{max_retries}, retrying in {delay}s: {str(e)}")
+                    await asyncio.sleep(delay)
+                    continue
+                else:
+                    # Either not a timeout error or we've exhausted retries
+                    break
+        
+        # If we get here, all retries failed
+        raise last_exception
 
     async def _file_exists(self, path: str) -> bool:
         """Check if a file exists in the sandbox"""
@@ -92,6 +122,11 @@ class SandboxFilesTool(SandboxToolsBase):
                         "type": "string",
                         "description": "File permissions in octal format (e.g., '644')",
                         "default": "644"
+                    },
+                    "timeout_seconds": {
+                        "type": "integer",
+                        "description": "Timeout in seconds for file creation operation. Defaults to 120 seconds.",
+                        "default": 120
                     }
                 },
                 "required": ["file_path", "file_contents"]
@@ -116,13 +151,15 @@ class SandboxFilesTool(SandboxToolsBase):
         if __name__ == "__main__":
             main()
         </parameter>
+        <parameter name="timeout_seconds">180</parameter>
         </invoke>
         </function_calls>
         '''
     )
-    async def create_file(self, file_path: str, file_contents: str, permissions: str = "644") -> ToolResult:
+    async def create_file(self, file_path: str, file_contents: str, permissions: str = "644", timeout_seconds: int = 120) -> ToolResult:
         try:
             # Ensure sandbox is initialized
+            logger.info(f"Initializing sandbox for file creation: {file_path}")
             await self._ensure_sandbox()
             
             file_path = self.clean_path(file_path)
@@ -132,35 +169,61 @@ class SandboxFilesTool(SandboxToolsBase):
             
             # Check file size before attempting to create
             content_size = len(file_contents.encode('utf-8'))
-            logger.info(f"Creating file '{file_path}' with size {content_size} bytes")
+            logger.info(f"Creating file '{file_path}' with size {content_size} bytes (timeout: {timeout_seconds}s)")
             
             # Warn if file is very large (over 1MB)
             if content_size > 1024 * 1024:
-                logger.warning(f"Large file detected: {file_path} ({content_size} bytes)")
+                logger.warning(f"Large file detected: {file_path} ({content_size} bytes) - may take longer to upload")
             
             # Create parent directories if needed
             parent_dir = '/'.join(full_path.split('/')[:-1])
             if parent_dir:
+                logger.info(f"Creating parent directory: {parent_dir}")
                 await self.sandbox.fs.create_folder(parent_dir, "755")
+                logger.info(f"Parent directory created successfully: {parent_dir}")
             
             # convert to json string if file_contents is a dict
             if isinstance(file_contents, dict):
                 file_contents = json.dumps(file_contents, indent=4)
             
-            # Write the file content with timeout handling
-            try:
+            # Write the file content with retry logic and timeout handling
+            async def upload_operation():
+                logger.info(f"Starting file upload for '{file_path}' ({content_size} bytes)")
+                start_time = time.time()
+                
+                # Upload file with retry logic
                 await self.sandbox.fs.upload_file(file_contents.encode(), full_path)
+                upload_time = time.time() - start_time
+                logger.info(f"File upload completed in {upload_time:.2f}s")
+                
+                # Set permissions
                 await self.sandbox.fs.set_file_permissions(full_path, permissions)
                 
                 # Verify the file was actually created
                 if not await self._file_exists(full_path):
-                    return self.fail_response(f"File creation failed: '{file_path}' was not created despite no errors")
+                    raise Exception(f"File creation failed: '{file_path}' was not created despite no errors")
                 
-                logger.info(f"Successfully created file '{file_path}' ({content_size} bytes)")
+                logger.info(f"Successfully created file '{file_path}' ({content_size} bytes) in {upload_time:.2f}s")
+                return True
+            
+            try:
+                # Use retry logic for the entire upload operation with user-specified timeout
+                await asyncio.wait_for(
+                    self._retry_with_backoff(upload_operation, max_retries=3, base_delay=2.0),
+                    timeout=timeout_seconds
+                )
                 
+            except asyncio.TimeoutError:
+                logger.error(f"File creation timed out after {timeout_seconds}s for '{file_path}'")
+                return self.fail_response(f"File creation timed out after {timeout_seconds} seconds. This may be due to network issues, high server load, or very large files. Please try again or reduce file size.")
             except Exception as upload_error:
-                logger.error(f"Error during file upload for '{file_path}': {str(upload_error)}")
-                return self.fail_response(f"Error uploading file content: {str(upload_error)}")
+                error_str = str(upload_error).lower()
+                if any(keyword in error_str for keyword in ['timeout', 'timed out', 'read timeout']):
+                    logger.error(f"File upload timed out after retries for '{file_path}': {str(upload_error)}")
+                    return self.fail_response(f"File upload timed out after multiple attempts. This may be due to network issues or high server load. Please try again.")
+                else:
+                    logger.error(f"Error during file upload for '{file_path}': {str(upload_error)}")
+                    return self.fail_response(f"Error uploading file content: {str(upload_error)}")
             
             message = f"File '{file_path}' created successfully."
             

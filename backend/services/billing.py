@@ -607,6 +607,7 @@ async def check_billing_status(client, user_id: str) -> Tuple[bool, str, Optiona
     Returns:
         Tuple[bool, str, Optional[Dict]]: (can_run, message, subscription_info)
     """
+    logger.info(f"Checking billing status for user {user_id}")
     if config.ENV_MODE == EnvMode.LOCAL:
         logger.info("Running in local development mode - billing checks are disabled")
         return True, "Local development mode - billing disabled", {
@@ -640,15 +641,42 @@ async def check_billing_status(client, user_id: str) -> Tuple[bool, str, Optiona
     
     # Calculate current month's usage
     current_usage = await calculate_monthly_usage(client, user_id)
+    logger.info(f"User {user_id} monthly usage: ${current_usage:.2f}/{tier_info['cost']} (tier: {tier_info['name']})")
     
     # Check if within monthly limits first
     if current_usage >= tier_info['cost']:
-        return False, f"Monthly limit of {tier_info['cost']} dollars reached. Please upgrade your plan, purchase credits, or wait until next month.", subscription
+        # Monthly limit exceeded - check if user has credits to cover the overage
+        user_credits = await get_user_credits(client, user_id)
+        overage_amount = current_usage - tier_info['cost']
+        
+        if user_credits >= overage_amount:
+            # User has enough credits to cover the overage - allow usage
+            logger.info(f"User {user_id} exceeded monthly limit by ${overage_amount:.2f} but has ${user_credits:.2f} credits - allowing usage")
+            return True, f"Monthly limit exceeded by ${overage_amount:.2f}, but you have ${user_credits:.2f} credits available. Usage will deduct from your credits.", {
+                "credits": user_credits,
+                "subscription": subscription,
+                "monthly_usage": current_usage,
+                "monthly_limit": tier_info['cost'],
+                "overage_amount": overage_amount,
+                "using_credits": True
+            }
+        else:
+            # User doesn't have enough credits to cover the overage
+            return False, f"Monthly limit of ${tier_info['cost']} reached with ${overage_amount:.2f} overage. You have ${user_credits:.2f} credits but need ${overage_amount:.2f}. Please purchase more credits or upgrade your plan.", {
+                "credits": user_credits,
+                "subscription": subscription,
+                "monthly_usage": current_usage,
+                "monthly_limit": tier_info['cost'],
+                "overage_amount": overage_amount,
+                "insufficient_credits": True
+            }
     
     # If monthly limit not reached, user can use the service regardless of credit balance
     # This allows free tier users to continue using their remaining allowance even with negative credits
+    user_credits = await get_user_credits(client, user_id)
+    logger.info(f"User {user_id} within monthly limits - allowing usage. Credits: ${user_credits:.2f}")
     return True, f"OK - Monthly usage: ${current_usage:.2f}/{tier_info['cost']}", {
-        "credits": await get_user_credits(client, user_id),
+        "credits": user_credits,
         "subscription": subscription,
         "monthly_usage": current_usage,
         "monthly_limit": tier_info['cost']
