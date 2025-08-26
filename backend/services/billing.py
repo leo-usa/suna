@@ -649,8 +649,8 @@ async def check_billing_status(client, user_id: str) -> Tuple[bool, str, Optiona
         user_credits = await get_user_credits(client, user_id)
         overage_amount = current_usage - tier_info['cost']
         
-        if user_credits >= overage_amount:
-            # User has enough credits to cover the overage - allow usage
+        if user_credits > 0:
+            # User has some credits - allow usage (credits will be deducted after run)
             logger.info(f"User {user_id} exceeded monthly limit by ${overage_amount:.2f} but has ${user_credits:.2f} credits - allowing usage")
             return True, f"Monthly limit exceeded by ${overage_amount:.2f}, but you have ${user_credits:.2f} credits available. Usage will deduct from your credits.", {
                 "credits": user_credits,
@@ -661,8 +661,8 @@ async def check_billing_status(client, user_id: str) -> Tuple[bool, str, Optiona
                 "using_credits": True
             }
         else:
-            # User doesn't have enough credits to cover the overage
-            return False, f"Monthly limit of ${tier_info['cost']} reached with ${overage_amount:.2f} overage. You have ${user_credits:.2f} credits but need ${overage_amount:.2f}. Please purchase more credits or upgrade your plan.", {
+            # User has no credits to cover overage
+            return False, f"Monthly limit of ${tier_info['cost']} reached with ${overage_amount:.2f} overage. You have no credits available. Please purchase more credits or upgrade your plan.", {
                 "credits": user_credits,
                 "subscription": subscription,
                 "monthly_usage": current_usage,
