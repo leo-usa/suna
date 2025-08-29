@@ -26,7 +26,17 @@ from typing import Dict, Any
 # Configure Dramatiq broker using Redis instead of RabbitMQ
 redis_host = os.getenv('REDIS_HOST', 'redis')
 redis_port = int(os.getenv('REDIS_PORT', 6379))
-redis_broker = RedisBroker(host=redis_host, port=redis_port, middleware=[dramatiq.middleware.AsyncIO()])
+redis_password = os.getenv('REDIS_PASSWORD', '')
+redis_ssl = os.getenv('REDIS_SSL', 'False').lower() == 'true'
+
+# Create Redis broker with proper authentication and SSL settings
+redis_broker = RedisBroker(
+    host=redis_host, 
+    port=redis_port, 
+    password=redis_password,
+    ssl=redis_ssl,
+    middleware=[dramatiq.middleware.AsyncIO()]
+)
 dramatiq.set_broker(redis_broker)
 
 
