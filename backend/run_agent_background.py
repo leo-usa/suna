@@ -15,19 +15,19 @@ import uuid
 from agentpress.thread_manager import ThreadManager
 from services.supabase import DBConnection
 from services import redis
-from dramatiq.brokers.rabbitmq import RabbitmqBroker
+from dramatiq.brokers.redis import RedisBroker
 import os
 from services.langfuse import langfuse
 from utils.retry import retry
-from services.rabbitmq import get_dramatiq_broker_url
 
 import sentry_sdk
 from typing import Dict, Any
 
-# Configure Dramatiq broker using our RabbitMQ service
-broker_url = get_dramatiq_broker_url()
-rabbitmq_broker = RabbitmqBroker(url=broker_url, middleware=[dramatiq.middleware.AsyncIO()])
-dramatiq.set_broker(rabbitmq_broker)
+# Configure Dramatiq broker using Redis instead of RabbitMQ
+redis_host = os.getenv('REDIS_HOST', 'redis')
+redis_port = int(os.getenv('REDIS_PORT', 6379))
+redis_broker = RedisBroker(host=redis_host, port=redis_port, middleware=[dramatiq.middleware.AsyncIO()])
+dramatiq.set_broker(redis_broker)
 
 
 _initialized = False
