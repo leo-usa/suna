@@ -11,8 +11,8 @@ MODELS = {
             "output_cost_per_million_tokens": 15.00
         },
         "tier_availability": ["free", "paid"],
-        "max_output_tokens": 8192,
-        "recommended_safe_limit": 7000
+        "max_output_tokens": 64000,
+        "recommended_safe_limit": 50000
     },
     # "openrouter/deepseek/deepseek-chat": {
     #     "aliases": ["deepseek"],
@@ -61,8 +61,8 @@ MODELS = {
             "output_cost_per_million_tokens": 3.00
         },
         "tier_availability": ["free", "paid"],
-        "max_output_tokens": 8192,
-        "recommended_safe_limit": 7000
+        "max_output_tokens": 128000,
+        "recommended_safe_limit": 100000
     },
     "openrouter/z-ai/glm-4.5": {
         "aliases": ["z-ai/glm-4.5"],
@@ -133,8 +133,8 @@ MODELS = {
             "output_cost_per_million_tokens": 10.00
         },
         "tier_availability": ["paid"],
-        "max_output_tokens": 64000,
-        "recommended_safe_limit": 50000
+        "max_output_tokens": 66000,
+        "recommended_safe_limit": 52000
     },
     "openai/gpt-4o": {
         "aliases": ["gpt-4o"],
@@ -173,8 +173,8 @@ MODELS = {
             "output_cost_per_million_tokens": 15.00
         },
         "tier_availability": ["paid"],
-        "max_output_tokens": 8192,
-        "recommended_safe_limit": 7000
+        "max_output_tokens": 64000,
+        "recommended_safe_limit": 50000
     },
     "anthropic/claude-3-5-sonnet-latest": {
         "aliases": ["sonnet-3.5"],
@@ -215,8 +215,8 @@ MODELS = {
             "output_cost_per_million_tokens": 75.00
         },
         "tier_availability": ["paid"],
-        "max_output_tokens": 8192,
-        "recommended_safe_limit": 7000
+        "max_output_tokens": 32000,
+        "recommended_safe_limit": 25000
     },   
 }
 
