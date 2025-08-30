@@ -183,8 +183,8 @@ MODELS = {
             "output_cost_per_million_tokens": 15.00
         },
         "tier_availability": ["paid"],
-        "max_output_tokens": 8192,
-        "recommended_safe_limit": 7000
+        "max_output_tokens": 4096,
+        "recommended_safe_limit": 3000
     },
     
     # Latest OpenAI Open Source and Anthropic Models
