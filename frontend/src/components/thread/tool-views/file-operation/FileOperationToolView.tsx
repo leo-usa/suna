@@ -170,7 +170,7 @@ export function FileOperationToolView({
             }}
             title={`HTML Preview of ${fileName}`}
             className="flex-grow border-0"
-            sandbox="allow-same-origin allow-scripts"
+            sandbox="allow-same-origin allow-scripts allow-popups allow-top-navigation"
           />
         </div>
       );

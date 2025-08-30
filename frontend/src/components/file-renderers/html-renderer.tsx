@@ -227,7 +227,7 @@ export function HtmlRenderer({
               ref={iframeRef}
               title="HTML Preview"
               className="w-full h-full border-0"
-              sandbox="allow-same-origin allow-scripts"
+              sandbox="allow-same-origin allow-scripts allow-popups allow-top-navigation"
             />
           </div>
         ) : (

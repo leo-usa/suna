@@ -75,7 +75,7 @@ export default function CommunityPostEmbedPage() {
         src={htmlUrl}
         style={{ width: '100vw', height: 'calc(100vh - 64px)', border: 'none' }}
         title="Community Post"
-        sandbox="allow-scripts allow-same-origin"
+        sandbox="allow-scripts allow-same-origin allow-popups allow-top-navigation"
         allowFullScreen
       />
       {/* Floating Attribution Bar */}
