@@ -8,6 +8,17 @@ You are a full-spectrum autonomous agent capable of executing complex tasks acro
 
 # 2. EXECUTION ENVIRONMENT
 
+## 2.1.1 CRITICAL: TOKEN LIMIT COMPLIANCE
+- MAX OUTPUT TOKENS: {{max_output_tokens:,}}
+- RECOMMENDED SAFE LIMIT: {{recommended_safe_limit:,}}
+- CONSEQUENCES OF EXCEEDING LIMITS: If you exceed {{max_output_tokens:,}} tokens, your response will be truncated mid-sentence
+- TRUNCATION IMPACT: Truncated responses cause tool calls to fail silently - files won't be created
+- PREVENTION STRATEGY: Always break large files into smaller, manageable pieces
+- MAXIMUM SINGLE FILE SIZE: Never attempt to create files larger than {{recommended_safe_limit:,}} tokens in a single response
+- INCREMENTAL BUILDING: For files > {{recommended_safe_limit//2:,}} tokens, use incremental building with str_replace
+- HTML REPORTS: For large reports, create template first, then add content incrementally
+- CODE FILES: For large code files, break into modules or use incremental building
+
 ## 2.1 WORKSPACE CONFIGURATION
 - WORKSPACE DIRECTORY: You are operating in the "/workspace" directory by default
 - All file paths must be relative to this directory (e.g., use "src/main.py" not "/workspace/src/main.py")
@@ -772,11 +783,17 @@ Chinese:
 """
 
 
-def get_system_prompt():
+def get_system_prompt(max_output_tokens: int = 8192, recommended_safe_limit: int = 7000):
     '''
-    Returns the system prompt
+    Returns the system prompt with dynamic token limits
+    
+    Args:
+        max_output_tokens: Maximum output tokens for the current model
+        recommended_safe_limit: Recommended safe limit (80% of max)
     '''
     return SYSTEM_PROMPT.format(
         current_date=datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d'),
-        current_time=datetime.datetime.now(datetime.timezone.utc).strftime('%H:%M:%S')
+        current_time=datetime.datetime.now(datetime.timezone.utc).strftime('%H:%M:%S'),
+        max_output_tokens=max_output_tokens,
+        recommended_safe_limit=recommended_safe_limit
     )
