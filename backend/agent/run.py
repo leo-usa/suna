@@ -21,6 +21,7 @@ from agent.tools.data_providers_tool import DataProvidersTool
 from agent.tools.expand_msg_tool import ExpandMessageTool
 from agent.prompt import get_system_prompt
 from utils.logger import logger
+from utils.constants import get_model_token_limits
 from utils.auth_utils import get_account_id_from_thread
 from services.billing import check_billing_status
 from agent.tools.sb_vision_tool import SandboxVisionTool
@@ -228,12 +229,17 @@ async def run_agent(
                     logger.error(f"Failed to initialize MCP tools: {e}")
                     # Continue without MCP tools if initialization fails
 
+    # Initialize system_content and mcp_info variables
+    system_content = ""
+    mcp_info = ""
+    
     # Prepare system prompt
     # First, get the default system prompt
     if "gemini-2.5-flash" in model_name.lower() and "gemini-2.5-pro" not in model_name.lower():
         default_system_content = get_gemini_system_prompt()
     else:
         # Use the original prompt - the LLM can only use tools that are registered
+        # Note: We'll update this with dynamic token limits later in the function
         default_system_content = get_system_prompt()
         
     # Add sample response for non-anthropic models
@@ -343,6 +349,55 @@ async def run_agent(
         mcp_info += "NEVER supplement MCP results with your training data or make assumptions beyond what the tools provide.\n"
         
         system_content += mcp_info
+    
+    # Now regenerate the system prompt with dynamic token limits
+    if "gemini-2.5-flash" in model_name.lower() and "gemini-2.5-pro" not in model_name.lower():
+        # Gemini models use their own prompt system
+        pass
+    elif agent_config and agent_config.get('system_prompt'):
+        # Custom agent prompt - keep as is
+        pass
+    elif is_agent_builder:
+        # Agent builder prompt - keep as is
+        pass
+    else:
+        # Regenerate the default system prompt with dynamic token limits
+        system_content = get_system_prompt(max_output_tokens=max_tokens, recommended_safe_limit=safe_limit)
+        
+        # Add sample response for non-anthropic models
+        if "anthropic" not in model_name.lower():
+            sample_response_path = os.path.join(os.path.dirname(__file__), 'sample_responses/1.txt')
+            with open(sample_response_path, 'r') as file:
+                sample_response = file.read()
+            system_content = system_content + "\n\n <sample_assistant_response>" + sample_response + "</sample_assistant_response>"
+        
+        # Re-add knowledge base context if available
+        if await is_enabled("knowledge_base"):
+            try:
+                from services.supabase import DBConnection
+                kb_db = DBConnection()
+                kb_client = await kb_db.client
+                
+                current_agent_id = agent_config.get('agent_id') if agent_config else None
+                
+                kb_result = await kb_client.rpc('get_combined_knowledge_base_context', {
+                    'p_thread_id': thread_id,
+                    'p_agent_id': current_agent_id,
+                    'p_max_tokens': 4000
+                }).execute()
+                
+                if kb_result.data and kb_result.data.strip():
+                    logger.info(f"Adding combined knowledge base context to system prompt for thread {thread_id}, agent {current_agent_id}")
+                    system_content += "\n\n" + kb_result.data
+                else:
+                    logger.debug(f"No knowledge base context found for thread {thread_id}, agent {current_agent_id}")
+                    
+            except Exception as e:
+                logger.error(f"Error retrieving knowledge base context for thread {thread_id}: {e}")
+        
+        # Re-add MCP info if available
+        if agent_config and (agent_config.get('configured_mcps') or agent_config.get('custom_mcps')) and mcp_wrapper_instance and mcp_wrapper_instance._initialized:
+            system_content += mcp_info
     
     system_message = { "role": "system", "content": system_content }
 
@@ -482,19 +537,13 @@ async def run_agent(
             # logger.debug(f"Constructed temporary message with {len(temp_message_content_list)} content blocks.")
         # ---- End Temporary Message Handling ----
 
-        # Set max_tokens based on model
-        max_tokens = None
-        if "sonnet" in model_name.lower():
-            # Claude 3.5 Sonnet has a limit of 8192 tokens
-            max_tokens = 8192
-        elif "gpt-4" in model_name.lower():
-            max_tokens = 4096
-        elif "gemini-2.5-pro" in model_name.lower():
-            # Gemini 2.5 Pro has 64k max output tokens
-            max_tokens = 64000
-        elif "kimi-k2" in model_name.lower():
-            # Kimi-K2 has 120K context, set reasonable max output tokens
-            max_tokens = 8192
+        # Get dynamic token limits based on model
+        model_limits = get_model_token_limits(model_name)
+        max_tokens = model_limits["max_output_tokens"]
+        safe_limit = model_limits["recommended_safe_limit"]
+        
+        # Log the token limits for debugging
+        logger.info(f"Model {model_name} token limits: max={max_tokens:,}, safe={safe_limit:,}")
             
         generation = trace.generation(name="thread_manager.run_thread") if trace else None
         try:
