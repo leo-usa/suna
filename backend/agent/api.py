@@ -2733,19 +2733,145 @@ async def get_community_post(post_id: str):
 
 @router.get("/public-html/{post_id}")
 async def serve_public_html(post_id: str):
-    """Proxy the HTML file from Supabase Storage and serve it as text/html."""
+    """Proxy the HTML file from Supabase Storage and serve it as text/html with Open Graph meta tags."""
     # First, get the post details to find the correct html_path
     client = await db.client
-    post = await client.table('community_posts').select('html_path').eq('id', post_id).maybe_single().execute()
+    post = await client.table('community_posts').select('*').eq('id', post_id).maybe_single().execute()
     if not post or not getattr(post, 'data', None):
         raise HTTPException(status_code=404, detail="Post not found")
     
-    html_path = post.data['html_path']
+    post_data = post.data
+    html_path = post_data['html_path']
     supabase_url = f"https://tsdrmlnyclxwkryqrjic.supabase.co/storage/v1/object/public/share/{html_path}"
     
     async with httpx.AsyncClient() as client:
         r = await client.get(supabase_url)
         if r.status_code != 200:
             raise HTTPException(status_code=404, detail="HTML file not found in Supabase Storage.")
-        return Response(content=r.content, media_type="text/html")
+        
+        html_content = r.content.decode('utf-8')
+        
+        # Parse HTML to extract first image and title
+        first_image_url = None
+        html_title = None
+        first_sentence = None
+        
+        try:
+            from bs4 import BeautifulSoup
+            soup = BeautifulSoup(html_content, 'html.parser')
+            
+            # Extract HTML title
+            title_tag = soup.find('title')
+            if title_tag:
+                html_title = title_tag.get_text().strip()
+            
+            # Extract first image
+            img_tag = soup.find('img')
+            if img_tag:
+                src = img_tag.get('src')
+                if src:
+                    # Convert relative URLs to absolute
+                    if src.startswith('http'):
+                        first_image_url = src
+                    else:
+                        # Use the current domain for relative URLs
+                        domain = "https://dobby.now"  # You can make this configurable
+                        first_image_url = f"{domain}{src}" if src.startswith('/') else f"{domain}/{src}"
+            
+            # Extract first sentence from body text (excluding title)
+            body = soup.find('body')
+            if body:
+                # Remove title and headings to get clean text content
+                for tag in body.find_all(['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'title']):
+                    tag.decompose()
+                
+                # Get text content and find first sentence
+                text_content = body.get_text().strip()
+                if text_content:
+                    # Clean up whitespace: replace multiple spaces/newlines with single space
+                    import re
+                    text_content = re.sub(r'\s+', ' ', text_content).strip()
+                    
+                    # Find first sentence (ending with . ! ?)
+                    sentences = re.split(r'[.!?]+', text_content)
+                    if sentences:
+                        first_sentence = sentences[0].strip()
+                        if len(first_sentence) > 100:  # Truncate if too long
+                            first_sentence = first_sentence[:100] + "..."
+        
+        except Exception as e:
+            logger.warning(f"Failed to parse HTML for post {post_id}: {str(e)}")
+            # Continue with fallback values
+        
+        # Prepare meta tags - focus on HTML report content
+        # Use HTML title as primary title, fallback to post title
+        og_title = html_title or post_data.get('title', 'Community Post')
+        
+        # Use HTML title + first sentence for description (this is the report content)
+        if html_title and first_sentence:
+            og_description = f"{html_title}. {first_sentence}"
+        elif html_title:
+            og_description = html_title
+        else:
+            og_description = f"Check out this community post: {post_data.get('title', 'Community Post')}"
+        
+        # Use first image from HTML, fallback to thumbnail_path, then Dobby logo
+        if first_image_url:
+            og_image = first_image_url
+        elif post_data.get('thumbnail_path'):
+            thumbnail_path = post_data['thumbnail_path']
+            if thumbnail_path.startswith('http'):
+                og_image = thumbnail_path
+            else:
+                domain = "https://dobby.now"
+                og_image = f"{domain}{thumbnail_path}" if thumbnail_path.startswith('/') else f"{domain}/{thumbnail_path}"
+        else:
+            og_image = "https://dobby.now/dobby-logo.svg"
+        
+        # Get current domain for canonical URL
+        domain = "https://dobby.now"  # You can make this configurable
+        post_url = f"{domain}/community/view/{post_id}"
+        
+        # Create meta tags HTML
+        meta_tags = f"""
+        <!-- Open Graph Meta Tags for Social Media Sharing -->
+        <meta property="og:title" content="{og_title}" />
+        <meta property="og:description" content="{og_description}" />
+        <meta property="og:image" content="{og_image}" />
+        <meta property="og:url" content="{post_url}" />
+        <meta property="og:type" content="article" />
+        <meta property="og:site_name" content="Dobby" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:image:alt" content="{og_title}" />
+        
+        <!-- WeChat Specific Meta Tags -->
+        <meta property="wechat:title" content="{og_title}" />
+        <meta property="wechat:description" content="{og_description}" />
+        <meta property="wechat:image" content="{og_image}" />
+        
+        <!-- Twitter Card Meta Tags -->
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="{og_title}" />
+        <meta name="twitter:description" content="{og_description}" />
+        <meta name="twitter:image" content="{og_image}" />
+        <meta name="twitter:creator" content="@dobby_ai" />
+        <meta name="twitter:site" content="@dobby_ai" />
+        
+        <!-- Additional Meta Tags -->
+        <meta name="description" content="{og_description}" />
+        <meta name="keywords" content="AI, Research, Community, Dobby" />
+        <meta name="author" content="Dobby AI" />
+        <link rel="canonical" href="{post_url}" />
+        """
+        
+        # Inject meta tags into HTML head
+        if '<head>' in html_content:
+            # Insert meta tags after <head> tag
+            html_content = html_content.replace('<head>', f'<head>{meta_tags}')
+        else:
+            # If no head tag, insert at the beginning
+            html_content = f'<!DOCTYPE html><html><head>{meta_tags}</head><body>{html_content}</body></html>'
+        
+        return Response(content=html_content.encode('utf-8'), media_type="text/html")
 
