@@ -163,6 +163,21 @@ export async function generateMetadata({ params }: LayoutProps): Promise<Metadat
         'wechat:site_icon': `${domain}/dobby-logo.svg`,
         'wechat:author': 'Dobby.now AI 智能体',
         'wechat:copyright': '© 2025 Dobby.now AI 智能体',
+        
+        // Alternative WeChat meta tag variations (for better compatibility)
+        'wechat:app_name': 'Dobby.now AI 智能体',
+        'wechat:app_id': 'dobby_ai',
+        'wechat:channel': 'community',
+        
+        // Additional meta tags that WeChat might recognize
+        'msapplication-TileColor': '#2563eb',
+        'msapplication-config': '/browserconfig.xml',
+        'apple-mobile-web-app-title': 'Dobby.now AI 智能体',
+        'apple-mobile-web-app-capable': 'yes',
+        'apple-mobile-web-app-status-bar-style': 'default',
+        'mobile-web-app-capable': 'yes',
+        'application-name': 'Dobby.now AI 智能体',
+        
         // Additional Open Graph tags for better compatibility
         'og:image:width': '1200',
         'og:image:height': '630',
