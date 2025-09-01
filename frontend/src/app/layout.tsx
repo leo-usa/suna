@@ -106,6 +106,35 @@ export const metadata: Metadata = {
   alternates: {
     canonical: siteConfig.url,
   },
+  // Additional meta tags for better social media sharing
+  other: {
+    // WeChat specific meta tags for homepage
+    'wechat:title': 'Dobby - 通用人工智能助手',
+    'wechat:description': 'Dobby是一个通用AI助手，通过自然对话帮助您轻松完成现实世界的任务，包括做研究写报告、数据分析和生成PPT等。',
+    'wechat:image': `${siteConfig.url}/banner.png`,
+    // WeChat brand display tags
+    'wechat:site_name': 'Dobby.now AI 智能体',
+    'wechat:site_icon': `${siteConfig.url}/dobby-logo.svg`,
+    'wechat:author': 'Dobby.now AI 智能体',
+    'wechat:copyright': '© 2025 Dobby.now AI 智能体',
+    // Alternative WeChat meta tag variations (for better compatibility)
+    'wechat:app_name': 'Dobby.now AI 智能体',
+    'wechat:app_id': 'dobby_ai',
+    'wechat:channel': 'homepage',
+    // Additional meta tags that WeChat might recognize
+    'msapplication-TileColor': '#2563eb',
+    'msapplication-config': '/browserconfig.xml',
+    'apple-mobile-web-app-title': 'Dobby.now AI 智能体',
+    'apple-mobile-web-app-capable': 'yes',
+    'apple-mobile-web-app-status-bar-style': 'default',
+    'mobile-web-app-capable': 'yes',
+    'application-name': 'Dobby.now AI 智能体',
+    // Additional Open Graph tags for better compatibility
+    'og:image:width': '1200',
+    'og:image:height': '630',
+    'og:image:type': 'image/png',
+    'og:image:alt': 'Dobby - Open Source Generalist AI Agent',
+  },
 };
 
 export default function RootLayout({
