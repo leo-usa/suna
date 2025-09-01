@@ -88,7 +88,7 @@ export default function HomeBillingTabs() {
   };
 
   return (
-    <section className="flex flex-col items-center justify-center gap-10 w-full relative pb-12">
+    <section id="pricing" className="flex flex-col items-center justify-center gap-10 w-full relative pb-12">
       <div className="text-center">
         <h2 className="text-3xl md:text-4xl font-medium tracking-tighter text-center text-balance">
           {t('pricing.title', 'Choose the right plan for your needs')}
