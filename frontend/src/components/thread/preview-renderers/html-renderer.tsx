@@ -164,48 +164,91 @@ export function HtmlRenderer({
 
     // Inject HTML content directly into iframe when in preview mode
     // This approach ensures HTML always renders correctly even when the Daytona proxy is down:
-    // 1. Immediately render the HTML content to ensure it shows up
-    // 2. Try to embed external assets (CSS/images) if the proxy is working
-    // 3. If asset embedding fails, keep the original content (which is already rendered)
-    // 4. Fallback timeout ensures content is always displayed
+    // 1. Try to embed external assets (CSS/images) if the proxy is working
+    // 2. Render the final HTML content once with proper JavaScript execution
+    // 3. Ensure JavaScript executes after DOM is fully loaded
     useEffect(() => {
         if (viewMode === 'preview' && iframeRef.current && content) {
             const iframe = iframeRef.current;
             const doc = iframe.contentDocument || iframe.contentWindow?.document;
 
             if (doc) {
-                let hasRendered = false;
-                
-                // Immediately render the HTML content to ensure it shows up
-                doc.open();
-                doc.write(content);
-                doc.close();
-                hasRendered = true;
-                
-                // Set a timeout to ensure we always render something
-                const timeoutId = setTimeout(() => {
-                    if (doc.body && !doc.body.innerHTML.trim()) {
-                        // If the iframe is still empty after timeout, write the content directly
-                        hasRendered = true;
-                        doc.open();
-                        doc.write(content);
-                        doc.close();
-                    }
-                }, 1000);
-
-                // Try to embed assets and re-render if successful
+                // Try to embed assets first, then render once
                 embedAssets(content, project, fileName).then((finalHtml) => {
-                    if (hasRendered) {
-                        clearTimeout(timeoutId);
-                        doc.open();
-                        doc.write(finalHtml);
-                        doc.close();
+                    // Clear the document completely
+                    doc.open();
+                    doc.write(finalHtml);
+                    doc.close();
+                    
+                    // Ensure JavaScript executes after DOM is ready
+                    if (doc.readyState === 'loading') {
+                        doc.addEventListener('DOMContentLoaded', () => {
+                            // Force re-execution of any inline scripts
+                            const scripts = doc.querySelectorAll('script');
+                            scripts.forEach(script => {
+                                if (script.innerHTML) {
+                                    try {
+                                        // Create a new script element to execute the code
+                                        const newScript = doc.createElement('script');
+                                        newScript.innerHTML = script.innerHTML;
+                                        doc.head.appendChild(newScript);
+                                    } catch (e) {
+                                        console.warn('Failed to execute script:', e);
+                                    }
+                                }
+                            });
+                        });
+                    } else {
+                        // DOM is already loaded, execute scripts immediately
+                        const scripts = doc.querySelectorAll('script');
+                        scripts.forEach(script => {
+                            if (script.innerHTML) {
+                                try {
+                                    const newScript = doc.createElement('script');
+                                    newScript.innerHTML = script.innerHTML;
+                                    doc.head.appendChild(newScript);
+                                } catch (e) {
+                                    console.warn('Failed to execute script:', e);
+                                }
+                            }
+                        });
                     }
                 }).catch((error) => {
-                    if (hasRendered) {
-                        clearTimeout(timeoutId);
-                        console.warn('Failed to embed assets, keeping original content:', error);
-                        // Content is already rendered, no need to do anything
+                    console.warn('Failed to embed assets, using original content:', error);
+                    // Fallback to original content
+                    doc.open();
+                    doc.write(content);
+                    doc.close();
+                    
+                    // Execute scripts for fallback content
+                    if (doc.readyState === 'loading') {
+                        doc.addEventListener('DOMContentLoaded', () => {
+                            const scripts = doc.querySelectorAll('script');
+                            scripts.forEach(script => {
+                                if (script.innerHTML) {
+                                    try {
+                                        const newScript = doc.createElement('script');
+                                        newScript.innerHTML = script.innerHTML;
+                                        doc.head.appendChild(newScript);
+                                    } catch (e) {
+                                        console.warn('Failed to execute script:', e);
+                                    }
+                                }
+                            });
+                        });
+                    } else {
+                        const scripts = doc.querySelectorAll('script');
+                        scripts.forEach(script => {
+                            if (script.innerHTML) {
+                                try {
+                                    const newScript = doc.createElement('script');
+                                    newScript.innerHTML = script.innerHTML;
+                                    doc.head.appendChild(newScript);
+                                } catch (e) {
+                                    console.warn('Failed to execute script:', e);
+                                }
+                            }
+                        });
                     }
                 });
             }

@@ -164,6 +164,77 @@ export function FileOperationToolView({
                     doc.open();
                     doc.write(finalHtml);
                     doc.close();
+                    
+                    // Ensure JavaScript executes after DOM is ready
+                    if (doc.readyState === 'loading') {
+                      doc.addEventListener('DOMContentLoaded', () => {
+                        // Force re-execution of any inline scripts
+                        const scripts = doc.querySelectorAll('script');
+                        scripts.forEach(script => {
+                          if (script.innerHTML) {
+                            try {
+                              // Create a new script element to execute the code
+                              const newScript = doc.createElement('script');
+                              newScript.innerHTML = script.innerHTML;
+                              doc.head.appendChild(newScript);
+                            } catch (e) {
+                              console.warn('Failed to execute script:', e);
+                            }
+                          }
+                        });
+                      });
+                    } else {
+                      // DOM is already loaded, execute scripts immediately
+                      const scripts = doc.querySelectorAll('script');
+                      scripts.forEach(script => {
+                        if (script.innerHTML) {
+                          try {
+                            const newScript = doc.createElement('script');
+                            newScript.innerHTML = script.innerHTML;
+                            doc.head.appendChild(newScript);
+                          } catch (e) {
+                            console.warn('Failed to execute script:', e);
+                          }
+                        }
+                      });
+                    }
+                  }).catch((error) => {
+                    console.warn('Failed to embed assets, using original content:', error);
+                    // Fallback to original content
+                    doc.open();
+                    doc.write(fileContent);
+                    doc.close();
+                    
+                    // Execute scripts for fallback content
+                    if (doc.readyState === 'loading') {
+                      doc.addEventListener('DOMContentLoaded', () => {
+                        const scripts = doc.querySelectorAll('script');
+                        scripts.forEach(script => {
+                          if (script.innerHTML) {
+                            try {
+                              const newScript = doc.createElement('script');
+                              newScript.innerHTML = script.innerHTML;
+                              doc.head.appendChild(newScript);
+                            } catch (e) {
+                              console.warn('Failed to execute script:', e);
+                            }
+                          }
+                        });
+                      });
+                    } else {
+                      const scripts = doc.querySelectorAll('script');
+                      scripts.forEach(script => {
+                        if (script.innerHTML) {
+                          try {
+                            const newScript = doc.createElement('script');
+                            newScript.innerHTML = script.innerHTML;
+                            doc.head.appendChild(newScript);
+                          } catch (e) {
+                            console.warn('Failed to execute script:', e);
+                          }
+                        }
+                      });
+                    }
                   });
                 }
               }
