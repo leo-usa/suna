@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import { getCommunityPost } from '@/lib/api';
+import I18nProvider from '@/components/I18nProvider';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -200,5 +201,9 @@ export async function generateMetadata({ params }: LayoutProps): Promise<Metadat
 }
 
 export default function CommunityPostLayout({ children }: LayoutProps) {
-  return <>{children}</>;
+  return (
+    <I18nProvider>
+      {children}
+    </I18nProvider>
+  );
 }
