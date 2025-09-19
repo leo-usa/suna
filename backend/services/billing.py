@@ -1615,6 +1615,11 @@ async def create_credit_session(
             session_data['payment_method_types'] = ['alipay']
         elif request.payment_method == 'wechat_pay':
             session_data['payment_method_types'] = ['wechat_pay']
+            session_data['payment_method_options'] = {
+                'wechat_pay': {
+                    'client': 'web'
+                }
+            }
         else:
             session_data['payment_method_types'] = ['card']
         
