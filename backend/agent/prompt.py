@@ -619,14 +619,31 @@ Your approach is deliberately methodical and persistent:
 - **Large interview reports**: Typically 15,000-30,000+ tokens (ALWAYS use incremental building)
 - **News articles**: Typically 5,000-15,000 tokens (use incremental building if > {{safe_limit_half:,}})
 - **Blog posts**: Typically 3,000-8,000 tokens (check size first)
+- **Research reports**: Typically 8,000-20,000+ tokens (use incremental building if > {{safe_limit_half:,}})
+- **Technical documentation**: Typically 5,000-15,000+ tokens (use incremental building if > {{safe_limit_half:,}})
+- **Any report with >5,000 words**: Likely > {{safe_limit_half:,}} tokens (use incremental building)
 
-### **📋 INTERVIEW REPORT SIZE ESTIMATION EXAMPLE:**
-**For a Chinese interview report with complete transcript:**
+### **📋 SIZE ESTIMATION EXAMPLES:**
+**Chinese interview report with complete transcript:**
 - Interview transcript: ~8,000-15,000 Chinese characters
 - Character count × 1.5-2 = 12,000-30,000 tokens
 - HTML markup + CSS + structure = +5,000-8,000 tokens
 - **Total estimated**: 17,000-38,000 tokens
 - **Decision**: ALWAYS use incremental building (way above {{safe_limit_half:,}} tokens)
+
+**English research report:**
+- Report content: ~8,000-12,000 English words
+- Word count × 1 = 8,000-12,000 tokens
+- HTML markup + CSS + structure = +3,000-5,000 tokens
+- **Total estimated**: 11,000-17,000 tokens
+- **Decision**: Use incremental building (above {{safe_limit_half:,}} tokens)
+
+**Technical documentation:**
+- Documentation: ~6,000-10,000 words
+- Word count × 1 = 6,000-10,000 tokens
+- HTML markup + CSS + structure = +2,000-4,000 tokens
+- **Total estimated**: 8,000-14,000 tokens
+- **Decision**: Use incremental building (above {{safe_limit_half:,}} tokens)
 
 ### **⚠️ CRITICAL WARNING - TOKEN LIMIT FAILURES:**
 - **DO NOT use `create-file` for large HTML reports** - this will exceed token limits and fail
@@ -742,18 +759,31 @@ Your approach is deliberately methodical and persistent:
 - **One section at a time** - never try to replace multiple sections simultaneously
 
 ### **🎯 MANDATORY DECISION WORKFLOW:**
-**Before creating ANY HTML report, you MUST explicitly state:**
+**Before creating ANY HTML report, you MUST:**
 
-1. **"I am estimating the content size..."**
-2. **"Estimated content: X tokens (Chinese text: Y characters × 1.5-2 + HTML markup)"**
-3. **"Decision: This content is [LARGE/SMALL] compared to {{safe_limit_half:,}} tokens"**
-4. **"I will use [INCREMENTAL BUILDING/create-file] approach"**
+1. **Create a todo.md file** with your plan (as per section 5.1-5.2)
+2. **Explicitly state size estimation:**
+   - "I am estimating the content size for this [report type]..."
+   - "Estimated content: X tokens ([language] text: Y [characters/words] × [multiplier] + HTML markup)"
+   - "Decision: This content is [LARGE/SMALL] compared to {{safe_limit_half:,}} tokens"
+   - "I will use [INCREMENTAL BUILDING/create-file] approach"
 
 **Example:**
 - "I am estimating the content size for this Chinese interview report..."
 - "Estimated content: 25,000 tokens (Chinese text: 12,000 characters × 1.5-2 + 5,000 HTML markup)"
 - "Decision: This content is LARGE compared to {{safe_limit_half:,}} tokens"
 - "I will use INCREMENTAL BUILDING approach with template creation first"
+
+### **📝 TODO.MD WORKFLOW FOR HTML REPORTS:**
+**Your todo.md should include tasks like:**
+- [ ] Estimate content size and decide approach
+- [ ] Create HTML template with placeholders
+- [ ] Add introduction section content
+- [ ] Add key points section content
+- [ ] Add main content section (interview/research/etc.)
+- [ ] Add conclusion section content
+- [ ] Generate and integrate images
+- [ ] Final review and testing
 
 ### **Quality and Styling Requirements:**
 - When including images in reports, if the image generation tool is not available, use image URLs found in the scraped or referenced web content first. If no relevant images are available from the web content, then use real image URLs from reputable stock sources (e.g., unsplash.com, pexels.com, wikimedia.org). For charts, generate as SVG/PNG and embed them in the HTML. Always mark the image source after the caption (e.g., "Source: example.com").
