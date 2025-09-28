@@ -94,12 +94,35 @@ export default function InlineContentEditor({ html, onSave, onCancel, project, f
         const relativePath = match[1];
         if (relativePath.startsWith('./') || relativePath.startsWith('../') || !relativePath.startsWith('http')) {
           try {
-            const imgUrl = `${sandboxUrl}/${relativePath}`;
-            const response = await fetch(imgUrl);
-            if (response.ok) {
-              const blob = await response.blob();
-              const dataUri = `data:${blob.type};base64,${await blobToBase64(blob)}`;
-              finalHtml = finalHtml.replace(`src="${relativePath}"`, `src="${dataUri}"`);
+            // Try multiple URL patterns to find the image
+            const possibleUrls = [
+              `${sandboxUrl}/${relativePath}`,
+              `${sandboxUrl}/workspace/${relativePath}`,
+              `${sandboxUrl}/workspace/${fileName.replace(/\.html$/, '')}/${relativePath}`,
+              // Try with the file's directory as base
+              `${sandboxUrl}/${fileName.substring(0, fileName.lastIndexOf('/'))}/${relativePath}`
+            ];
+            
+            let imageFound = false;
+            for (const imgUrl of possibleUrls) {
+              try {
+                const response = await fetch(imgUrl);
+                if (response.ok) {
+                  const blob = await response.blob();
+                  const dataUri = `data:${blob.type};base64,${await blobToBase64(blob)}`;
+                  finalHtml = finalHtml.replace(`src="${relativePath}"`, `src="${dataUri}"`);
+                  imageFound = true;
+                  break;
+                }
+              } catch (e) {
+                // Continue to next URL
+                continue;
+              }
+            }
+            
+            if (!imageFound) {
+              console.warn(`Failed to find image ${relativePath} at any of the attempted URLs:`, possibleUrls);
+              hasAssetErrors = true;
             }
           } catch (e) {
             console.warn(`Failed to embed image ${relativePath}:`, e);
