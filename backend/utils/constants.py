@@ -4,8 +4,8 @@ import logging
 MODELS = {
     # Free tier models
 
-    "anthropic/claude-sonnet-4-20250514": {
-        "aliases": ["claude-sonnet-4"],
+    "anthropic/claude-sonnet-4-5": {
+        "aliases": ["claude-sonnet-4", "claude-sonnet-4-5"],
         "pricing": {
             "input_cost_per_million_tokens": 3.00,
             "output_cost_per_million_tokens": 15.00
@@ -272,9 +272,9 @@ def _generate_model_structures():
             legacy_name = model_name.replace("openrouter/", "")
             pricing[legacy_name] = config["pricing"]
         elif model_name.startswith("anthropic/"):
-            # Add anthropic/claude-sonnet-4 alias for claude-sonnet-4-20250514
-            if "claude-sonnet-4-20250514" in model_name:
-                pricing["anthropic/claude-sonnet-4"] = config["pricing"]
+            # Add anthropic/claude-sonnet-4-5 alias for anthropic/claude-sonnet-4-5
+            if "claude-sonnet-4-5" in model_name:
+                pricing["anthropic/claude-sonnet-4-5"] = config["pricing"]
     
     return free_models, paid_models, aliases, pricing
 

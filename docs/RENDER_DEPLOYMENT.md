@@ -47,7 +47,7 @@ RABBITMQ_URL=amqps://username:password@hostname:port/vhost
 # LLM Providers
 ANTHROPIC_API_KEY=your-anthropic-key
 OPENAI_API_KEY=your-openai-key
-MODEL_TO_USE=anthropic/claude-sonnet-4-20250514
+MODEL_TO_USE=anthropic/claude-sonnet-4-5
 
 # Other APIs
 TAVILY_API_KEY=your-tavily-key

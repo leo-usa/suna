@@ -74,7 +74,7 @@ def get_openrouter_fallback(model_name: str) -> Optional[str]:
     # Map models to their OpenRouter equivalents
     fallback_mapping = {
         "anthropic/claude-3-7-sonnet-latest": "openrouter/anthropic/claude-3.7-sonnet",
-        "anthropic/claude-sonnet-4-20250514": "openrouter/anthropic/claude-sonnet-4",
+        "anthropic/claude-sonnet-4-5": "openrouter/anthropic/claude-sonnet-4",
         "xai/grok-4": "openrouter/x-ai/grok-4",
     }
     

@@ -214,7 +214,7 @@ export const useModelSelection = () => {
         },
         { 
           id: DEFAULT_PREMIUM_MODEL_ID, 
-          label: 'Sonnet 4', 
+          label: 'Claude Sonnet 4.5', 
           requiresSubscription: true, 
           priority: MODELS[DEFAULT_PREMIUM_MODEL_ID]?.priority || 100
         },
@@ -231,11 +231,16 @@ export const useModelSelection = () => {
           cleanLabel = cleanLabel.split('/').pop() || cleanLabel;
         }
         
-        cleanLabel = cleanLabel
-          .replace(/-/g, ' ')
-          .split(' ')
-          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-          .join(' ');
+        // Special case for claude-sonnet-4-5 and claude-sonnet-4 to display as "Claude Sonnet 4.5"
+        if (cleanLabel === 'claude-sonnet-4-5' || cleanLabel === 'claude-sonnet-4') {
+          cleanLabel = 'Claude Sonnet 4.5';
+        } else {
+          cleanLabel = cleanLabel
+            .replace(/-/g, ' ')
+            .split(' ')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+        }
         
         // Get model data from our central MODELS constant
         const modelData = MODELS[shortName] || {};
