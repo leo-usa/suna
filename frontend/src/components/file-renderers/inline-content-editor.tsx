@@ -226,28 +226,41 @@ export default function InlineContentEditor({ html, onSave, onCancel, project, f
     cleanedHtml = cleanedHtml.replace(imgRegex, (fullMatch, quote, url) => {
       // If it's a blob URL or backend API URL, try to convert back to relative
       if (url.startsWith('blob:') || (url.includes('/sandboxes/') && url.includes('/files/content'))) {
-        // Try to find the original relative path
-        for (const [absoluteUrl, relativePath] of urlToRelativeMap.entries()) {
-          if (url === absoluteUrl || url.includes(absoluteUrl.split('?')[0])) {
-            return `src=${quote}${relativePath}${quote}`;
-          }
+        // First, try exact match (most reliable)
+        if (urlToRelativeMap.has(url)) {
+          return `src=${quote}${urlToRelativeMap.get(url)!}${quote}`;
         }
-        // If we can't find the mapping, check if it's a backend API URL we can reverse
+        
+        // For backend API URLs, extract the path parameter to find the correct mapping
         if (url.includes('/sandboxes/') && url.includes('/files/content')) {
           try {
             const urlObj = new URL(url);
             const pathParam = urlObj.searchParams.get('path');
             if (pathParam) {
-              // Extract the relative path from /workspace/...
+              // Try to find by matching the path parameter
+              // Reconstruct the expected URL and look it up
+              for (const [absoluteUrl, relativePath] of urlToRelativeMap.entries()) {
+                try {
+                  const expectedUrlObj = new URL(absoluteUrl);
+                  const expectedPathParam = expectedUrlObj.searchParams.get('path');
+                  if (expectedPathParam === pathParam) {
+                    return `src=${quote}${relativePath}${quote}`;
+                  }
+                } catch (e) {
+                  // Continue to next entry
+                }
+              }
+              
+              // If no mapping found, reconstruct relative path from the path parameter
               let relativePath = pathParam.replace(/^\/workspace\//, '');
               // Determine the original relative path based on fileName
               if (fileName) {
                 const htmlDir = fileName.substring(0, fileName.lastIndexOf('/') + 1).replace(/^\/workspace\//, '');
-                if (htmlDir) {
-                  // Try to make it relative to the HTML file's directory
-                  const imagePath = relativePath.replace(htmlDir, '');
-                  if (imagePath !== relativePath && !imagePath.startsWith('/')) {
-                    relativePath = `./${imagePath}`;
+                if (htmlDir && relativePath.startsWith(htmlDir)) {
+                  // Make it relative to the HTML file's directory
+                  relativePath = relativePath.replace(htmlDir, '');
+                  if (!relativePath.startsWith('./') && !relativePath.startsWith('../')) {
+                    relativePath = `./${relativePath}`;
                   }
                 }
               }
@@ -255,6 +268,7 @@ export default function InlineContentEditor({ html, onSave, onCancel, project, f
             }
           } catch (e) {
             // URL parsing failed, keep as-is
+            console.warn('Failed to parse URL for conversion:', url, e);
           }
         }
       }
