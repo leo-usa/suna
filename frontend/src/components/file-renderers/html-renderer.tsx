@@ -106,7 +106,31 @@ export function HtmlRenderer({
             
             if (!imageFound) {
               console.warn(`Failed to find image ${relativePath} at any of the attempted URLs:`, possibleUrls);
-              hasAssetErrors = true;
+              
+              // Convert relative path to absolute URL using the same method as constructImageUrl
+              // This ensures images load correctly from Daytona sandbox
+              const sandboxId = typeof project?.sandbox === 'string' 
+                ? project.sandbox 
+                : project?.sandbox?.id;
+              
+              let absoluteImgUrl: string;
+              if (sandboxId) {
+                // Use backend API endpoint (same as ImageRenderer) - this works correctly with Daytona
+                let normalizedPath = relativePath;
+                if (!normalizedPath.startsWith('/workspace')) {
+                  normalizedPath = `/workspace/${normalizedPath.startsWith('/') ? normalizedPath.substring(1) : normalizedPath}`;
+                }
+                absoluteImgUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL}/sandboxes/${sandboxId}/files/content?path=${encodeURIComponent(normalizedPath)}`;
+              } else if (project.sandbox.sandbox_url) {
+                // Fallback: use sandbox URL directly (server serves /workspace at root)
+                absoluteImgUrl = `${project.sandbox.sandbox_url}/${relativePath}`;
+              } else {
+                absoluteImgUrl = relativePath; // Keep as-is if no sandbox info
+              }
+              
+              // Replace relative path with absolute URL so it works with doc.write()
+              finalHtml = finalHtml.replace(`src="${relativePath}"`, `src="${absoluteImgUrl}"`);
+              // Don't set hasAssetErrors - absolute URL should work
             }
           } catch (e) {
             console.warn(`Failed to embed image ${relativePath}:`, e);
@@ -115,11 +139,10 @@ export function HtmlRenderer({
         }
       }
       
-      // If we had asset errors, the proxy might not be working
-      // In this case, return the original HTML content to avoid broken references
+      // Always return finalHtml (which has absolute URLs for images)
+      // Never return htmlContent which has relative paths that don't work with doc.write()
       if (hasAssetErrors) {
-        console.warn('Some assets failed to load, using original HTML content');
-        return htmlContent;
+        console.warn('Some assets may have failed, but images converted to absolute URLs');
       }
       
       return finalHtml;
