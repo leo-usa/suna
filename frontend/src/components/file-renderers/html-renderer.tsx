@@ -182,7 +182,7 @@ export function HtmlRenderer({
       }
       return errorHtml;
     }
-  }, [project?.sandbox?.sandbox_url, fileName]);
+  }, [project?.sandbox?.sandbox_url, project?.sandbox?.id, fileName]);
 
   // Helper function to convert blob to base64
   const blobToBase64 = (blob: Blob): Promise<string> => {
