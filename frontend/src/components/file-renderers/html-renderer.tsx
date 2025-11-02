@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Monitor, Code, ExternalLink, Pencil } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/components/AuthProvider';
+import { Project } from '@/lib/api';
 
 interface HtmlRendererProps {
   content: string;
@@ -14,12 +15,7 @@ interface HtmlRendererProps {
   sandboxUrl?: string; // Add sandbox URL for base tag extraction
   className?: string;
   onEdit?: () => void;
-  // Add project context for asset resolution
-  project?: {
-    sandbox?: {
-      sandbox_url?: string;
-    };
-  };
+  project?: Project;
   fileName?: string;
 }
 
