@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Monitor, Code, ExternalLink, Pencil } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/components/AuthProvider';
-import { Project } from '@/lib/api';
 
 interface HtmlRendererProps {
   content: string;
@@ -15,7 +14,13 @@ interface HtmlRendererProps {
   sandboxUrl?: string; // Add sandbox URL for base tag extraction
   className?: string;
   onEdit?: () => void;
-  project?: Project;
+  // Accept flexible project type similar to constructImageUrl
+  project?: {
+    sandbox?: {
+      sandbox_url?: string;
+      id?: string;
+    } | string; // Can be a string (sandbox ID) or object
+  };
   fileName?: string;
 }
 
@@ -41,9 +46,10 @@ export function HtmlRenderer({
       return relativePath;
     }
 
-    const sandboxId = typeof project?.sandbox === 'string' 
-      ? project.sandbox 
-      : project?.sandbox?.id;
+    const sandbox = project?.sandbox;
+    const sandboxId = typeof sandbox === 'string' 
+      ? sandbox 
+      : (typeof sandbox === 'object' ? sandbox?.id : undefined);
     
     if (sandboxId) {
       // Use backend API endpoint (same as ImageRenderer) - this works correctly with Daytona
@@ -57,10 +63,11 @@ export function HtmlRenderer({
       return `${process.env.NEXT_PUBLIC_BACKEND_URL}/sandboxes/${sandboxId}/files/content?path=${encodeURIComponent(normalizedPath)}`;
     }
     
-    if (project?.sandbox?.sandbox_url) {
+    const sandboxUrl = typeof sandbox === 'object' ? sandbox?.sandbox_url : undefined;
+    if (sandboxUrl) {
       // Fallback: use sandbox URL directly (server serves /workspace at root)
       const cleanPath = relativePath.replace(/^\.\//, '').replace(/^\.\.\//, '');
-      return `${project.sandbox.sandbox_url.replace(/\/$/, '')}/${cleanPath}`;
+      return `${sandboxUrl.replace(/\/$/, '')}/${cleanPath}`;
     }
     
     // Keep as-is if no sandbox info
