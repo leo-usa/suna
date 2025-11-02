@@ -7,6 +7,7 @@ import { Save, Undo, Redo, FileText, Globe, X } from "lucide-react"
 import { Project } from "@/lib/api";
 import { constructHtmlPreviewUrl } from "@/lib/utils/url";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "@/components/AuthProvider";
 
 interface InlineContentEditorProps {
   html: string;
@@ -31,10 +32,13 @@ function extractTextContent(html: string): string {
 
 export default function InlineContentEditor({ html, onSave, onCancel, project, fileName }: InlineContentEditorProps) {
   const { t } = useTranslation();
+  const { session } = useAuth();
   const [mode, setMode] = useState<"html" | "txt">("html")
   const [txtContent, setTxtContent] = useState(() => extractTextContent(html));
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const iframeRef = useRef<HTMLIFrameElement>(null)
+  // Track blob URL to relative path mapping for saving
+  const blobUrlToRelativePathMap = useRef<Map<string, string>>(new Map());
 
   const previewUrl = constructHtmlPreviewUrl(project?.sandbox?.sandbox_url, fileName);
 
@@ -72,10 +76,13 @@ export default function InlineContentEditor({ html, onSave, onCancel, project, f
     return relativePath;
   }, [project?.sandbox]);
 
-  // Function to convert all relative image paths to absolute backend API URLs
-  // This is CRITICAL because doc.write() creates about:blank origin, so relative paths don't work
+  // Function to convert all relative image paths to blob URLs (fetched with auth)
+  // This is CRITICAL because:
+  // 1. doc.write() creates about:blank origin, so relative paths don't work
+  // 2. Backend API URLs need Authorization headers, which <img src> can't send
+  // Solution: Fetch images with auth, convert to blob URLs, then use in HTML
   const embedAssets = useCallback(async (htmlContent: string): Promise<string> => {
-    if (!project?.sandbox) {
+    if (!project?.sandbox || !session?.access_token) {
       return htmlContent;
     }
 
@@ -85,35 +92,79 @@ export default function InlineContentEditor({ html, onSave, onCancel, project, f
       
       let finalHtml = htmlContent;
       
-      // Process all image matches and convert relative paths to absolute URLs
+      // Process all image matches and convert relative paths to blob URLs
       const processedPaths = new Map<string, string>();
+      const imagePromises: Promise<void>[] = [];
       
-      finalHtml = finalHtml.replace(imgRegex, (fullMatch, quote, relativePath) => {
-        // Skip if already absolute URL or data URI
-        if (relativePath.startsWith('http') || relativePath.startsWith('data:')) {
-          return fullMatch;
+      const imgMatches = [...htmlContent.matchAll(imgRegex)];
+      for (const match of imgMatches) {
+        const quote = match[1];
+        const relativePath = match[2];
+        
+        // Skip if already absolute URL or data URI or blob URL
+        if (relativePath.startsWith('http') || relativePath.startsWith('data:') || relativePath.startsWith('blob:')) {
+          continue;
         }
         
         // Check if we've already processed this path
         if (processedPaths.has(relativePath)) {
-          return `src=${quote}${processedPaths.get(relativePath)}${quote}`;
+          continue;
         }
         
-        // Convert to absolute URL
-        const absoluteUrl = convertImagePathToAbsoluteUrl(relativePath);
-        processedPaths.set(relativePath, absoluteUrl);
+        // Convert to backend API URL first
+        const apiUrl = convertImagePathToAbsoluteUrl(relativePath);
         
-        return `src=${quote}${absoluteUrl}${quote}`;
-      });
+        // Only fetch if it's a backend API URL (not sandbox URL)
+        if (apiUrl.includes('/sandboxes/') && apiUrl.includes('/files/content')) {
+          // Fetch with auth and convert to blob URL
+          const imagePromise = fetch(apiUrl, {
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`
+            }
+          })
+            .then(response => {
+              if (!response.ok) {
+                throw new Error(`Failed to load image: ${response.status}`);
+              }
+              return response.blob();
+            })
+            .then(blob => {
+              const blobUrl = URL.createObjectURL(blob);
+              processedPaths.set(relativePath, blobUrl);
+              // Track mapping for saving
+              blobUrlToRelativePathMap.current.set(blobUrl, relativePath);
+              // Replace all occurrences of this relative path with the blob URL
+              const escapedPath = relativePath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+              const regex = new RegExp(`src=${quote}${escapedPath}${quote}`, 'gi');
+              finalHtml = finalHtml.replace(regex, `src=${quote}${blobUrl}${quote}`);
+            })
+            .catch(err => {
+              console.warn(`Failed to fetch image ${relativePath}:`, err);
+              // Fallback: use the API URL directly (might work if project is public or uses cookies)
+              processedPaths.set(relativePath, apiUrl);
+            });
+          
+          imagePromises.push(imagePromise);
+        } else {
+          // For sandbox URLs, replace immediately (will try to load, might fail with SSL but that's OK)
+          processedPaths.set(relativePath, apiUrl);
+          const escapedPath = relativePath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          const regex = new RegExp(`src=${quote}${escapedPath}${quote}`, 'gi');
+          finalHtml = finalHtml.replace(regex, `src=${quote}${apiUrl}${quote}`);
+        }
+      }
+      
+      // Wait for all images to be fetched and converted to blob URLs
+      await Promise.all(imagePromises);
       
       return finalHtml;
     } catch (e) {
       console.warn('Failed to convert image paths:', e);
-      // Even on error, try to convert relative image paths to absolute URLs
+      // On error, fall back to converting to absolute URLs (won't work without auth, but better than relative paths)
       try {
         const imgRegex = /src=(["'])([^"']*\.(png|jpg|jpeg|gif|webp|svg))\1/gi;
         return htmlContent.replace(imgRegex, (fullMatch, quote, relativePath) => {
-          if (relativePath.startsWith('http') || relativePath.startsWith('data:')) {
+          if (relativePath.startsWith('http') || relativePath.startsWith('data:') || relativePath.startsWith('blob:')) {
             return fullMatch;
           }
           const absoluteUrl = convertImagePathToAbsoluteUrl(relativePath);
@@ -124,7 +175,7 @@ export default function InlineContentEditor({ html, onSave, onCancel, project, f
         return htmlContent;
       }
     }
-  }, [project?.sandbox, convertImagePathToAbsoluteUrl]);
+  }, [project?.sandbox, convertImagePathToAbsoluteUrl, session?.access_token]);
 
   // This effect handles writing content to the iframe and making it editable
   // This approach ensures HTML always renders correctly even when the Daytona proxy is down:
@@ -226,7 +277,18 @@ export default function InlineContentEditor({ html, onSave, onCancel, project, f
     cleanedHtml = cleanedHtml.replace(imgRegex, (fullMatch, quote, url) => {
       // If it's a blob URL or backend API URL, try to convert back to relative
       if (url.startsWith('blob:') || (url.includes('/sandboxes/') && url.includes('/files/content'))) {
-        // First, try exact match (most reliable)
+        // For blob URLs, use the tracked mapping
+        if (url.startsWith('blob:')) {
+          const relativePath = blobUrlToRelativePathMap.current.get(url);
+          if (relativePath) {
+            return `src=${quote}${relativePath}${quote}`;
+          }
+          // If mapping not found, keep the blob URL (shouldn't happen, but safe fallback)
+          console.warn('Blob URL not found in mapping:', url);
+          return fullMatch;
+        }
+        
+        // First, try exact match for backend API URLs (most reliable)
         if (urlToRelativeMap.has(url)) {
           return `src=${quote}${urlToRelativeMap.get(url)!}${quote}`;
         }
