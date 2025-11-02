@@ -147,8 +147,40 @@ export function HtmlRenderer({
       
       return finalHtml;
     } catch (e) {
-      console.warn('Failed to embed assets, using original HTML content:', e);
-      return htmlContent;
+      console.warn('Failed to embed assets:', e);
+      // Even on error, convert relative image paths to backend API URLs (like ImageRenderer)
+      let errorHtml = htmlContent;
+      try {
+        const imgRegex = /src=["']([^"']*\.(png|jpg|jpeg|gif|webp|svg))["']/g;
+        const imgMatches = [...htmlContent.matchAll(imgRegex)];
+        const sandboxId = typeof project?.sandbox === 'string' 
+          ? project.sandbox 
+          : project?.sandbox?.id;
+        
+        for (const match of imgMatches) {
+          const relativePath = match[1];
+          const fullMatch = match[0];
+          if (relativePath.startsWith('./') || relativePath.startsWith('../') || !relativePath.startsWith('http')) {
+            let absoluteImgUrl: string;
+            if (sandboxId) {
+              // Use backend API endpoint (same as ImageRenderer) - works correctly with Daytona
+              let normalizedPath = relativePath;
+              if (!normalizedPath.startsWith('/workspace')) {
+                normalizedPath = `/workspace/${normalizedPath.startsWith('/') ? normalizedPath.substring(1) : normalizedPath}`;
+              }
+              absoluteImgUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL}/sandboxes/${sandboxId}/files/content?path=${encodeURIComponent(normalizedPath)}`;
+            } else if (project?.sandbox?.sandbox_url) {
+              absoluteImgUrl = `${project.sandbox.sandbox_url}/${relativePath}`;
+            } else {
+              absoluteImgUrl = relativePath;
+            }
+            errorHtml = errorHtml.replace(new RegExp(fullMatch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), fullMatch.replace(relativePath, absoluteImgUrl));
+          }
+        }
+      } catch (innerError) {
+        console.warn('Failed to convert image paths in error handler:', innerError);
+      }
+      return errorHtml;
     }
   }, [project?.sandbox?.sandbox_url, fileName]);
 
