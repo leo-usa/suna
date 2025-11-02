@@ -38,112 +38,93 @@ export default function InlineContentEditor({ html, onSave, onCancel, project, f
 
   const previewUrl = constructHtmlPreviewUrl(project?.sandbox?.sandbox_url, fileName);
 
-  // Helper function to convert blob to base64
-  const blobToBase64 = useCallback((blob: Blob): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const result = reader.result as string;
-        resolve(result.split(',')[1]); // Remove data:image/...;base64, prefix
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
-  }, []);
+  // Helper function to convert relative image path to absolute backend API URL
+  // This uses the same method as ImageRenderer/constructImageUrl to ensure compatibility
+  const convertImagePathToAbsoluteUrl = useCallback((relativePath: string): string => {
+    // Skip if already absolute
+    if (relativePath.startsWith('http') || relativePath.startsWith('data:')) {
+      return relativePath;
+    }
 
-  // Function to fetch and convert assets to data URIs
-  // This function gracefully handles proxy failures by returning the original HTML content
-  // when external assets cannot be fetched, ensuring the HTML still renders correctly
+    const sandboxId = typeof project?.sandbox === 'string' 
+      ? project.sandbox 
+      : project?.sandbox?.id;
+    
+    if (sandboxId) {
+      // Use backend API endpoint (same as ImageRenderer) - this works correctly with Daytona
+      let normalizedPath = relativePath;
+      // Remove leading ./ or ../
+      normalizedPath = normalizedPath.replace(/^\.\//, '').replace(/^\.\.\//, '');
+      // Ensure it starts with /workspace
+      if (!normalizedPath.startsWith('/workspace')) {
+        normalizedPath = `/workspace/${normalizedPath.startsWith('/') ? normalizedPath.substring(1) : normalizedPath}`;
+      }
+      return `${process.env.NEXT_PUBLIC_BACKEND_URL}/sandboxes/${sandboxId}/files/content?path=${encodeURIComponent(normalizedPath)}`;
+    }
+    
+    if (project?.sandbox?.sandbox_url) {
+      // Fallback: use sandbox URL directly (server serves /workspace at root)
+      const cleanPath = relativePath.replace(/^\.\//, '').replace(/^\.\.\//, '');
+      return `${project.sandbox.sandbox_url.replace(/\/$/, '')}/${cleanPath}`;
+    }
+    
+    // Keep as-is if no sandbox info
+    return relativePath;
+  }, [project?.sandbox]);
+
+  // Function to convert all relative image paths to absolute backend API URLs
+  // This is CRITICAL because doc.write() creates about:blank origin, so relative paths don't work
   const embedAssets = useCallback(async (htmlContent: string): Promise<string> => {
-    const sandboxUrl = project?.sandbox?.sandbox_url;
-    if (!sandboxUrl || !fileName) {
+    if (!project?.sandbox) {
       return htmlContent;
     }
 
     try {
-      // Extract relative asset references
-      const cssRegex = /href=["']([^"']*\.css)["']/g;
-      const imgRegex = /src=["']([^"']*\.(png|jpg|jpeg|gif|webp|svg))["']/g;
+      // Extract relative image references - handle both single and double quotes
+      const imgRegex = /src=(["'])([^"']*\.(png|jpg|jpeg|gif|webp|svg))\1/gi;
       
       let finalHtml = htmlContent;
-      let hasAssetErrors = false;
       
-      // Replace CSS references
-      const cssMatches = [...htmlContent.matchAll(cssRegex)];
-      for (const match of cssMatches) {
-        const relativePath = match[1];
-        if (relativePath.startsWith('./') || relativePath.startsWith('../') || !relativePath.startsWith('http')) {
-          try {
-            const cssUrl = `${sandboxUrl}/${relativePath}`;
-            const response = await fetch(cssUrl);
-            if (response.ok) {
-              const cssContent = await response.text();
-              const dataUri = `data:text/css;base64,${btoa(cssContent)}`;
-              finalHtml = finalHtml.replace(`href="${relativePath}"`, `href="${dataUri}"`);
-            }
-          } catch (e) {
-            console.warn(`Failed to embed CSS ${relativePath}:`, e);
-            hasAssetErrors = true;
-          }
+      // Process all image matches and convert relative paths to absolute URLs
+      const processedPaths = new Map<string, string>();
+      
+      finalHtml = finalHtml.replace(imgRegex, (fullMatch, quote, relativePath) => {
+        // Skip if already absolute URL or data URI
+        if (relativePath.startsWith('http') || relativePath.startsWith('data:')) {
+          return fullMatch;
         }
-      }
-      
-      // Replace image references
-      const imgMatches = [...htmlContent.matchAll(imgRegex)];
-      for (const match of imgMatches) {
-        const relativePath = match[1];
-        if (relativePath.startsWith('./') || relativePath.startsWith('../') || !relativePath.startsWith('http')) {
-          try {
-            // Try multiple URL patterns to find the image
-            const possibleUrls = [
-              `${sandboxUrl}/${relativePath}`,
-              `${sandboxUrl}/workspace/${relativePath}`,
-              `${sandboxUrl}/workspace/${fileName.replace(/\.html$/, '')}/${relativePath}`,
-              // Try with the file's directory as base
-              `${sandboxUrl}/${fileName.substring(0, fileName.lastIndexOf('/'))}/${relativePath}`
-            ];
-            
-            let imageFound = false;
-            for (const imgUrl of possibleUrls) {
-              try {
-                const response = await fetch(imgUrl);
-                if (response.ok) {
-                  const blob = await response.blob();
-                  const dataUri = `data:${blob.type};base64,${await blobToBase64(blob)}`;
-                  finalHtml = finalHtml.replace(`src="${relativePath}"`, `src="${dataUri}"`);
-                  imageFound = true;
-                  break;
-                }
-              } catch (e) {
-                // Continue to next URL
-                continue;
-              }
-            }
-            
-            if (!imageFound) {
-              console.warn(`Failed to find image ${relativePath} at any of the attempted URLs:`, possibleUrls);
-              hasAssetErrors = true;
-            }
-          } catch (e) {
-            console.warn(`Failed to embed image ${relativePath}:`, e);
-            hasAssetErrors = true;
-          }
+        
+        // Check if we've already processed this path
+        if (processedPaths.has(relativePath)) {
+          return `src=${quote}${processedPaths.get(relativePath)}${quote}`;
         }
-      }
-      
-      // If we had asset errors, the proxy might not be working
-      // In this case, return the original HTML content to avoid broken references
-      if (hasAssetErrors) {
-        console.warn('Some assets failed to load, using original HTML content');
-        return htmlContent;
-      }
+        
+        // Convert to absolute URL
+        const absoluteUrl = convertImagePathToAbsoluteUrl(relativePath);
+        processedPaths.set(relativePath, absoluteUrl);
+        
+        return `src=${quote}${absoluteUrl}${quote}`;
+      });
       
       return finalHtml;
     } catch (e) {
-      console.warn('Failed to embed assets, using original HTML content:', e);
-      return htmlContent;
+      console.warn('Failed to convert image paths:', e);
+      // Even on error, try to convert relative image paths to absolute URLs
+      try {
+        const imgRegex = /src=(["'])([^"']*\.(png|jpg|jpeg|gif|webp|svg))\1/gi;
+        return htmlContent.replace(imgRegex, (fullMatch, quote, relativePath) => {
+          if (relativePath.startsWith('http') || relativePath.startsWith('data:')) {
+            return fullMatch;
+          }
+          const absoluteUrl = convertImagePathToAbsoluteUrl(relativePath);
+          return `src=${quote}${absoluteUrl}${quote}`;
+        });
+      } catch (innerError) {
+        console.warn('Failed to convert image paths in error handler:', innerError);
+        return htmlContent;
+      }
     }
-  }, [project?.sandbox?.sandbox_url, fileName, blobToBase64]);
+  }, [project?.sandbox, convertImagePathToAbsoluteUrl]);
 
   // This effect handles writing content to the iframe and making it editable
   // This approach ensures HTML always renders correctly even when the Daytona proxy is down:
@@ -220,6 +201,69 @@ export default function InlineContentEditor({ html, onSave, onCancel, project, f
     }
   }, [mode, html, project, fileName, embedAssets]);
 
+  // Helper function to convert blob URLs or backend API URLs back to relative paths
+  // This ensures we don't save temporary blob URLs or absolute backend URLs to the file
+  const convertUrlsBackToRelative = useCallback((htmlContent: string): string => {
+    // Track mappings from absolute URLs back to relative paths (from original HTML)
+    const urlToRelativeMap = new Map<string, string>();
+    
+    // Build the mapping by looking at what we converted
+    const originalImgRegex = /src=(["'])([^"']*\.(png|jpg|jpeg|gif|webp|svg))\1/gi;
+    const originalMatches = [...html.matchAll(originalImgRegex)];
+    
+    for (const match of originalMatches) {
+      const relativePath = match[2];
+      if (!relativePath.startsWith('http') && !relativePath.startsWith('data:') && !relativePath.startsWith('blob:')) {
+        const absoluteUrl = convertImagePathToAbsoluteUrl(relativePath);
+        urlToRelativeMap.set(absoluteUrl, relativePath);
+      }
+    }
+    
+    // Replace blob URLs and backend API URLs with their original relative paths
+    let cleanedHtml = htmlContent;
+    const imgRegex = /src=(["'])([^"']+)\1/gi;
+    
+    cleanedHtml = cleanedHtml.replace(imgRegex, (fullMatch, quote, url) => {
+      // If it's a blob URL or backend API URL, try to convert back to relative
+      if (url.startsWith('blob:') || (url.includes('/sandboxes/') && url.includes('/files/content'))) {
+        // Try to find the original relative path
+        for (const [absoluteUrl, relativePath] of urlToRelativeMap.entries()) {
+          if (url === absoluteUrl || url.includes(absoluteUrl.split('?')[0])) {
+            return `src=${quote}${relativePath}${quote}`;
+          }
+        }
+        // If we can't find the mapping, check if it's a backend API URL we can reverse
+        if (url.includes('/sandboxes/') && url.includes('/files/content')) {
+          try {
+            const urlObj = new URL(url);
+            const pathParam = urlObj.searchParams.get('path');
+            if (pathParam) {
+              // Extract the relative path from /workspace/...
+              let relativePath = pathParam.replace(/^\/workspace\//, '');
+              // Determine the original relative path based on fileName
+              if (fileName) {
+                const htmlDir = fileName.substring(0, fileName.lastIndexOf('/') + 1).replace(/^\/workspace\//, '');
+                if (htmlDir) {
+                  // Try to make it relative to the HTML file's directory
+                  const imagePath = relativePath.replace(htmlDir, '');
+                  if (imagePath !== relativePath && !imagePath.startsWith('/')) {
+                    relativePath = `./${imagePath}`;
+                  }
+                }
+              }
+              return `src=${quote}${relativePath}${quote}`;
+            }
+          } catch (e) {
+            // URL parsing failed, keep as-is
+          }
+        }
+      }
+      return fullMatch;
+    });
+    
+    return cleanedHtml;
+  }, [html, fileName, convertImagePathToAbsoluteUrl]);
+
   // Save all changes
   const saveChanges = () => {
     let finalHtml = '';
@@ -233,6 +277,9 @@ export default function InlineContentEditor({ html, onSave, onCancel, project, f
         
         // The browser might add a contenteditable attribute, so we clean it up
         finalHtml = finalHtml.replace(/ contenteditable="true"/g, '');
+        
+        // Convert blob URLs and backend API URLs back to relative paths before saving
+        finalHtml = convertUrlsBackToRelative(finalHtml);
       } else {
         console.error("Could not access iframe content to save.");
         return;
