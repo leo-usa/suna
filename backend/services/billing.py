@@ -598,7 +598,8 @@ async def can_use_model(client, user_id: str, model_name: str):
     if resolved_model in allowed_models:
         return True, "Model access allowed", allowed_models
     
-    return False, f"Your current subscription plan does not include access to {model_name}. Please upgrade your subscription or choose from your available models: {', '.join(allowed_models)}", allowed_models
+    # Use resolved_model in error message for clarity (may differ from input model_name)
+    return False, f"Your current subscription plan does not include access to {resolved_model}. Please upgrade your subscription or choose from your available models: {', '.join(allowed_models)}", allowed_models
 
 async def check_billing_status(client, user_id: str) -> Tuple[bool, str, Optional[Dict]]:
     """

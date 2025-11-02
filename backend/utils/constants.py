@@ -5,7 +5,7 @@ MODELS = {
     # Free tier models
 
     "anthropic/claude-sonnet-4-5": {
-        "aliases": ["claude-sonnet-4", "claude-sonnet-4-5"],
+        "aliases": ["claude-sonnet-4", "claude-sonnet-4-5", "anthropic/claude-sonnet-4-20250514"],
         "pricing": {
             "input_cost_per_million_tokens": 3.00,
             "output_cost_per_million_tokens": 15.00
