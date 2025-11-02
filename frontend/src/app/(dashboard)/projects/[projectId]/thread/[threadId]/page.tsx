@@ -321,11 +321,26 @@ export default function ThreadPage({
 
   const handleStreamError = useCallback((errorMessage: string) => {
     console.error(`[PAGE] Stream hook error: ${errorMessage}`);
+    
+    // Filter out transient connection errors when agent might still be running
+    const isTransientError = (
+      errorMessage.toLowerCase().includes('too many connections') ||
+      (errorMessage.toLowerCase().includes('failed to start stream') && 
+       errorMessage.toLowerCase().includes('connection'))
+    );
+    
+    // Don't show notifications for:
+    // 1. "not found" errors (already filtered)
+    // 2. Transient connection errors (agent may still work)
     if (
       !errorMessage.toLowerCase().includes('not found') &&
-      !errorMessage.toLowerCase().includes('agent run is not running')
+      !errorMessage.toLowerCase().includes('agent run is not running') &&
+      !isTransientError
     ) {
       toast.error(`Stream Error: ${errorMessage}`);
+    } else if (isTransientError) {
+      // Log but don't show toast for transient errors
+      console.warn(`[PAGE] Suppressed transient stream error (agent may still be running): ${errorMessage}`);
     }
   }, []);
 

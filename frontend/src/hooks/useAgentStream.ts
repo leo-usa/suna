@@ -274,6 +274,25 @@ export function useAgentStream(
         if (jsonData.status === 'error') {
           console.error('[useAgentStream] Received error status message:', jsonData);
           const errorMessage = jsonData.message || 'Unknown error occurred';
+          
+          // Check if this is a transient connection error that we should suppress
+          // These errors occur when Redis connection pool is exhausted but agent continues
+          const isTransientConnectionError = (
+            errorMessage.toLowerCase().includes('too many connections') ||
+            errorMessage.toLowerCase().includes('failed to start stream') && 
+            errorMessage.toLowerCase().includes('connection')
+          );
+          
+          // Only suppress if it's a transient error AND we have an active agent run
+          // The agent might still be working despite the stream connection error
+          if (isTransientConnectionError && currentRunIdRef.current) {
+            console.warn('[useAgentStream] Suppressing transient connection error - agent may still be running:', errorMessage);
+            // Don't show toast or set error state, but still log it and notify callback
+            // The callback handler can decide whether to show it
+            callbacks.onError?.(errorMessage);
+            return;
+          }
+          
           setError(errorMessage);
           toast.error(errorMessage, { duration: 15000 });
           callbacks.onError?.(errorMessage);

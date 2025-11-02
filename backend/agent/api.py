@@ -839,9 +839,30 @@ async def stream_agent_run(
 
         except Exception as e:
             logger.error(f"Error setting up stream for agent run {agent_run_id}: {e}", exc_info=True)
-            # Only yield error if initial yield didn't happen
+            # Check if the error is a transient connection issue (e.g., "Too many connections")
+            # If agent is still running, don't show error to user as it will retry/recover
+            error_str = str(e).lower()
+            is_transient_error = (
+                'too many connections' in error_str or
+                'connection' in error_str and ('pool' in error_str or 'limit' in error_str)
+            )
+            
+            # Check if agent run is still active/running
+            try:
+                run_status = await client.table('agent_runs').select('status').eq("id", agent_run_id).maybe_single().execute()
+                agent_still_running = run_status.data and run_status.data.get('status') == 'running'
+            except:
+                agent_still_running = False
+            
+            # Only yield error if:
+            # 1. Initial yield didn't happen (stream never started)
+            # 2. AND (error is not transient OR agent is not running)
             if not initial_yield_complete:
-                 yield f"data: {json.dumps({'type': 'status', 'status': 'error', 'message': f'Failed to start stream: {e}'})}\n\n"
+                if not (is_transient_error and agent_still_running):
+                    yield f"data: {json.dumps({'type': 'status', 'status': 'error', 'message': f'Failed to start stream: {e}'})}\n\n"
+                else:
+                    logger.info(f"Suppressing transient stream error for {agent_run_id} as agent is still running")
+                    # Still log it, but don't show to user since agent will continue
         finally:
             terminate_stream = True
             # Graceful shutdown order: unsubscribe → close → cancel
