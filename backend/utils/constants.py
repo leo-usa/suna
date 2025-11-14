@@ -74,6 +74,46 @@ MODELS = {
         "max_output_tokens": 8192,
         "recommended_safe_limit": 7000
     },
+    "openrouter/openai/gpt-5.1-chat": {
+        "aliases": ["gpt-5.1-chat"],
+        "pricing": {
+            "input_cost_per_million_tokens": 1.25,
+            "output_cost_per_million_tokens": 10.00
+        },
+        "tier_availability": ["free", "paid"],
+        "max_output_tokens": 128000,
+        "recommended_safe_limit": 100000
+    },
+    "openrouter/openai/gpt-5.1": {
+        "aliases": ["gpt-5.1"],
+        "pricing": {
+            "input_cost_per_million_tokens": 1.25,
+            "output_cost_per_million_tokens": 10.00
+        },
+        "tier_availability": ["free", "paid"],
+        "max_output_tokens": 128000,
+        "recommended_safe_limit": 100000
+    },
+    "openrouter/openai/gpt-5.1-codex": {
+        "aliases": ["gpt-5.1-codex"],
+        "pricing": {
+            "input_cost_per_million_tokens": 1.25,
+            "output_cost_per_million_tokens": 10.00
+        },
+        "tier_availability": ["free", "paid"],
+        "max_output_tokens": 128000,
+        "recommended_safe_limit": 100000
+    },
+    "openrouter/openai/gpt-5.1-codex-mini": {
+        "aliases": ["gpt-5.1-codex-mini"],
+        "pricing": {
+            "input_cost_per_million_tokens": 1.50,
+            "output_cost_per_million_tokens": 6.00
+        },
+        "tier_availability": ["free", "paid"],
+        "max_output_tokens": 100000,
+        "recommended_safe_limit": 90000
+    },
     "openrouter/openai/gpt-5-chat": {
         "aliases": ["gpt-5-chat"],
         "pricing": {
