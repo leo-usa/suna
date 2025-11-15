@@ -311,6 +311,10 @@ def _generate_model_structures():
         elif model_name.startswith("openrouter/google/"):
             legacy_name = model_name.replace("openrouter/", "")
             pricing[legacy_name] = config["pricing"]
+        elif model_name.startswith("openrouter/openai/"):
+            # Add pricing for openai/ variant (without openrouter/ prefix)
+            legacy_name = model_name.replace("openrouter/", "")
+            pricing[legacy_name] = config["pricing"]
         elif model_name.startswith("anthropic/"):
             # Add anthropic/claude-sonnet-4-5 alias for anthropic/claude-sonnet-4-5
             if "claude-sonnet-4-5" in model_name:
