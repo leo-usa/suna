@@ -81,8 +81,8 @@ MODELS = {
             "output_cost_per_million_tokens": 10.00
         },
         "tier_availability": ["free", "paid"],
-        "max_output_tokens": 128000,
-        "recommended_safe_limit": 100000
+        "max_output_tokens": 16400,
+        "recommended_safe_limit": 15000
     },
     "openrouter/openai/gpt-5.1": {
         "aliases": ["gpt-5.1"],
