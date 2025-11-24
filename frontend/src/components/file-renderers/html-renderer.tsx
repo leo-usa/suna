@@ -153,8 +153,50 @@ export function HtmlRenderer({
       // Wait for all images to be fetched and converted to blob URLs
       await Promise.all(imagePromises);
       
-      // Handle CSS references (optional - try to embed, but not critical)
-      // CSS can load via absolute URLs, so we don't need blob URLs for them
+      // Helper to convert relative paths to absolute URLs for CSS/JS files
+      const convertAssetPathToAbsoluteUrl = (relativePath: string): string => {
+        if (relativePath.startsWith('http') || relativePath.startsWith('data:') || relativePath.startsWith('blob:')) {
+          return relativePath;
+        }
+        
+        const sandbox = project?.sandbox;
+        const sandboxUrlObj = typeof sandbox === 'object' ? sandbox?.sandbox_url : undefined;
+        
+        if (sandboxUrlObj && fileName) {
+          // Remove /workspace prefix from fileName if present
+          const cleanFileName = fileName.replace(/^\/workspace\//, '');
+          const htmlDir = cleanFileName.substring(0, cleanFileName.lastIndexOf('/') + 1);
+          
+          let assetPath = relativePath.replace(/^\.\//, '').replace(/^\.\.\//, '');
+          
+          if (!assetPath.startsWith('/')) {
+            assetPath = htmlDir ? `${htmlDir}${assetPath}` : assetPath;
+          } else {
+            assetPath = assetPath.replace(/^\/workspace\//, '');
+          }
+          
+          const pathSegments = assetPath.split('/').filter(s => s).map(segment => encodeURIComponent(segment));
+          const encodedPath = pathSegments.join('/');
+          
+          return `${sandboxUrlObj.replace(/\/$/, '')}/${encodedPath}`;
+        }
+        
+        return convertImagePathToAbsoluteUrl(relativePath);
+      };
+      
+      // Handle CSS file references (<link rel="stylesheet" href="...">)
+      const cssRegex = /href=(["'])([^"']*\.(css))\1/gi;
+      finalHtml = finalHtml.replace(cssRegex, (fullMatch, quote, relativePath) => {
+        const absoluteUrl = convertAssetPathToAbsoluteUrl(relativePath);
+        return `href=${quote}${absoluteUrl}${quote}`;
+      });
+      
+      // Handle JavaScript file references (<script src="...">)
+      const jsSrcRegex = /<script([^>]*)\ssrc=(["'])([^"']*\.(js))\2([^>]*)>/gi;
+      finalHtml = finalHtml.replace(jsSrcRegex, (fullMatch, beforeSrc, quote, relativePath, afterSrc) => {
+        const absoluteUrl = convertAssetPathToAbsoluteUrl(relativePath);
+        return `<script${beforeSrc} src=${quote}${absoluteUrl}${quote}${afterSrc}>`;
+      });
       
       return finalHtml;
     } catch (e) {
@@ -195,37 +237,50 @@ export function HtmlRenderer({
           doc.close();
           
           // Ensure JavaScript executes after DOM is ready
-          if (doc.readyState === 'loading') {
-            doc.addEventListener('DOMContentLoaded', () => {
-              // Force re-execution of any inline scripts
-              const scripts = doc.querySelectorAll('script');
-              scripts.forEach(script => {
-                if (script.innerHTML) {
-                  try {
-                    // Create a new script element to execute the code
-                    const newScript = doc.createElement('script');
-                    newScript.innerHTML = script.innerHTML;
-                    doc.head.appendChild(newScript);
-                  } catch (e) {
-                    console.warn('Failed to execute script:', e);
-                  }
-                }
-              });
-            });
-          } else {
-            // DOM is already loaded, execute scripts immediately
+          const executeScripts = () => {
             const scripts = doc.querySelectorAll('script');
+            const externalScripts: Promise<void>[] = [];
+            const inlineScripts: HTMLScriptElement[] = [];
+
             scripts.forEach(script => {
-              if (script.innerHTML) {
+              if (script.src) {
+                // External script - reload it
+                const newScript = doc.createElement('script');
+                newScript.src = script.src;
+                newScript.async = script.async;
+                newScript.defer = script.defer;
+                newScript.type = script.type || 'text/javascript';
+                
+                const scriptPromise = new Promise<void>((resolve) => {
+                  newScript.onload = () => resolve();
+                  newScript.onerror = () => resolve(); // Continue even if fails
+                  doc.head.appendChild(newScript);
+                });
+                externalScripts.push(scriptPromise);
+              } else if (script.innerHTML) {
+                inlineScripts.push(script);
+              }
+            });
+
+            // Wait for external scripts then execute inline ones
+            Promise.all(externalScripts).then(() => {
+              inlineScripts.forEach(script => {
                 try {
                   const newScript = doc.createElement('script');
                   newScript.innerHTML = script.innerHTML;
+                  newScript.type = script.type || 'text/javascript';
                   doc.head.appendChild(newScript);
                 } catch (e) {
                   console.warn('Failed to execute script:', e);
                 }
-              }
+              });
             });
+          };
+
+          if (doc.readyState === 'loading') {
+            doc.addEventListener('DOMContentLoaded', executeScripts);
+          } else {
+            executeScripts();
           }
         }).catch((error) => {
           console.warn('Failed to embed assets, using original content:', error);
@@ -235,34 +290,48 @@ export function HtmlRenderer({
           doc.close();
           
           // Execute scripts for fallback content
-          if (doc.readyState === 'loading') {
-            doc.addEventListener('DOMContentLoaded', () => {
-              const scripts = doc.querySelectorAll('script');
-              scripts.forEach(script => {
-                if (script.innerHTML) {
-                  try {
-                    const newScript = doc.createElement('script');
-                    newScript.innerHTML = script.innerHTML;
-                    doc.head.appendChild(newScript);
-                  } catch (e) {
-                    console.warn('Failed to execute script:', e);
-                  }
-                }
-              });
-            });
-          } else {
+          const executeScripts = () => {
             const scripts = doc.querySelectorAll('script');
+            const externalScripts: Promise<void>[] = [];
+            const inlineScripts: HTMLScriptElement[] = [];
+
             scripts.forEach(script => {
-              if (script.innerHTML) {
+              if (script.src) {
+                const newScript = doc.createElement('script');
+                newScript.src = script.src;
+                newScript.async = script.async;
+                newScript.defer = script.defer;
+                newScript.type = script.type || 'text/javascript';
+                
+                const scriptPromise = new Promise<void>((resolve) => {
+                  newScript.onload = () => resolve();
+                  newScript.onerror = () => resolve();
+                  doc.head.appendChild(newScript);
+                });
+                externalScripts.push(scriptPromise);
+              } else if (script.innerHTML) {
+                inlineScripts.push(script);
+              }
+            });
+
+            Promise.all(externalScripts).then(() => {
+              inlineScripts.forEach(script => {
                 try {
                   const newScript = doc.createElement('script');
                   newScript.innerHTML = script.innerHTML;
+                  newScript.type = script.type || 'text/javascript';
                   doc.head.appendChild(newScript);
                 } catch (e) {
                   console.warn('Failed to execute script:', e);
                 }
-              }
+              });
             });
+          };
+
+          if (doc.readyState === 'loading') {
+            doc.addEventListener('DOMContentLoaded', executeScripts);
+          } else {
+            executeScripts();
           }
         });
       }

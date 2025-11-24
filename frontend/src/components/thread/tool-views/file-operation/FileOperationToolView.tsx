@@ -166,37 +166,48 @@ export function FileOperationToolView({
                     doc.close();
                     
                     // Ensure JavaScript executes after DOM is ready
-                    if (doc.readyState === 'loading') {
-                      doc.addEventListener('DOMContentLoaded', () => {
-                        // Force re-execution of any inline scripts
-                        const scripts = doc.querySelectorAll('script');
-                        scripts.forEach(script => {
-                          if (script.innerHTML) {
-                            try {
-                              // Create a new script element to execute the code
-                              const newScript = doc.createElement('script');
-                              newScript.innerHTML = script.innerHTML;
-                              doc.head.appendChild(newScript);
-                            } catch (e) {
-                              console.warn('Failed to execute script:', e);
-                            }
-                          }
-                        });
-                      });
-                    } else {
-                      // DOM is already loaded, execute scripts immediately
+                    const executeScripts = () => {
                       const scripts = doc.querySelectorAll('script');
+                      const externalScripts: Promise<void>[] = [];
+                      const inlineScripts: HTMLScriptElement[] = [];
+
                       scripts.forEach(script => {
-                        if (script.innerHTML) {
+                        if (script.src) {
+                          const newScript = doc.createElement('script');
+                          newScript.src = script.src;
+                          newScript.async = script.async;
+                          newScript.defer = script.defer;
+                          newScript.type = script.type || 'text/javascript';
+                          
+                          const scriptPromise = new Promise<void>((resolve) => {
+                            newScript.onload = () => resolve();
+                            newScript.onerror = () => resolve();
+                            doc.head.appendChild(newScript);
+                          });
+                          externalScripts.push(scriptPromise);
+                        } else if (script.innerHTML) {
+                          inlineScripts.push(script);
+                        }
+                      });
+
+                      Promise.all(externalScripts).then(() => {
+                        inlineScripts.forEach(script => {
                           try {
                             const newScript = doc.createElement('script');
                             newScript.innerHTML = script.innerHTML;
+                            newScript.type = script.type || 'text/javascript';
                             doc.head.appendChild(newScript);
                           } catch (e) {
-                            console.warn('Failed to execute script:', e);
+                            console.warn('Failed to execute inline script:', e);
                           }
-                        }
+                        });
                       });
+                    };
+
+                    if (doc.readyState === 'loading') {
+                      doc.addEventListener('DOMContentLoaded', executeScripts);
+                    } else {
+                      executeScripts();
                     }
                   }).catch((error) => {
                     console.warn('Failed to embed assets, using original content:', error);
@@ -206,34 +217,48 @@ export function FileOperationToolView({
                     doc.close();
                     
                     // Execute scripts for fallback content
-                    if (doc.readyState === 'loading') {
-                      doc.addEventListener('DOMContentLoaded', () => {
-                        const scripts = doc.querySelectorAll('script');
-                        scripts.forEach(script => {
-                          if (script.innerHTML) {
-                            try {
-                              const newScript = doc.createElement('script');
-                              newScript.innerHTML = script.innerHTML;
-                              doc.head.appendChild(newScript);
-                            } catch (e) {
-                              console.warn('Failed to execute script:', e);
-                            }
-                          }
-                        });
-                      });
-                    } else {
+                    const executeScripts = () => {
                       const scripts = doc.querySelectorAll('script');
+                      const externalScripts: Promise<void>[] = [];
+                      const inlineScripts: HTMLScriptElement[] = [];
+
                       scripts.forEach(script => {
-                        if (script.innerHTML) {
+                        if (script.src) {
+                          const newScript = doc.createElement('script');
+                          newScript.src = script.src;
+                          newScript.async = script.async;
+                          newScript.defer = script.defer;
+                          newScript.type = script.type || 'text/javascript';
+                          
+                          const scriptPromise = new Promise<void>((resolve) => {
+                            newScript.onload = () => resolve();
+                            newScript.onerror = () => resolve();
+                            doc.head.appendChild(newScript);
+                          });
+                          externalScripts.push(scriptPromise);
+                        } else if (script.innerHTML) {
+                          inlineScripts.push(script);
+                        }
+                      });
+
+                      Promise.all(externalScripts).then(() => {
+                        inlineScripts.forEach(script => {
                           try {
                             const newScript = doc.createElement('script');
                             newScript.innerHTML = script.innerHTML;
+                            newScript.type = script.type || 'text/javascript';
                             doc.head.appendChild(newScript);
                           } catch (e) {
                             console.warn('Failed to execute script:', e);
                           }
-                        }
+                        });
                       });
+                    };
+
+                    if (doc.readyState === 'loading') {
+                      doc.addEventListener('DOMContentLoaded', executeScripts);
+                    } else {
+                      executeScripts();
                     }
                   });
                 }
@@ -366,24 +391,53 @@ export function FileOperationToolView({
       
       let finalHtml = htmlContent;
       
-      // Replace CSS references
-      const cssMatches = [...htmlContent.matchAll(cssRegex)];
-      for (const match of cssMatches) {
-        const relativePath = match[1];
-        if (relativePath.startsWith('./') || relativePath.startsWith('../') || !relativePath.startsWith('http')) {
-          try {
-            const cssUrl = `${project.sandbox.sandbox_url}/${relativePath}`;
-            const response = await fetch(cssUrl);
-            if (response.ok) {
-              const cssContent = await response.text();
-              const dataUri = `data:text/css;base64,${btoa(cssContent)}`;
-              finalHtml = finalHtml.replace(`href="${relativePath}"`, `href="${dataUri}"`);
-            }
-          } catch (e) {
-            console.warn(`Failed to embed CSS ${relativePath}:`, e);
-          }
+      // Helper to convert relative paths to absolute URLs for CSS/JS files
+      const convertAssetPathToAbsoluteUrl = (relativePath: string): string => {
+        if (relativePath.startsWith('http') || relativePath.startsWith('data:') || relativePath.startsWith('blob:')) {
+          return relativePath;
         }
-      }
+        
+        const sandboxUrl = project?.sandbox?.sandbox_url;
+        if (sandboxUrl && fileName) {
+          const cleanFileName = fileName.replace(/^\/workspace\//, '');
+          const htmlDir = cleanFileName.substring(0, cleanFileName.lastIndexOf('/') + 1);
+          
+          let assetPath = relativePath.replace(/^\.\//, '').replace(/^\.\.\//, '');
+          
+          if (!assetPath.startsWith('/')) {
+            assetPath = htmlDir ? `${htmlDir}${assetPath}` : assetPath;
+          } else {
+            assetPath = assetPath.replace(/^\/workspace\//, '');
+          }
+          
+          const pathSegments = assetPath.split('/').filter(s => s).map(segment => encodeURIComponent(segment));
+          const encodedPath = pathSegments.join('/');
+          
+          return `${sandboxUrl.replace(/\/$/, '')}/${encodedPath}`;
+        }
+        
+        return relativePath;
+      };
+      
+      // Replace CSS references - convert to absolute URLs
+      const cssRegexWithQuotes = /href=(["'])([^"']*\.css)\1/gi;
+      finalHtml = finalHtml.replace(cssRegexWithQuotes, (fullMatch, quote, relativePath) => {
+        if (relativePath.startsWith('http') || relativePath.startsWith('data:') || relativePath.startsWith('blob:')) {
+          return fullMatch;
+        }
+        const absoluteUrl = convertAssetPathToAbsoluteUrl(relativePath);
+        return `href=${quote}${absoluteUrl}${quote}`;
+      });
+      
+      // Handle JavaScript file references (<script src="...">) - convert to absolute URLs
+      const jsSrcRegex = /<script([^>]*)\ssrc=(["'])([^"']*\.(js))\2([^>]*)>/gi;
+      finalHtml = finalHtml.replace(jsSrcRegex, (fullMatch, beforeSrc, quote, relativePath, afterSrc) => {
+        if (relativePath.startsWith('http') || relativePath.startsWith('data:') || relativePath.startsWith('blob:')) {
+          return fullMatch;
+        }
+        const absoluteUrl = convertAssetPathToAbsoluteUrl(relativePath);
+        return `<script${beforeSrc} src=${quote}${absoluteUrl}${quote}${afterSrc}>`;
+      });
       
       // Replace image references
       const imgMatches = [...htmlContent.matchAll(imgRegex)];
