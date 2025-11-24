@@ -153,74 +153,112 @@ export function HtmlRenderer({
       // Wait for all images to be fetched and converted to blob URLs
       await Promise.all(imagePromises);
       
-      // Helper to convert relative paths to absolute URLs for CSS/JS files
-      const convertAssetPathToAbsoluteUrl = (relativePath: string): string => {
-        console.log('[HTML Renderer] Converting asset path:', relativePath);
-        console.log('[HTML Renderer] fileName:', fileName);
-        console.log('[HTML Renderer] project?.sandbox:', project?.sandbox);
-        
-        if (relativePath.startsWith('http') || relativePath.startsWith('data:') || relativePath.startsWith('blob:')) {
-          console.log('[HTML Renderer] Already absolute, returning as-is');
-          return relativePath;
-        }
-        
-        const sandbox = project?.sandbox;
-        const sandboxUrlObj = typeof sandbox === 'object' ? sandbox?.sandbox_url : undefined;
-        
-        console.log('[HTML Renderer] sandboxUrlObj:', sandboxUrlObj);
-        
-        if (sandboxUrlObj && fileName) {
-          // Remove /workspace prefix from fileName if present
-          const cleanFileName = fileName.replace(/^\/workspace\//, '');
-          const htmlDir = cleanFileName.substring(0, cleanFileName.lastIndexOf('/') + 1);
-          
-          console.log('[HTML Renderer] cleanFileName:', cleanFileName);
-          console.log('[HTML Renderer] htmlDir:', htmlDir);
-          
-          let assetPath = relativePath.replace(/^\.\//, '').replace(/^\.\.\//, '');
-          
-          if (!assetPath.startsWith('/')) {
-            assetPath = htmlDir ? `${htmlDir}${assetPath}` : assetPath;
-          } else {
-            assetPath = assetPath.replace(/^\/workspace\//, '');
-          }
-          
-          console.log('[HTML Renderer] assetPath before encoding:', assetPath);
-          
-          const pathSegments = assetPath.split('/').filter(s => s).map(segment => encodeURIComponent(segment));
-          const encodedPath = pathSegments.join('/');
-          
-          const finalUrl = `${sandboxUrlObj.replace(/\/$/, '')}/${encodedPath}`;
-          console.log('[HTML Renderer] Final absolute URL:', finalUrl);
-          
-          return finalUrl;
-        }
-        
-        console.log('[HTML Renderer] No sandboxUrlObj or fileName, falling back to convertImagePathToAbsoluteUrl');
-        return convertImagePathToAbsoluteUrl(relativePath);
-      };
-      
       // Handle CSS file references (<link rel="stylesheet" href="...">)
+      // Fetch CSS files and inline them as <style> tags to bypass authentication issues
       console.log('[HTML Renderer] Looking for CSS files in HTML...');
-      const cssRegex = /href=(["'])([^"']*\.(css))\1/gi;
-      finalHtml = finalHtml.replace(cssRegex, (fullMatch, quote, relativePath) => {
+      const cssRegex = /<link([^>]*)\shref=(["'])([^"']*\.css)\2([^>]*)>/gi;
+      const cssMatches = [...htmlContent.matchAll(cssRegex)];
+      const cssPromises: Promise<void>[] = [];
+      
+      for (const match of cssMatches) {
+        const fullMatch = match[0];
+        const relativePath = match[3];
+        
         console.log('[HTML Renderer] Found CSS reference:', relativePath);
-        const absoluteUrl = convertAssetPathToAbsoluteUrl(relativePath);
-        const result = `href=${quote}${absoluteUrl}${quote}`;
-        console.log('[HTML Renderer] Replaced with:', result);
-        return result;
-      });
+        
+        // Skip if already absolute URL
+        if (relativePath.startsWith('http') || relativePath.startsWith('data:') || relativePath.startsWith('blob:')) {
+          continue;
+        }
+        
+        // Convert to backend API URL
+        const apiUrl = convertImagePathToAbsoluteUrl(relativePath);
+        console.log('[HTML Renderer] CSS API URL:', apiUrl);
+        
+        // Only fetch if it's a backend API URL
+        if (apiUrl.includes('/sandboxes/') && apiUrl.includes('/files/content')) {
+          const cssPromise = fetch(apiUrl, {
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`
+            }
+          })
+            .then(response => {
+              if (!response.ok) {
+                throw new Error(`Failed to load CSS: ${response.status}`);
+              }
+              return response.text();
+            })
+            .then(cssContent => {
+              // Inline the CSS as a <style> tag
+              const styleTag = `<style>/* ${relativePath} */\n${cssContent}\n</style>`;
+              finalHtml = finalHtml.replace(fullMatch, styleTag);
+              console.log('[HTML Renderer] Inlined CSS:', relativePath);
+            })
+            .catch(err => {
+              console.warn(`[HTML Renderer] Failed to fetch CSS ${relativePath}:`, err);
+            });
+          
+          cssPromises.push(cssPromise);
+        }
+      }
+      
+      // Wait for all CSS files to be fetched and inlined
+      await Promise.all(cssPromises);
       
       // Handle JavaScript file references (<script src="...">)
+      // Fetch JS files and convert to blob URLs
       console.log('[HTML Renderer] Looking for JS files in HTML...');
-      const jsSrcRegex = /<script([^>]*)\ssrc=(["'])([^"']*\.(js))\2([^>]*)>/gi;
-      finalHtml = finalHtml.replace(jsSrcRegex, (fullMatch, beforeSrc, quote, relativePath, afterSrc) => {
+      const jsSrcRegex = /<script([^>]*)\ssrc=(["'])([^"']*\.js)\2([^>]*)>/gi;
+      const jsMatches = [...htmlContent.matchAll(jsSrcRegex)];
+      const jsPromises: Promise<void>[] = [];
+      
+      for (const match of jsMatches) {
+        const fullMatch = match[0];
+        const beforeSrc = match[1];
+        const quote = match[2];
+        const relativePath = match[3];
+        const afterSrc = match[4];
+        
         console.log('[HTML Renderer] Found JS reference:', relativePath);
-        const absoluteUrl = convertAssetPathToAbsoluteUrl(relativePath);
-        const result = `<script${beforeSrc} src=${quote}${absoluteUrl}${quote}${afterSrc}>`;
-        console.log('[HTML Renderer] Replaced with:', result);
-        return result;
-      });
+        
+        // Skip if already absolute URL
+        if (relativePath.startsWith('http') || relativePath.startsWith('data:') || relativePath.startsWith('blob:')) {
+          continue;
+        }
+        
+        // Convert to backend API URL
+        const apiUrl = convertImagePathToAbsoluteUrl(relativePath);
+        console.log('[HTML Renderer] JS API URL:', apiUrl);
+        
+        // Only fetch if it's a backend API URL
+        if (apiUrl.includes('/sandboxes/') && apiUrl.includes('/files/content')) {
+          const jsPromise = fetch(apiUrl, {
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`
+            }
+          })
+            .then(response => {
+              if (!response.ok) {
+                throw new Error(`Failed to load JS: ${response.status}`);
+              }
+              return response.blob();
+            })
+            .then(blob => {
+              const blobUrl = URL.createObjectURL(blob);
+              const newScript = `<script${beforeSrc} src=${quote}${blobUrl}${quote}${afterSrc}>`;
+              finalHtml = finalHtml.replace(fullMatch, newScript);
+              console.log('[HTML Renderer] Converted JS to blob URL:', relativePath, '->', blobUrl);
+            })
+            .catch(err => {
+              console.warn(`[HTML Renderer] Failed to fetch JS ${relativePath}:`, err);
+            });
+          
+          jsPromises.push(jsPromise);
+        }
+      }
+      
+      // Wait for all JS files to be fetched and converted
+      await Promise.all(jsPromises);
       
       return finalHtml;
     } catch (e) {

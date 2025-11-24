@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { constructHtmlPreviewUrl } from '@/lib/utils/url';
 import type { Project } from '@/lib/api';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '@/components/AuthProvider';
 
 interface HtmlRendererProps {
     content: string;
@@ -28,6 +29,7 @@ export function HtmlRenderer({
     onEdit
 }: HtmlRendererProps) {
     const { t } = useTranslation();
+    const { session } = useAuth();
     const [viewMode, setViewMode] = useState<'preview' | 'code'>('preview');
     const iframeRef = useRef<HTMLIFrameElement>(null);
 
@@ -144,47 +146,100 @@ export function HtmlRenderer({
                 return `src=${quote}${absoluteUrl}${quote}`;
             });
             
-            // Helper to convert relative paths to absolute URLs for CSS/JS files
-            const convertAssetPathToAbsoluteUrl = (relativePath: string): string => {
+            // Handle CSS file references - fetch and inline them
+            const cssRegex = /<link([^>]*)\shref=(["'])([^"']*\.css)\2([^>]*)>/gi;
+            const cssMatches = [...htmlContent.matchAll(cssRegex)];
+            const cssPromises: Promise<void>[] = [];
+            
+            for (const match of cssMatches) {
+                const fullMatch = match[0];
+                const relativePath = match[3];
+                
+                // Skip if already absolute URL
                 if (relativePath.startsWith('http') || relativePath.startsWith('data:') || relativePath.startsWith('blob:')) {
-                    return relativePath;
+                    continue;
                 }
                 
-                const sandboxUrl = project?.sandbox?.sandbox_url;
-                if (sandboxUrl && fileName) {
-                    const cleanFileName = fileName.replace(/^\/workspace\//, '');
-                    const htmlDir = cleanFileName.substring(0, cleanFileName.lastIndexOf('/') + 1);
+                // Convert to backend API URL
+                const apiUrl = convertImagePathToAbsoluteUrl(relativePath, project);
+                
+                // Only fetch if it's a backend API URL
+                if (apiUrl.includes('/sandboxes/') && apiUrl.includes('/files/content') && session?.access_token) {
+                    const cssPromise = fetch(apiUrl, {
+                        headers: {
+                            'Authorization': `Bearer ${session.access_token}`
+                        }
+                    })
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`Failed to load CSS: ${response.status}`);
+                            }
+                            return response.text();
+                        })
+                        .then(cssContent => {
+                            // Inline the CSS as a <style> tag
+                            const styleTag = `<style>/* ${relativePath} */\n${cssContent}\n</style>`;
+                            finalHtml = finalHtml.replace(fullMatch, styleTag);
+                        })
+                        .catch(err => {
+                            console.warn(`Failed to fetch CSS ${relativePath}:`, err);
+                        });
                     
-                    let assetPath = relativePath.replace(/^\.\//, '').replace(/^\.\.\//, '');
-                    
-                    if (!assetPath.startsWith('/')) {
-                        assetPath = htmlDir ? `${htmlDir}${assetPath}` : assetPath;
-                    } else {
-                        assetPath = assetPath.replace(/^\/workspace\//, '');
-                    }
-                    
-                    const pathSegments = assetPath.split('/').filter(s => s).map(segment => encodeURIComponent(segment));
-                    const encodedPath = pathSegments.join('/');
-                    
-                    return `${sandboxUrl.replace(/\/$/, '')}/${encodedPath}`;
+                    cssPromises.push(cssPromise);
+                }
+            }
+            
+            // Wait for all CSS files to be fetched and inlined
+            await Promise.all(cssPromises);
+            
+            // Handle JavaScript file references - fetch and convert to blob URLs
+            const jsSrcRegex = /<script([^>]*)\ssrc=(["'])([^"']*\.js)\2([^>]*)>/gi;
+            const jsMatches = [...htmlContent.matchAll(jsSrcRegex)];
+            const jsPromises: Promise<void>[] = [];
+            
+            for (const match of jsMatches) {
+                const fullMatch = match[0];
+                const beforeSrc = match[1];
+                const quote = match[2];
+                const relativePath = match[3];
+                const afterSrc = match[4];
+                
+                // Skip if already absolute URL
+                if (relativePath.startsWith('http') || relativePath.startsWith('data:') || relativePath.startsWith('blob:')) {
+                    continue;
                 }
                 
-                return convertImagePathToAbsoluteUrl(relativePath, project);
-            };
+                // Convert to backend API URL
+                const apiUrl = convertImagePathToAbsoluteUrl(relativePath, project);
+                
+                // Only fetch if it's a backend API URL
+                if (apiUrl.includes('/sandboxes/') && apiUrl.includes('/files/content') && session?.access_token) {
+                    const jsPromise = fetch(apiUrl, {
+                        headers: {
+                            'Authorization': `Bearer ${session.access_token}`
+                        }
+                    })
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`Failed to load JS: ${response.status}`);
+                            }
+                            return response.blob();
+                        })
+                        .then(blob => {
+                            const blobUrl = URL.createObjectURL(blob);
+                            const newScript = `<script${beforeSrc} src=${quote}${blobUrl}${quote}${afterSrc}>`;
+                            finalHtml = finalHtml.replace(fullMatch, newScript);
+                        })
+                        .catch(err => {
+                            console.warn(`Failed to fetch JS ${relativePath}:`, err);
+                        });
+                    
+                    jsPromises.push(jsPromise);
+                }
+            }
             
-            // Handle CSS file references
-            const cssRegex = /href=(["'])([^"']*\.(css))\1/gi;
-            finalHtml = finalHtml.replace(cssRegex, (fullMatch, quote, relativePath) => {
-                const absoluteUrl = convertAssetPathToAbsoluteUrl(relativePath);
-                return `href=${quote}${absoluteUrl}${quote}`;
-            });
-            
-            // Handle JavaScript file references
-            const jsSrcRegex = /<script([^>]*)\ssrc=(["'])([^"']*\.(js))\2([^>]*)>/gi;
-            finalHtml = finalHtml.replace(jsSrcRegex, (fullMatch, beforeSrc, quote, relativePath, afterSrc) => {
-                const absoluteUrl = convertAssetPathToAbsoluteUrl(relativePath);
-                return `<script${beforeSrc} src=${quote}${absoluteUrl}${quote}${afterSrc}>`;
-            });
+            // Wait for all JS files to be fetched and converted
+            await Promise.all(jsPromises);
             
             return finalHtml;
         } catch (e) {
@@ -204,7 +259,7 @@ export function HtmlRenderer({
                 return htmlContent;
             }
         }
-    }, [convertImagePathToAbsoluteUrl]);
+    }, [convertImagePathToAbsoluteUrl, session?.access_token]);
 
     // Inject HTML content directly into iframe when in preview mode
     // This approach ensures HTML always renders correctly even when the Daytona proxy is down:
