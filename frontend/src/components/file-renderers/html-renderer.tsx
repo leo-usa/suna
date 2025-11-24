@@ -155,17 +155,27 @@ export function HtmlRenderer({
       
       // Helper to convert relative paths to absolute URLs for CSS/JS files
       const convertAssetPathToAbsoluteUrl = (relativePath: string): string => {
+        console.log('[HTML Renderer] Converting asset path:', relativePath);
+        console.log('[HTML Renderer] fileName:', fileName);
+        console.log('[HTML Renderer] project?.sandbox:', project?.sandbox);
+        
         if (relativePath.startsWith('http') || relativePath.startsWith('data:') || relativePath.startsWith('blob:')) {
+          console.log('[HTML Renderer] Already absolute, returning as-is');
           return relativePath;
         }
         
         const sandbox = project?.sandbox;
         const sandboxUrlObj = typeof sandbox === 'object' ? sandbox?.sandbox_url : undefined;
         
+        console.log('[HTML Renderer] sandboxUrlObj:', sandboxUrlObj);
+        
         if (sandboxUrlObj && fileName) {
           // Remove /workspace prefix from fileName if present
           const cleanFileName = fileName.replace(/^\/workspace\//, '');
           const htmlDir = cleanFileName.substring(0, cleanFileName.lastIndexOf('/') + 1);
+          
+          console.log('[HTML Renderer] cleanFileName:', cleanFileName);
+          console.log('[HTML Renderer] htmlDir:', htmlDir);
           
           let assetPath = relativePath.replace(/^\.\//, '').replace(/^\.\.\//, '');
           
@@ -175,27 +185,41 @@ export function HtmlRenderer({
             assetPath = assetPath.replace(/^\/workspace\//, '');
           }
           
+          console.log('[HTML Renderer] assetPath before encoding:', assetPath);
+          
           const pathSegments = assetPath.split('/').filter(s => s).map(segment => encodeURIComponent(segment));
           const encodedPath = pathSegments.join('/');
           
-          return `${sandboxUrlObj.replace(/\/$/, '')}/${encodedPath}`;
+          const finalUrl = `${sandboxUrlObj.replace(/\/$/, '')}/${encodedPath}`;
+          console.log('[HTML Renderer] Final absolute URL:', finalUrl);
+          
+          return finalUrl;
         }
         
+        console.log('[HTML Renderer] No sandboxUrlObj or fileName, falling back to convertImagePathToAbsoluteUrl');
         return convertImagePathToAbsoluteUrl(relativePath);
       };
       
       // Handle CSS file references (<link rel="stylesheet" href="...">)
+      console.log('[HTML Renderer] Looking for CSS files in HTML...');
       const cssRegex = /href=(["'])([^"']*\.(css))\1/gi;
       finalHtml = finalHtml.replace(cssRegex, (fullMatch, quote, relativePath) => {
+        console.log('[HTML Renderer] Found CSS reference:', relativePath);
         const absoluteUrl = convertAssetPathToAbsoluteUrl(relativePath);
-        return `href=${quote}${absoluteUrl}${quote}`;
+        const result = `href=${quote}${absoluteUrl}${quote}`;
+        console.log('[HTML Renderer] Replaced with:', result);
+        return result;
       });
       
       // Handle JavaScript file references (<script src="...">)
+      console.log('[HTML Renderer] Looking for JS files in HTML...');
       const jsSrcRegex = /<script([^>]*)\ssrc=(["'])([^"']*\.(js))\2([^>]*)>/gi;
       finalHtml = finalHtml.replace(jsSrcRegex, (fullMatch, beforeSrc, quote, relativePath, afterSrc) => {
+        console.log('[HTML Renderer] Found JS reference:', relativePath);
         const absoluteUrl = convertAssetPathToAbsoluteUrl(relativePath);
-        return `<script${beforeSrc} src=${quote}${absoluteUrl}${quote}${afterSrc}>`;
+        const result = `<script${beforeSrc} src=${quote}${absoluteUrl}${quote}${afterSrc}>`;
+        console.log('[HTML Renderer] Replaced with:', result);
+        return result;
       });
       
       return finalHtml;
