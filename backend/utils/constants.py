@@ -216,6 +216,16 @@ MODELS = {
         "max_output_tokens": 4096,
         "recommended_safe_limit": 3000
     },
+    "anthropic/claude-opus-4-5": {
+        "aliases": ["claude-opus-4.5", "claude-opus-4-5"],
+        "pricing": {
+            "input_cost_per_million_tokens": 5.00,
+            "output_cost_per_million_tokens": 25.00
+        },
+        "tier_availability": ["paid"],
+        "max_output_tokens": 32000,
+        "recommended_safe_limit": 25000
+    },
     "anthropic/claude-3-7-sonnet-latest": {
         "aliases": ["sonnet-3.7"],
         "pricing": {
@@ -258,16 +268,6 @@ MODELS = {
         "max_output_tokens": 8192,
         "recommended_safe_limit": 7000
     },
-    "openrouter/anthropic/claude-opus-4.1": {
-        "aliases": ["claude-opus-4.1"],
-        "pricing": {
-            "input_cost_per_million_tokens": 15.00,
-            "output_cost_per_million_tokens": 75.00
-        },
-        "tier_availability": ["paid"],
-        "max_output_tokens": 32000,
-        "recommended_safe_limit": 25000
-    },   
 }
 
 # Image generation pricing configuration
