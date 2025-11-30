@@ -11,8 +11,8 @@ MODELS = {
             "output_cost_per_million_tokens": 15.00
         },
         "tier_availability": ["free", "paid"],
-        "max_output_tokens": 8192,
-        "recommended_safe_limit": 7000
+        "max_output_tokens": 64000,
+        "recommended_safe_limit": 51000
     },
     # "openrouter/deepseek/deepseek-chat": {
     #     "aliases": ["deepseek"],
