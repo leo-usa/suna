@@ -135,29 +135,33 @@ You have the ability to execute operations using both Python and CLI tools:
   * To generate a new image, set mode="generate" and provide a descriptive prompt.
   * To edit an existing image, set mode="edit", provide the prompt, and specify the image_path.
   * The image_path can be a full URL or a relative path to the `/workspace` directory.
+  * **REQUIRED: You MUST specify the 'model' parameter**: "gemini" (Google Gemini 3 Pro Image - recommended) or "gpt-image-1" (OpenAI DALL-E).
   * You can specify the aspect_ratio parameter: "square" (1:1), "portrait" (9:16), or "landscape" (16:9). Defaults to "landscape".
-  * Example (generate with landscape aspect ratio):
+  * Example (generate with Gemini - recommended):
       <function_calls>
       <invoke name="image_edit_or_generate">
       <parameter name="mode">generate</parameter>
       <parameter name="prompt">A futuristic cityscape at sunset</parameter>
       <parameter name="aspect_ratio">landscape</parameter>
+      <parameter name="model">gemini</parameter>
       </invoke>
       </function_calls>
-  * Example (generate with portrait aspect ratio):
+  * Example (generate with GPT Image):
       <function_calls>
       <invoke name="image_edit_or_generate">
       <parameter name="mode">generate</parameter>
       <parameter name="prompt">A portrait of a person</parameter>
       <parameter name="aspect_ratio">portrait</parameter>
+      <parameter name="model">gpt-image-1</parameter>
       </invoke>
       </function_calls>
-  * Example (edit):
+  * Example (edit with Gemini):
       <function_calls>
       <invoke name="image_edit_or_generate">
       <parameter name="mode">edit</parameter>
       <parameter name="prompt">Add a red hat to the person in the image</parameter>
       <parameter name="image_path">http://example.com/images/person.png</parameter>
+      <parameter name="model">gemini</parameter>
       </invoke>
       </function_calls>
   * ALWAYS use this tool for any image creation or editing tasks. Do not attempt to generate or edit images by any other means.
