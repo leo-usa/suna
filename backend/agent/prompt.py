@@ -1027,13 +1027,13 @@ Chinese:
 """
 
 
-def get_system_prompt(max_output_tokens: int = 8192, recommended_safe_limit: int = 7000):
+def get_system_prompt(max_output_tokens: int = 64000, recommended_safe_limit: int = 51000):
     '''
     Returns the system prompt with dynamic token limits
     
     Args:
-        max_output_tokens: Maximum output tokens for the current model
-        recommended_safe_limit: Recommended safe limit (80% of max)
+        max_output_tokens: Maximum output tokens for the current model (default: 64000 for Claude Sonnet 4.5)
+        recommended_safe_limit: Recommended safe limit ~80% of max (default: 51000 for Claude Sonnet 4.5)
     '''
     # Pre-calculate derived values to avoid formatting errors
     safe_limit_half = recommended_safe_limit // 2
