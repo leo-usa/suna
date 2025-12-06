@@ -4,6 +4,7 @@ import { useAuth } from '@/components/AuthProvider';
 import {
   CheckCircle,
   AlertTriangle,
+  ExternalLink,
   Loader2,
   Code,
   Eye,
@@ -26,6 +27,7 @@ import { CsvRenderer } from '@/components/file-renderers/csv-renderer';
 import { cn } from '@/lib/utils';
 import { useTheme } from 'next-themes';
 import { CodeBlockCode } from '@/components/ui/code-block';
+import { constructHtmlPreviewUrl } from '@/lib/utils/url';
 import {
   Card,
   CardContent,
@@ -117,6 +119,11 @@ export function FileOperationToolView({
   const language = getLanguageFromFileName(fileName);
   const hasHighlighting = hasLanguageHighlighting(language);
   const contentLines = splitContentIntoLines(fileContent);
+
+  const htmlPreviewUrl =
+    isHtml && project?.sandbox?.sandbox_url && processedFilePath
+      ? constructHtmlPreviewUrl(project.sandbox.sandbox_url, processedFilePath)
+      : undefined;
 
   const FileIcon = getFileIcon(fileName);
 
@@ -581,6 +588,14 @@ export function FileOperationToolView({
               </div>
             </div>
             <div className='flex items-center gap-2'>
+              {isHtml && htmlPreviewUrl && !isStreaming && (
+                <Button variant="outline" size="sm" className="h-8 text-xs bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800" asChild>
+                  <a href={htmlPreviewUrl} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+                    Open in Browser
+                  </a>
+                </Button>
+              )}
               <TabsList className="-mr-2 h-7 bg-zinc-100/70 dark:bg-zinc-800/70 rounded-lg">
                 <TabsTrigger value="code" className="rounded-md data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-900 data-[state=active]:text-primary">
                   <Code className="h-4 w-4" />

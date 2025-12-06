@@ -47,10 +47,10 @@ export function HtmlRenderer({
     }
 
     const sandbox = project?.sandbox;
-    const sandboxId = typeof sandbox === 'string' 
-      ? sandbox 
+    const sandboxId = typeof sandbox === 'string'
+      ? sandbox
       : (typeof sandbox === 'object' ? sandbox?.id : undefined);
-    
+
     if (sandboxId) {
       // Use backend API endpoint (same as ImageRenderer) - this works correctly with Daytona
       let normalizedPath = relativePath;
@@ -62,14 +62,14 @@ export function HtmlRenderer({
       }
       return `${process.env.NEXT_PUBLIC_BACKEND_URL}/sandboxes/${sandboxId}/files/content?path=${encodeURIComponent(normalizedPath)}`;
     }
-    
+
     const sandboxUrl = typeof sandbox === 'object' ? sandbox?.sandbox_url : undefined;
     if (sandboxUrl) {
       // Fallback: use sandbox URL directly (server serves /workspace at root)
       const cleanPath = relativePath.replace(/^\.\//, '').replace(/^\.\.\//, '');
       return `${sandboxUrl.replace(/\/$/, '')}/${cleanPath}`;
     }
-    
+
     // Keep as-is if no sandbox info
     return relativePath;
   }, [project?.sandbox]);
@@ -87,31 +87,31 @@ export function HtmlRenderer({
     try {
       // Extract relative image references - handle both single and double quotes
       const imgRegex = /src=(["'])([^"']*\.(png|jpg|jpeg|gif|webp|svg))\1/gi;
-      
+
       let finalHtml = htmlContent;
-      
+
       // Process all image matches and convert relative paths to blob URLs
       const processedPaths = new Map<string, string>();
       const imagePromises: Promise<void>[] = [];
-      
+
       const imgMatches = [...htmlContent.matchAll(imgRegex)];
       for (const match of imgMatches) {
         const quote = match[1];
         const relativePath = match[2];
-        
+
         // Skip if already absolute URL or data URI
         if (relativePath.startsWith('http') || relativePath.startsWith('data:') || relativePath.startsWith('blob:')) {
           continue;
         }
-        
+
         // Check if we've already processed this path
         if (processedPaths.has(relativePath)) {
           continue;
         }
-        
+
         // Convert to backend API URL first
         const apiUrl = convertImagePathToAbsoluteUrl(relativePath);
-        
+
         // Only fetch if it's a backend API URL (not sandbox URL)
         if (apiUrl.includes('/sandboxes/') && apiUrl.includes('/files/content')) {
           // Fetch with auth and convert to blob URL
@@ -139,7 +139,7 @@ export function HtmlRenderer({
               // Fallback: use the API URL directly (might work if project is public or uses cookies)
               processedPaths.set(relativePath, apiUrl);
             });
-          
+
           imagePromises.push(imagePromise);
         } else {
           // For sandbox URLs, replace immediately (will try to load, might fail with SSL but that's OK)
@@ -149,32 +149,32 @@ export function HtmlRenderer({
           finalHtml = finalHtml.replace(regex, `src=${quote}${apiUrl}${quote}`);
         }
       }
-      
+
       // Wait for all images to be fetched and converted to blob URLs
       await Promise.all(imagePromises);
-      
+
       // Handle CSS file references (<link rel="stylesheet" href="...">)
       // Fetch CSS files and inline them as <style> tags to bypass authentication issues
       console.log('[HTML Renderer] Looking for CSS files in HTML...');
       const cssRegex = /<link([^>]*)\shref=(["'])([^"']*\.css)\2([^>]*)>/gi;
       const cssMatches = [...htmlContent.matchAll(cssRegex)];
       const cssPromises: Promise<void>[] = [];
-      
+
       for (const match of cssMatches) {
         const fullMatch = match[0];
         const relativePath = match[3];
-        
+
         console.log('[HTML Renderer] Found CSS reference:', relativePath);
-        
+
         // Skip if already absolute URL
         if (relativePath.startsWith('http') || relativePath.startsWith('data:') || relativePath.startsWith('blob:')) {
           continue;
         }
-        
+
         // Convert to backend API URL
         const apiUrl = convertImagePathToAbsoluteUrl(relativePath);
         console.log('[HTML Renderer] CSS API URL:', apiUrl);
-        
+
         // Only fetch if it's a backend API URL
         if (apiUrl.includes('/sandboxes/') && apiUrl.includes('/files/content')) {
           const cssPromise = fetch(apiUrl, {
@@ -197,39 +197,39 @@ export function HtmlRenderer({
             .catch(err => {
               console.warn(`[HTML Renderer] Failed to fetch CSS ${relativePath}:`, err);
             });
-          
+
           cssPromises.push(cssPromise);
         }
       }
-      
+
       // Wait for all CSS files to be fetched and inlined
       await Promise.all(cssPromises);
-      
+
       // Handle JavaScript file references (<script src="...">)
       // Fetch JS files and convert to blob URLs
       console.log('[HTML Renderer] Looking for JS files in HTML...');
       const jsSrcRegex = /<script([^>]*)\ssrc=(["'])([^"']*\.js)\2([^>]*)>/gi;
       const jsMatches = [...htmlContent.matchAll(jsSrcRegex)];
       const jsPromises: Promise<void>[] = [];
-      
+
       for (const match of jsMatches) {
         const fullMatch = match[0];
         const beforeSrc = match[1];
         const quote = match[2];
         const relativePath = match[3];
         const afterSrc = match[4];
-        
+
         console.log('[HTML Renderer] Found JS reference:', relativePath);
-        
+
         // Skip if already absolute URL
         if (relativePath.startsWith('http') || relativePath.startsWith('data:') || relativePath.startsWith('blob:')) {
           continue;
         }
-        
+
         // Convert to backend API URL
         const apiUrl = convertImagePathToAbsoluteUrl(relativePath);
         console.log('[HTML Renderer] JS API URL:', apiUrl);
-        
+
         // Only fetch if it's a backend API URL
         if (apiUrl.includes('/sandboxes/') && apiUrl.includes('/files/content')) {
           const jsPromise = fetch(apiUrl, {
@@ -252,14 +252,14 @@ export function HtmlRenderer({
             .catch(err => {
               console.warn(`[HTML Renderer] Failed to fetch JS ${relativePath}:`, err);
             });
-          
+
           jsPromises.push(jsPromise);
         }
       }
-      
+
       // Wait for all JS files to be fetched and converted
       await Promise.all(jsPromises);
-      
+
       return finalHtml;
     } catch (e) {
       console.warn('Failed to convert image paths:', e);
@@ -297,7 +297,7 @@ export function HtmlRenderer({
           doc.open();
           doc.write(finalHtml);
           doc.close();
-          
+
           // Ensure JavaScript executes after DOM is ready
           const executeScripts = () => {
             const scripts = doc.querySelectorAll('script');
@@ -312,7 +312,7 @@ export function HtmlRenderer({
                 newScript.async = script.async;
                 newScript.defer = script.defer;
                 newScript.type = script.type || 'text/javascript';
-                
+
                 const scriptPromise = new Promise<void>((resolve) => {
                   newScript.onload = () => resolve();
                   newScript.onerror = () => resolve(); // Continue even if fails
@@ -350,7 +350,7 @@ export function HtmlRenderer({
           doc.open();
           doc.write(content);
           doc.close();
-          
+
           // Execute scripts for fallback content
           const executeScripts = () => {
             const scripts = doc.querySelectorAll('script');
@@ -364,7 +364,7 @@ export function HtmlRenderer({
                 newScript.async = script.async;
                 newScript.defer = script.defer;
                 newScript.type = script.type || 'text/javascript';
-                
+
                 const scriptPromise = new Promise<void>((resolve) => {
                   newScript.onload = () => resolve();
                   newScript.onerror = () => resolve();
@@ -434,7 +434,31 @@ export function HtmlRenderer({
             variant="ghost"
             size="sm"
             className="flex items-center gap-2 bg-background/80 backdrop-blur-sm hover:bg-background/90"
-            onClick={() => window.open(previewUrl, '_blank')}
+            onClick={async () => {
+              // Open a new window and write HTML content directly (same as preview mode)
+              // This avoids the Daytona warning page
+              const newWindow = window.open('', '_blank');
+              if (newWindow) {
+                try {
+                  // Embed assets first (same as preview mode)
+                  const finalHtml = await embedAssets(content);
+
+                  // Write the HTML content
+                  newWindow.document.open();
+                  newWindow.document.write(finalHtml);
+                  newWindow.document.close();
+
+                  // Set the title
+                  if (fileName) {
+                    newWindow.document.title = fileName;
+                  }
+                } catch (error) {
+                  console.error('Error opening HTML in new window:', error);
+                  // Fallback to original URL if something goes wrong
+                  newWindow.location.href = previewUrl;
+                }
+              }
+            }}
           >
             <ExternalLink className="h-4 w-4" />
             {t('editor.open', 'Open')}
