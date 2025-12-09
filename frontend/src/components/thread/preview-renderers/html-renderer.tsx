@@ -126,25 +126,73 @@ export function HtmlRenderer({
             // Extract relative image references - handle both single and double quotes
             const imgRegex = /src=(["'])([^"']*\.(png|jpg|jpeg|gif|webp|svg))\1/gi;
 
+
             let finalHtml = htmlContent;
 
-            // Process all image matches and convert relative paths to absolute URLs
+            // Process all image matches and convert relative paths to blob URLs (fetched with auth)
+            // This is CRITICAL because img src cannot send Authorization headers
             const processedPaths = new Map<string, string>();
+            const imagePromises: Promise<void>[] = [];
 
-            finalHtml = finalHtml.replace(imgRegex, (fullMatch, quote, relativePath) => {
+            const imgMatches = [...htmlContent.matchAll(imgRegex)];
+            for (const match of imgMatches) {
+                const quote = match[1];
+                const relativePath = match[2];
+
+                // Skip if already absolute URL or data URI
                 if (relativePath.startsWith('http') || relativePath.startsWith('data:') || relativePath.startsWith('blob:')) {
-                    return fullMatch;
+                    continue;
                 }
 
+                // Check if we've already processed this path
                 if (processedPaths.has(relativePath)) {
-                    return `src=${quote}${processedPaths.get(relativePath)}${quote}`;
+                    continue;
                 }
 
-                const absoluteUrl = convertImagePathToAbsoluteUrl(relativePath, project);
-                processedPaths.set(relativePath, absoluteUrl);
+                // Convert to backend API URL first
+                const apiUrl = convertImagePathToAbsoluteUrl(relativePath, project);
 
-                return `src=${quote}${absoluteUrl}${quote}`;
-            });
+                // Only fetch if it's a backend API URL (not sandbox URL)
+                if (apiUrl.includes('/sandboxes/') && apiUrl.includes('/files/content') && session?.access_token) {
+                    // Fetch with auth and convert to blob URL
+                    const imagePromise = fetch(apiUrl, {
+                        headers: {
+                            'Authorization': `Bearer ${session.access_token}`
+                        }
+                    })
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`Failed to load image: ${response.status}`);
+                            }
+                            return response.blob();
+                        })
+                        .then(blob => {
+                            const blobUrl = URL.createObjectURL(blob);
+                            processedPaths.set(relativePath, blobUrl);
+                            // Replace all occurrences of this relative path with the blob URL
+                            const escapedPath = relativePath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                            const regex = new RegExp(`src=${quote}${escapedPath}${quote}`, 'gi');
+                            finalHtml = finalHtml.replace(regex, `src=${quote}${blobUrl}${quote}`);
+                        })
+                        .catch(err => {
+                            console.warn(`Failed to fetch image ${relativePath}:`, err);
+                            // Fallback: use the API URL directly
+                            processedPaths.set(relativePath, apiUrl);
+                        });
+
+                    imagePromises.push(imagePromise);
+                } else {
+                    // For sandbox URLs, replace immediately
+                    processedPaths.set(relativePath, apiUrl);
+                    const escapedPath = relativePath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                    const regex = new RegExp(`src=${quote}${escapedPath}${quote}`, 'gi');
+                    finalHtml = finalHtml.replace(regex, `src=${quote}${apiUrl}${quote}`);
+                }
+            }
+
+            // Wait for all images to be fetched and converted to blob URLs
+            await Promise.all(imagePromises);
+
 
             // Handle CSS file references - fetch and inline them
             const cssRegex = /<link([^>]*)\shref=(["'])([^"']*\.css)\2([^>]*)>/gi;
