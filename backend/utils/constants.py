@@ -267,18 +267,33 @@ MODELS = {
         "tier_availability": ["free", "paid"],
         "max_output_tokens": 8192,
         "recommended_safe_limit": 7000
-    },
+    },   
 }
 
 # Image generation pricing configuration
 IMAGE_PRICING = {
     "gpt-image-1": {
-        "generation_cost_per_image": 0.040,  # $0.040 per image generation
-        "editing_cost_per_image": 0.080,     # $0.080 per image editing
+        "generation_cost_per_image": 0.08,  # $0.08 per image generation
+        "editing_cost_per_image": 0.16,     # $0.16 per image editing
         "sizes": {
             "1024x1024": 1.0,      # Base multiplier
-            "1024x1536": 1.0,      # Same cost
-            "1536x1024": 1.0       # Same cost
+            "1024x1536": 1.5,      # Same cost
+            "1536x1024": 1.5       # Same cost
+        }
+    },
+    "gemini-3-pro-image": {
+        "generation_cost_per_image": 0.150,  # $0.150 per image generation (2K tier)
+        "editing_cost_per_image": 0.300,     # $0.300 per image editing
+        "sizes": {
+            # 2K tier (up to 2048x2048) - same cost
+            "1024x1024": 1.0,      # Base multiplier
+            "1024x1536": 1.0,      # Same cost (within 2K tier)
+            "1536x1024": 1.0,      # Same cost (within 2K tier)
+            "2048x2048": 1.0,      # Same cost (within 2K tier)
+            # 4K tier (up to 4096x4096) - higher cost
+            "2048x3072": 2.0,      # 4K tier (~$0.240 actual cost)
+            "3072x2048": 2.0,      # 4K tier
+            "4096x4096": 2.0,      # 4K tier (highest supported)
         }
     }
 }
