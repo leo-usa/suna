@@ -53,14 +53,14 @@ class SandboxImageEditTool(SandboxToolsBase):
     async def _generate_with_gpt_image(self, prompt: str, size: str) -> dict:
         """Generate image using GPT Image 1."""
         response = await aimage_generation(
-            model="gpt-image-1",
+            model="gpt-image-1.5",
             prompt=prompt,
             n=1,
             size=size,
         )
         # Extract base64 from GPT response
         b64_data = response.data[0].b64_json
-        return {"b64_data": b64_data, "model": "gpt-image-1"}
+        return {"b64_data": b64_data, "model": "gpt-image-1.5"}
 
     async def _edit_with_gpt_image(self, prompt: str, image_bytes: bytes, size: str) -> dict:
         """Edit image using GPT Image 1."""
@@ -70,12 +70,12 @@ class SandboxImageEditTool(SandboxToolsBase):
         response = await aimage_edit(
             image=[image_io],
             prompt=prompt,
-            model="gpt-image-1",
+            model="gpt-image-1.5",
             n=1,
             size=size,
         )
         b64_data = response.data[0].b64_json
-        return {"b64_data": b64_data, "model": "gpt-image-1"}
+        return {"b64_data": b64_data, "model": "gpt-image-1.5"}
 
     async def _generate_with_gemini(self, prompt: str, aspect_ratio: str, image_bytes: Optional[bytes] = None) -> dict:
         """Generate or edit image using Gemini 3 Pro Image via OpenRouter (direct API call)."""
@@ -201,7 +201,7 @@ class SandboxImageEditTool(SandboxToolsBase):
             "type": "function",
             "function": {
                 "name": "image_edit_or_generate",
-                "description": "Generate a new image from a prompt, or edit an existing image. REQUIRED: You MUST specify the 'model' parameter ('gemini' or 'gpt-image-1'). Also specify 'aspect_ratio' when user requests a specific format.",
+                "description": "Generate a new image from a prompt, or edit an existing image. REQUIRED: You MUST specify the 'model' parameter ('gemini' or 'gpt-image-1.5'). Also specify 'aspect_ratio' when user requests a specific format.",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -226,8 +226,8 @@ class SandboxImageEditTool(SandboxToolsBase):
                         },
                         "model": {
                             "type": "string",
-                            "enum": ["gpt-image-1", "gemini"],
-                            "description": "REQUIRED: Image generation model to use. 'gemini' (Google Gemini 3 Pro Image - recommended for most cases) or 'gpt-image-1' (OpenAI DALL-E).",
+                            "enum": ["gpt-image-1.5", "gemini"],
+                            "description": "REQUIRED: Image generation model to use. 'gemini' (Google Gemini 3 Pro Image - recommended for most cases) or 'gpt-image-1.5' (OpenAI DALL-E).",
                         },
                     },
                     "required": ["mode", "prompt", "model"],

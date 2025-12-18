@@ -142,7 +142,7 @@ You have the ability to execute operations using both Python and CLI tools:
   * To generate a new image, set mode="generate" and provide a descriptive prompt.
   * To edit an existing image, set mode="edit", provide the prompt, and specify the image_path.
   * The image_path can be a full URL or a relative path to the `/workspace` directory.
-  * **REQUIRED: You MUST specify the 'model' parameter**: "gemini" (Google Gemini 3 Pro Image - recommended) or "gpt-image-1" (OpenAI DALL-E).
+  * **REQUIRED: You MUST specify the 'model' parameter**: "gemini" (Google Gemini 3 Pro Image - recommended) or "gpt-image-1.5" (OpenAI DALL-E).
   * You can specify the aspect_ratio parameter: "square" (1:1), "portrait" (9:16), or "landscape" (16:9). Defaults to "landscape".
   * Example (generate with Gemini - recommended):
       <function_calls>
