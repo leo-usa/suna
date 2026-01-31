@@ -54,11 +54,21 @@ MODELS = {
     #     "max_output_tokens": 8192,
     #     "recommended_safe_limit": 7000
     # },
-    "openrouter/moonshotai/kimi-k2": {
-        "aliases": ["moonshotai/kimi-k2"],
+    "openrouter/moonshotai/kimi-k2.5": {
+        "aliases": ["moonshotai/kimi-k2.5"],
         "pricing": {
-            "input_cost_per_million_tokens": 1.00,
-            "output_cost_per_million_tokens": 3.00
+            "input_cost_per_million_tokens": 0.50,
+            "output_cost_per_million_tokens": 2.80
+        },
+        "tier_availability": ["free", "paid"],
+        "max_output_tokens": 128000,
+        "recommended_safe_limit": 100000
+    },
+    "openrouter/minimax/minimax-m2.1": {
+        "aliases": ["minimax/minimax-m2.1"],
+        "pricing": {
+            "input_cost_per_million_tokens": 0.27,
+            "output_cost_per_million_tokens": 1.10
         },
         "tier_availability": ["free", "paid"],
         "max_output_tokens": 128000,
@@ -358,6 +368,14 @@ def _generate_model_structures():
             pricing[legacy_name] = config["pricing"]
         elif model_name.startswith("openrouter/openai/"):
             # Add pricing for openai/ variant (without openrouter/ prefix)
+            legacy_name = model_name.replace("openrouter/", "")
+            pricing[legacy_name] = config["pricing"]
+        elif model_name.startswith("openrouter/minimax/"):
+            # Add pricing for minimax/ variant (without openrouter/ prefix)
+            legacy_name = model_name.replace("openrouter/", "")
+            pricing[legacy_name] = config["pricing"]
+        elif model_name.startswith("openrouter/moonshotai/"):
+            # Add pricing for moonshotai/ variant (without openrouter/ prefix)
             legacy_name = model_name.replace("openrouter/", "")
             pricing[legacy_name] = config["pricing"]
         elif model_name.startswith("anthropic/"):
