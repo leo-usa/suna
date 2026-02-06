@@ -246,8 +246,8 @@ MODELS = {
         "max_output_tokens": 4096,
         "recommended_safe_limit": 3000
     },
-    "anthropic/claude-opus-4-5": {
-        "aliases": ["claude-opus-4.5", "claude-opus-4-5"],
+    "anthropic/claude-opus-4-6": {
+        "aliases": ["claude-opus-4.6", "claude-opus-4-6"],
         "pricing": {
             "input_cost_per_million_tokens": 5.00,
             "output_cost_per_million_tokens": 25.00
