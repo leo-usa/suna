@@ -1607,6 +1607,7 @@ export interface SubscriptionStatus {
   minutes_limit?: number;
   cost_limit?: number;
   current_usage?: number;
+  credits?: number; // Pre-paid credit balance in dollars
   // Fields for scheduled changes
   has_schedule: boolean;
   scheduled_plan_name?: string;

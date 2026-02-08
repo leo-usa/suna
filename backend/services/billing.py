@@ -13,7 +13,7 @@ from utils.config import config, EnvMode
 from services.supabase import DBConnection
 from utils.auth_utils import get_current_user_id_from_jwt
 from pydantic import BaseModel, Field
-from utils.constants import MODEL_ACCESS_TIERS, MODEL_NAME_ALIASES, HARDCODED_MODEL_PRICES, IMAGE_PRICING
+from utils.constants import MODEL_ACCESS_TIERS, MODEL_NAME_ALIASES, HARDCODED_MODEL_PRICES, IMAGE_PRICING, PAID_TIER_MODELS
 from litellm.cost_calculator import cost_per_token
 import time
 
@@ -163,6 +163,7 @@ class SubscriptionStatus(BaseModel):
     minutes_limit: Optional[int] = None
     cost_limit: Optional[float] = None
     current_usage: Optional[float] = None
+    credits: Optional[float] = None  # Pre-paid credit balance in dollars
     # Fields for scheduled changes
     has_schedule: bool = False
     scheduled_plan_name: Optional[str] = None
@@ -559,10 +560,11 @@ def calculate_image_cost(model: str, mode: str, size: str = "1024x1024") -> floa
 
 async def get_allowed_models_for_user(client, user_id: str):
     """
-    Get the list of models allowed for a user based on their subscription tier.
+    Get the list of models allowed for a user based on their subscription tier
+    or pre-paid credit balance.
     
     Returns:
-        List of model names allowed for the user's subscription tier.
+        List of model names allowed for the user.
     """
 
     subscription = await get_user_subscription(user_id)
@@ -579,6 +581,13 @@ async def get_allowed_models_for_user(client, user_id: str):
         tier_info = SUBSCRIPTION_TIERS.get(price_id)
         if tier_info:
             tier_name = tier_info['name']
+    
+    # If user is on free tier, check if they have pre-paid credits
+    # Pre-paid users with positive balance get paid model access
+    if tier_name == 'free':
+        credits = await get_user_credits(client, user_id)
+        if credits > 0:
+            return PAID_TIER_MODELS
     
     # Return allowed models for this tier
     return MODEL_ACCESS_TIERS.get(tier_name, MODEL_ACCESS_TIERS['free'])  # Default to free tier if unknown
@@ -1080,22 +1089,24 @@ async def get_subscription(
         subscription = await get_user_subscription(current_user_id)
         # print("Subscription data for status:", subscription)
         
-        # Calculate current usage
+        # Calculate current usage and credits
         db = DBConnection()
         client = await db.client
         current_usage = await calculate_monthly_usage(client, current_user_id)
+        credits = await get_user_credits(client, current_user_id)
 
         if not subscription:
             # Default to free tier status if no active subscription for our product
             free_tier_id = config.STRIPE_FREE_TIER_ID
             free_tier_info = SUBSCRIPTION_TIERS.get(free_tier_id)
             return SubscriptionStatus(
-                status="no_subscription",
-                plan_name=free_tier_info.get('name', 'free') if free_tier_info else 'free',
+                status="no_subscription" if credits <= 0 else "active",
+                plan_name='prepaid' if credits > 0 else (free_tier_info.get('name', 'free') if free_tier_info else 'free'),
                 price_id=free_tier_id,
                 minutes_limit=free_tier_info.get('minutes') if free_tier_info else 0,
                 cost_limit=free_tier_info.get('cost') if free_tier_info else 0,
-                current_usage=current_usage
+                current_usage=current_usage,
+                credits=credits,
             )
         
         # Extract current plan details
@@ -1117,6 +1128,7 @@ async def get_subscription(
             minutes_limit=current_tier_info['minutes'],
             cost_limit=current_tier_info['cost'],
             current_usage=current_usage,
+            credits=credits,
             has_schedule=False # Default
         )
 
@@ -1391,6 +1403,12 @@ async def get_available_models(
             tier_info = SUBSCRIPTION_TIERS.get(price_id)
             if tier_info:
                 tier_name = tier_info['name']
+        
+        # Pre-paid users with positive balance are treated as paid tier
+        if tier_name == 'free':
+            credits = await get_user_credits(client, current_user_id)
+            if credits > 0:
+                tier_name = 'prepaid'
         
         # Get all unique full model names from MODEL_NAME_ALIASES
         all_models = set()
