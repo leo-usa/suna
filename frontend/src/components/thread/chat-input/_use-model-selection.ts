@@ -58,13 +58,13 @@ export const MODELS = {
     recommended: false,
     lowQuality: false
   },
-  'minimax/minimax-m2.1': { 
+  'minimax/minimax-m2.5': { 
     tier: 'free', 
     priority: 98,
     recommended: false,
     lowQuality: false
   },
-  'z-ai/glm-4.5': { 
+  'z-ai/glm-5': { 
     tier: 'free', 
     priority: 97,
     recommended: false,

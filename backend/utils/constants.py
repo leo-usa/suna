@@ -64,25 +64,25 @@ MODELS = {
         "max_output_tokens": 128000,
         "recommended_safe_limit": 100000
     },
-    "openrouter/minimax/minimax-m2.1": {
-        "aliases": ["minimax/minimax-m2.1"],
+    "openrouter/minimax/minimax-m2.5": {
+        "aliases": ["minimax/minimax-m2.5"],
         "pricing": {
-            "input_cost_per_million_tokens": 0.27,
-            "output_cost_per_million_tokens": 1.10
+            "input_cost_per_million_tokens": 0.30,
+            "output_cost_per_million_tokens": 1.20
         },
         "tier_availability": ["free", "paid"],
         "max_output_tokens": 128000,
         "recommended_safe_limit": 100000
     },
-    "openrouter/z-ai/glm-4.5": {
-        "aliases": ["z-ai/glm-4.5"],
+    "openrouter/z-ai/glm-5": {
+        "aliases": ["z-ai/glm-5"],
         "pricing": {
-            "input_cost_per_million_tokens": 0.60,
-            "output_cost_per_million_tokens": 2.20
+            "input_cost_per_million_tokens": 0.80,
+            "output_cost_per_million_tokens": 2.56
         },
         "tier_availability": ["free", "paid"],
-        "max_output_tokens": 8192,
-        "recommended_safe_limit": 7000
+        "max_output_tokens": 128000,
+        "recommended_safe_limit": 100000
     },
         "openrouter/openai/gpt-5.1-chat": {
         "aliases": ["gpt-5.1-chat"],
