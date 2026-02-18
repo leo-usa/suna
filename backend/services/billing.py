@@ -13,7 +13,7 @@ from utils.config import config, EnvMode
 from services.supabase import DBConnection
 from utils.auth_utils import get_current_user_id_from_jwt
 from pydantic import BaseModel, Field
-from utils.constants import MODEL_ACCESS_TIERS, MODEL_NAME_ALIASES, HARDCODED_MODEL_PRICES, IMAGE_PRICING, PAID_TIER_MODELS
+from utils.constants import MODEL_ACCESS_TIERS, MODEL_NAME_ALIASES, HARDCODED_MODEL_PRICES, IMAGE_PRICING, VIDEO_PRICING, PAID_TIER_MODELS
 from litellm.cost_calculator import cost_per_token
 import time
 
@@ -319,18 +319,28 @@ async def calculate_monthly_usage(client, user_id: str) -> float:
     return total_cost
 
 
-async def process_credit_deduction_for_response(client, user_id: str, usage_content: dict, model: str) -> bool:
-    """Process credit deduction for a single agent response."""
+async def process_credit_deduction_for_response(client, user_id: str, usage_content: dict, model: str, usage_data_list: list = None) -> bool:
+    """Process credit deduction for a single agent response, including image/video costs."""
     try:
         usage = usage_content.get('usage', {})
         prompt_tokens = usage.get('prompt_tokens', 0)
         completion_tokens = usage.get('completion_tokens', 0)
         cost = calculate_token_cost(prompt_tokens, completion_tokens, model)
         
+        # Add image/video generation costs from tool results
+        if usage_data_list:
+            for usage_item in usage_data_list:
+                if 'image_cost' in usage_item:
+                    cost += usage_item['image_cost']
+                    logger.info(f"Including image cost ${usage_item['image_cost']:.4f} in credit deduction for user {user_id}")
+                if 'video_cost' in usage_item:
+                    cost += usage_item['video_cost']
+                    logger.info(f"Including video cost ${usage_item['video_cost']:.4f} in credit deduction for user {user_id}")
+        
         if cost > 0:
             success = await deduct_user_credits(client, user_id, cost)
             if success:
-                logger.info(f"Deducted ${cost:.4f} from user {user_id} credits")
+                logger.info(f"Deducted ${cost:.4f} from user {user_id} credits (tokens + media)")
                 return True
             else:
                 logger.warning(f"Failed to deduct ${cost:.4f} from user {user_id}")
@@ -386,7 +396,7 @@ async def get_usage_logs(client, user_id: str, page: int = 0, items_per_page: in
     start_time = time.time()
     messages_result = await client.table('messages') \
         .select(
-            'message_id, thread_id, created_at, content, threads!inner(project_id)'
+            'message_id, thread_id, created_at, content, metadata, threads!inner(project_id)'
         ) \
         .in_('thread_id', thread_ids) \
         .eq('type', 'assistant_response_end') \
@@ -426,12 +436,15 @@ async def get_usage_logs(client, user_id: str, page: int = 0, items_per_page: in
                 model
             )
             
-            # Add image costs if present in metadata
+            # Add image/video costs if present in metadata
             if message.get('metadata') and message['metadata'].get('usage_data'):
                 for usage_item in message['metadata']['usage_data']:
                     if 'image_cost' in usage_item:
                         estimated_cost += usage_item['image_cost']
                         logger.info(f"Added image cost: ${usage_item['image_cost']:.4f} for model {usage_item.get('model', 'unknown')}")
+                    if 'video_cost' in usage_item:
+                        estimated_cost += usage_item['video_cost']
+                        logger.info(f"Added video cost: ${usage_item['video_cost']:.4f} for model {usage_item.get('model', 'unknown')} duration={usage_item.get('duration', '?')}s")
             
             # Safely extract project_id from threads relationship
             project_id = 'unknown'
@@ -556,6 +569,23 @@ def calculate_image_cost(model: str, mode: str, size: str = "1024x1024") -> floa
         
     except Exception as e:
         logger.error(f"Error calculating image cost for model {model}, mode {mode}: {str(e)}")
+        return 0.0
+
+def calculate_video_cost(model: str, duration_seconds: int) -> float:
+    """Calculate the cost for video generation."""
+    try:
+        if model not in VIDEO_PRICING:
+            logger.warning(f"No pricing found for video model {model}")
+            return 0.0
+        
+        pricing = VIDEO_PRICING[model]
+        cost_per_second = pricing["cost_per_second"]
+        
+        total_cost = cost_per_second * duration_seconds * TOKEN_PRICE_MULTIPLIER
+        return total_cost
+        
+    except Exception as e:
+        logger.error(f"Error calculating video cost for model {model}, duration {duration_seconds}s: {str(e)}")
         return 0.0
 
 async def get_allowed_models_for_user(client, user_id: str):

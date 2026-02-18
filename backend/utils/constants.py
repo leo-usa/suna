@@ -328,6 +328,13 @@ IMAGE_PRICING = {
     }
 }
 
+# Video generation pricing configuration
+VIDEO_PRICING = {
+    "seedance-1.5-pro": {
+        "cost_per_second": 0.05,  # $0.05 per second of output video (720p, Replicate)
+    }
+}
+
 # Derived structures (auto-generated from MODELS)
 def _generate_model_structures():
     """Generate all model structures from the master MODELS dictionary."""

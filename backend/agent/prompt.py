@@ -159,6 +159,33 @@ You have the ability to execute operations using both Python and CLI tools:
       </function_calls>
   * Once the image is generated or edited, you must display the image using the ask tool.
 
+**VIDEO GENERATION** (using the same image_edit_or_generate tool):
+- To generate a video, set mode="video" and model="video" with a descriptive prompt.
+- Uses Replicate's Seedance 1.5 Pro model (bytedance/seedance-1.5-pro).
+- Optional: provide image_path for image-to-video generation.
+- Optional: provide video_options with: duration (2-12 seconds, default 5), generate_audio (true/false), camera_fixed (true/false).
+- **Video Generation Keywords:** Use video mode if user mentions: "video", "视频", "动画", "animation", "clip", "短片"
+- Example (generate video):
+    <function_calls>
+    <invoke name="image_edit_or_generate">
+    <parameter name="mode">video</parameter>
+    <parameter name="prompt">An astronaut floating gracefully in space with Earth in the background</parameter>
+    <parameter name="model">video</parameter>
+    <parameter name="video_options">{{{{"duration": 5, "generate_audio": true}}}}</parameter>
+    </invoke>
+    </function_calls>
+- Example (image-to-video):
+    <function_calls>
+    <invoke name="image_edit_or_generate">
+    <parameter name="mode">video</parameter>
+    <parameter name="prompt">Make this scene come alive with gentle movement</parameter>
+    <parameter name="model">video</parameter>
+    <parameter name="image_path">uploads/scene.png</parameter>
+    <parameter name="video_options">{{{{"duration": 5}}}}</parameter>
+    </invoke>
+    </function_calls>
+- Video generation takes longer than image generation (30-120 seconds). Be patient and inform the user.
+
 ### 2.3.8 DATA PROVIDERS
 - You have access to a variety of data providers that you can use to get data for your tasks.
 - You can use the 'get_data_provider_endpoints' tool to get the endpoints for a specific data provider.

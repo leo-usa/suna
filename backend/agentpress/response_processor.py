@@ -176,6 +176,7 @@ class ResponseProcessor:
         has_printed_thinking_prefix = False # Flag for printing thinking prefix only once
         agent_should_terminate = False # Flag to track if a terminating tool has been executed
         complete_native_tool_calls = [] # Initialize early for use in assistant_response_end
+        accumulated_usage_data = [] # Accumulate image/video costs from tool results for billing
 
         # Collect metadata for reconstructing LiteLLM response object
         streaming_metadata = {
@@ -653,6 +654,10 @@ class ResponseProcessor:
                             context.assistant_message_id, context.parsing_details
                         )
 
+                        # Accumulate usage data (image/video costs) for billing
+                        if hasattr(result, 'usage_data') and result.usage_data:
+                            accumulated_usage_data.append(result.usage_data)
+
                         # Yield completed/failed status (linked to saved result ID if available)
                         completed_msg_obj = await self._yield_and_save_tool_completed(
                             context,
@@ -733,12 +738,16 @@ class ResponseProcessor:
                         if streaming_metadata.get("response_ms"):
                             assistant_end_content["response_ms"] = streaming_metadata["response_ms"]
                         
+                        end_metadata = {"thread_run_id": thread_run_id}
+                        if accumulated_usage_data:
+                            end_metadata["usage_data"] = accumulated_usage_data
+                        
                         await self.add_message(
                             thread_id=thread_id,
                             type="assistant_response_end",
                             content=assistant_end_content,
                             is_llm_message=False,
-                            metadata={"thread_run_id": thread_run_id}
+                            metadata=end_metadata
                         )
                         logger.info("Assistant response end saved for stream (before termination)")
                         
@@ -752,7 +761,7 @@ class ResponseProcessor:
                             user_id = await get_account_id_from_thread(client, thread_id)
                             
                             if user_id:
-                                await process_credit_deduction_for_response(client, user_id, assistant_end_content, llm_model)
+                                await process_credit_deduction_for_response(client, user_id, assistant_end_content, llm_model, accumulated_usage_data)
                         except Exception as e:
                             logger.error(f"Error handling credit deduction: {str(e)}")
                             # Don't break the response flow
@@ -800,12 +809,16 @@ class ResponseProcessor:
                     if streaming_metadata.get("response_ms"):
                         assistant_end_content["response_ms"] = streaming_metadata["response_ms"]
                     
+                    end_metadata = {"thread_run_id": thread_run_id}
+                    if accumulated_usage_data:
+                        end_metadata["usage_data"] = accumulated_usage_data
+                    
                     await self.add_message(
                         thread_id=thread_id,
                         type="assistant_response_end",
                         content=assistant_end_content,
                         is_llm_message=False,
-                        metadata={"thread_run_id": thread_run_id}
+                        metadata=end_metadata
                     )
                     logger.info("Assistant response end saved for stream")
                     
@@ -819,7 +832,7 @@ class ResponseProcessor:
                         user_id = await get_account_id_from_thread(client, thread_id)
                         
                         if user_id:
-                            await process_credit_deduction_for_response(client, user_id, assistant_end_content, llm_model)
+                            await process_credit_deduction_for_response(client, user_id, assistant_end_content, llm_model, accumulated_usage_data)
                     except Exception as e:
                         logger.error(f"Error handling credit deduction: {str(e)}")
                         # Don't break the response flow
@@ -888,6 +901,7 @@ class ResponseProcessor:
         tool_result_message_objects = {}
         finish_reason = None
         native_tool_calls_for_message = []
+        accumulated_usage_data = [] # Accumulate image/video costs from tool results for billing
 
         try:
             # Save and Yield thread_run_start status message
@@ -987,6 +1001,10 @@ class ResponseProcessor:
                         current_assistant_id, parsing_details
                     )
 
+                    # Accumulate usage data (image/video costs) for billing
+                    if hasattr(result, 'usage_data') and result.usage_data:
+                        accumulated_usage_data.append(result.usage_data)
+
                     # Save and Yield completed/failed status
                     completed_msg_obj = await self._yield_and_save_tool_completed(
                         context,
@@ -1017,13 +1035,17 @@ class ResponseProcessor:
             # --- Save and Yield assistant_response_end ---
             if assistant_message_object: # Only save if assistant message was saved
                 try:
+                    end_metadata = {"thread_run_id": thread_run_id}
+                    if accumulated_usage_data:
+                        end_metadata["usage_data"] = accumulated_usage_data
+                    
                     # Save the full LiteLLM response object directly in content
                     await self.add_message(
                         thread_id=thread_id,
                         type="assistant_response_end",
                         content=llm_response,
                         is_llm_message=False,
-                        metadata={"thread_run_id": thread_run_id}
+                        metadata=end_metadata
                     )
                     logger.info("Assistant response end saved for non-stream")
                     
@@ -1037,7 +1059,7 @@ class ResponseProcessor:
                         user_id = await get_account_id_from_thread(client, thread_id)
                         
                         if user_id:
-                            await process_credit_deduction_for_response(client, user_id, llm_response, llm_model)
+                            await process_credit_deduction_for_response(client, user_id, llm_response, llm_model, accumulated_usage_data)
                     except Exception as e:
                         logger.error(f"Error handling credit deduction: {str(e)}")
                         # Don't break the response flow
@@ -1633,6 +1655,13 @@ class ResponseProcessor:
                 
                 logger.info(f"Formatted tool result content: {content[:100]}...")
                 self.trace.event(name="formatted_tool_result_content", level="DEFAULT", status_message=(f"Formatted tool result content: {content[:100]}..."))
+                
+                # Handle usage data for billing (native tools)
+                if hasattr(result, 'usage_data') and result.usage_data:
+                    logger.info(f"Native tool result contains usage data: {result.usage_data}")
+                    if 'usage_data' not in metadata:
+                        metadata['usage_data'] = []
+                    metadata['usage_data'].append(result.usage_data)
                 
                 # Create the tool response message with proper format
                 tool_message = {

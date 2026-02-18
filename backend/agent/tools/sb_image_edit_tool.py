@@ -7,8 +7,10 @@ from io import BytesIO
 import uuid
 from litellm import aimage_generation, aimage_edit
 import aiohttp  # For direct OpenRouter API calls
+import replicate
+import asyncio
 import base64
-from services.billing import calculate_image_cost
+from services.billing import calculate_image_cost, calculate_video_cost
 from utils.logger import logger
 import sys
 import os
@@ -201,33 +203,43 @@ class SandboxImageEditTool(SandboxToolsBase):
             "type": "function",
             "function": {
                 "name": "image_edit_or_generate",
-                "description": "Generate a new image from a prompt, or edit an existing image. REQUIRED: You MUST specify the 'model' parameter ('gemini' or 'gpt-image-1.5'). Also specify 'aspect_ratio' when user requests a specific format.",
+                "description": "Generate a new image from a prompt, edit an existing image, or generate a video. REQUIRED: You MUST specify the 'model' parameter ('gemini', 'gpt-image-1.5', or 'video'). Also specify 'aspect_ratio' when user requests a specific format.",
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "mode": {
                             "type": "string",
-                            "enum": ["generate", "edit"],
-                            "description": "'generate' to create a new image from a prompt, 'edit' to edit an existing image.",
+                            "enum": ["generate", "edit", "video"],
+                            "description": "'generate' to create a new image, 'edit' to edit an existing image, 'video' to generate a video.",
                         },
                         "prompt": {
                             "type": "string",
-                            "description": "Text prompt describing the desired image or edit.",
+                            "description": "Text prompt describing the desired image, edit, or video.",
                         },
                         "image_path": {
                             "type": "string",
-                            "description": "(edit mode only) Path to the image file to edit, relative to /workspace. Required for 'edit'.",
+                            "description": "(edit/video mode) Path to an image file relative to /workspace. Required for 'edit', optional for 'video' (image-to-video).",
                         },
                         "aspect_ratio": {
                             "type": "string",
                             "enum": ["square", "portrait", "landscape"],
-                            "description": "Aspect ratio for the generated image. 'square' (1:1), 'portrait' (9:16), or 'landscape' (16:9). ALWAYS specify this parameter when the user requests a specific format. Defaults to 'square' if not specified.",
+                            "description": "Aspect ratio. 'square' (1:1), 'portrait' (9:16), or 'landscape' (16:9). Defaults to 'square' for images, '16:9' for video.",
                             "default": "square"
                         },
                         "model": {
                             "type": "string",
-                            "enum": ["gpt-image-1.5", "gemini"],
-                            "description": "REQUIRED: Image generation model to use. 'gemini' (Google Gemini 3 Pro Image - recommended for most cases) or 'gpt-image-1.5' (OpenAI DALL-E).",
+                            "enum": ["gpt-image-1.5", "gemini", "video"],
+                            "description": "REQUIRED: Model to use. 'gemini' (Google Gemini 3 Pro Image), 'gpt-image-1.5' (OpenAI), or 'video' (Replicate Seedance video generation).",
+                        },
+                        "video_options": {
+                            "type": "object",
+                            "description": "(video mode only) Options for video generation.",
+                            "properties": {
+                                "duration": {"type": "integer", "description": "Video duration in seconds (2-12). Default: 5."},
+                                "fps": {"type": "integer", "description": "Frames per second. Default: 24."},
+                                "generate_audio": {"type": "boolean", "description": "Whether to generate audio. Default: false."},
+                                "camera_fixed": {"type": "boolean", "description": "Keep camera fixed. Default: false."},
+                            },
                         },
                     },
                     "required": ["mode", "prompt", "model"],
@@ -243,6 +255,7 @@ class SandboxImageEditTool(SandboxToolsBase):
             {"param_name": "image_path", "node_type": "attribute", "path": ".", "required": False},
             {"param_name": "aspect_ratio", "node_type": "attribute", "path": ".", "required": False},
             {"param_name": "model", "node_type": "attribute", "path": ".", "required": True},
+            {"param_name": "video_options", "node_type": "attribute", "path": ".", "required": False},
         ],
         example="""
         <function_calls>
@@ -262,11 +275,16 @@ class SandboxImageEditTool(SandboxToolsBase):
         model: str,
         image_path: Optional[str] = None,
         aspect_ratio: str = "square",
+        video_options: Optional[dict] = None,
     ) -> ToolResult:
-        """Generate or edit images using GPT Image 1 or Gemini 3 Pro Image."""
-        _log(f"🎨🎨🎨 IMAGE TOOL CALLED: mode={mode} | model={model} | aspect_ratio={aspect_ratio} | prompt={prompt[:50]}...")
+        """Generate or edit images using GPT Image 1 or Gemini 3 Pro Image, or generate videos using Replicate."""
+        _log(f"🎨🎨🎨 MEDIA TOOL CALLED: mode={mode} | model={model} | aspect_ratio={aspect_ratio} | prompt={prompt[:50]}...")
         try:
             await self._ensure_sandbox()
+
+            # Handle video generation
+            if mode == "video" or model == "video":
+                return await self._generate_video(prompt, image_path, video_options)
 
             # Get the appropriate size based on aspect ratio (for GPT)
             size = self._get_size_from_aspect_ratio(aspect_ratio)
@@ -296,7 +314,7 @@ class SandboxImageEditTool(SandboxToolsBase):
                 elif mode == "edit":
                     result = await self._edit_with_gpt_image(prompt, image_bytes, size)
                 else:
-                    return self.fail_response("Invalid mode. Use 'generate' or 'edit'.")
+                    return self.fail_response("Invalid mode. Use 'generate', 'edit', or 'video'.")
                 _log(f"🎨🎨🎨 IMAGE GENERATION: GPT Image 1 completed successfully")
                 logger.info(f"🎨 IMAGE GENERATION: GPT Image 1 completed successfully")
 
@@ -327,11 +345,109 @@ class SandboxImageEditTool(SandboxToolsBase):
             )
 
         except Exception as e:
-            _log(f"🎨🎨🎨 IMAGE GENERATION ERROR: model={model} | mode={mode} | error={str(e)}")
-            logger.error(f"🎨 IMAGE GENERATION ERROR: model={model} | mode={mode} | error={str(e)}")
+            _log(f"🎨🎨🎨 MEDIA GENERATION ERROR: model={model} | mode={mode} | error={str(e)}")
+            logger.error(f"🎨 MEDIA GENERATION ERROR: model={model} | mode={mode} | error={str(e)}")
             return self.fail_response(
-                f"An error occurred during image generation/editing: {str(e)}"
+                f"An error occurred during media generation/editing: {str(e)}"
             )
+
+    async def _generate_video(
+        self,
+        prompt: str,
+        image_path: Optional[str] = None,
+        video_options: Optional[dict] = None,
+    ) -> ToolResult:
+        """Generate video using bytedance/seedance-1.5-pro via Replicate."""
+        try:
+            token = os.getenv("REPLICATE_API_TOKEN")
+            if not token:
+                return self.fail_response("REPLICATE_API_TOKEN not configured. Add it to your .env file.")
+            os.environ["REPLICATE_API_TOKEN"] = token
+
+            opts = video_options or {}
+
+            # Build input payload
+            input_params = {"prompt": prompt}
+
+            # Duration: integer 2-12
+            duration = max(2, min(12, int(opts.get("duration", 5))))
+            input_params["duration"] = duration
+
+            # Aspect ratio
+            aspect = opts.get("aspect_ratio", "16:9")
+            input_params["aspect_ratio"] = str(aspect)
+
+            # FPS
+            input_params["fps"] = int(opts.get("fps", 24))
+            input_params["camera_fixed"] = bool(opts.get("camera_fixed", False))
+            input_params["generate_audio"] = bool(opts.get("generate_audio", False))
+
+            if "seed" in opts:
+                try:
+                    input_params["seed"] = int(opts["seed"])
+                except (ValueError, TypeError):
+                    pass
+
+            # Handle input image for image-to-video
+            if image_path:
+                img_bytes = await self._get_image_bytes(image_path)
+                if isinstance(img_bytes, ToolResult):
+                    return img_bytes
+                image_b64 = base64.b64encode(img_bytes).decode('utf-8')
+                input_params["image"] = f"data:image/png;base64,{image_b64}"
+                _log(f"🎬 Video: Using input image '{image_path}' ({len(img_bytes)} bytes)")
+
+            _log(f"🎬 Calling Replicate seedance-1.5-pro | duration={duration}s | aspect={aspect}")
+            logger.info(f"🎬 Video generation: prompt='{prompt[:50]}...' duration={duration}s")
+
+            # Run in thread pool to avoid blocking the event loop
+            output = await asyncio.to_thread(
+                replicate.run,
+                "bytedance/seedance-1.5-pro",
+                input=input_params
+            )
+
+            # Extract video bytes from Replicate output
+            if hasattr(output, 'read'):
+                result_bytes = output.read()
+            elif hasattr(output, 'url'):
+                async with httpx.AsyncClient() as client:
+                    response = await client.get(str(output.url), timeout=120.0)
+                    response.raise_for_status()
+                    result_bytes = response.content
+            else:
+                async with httpx.AsyncClient() as client:
+                    response = await client.get(str(output), timeout=120.0)
+                    response.raise_for_status()
+                    result_bytes = response.content
+
+            # Save to sandbox
+            video_filename = f"generated_video_{uuid.uuid4().hex[:8]}.mp4"
+            sandbox_path = f"{self.workspace_path}/{video_filename}"
+            await self.sandbox.fs.upload_file(result_bytes, sandbox_path)
+
+            # Calculate and store video cost
+            video_cost = calculate_video_cost("seedance-1.5-pro", duration)
+            _log(f"🎬 Video saved: {video_filename} ({len(result_bytes)} bytes) | cost=${video_cost:.4f}")
+            logger.info(f"🎬 Video saved: {video_filename} | duration={duration}s | cost=${video_cost:.4f}")
+
+            # Create usage data for billing
+            usage_data = {
+                "video_cost": video_cost,
+                "model": "seedance-1.5-pro",
+                "mode": "video",
+                "duration": duration,
+            }
+
+            return self.success_response(
+                f"Successfully generated video ({duration}s). Video saved as: {video_filename}",
+                usage_data=usage_data
+            )
+
+        except Exception as e:
+            _log(f"🎬 VIDEO GENERATION ERROR: {str(e)}")
+            logger.error(f"🎬 VIDEO GENERATION ERROR: {str(e)}")
+            return self.fail_response(f"Video generation failed: {str(e)}")
 
     async def _get_image_bytes(self, image_path: str) -> bytes | ToolResult:
         """Get image bytes from URL or local file path."""
