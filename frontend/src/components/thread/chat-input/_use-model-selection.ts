@@ -220,7 +220,7 @@ export const useModelSelection = () => {
         },
         { 
           id: DEFAULT_PREMIUM_MODEL_ID, 
-          label: 'Claude Sonnet 4.5', 
+          label: 'Claude Sonnet 4.6', 
           requiresSubscription: true, 
           priority: MODELS[DEFAULT_PREMIUM_MODEL_ID]?.priority || 100
         },
@@ -237,9 +237,9 @@ export const useModelSelection = () => {
           cleanLabel = cleanLabel.split('/').pop() || cleanLabel;
         }
         
-        // Special case for claude-sonnet-4-5 and claude-sonnet-4 to display as "Claude Sonnet 4.5"
-        if (cleanLabel === 'claude-sonnet-4-5' || cleanLabel === 'claude-sonnet-4') {
-          cleanLabel = 'Claude Sonnet 4.5';
+        // Special case for claude-sonnet-4-6 and claude-sonnet-4 to display as "Claude Sonnet 4.6"
+        if (cleanLabel === 'claude-sonnet-4-6' || cleanLabel === 'claude-sonnet-4') {
+          cleanLabel = 'Claude Sonnet 4.6';
         } else {
           cleanLabel = cleanLabel
             .replace(/-/g, ' ')
