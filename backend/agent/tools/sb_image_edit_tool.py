@@ -203,7 +203,7 @@ class SandboxImageEditTool(SandboxToolsBase):
             "type": "function",
             "function": {
                 "name": "image_edit_or_generate",
-                "description": "Generate a new image from a prompt, edit an existing image, or generate a video. REQUIRED: You MUST specify the 'model' parameter ('gemini', 'gpt-image-1.5', or 'video'). Also specify 'aspect_ratio' when user requests a specific format.",
+                "description": "Generate a new image from a prompt, edit an existing image, or generate a video. REQUIRED: You MUST specify the 'model' parameter ('gemini', 'gpt-image-1.5', or 'video'). Also specify 'aspect_ratio' when user requests a specific format. Video uses Sora 2 (default) with Replicate seedance-1.5-pro fallback.",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -229,14 +229,15 @@ class SandboxImageEditTool(SandboxToolsBase):
                         "model": {
                             "type": "string",
                             "enum": ["gpt-image-1.5", "gemini", "video"],
-                            "description": "REQUIRED: Model to use. 'gemini' (Google Gemini 3 Pro Image), 'gpt-image-1.5' (OpenAI), or 'video' (Replicate Seedance video generation).",
+                            "description": "REQUIRED: Model to use. 'gemini' (Google Gemini 3 Pro Image), 'gpt-image-1.5' (OpenAI), or 'video' (video generation via Sora 2 with Replicate fallback).",
                         },
                         "video_options": {
                             "type": "object",
                             "description": "(video mode only) Options for video generation.",
                             "properties": {
-                                "duration": {"type": "integer", "description": "Video duration in seconds (2-12). Default: 5."},
-                                "fps": {"type": "integer", "description": "Frames per second. Default: 24."},
+                                "provider": {"type": "string", "enum": ["sora", "replicate"], "description": "Video provider. 'sora' (Sora 2, default) or 'replicate' (Seedance 1.5 Pro). Default: sora."},
+                                "duration": {"type": "integer", "description": "Video duration in seconds (2-15 for sora, 2-12 for replicate). Default: 5."},
+                                "aspect_ratio": {"type": "string", "enum": ["16:9", "9:16", "4:3", "3:4", "1:1"], "description": "Video aspect ratio. Default: 16:9."},
                                 "generate_audio": {"type": "boolean", "description": "Whether to generate audio. Default: false."},
                                 "camera_fixed": {"type": "boolean", "description": "Keep camera fixed. Default: false."},
                             },
@@ -277,7 +278,7 @@ class SandboxImageEditTool(SandboxToolsBase):
         aspect_ratio: str = "square",
         video_options: Optional[dict] = None,
     ) -> ToolResult:
-        """Generate or edit images using GPT Image 1 or Gemini 3 Pro Image, or generate videos using Replicate."""
+        """Generate or edit images using GPT Image 1 or Gemini 3 Pro Image, or generate videos using Sora 2 / Replicate."""
         _log(f"🎨🎨🎨 MEDIA TOOL CALLED: mode={mode} | model={model} | aspect_ratio={aspect_ratio} | prompt={prompt[:50]}...")
         try:
             await self._ensure_sandbox()
@@ -357,97 +358,217 @@ class SandboxImageEditTool(SandboxToolsBase):
         image_path: Optional[str] = None,
         video_options: Optional[dict] = None,
     ) -> ToolResult:
-        """Generate video using bytedance/seedance-1.5-pro via Replicate."""
-        try:
-            token = os.getenv("REPLICATE_API_TOKEN")
-            if not token:
-                return self.fail_response("REPLICATE_API_TOKEN not configured. Add it to your .env file.")
-            os.environ["REPLICATE_API_TOKEN"] = token
+        """Generate video. Default: Sora 2 via laozhang.ai, fallback: Replicate."""
+        opts = video_options or {}
+        provider = opts.get("provider", "").lower()
+        aspect = opts.get("aspect_ratio", "16:9")
 
-            opts = video_options or {}
-
-            # Build input payload
-            input_params = {"prompt": prompt}
-
-            # Duration: integer 2-12
+        if provider == "replicate":
             duration = max(2, min(12, int(opts.get("duration", 5))))
-            input_params["duration"] = duration
+            try:
+                return await self._generate_video_replicate(prompt, image_path, opts, duration, aspect)
+            except Exception as e:
+                _log(f"🎬 Replicate failed, falling back to Sora 2: {str(e)}")
+                logger.warning(f"Replicate failed: {str(e)}, trying Sora 2 fallback")
+                return await self._generate_video_laozhang(prompt, image_path, opts, duration, aspect)
 
-            # Aspect ratio
-            aspect = opts.get("aspect_ratio", "16:9")
-            input_params["aspect_ratio"] = str(aspect)
+        # Default (sora / unspecified): try Sora 2 first, Replicate fallback
+        duration = max(2, min(15, int(opts.get("duration", 5))))
+        try:
+            return await self._generate_video_laozhang(prompt, image_path, opts, duration, aspect)
+        except Exception as e:
+            _log(f"🎬 Sora 2 failed, trying Replicate fallback: {str(e)}")
+            logger.warning(f"Sora 2 failed: {str(e)}, trying Replicate fallback")
 
-            # FPS
-            input_params["fps"] = int(opts.get("fps", 24))
-            input_params["camera_fixed"] = bool(opts.get("camera_fixed", False))
-            input_params["generate_audio"] = bool(opts.get("generate_audio", False))
+        try:
+            duration = min(duration, 12)
+            return await self._generate_video_replicate(prompt, image_path, opts, duration, aspect)
+        except Exception as e2:
+            _log(f"🎬 VIDEO GENERATION ERROR (both providers failed): {str(e2)}")
+            logger.error(f"🎬 VIDEO GENERATION ERROR: Sora 2 and Replicate both failed")
+            return self.fail_response(f"Video generation failed. Sora 2: {str(e)}. Replicate: {str(e2)}")
 
-            if "seed" in opts:
-                try:
-                    input_params["seed"] = int(opts["seed"])
-                except (ValueError, TypeError):
-                    pass
+    async def _generate_video_laozhang(
+        self,
+        prompt: str,
+        image_path: Optional[str],
+        opts: dict,
+        duration: int,
+        aspect: str,
+    ) -> ToolResult:
+        """Primary: generate video via laozhang.ai async video API (sora-2)."""
+        api_key = os.getenv("LAOZHANG_API_KEY")
+        if not api_key:
+            raise RuntimeError("LAOZHANG_API_KEY not configured")
 
-            # Handle input image for image-to-video
+        base_url = "https://api.laozhang.ai/v1"
+        headers = {"Authorization": f"Bearer {api_key}"}
+
+        portrait_aspects = {"9:16", "3:4"}
+        size = "720x1280" if aspect in portrait_aspects else "1280x720"
+        seconds_str = str(min(duration, 15))
+
+        _log(f"🎬 Calling laozhang.ai sora-2 (primary) | size={size} | seconds={seconds_str}")
+        logger.info(f"🎬 laozhang.ai fallback: prompt='{prompt[:50]}...' size={size} seconds={seconds_str}")
+
+        async with httpx.AsyncClient(timeout=60.0) as client:
             if image_path:
                 img_bytes = await self._get_image_bytes(image_path)
                 if isinstance(img_bytes, ToolResult):
                     return img_bytes
-                image_b64 = base64.b64encode(img_bytes).decode('utf-8')
-                input_params["image"] = f"data:image/png;base64,{image_b64}"
-                _log(f"🎬 Video: Using input image '{image_path}' ({len(img_bytes)} bytes)")
+                from pathlib import Path
+                ext = Path(image_path).suffix.lstrip(".") or "png"
+                mime = {"jpg": "image/jpeg", "jpeg": "image/jpeg", "png": "image/png", "webp": "image/webp"}.get(ext, "image/png")
+                _log(f"🎬 Video (laozhang): Using input image '{image_path}' ({len(img_bytes)} bytes)")
 
-            _log(f"🎬 Calling Replicate seedance-1.5-pro | duration={duration}s | aspect={aspect}")
-            logger.info(f"🎬 Video generation: prompt='{prompt[:50]}...' duration={duration}s")
-
-            # Run in thread pool to avoid blocking the event loop
-            output = await asyncio.to_thread(
-                replicate.run,
-                "bytedance/seedance-1.5-pro",
-                input=input_params
-            )
-
-            # Extract video bytes from Replicate output
-            if hasattr(output, 'read'):
-                result_bytes = output.read()
-            elif hasattr(output, 'url'):
-                async with httpx.AsyncClient() as client:
-                    response = await client.get(str(output.url), timeout=120.0)
-                    response.raise_for_status()
-                    result_bytes = response.content
+                resp = await client.post(
+                    f"{base_url}/videos",
+                    headers=headers,
+                    data={"model": "sora-2", "prompt": prompt, "size": size, "seconds": seconds_str},
+                    files={"input_reference": (f"image.{ext}", img_bytes, mime)},
+                )
             else:
-                async with httpx.AsyncClient() as client:
-                    response = await client.get(str(output), timeout=120.0)
-                    response.raise_for_status()
-                    result_bytes = response.content
+                resp = await client.post(
+                    f"{base_url}/videos",
+                    headers={**headers, "Content-Type": "application/json"},
+                    json={"model": "sora-2", "prompt": prompt, "size": size, "seconds": seconds_str},
+                )
 
-            # Save to sandbox
-            video_filename = f"generated_video_{uuid.uuid4().hex[:8]}.mp4"
-            sandbox_path = f"{self.workspace_path}/{video_filename}"
-            await self.sandbox.fs.upload_file(result_bytes, sandbox_path)
+            resp.raise_for_status()
+            job_data = resp.json()
+            video_id = job_data.get("id")
+            if not video_id:
+                raise RuntimeError(f"No task id in response: {job_data}")
+            _log(f"🎬 laozhang.ai task submitted: {video_id}")
 
-            # Calculate and store video cost
-            video_cost = calculate_video_cost("seedance-1.5-pro", duration)
-            _log(f"🎬 Video saved: {video_filename} ({len(result_bytes)} bytes) | cost=${video_cost:.4f}")
-            logger.info(f"🎬 Video saved: {video_filename} | duration={duration}s | cost=${video_cost:.4f}")
+            # Poll for completion (5s intervals, 600s max)
+            poll_start = asyncio.get_event_loop().time()
+            max_poll = 600
+            while True:
+                elapsed = asyncio.get_event_loop().time() - poll_start
+                if elapsed > max_poll:
+                    raise TimeoutError(f"laozhang.ai task {video_id} timed out after {max_poll}s")
 
-            # Create usage data for billing
-            usage_data = {
-                "video_cost": video_cost,
-                "model": "seedance-1.5-pro",
-                "mode": "video",
-                "duration": duration,
-            }
+                await asyncio.sleep(5)
+                status_resp = await client.get(f"{base_url}/videos/{video_id}", headers=headers)
+                status_resp.raise_for_status()
+                status_data = status_resp.json()
+                status = status_data.get("status", "unknown")
+                progress = status_data.get("progress", 0)
+                _log(f"🎬 laozhang.ai task {video_id}: {status} ({progress}%)")
 
-            return self.success_response(
-                f"Successfully generated video ({duration}s). Video saved as: {video_filename}",
-                usage_data=usage_data
-            )
+                if status == "completed":
+                    break
+                elif status == "failed":
+                    error_info = status_data.get("error", {})
+                    error_msg = error_info.get("message", str(error_info)) if isinstance(error_info, dict) else str(error_info)
+                    raise RuntimeError(f"laozhang.ai generation failed: {error_msg}")
 
-        except Exception as e:
-            _log(f"🎬 VIDEO GENERATION ERROR: {str(e)}")
-            logger.error(f"🎬 VIDEO GENERATION ERROR: {str(e)}")
-            return self.fail_response(f"Video generation failed: {str(e)}")
+            # Download video
+            dl_resp = await client.get(f"{base_url}/videos/{video_id}/content", headers=headers, timeout=120.0)
+            dl_resp.raise_for_status()
+            result_bytes = dl_resp.content
+
+        video_filename = f"generated_video_{uuid.uuid4().hex[:8]}.mp4"
+        sandbox_path = f"{self.workspace_path}/{video_filename}"
+        await self.sandbox.fs.upload_file(result_bytes, sandbox_path)
+
+        video_cost = calculate_video_cost("laozhang-sora2", duration)
+        _log(f"🎬 Video saved (laozhang): {video_filename} ({len(result_bytes)} bytes) | cost=${video_cost:.4f}")
+        logger.info(f"🎬 Video saved (laozhang): {video_filename} | duration={duration}s | cost=${video_cost:.4f}")
+
+        usage_data = {
+            "video_cost": video_cost,
+            "model": "laozhang/sora-2",
+            "mode": "video",
+            "duration": duration,
+        }
+
+        return self.success_response(
+            f"Successfully generated video ({duration}s). Video saved as: {video_filename}",
+            usage_data=usage_data
+        )
+
+    async def _generate_video_replicate(
+        self,
+        prompt: str,
+        image_path: Optional[str],
+        opts: dict,
+        duration: int,
+        aspect: str,
+    ) -> ToolResult:
+        """Fallback: generate video using seedance-1.5-pro via Replicate."""
+        token = os.getenv("REPLICATE_API_TOKEN")
+        if not token:
+            raise RuntimeError("REPLICATE_API_TOKEN not configured")
+        os.environ["REPLICATE_API_TOKEN"] = token
+
+        duration = min(duration, 12)
+
+        input_params = {
+            "prompt": prompt,
+            "duration": duration,
+            "aspect_ratio": str(aspect),
+            "fps": int(opts.get("fps", 24)),
+            "camera_fixed": bool(opts.get("camera_fixed", False)),
+            "generate_audio": bool(opts.get("generate_audio", False)),
+        }
+
+        if "seed" in opts:
+            try:
+                input_params["seed"] = int(opts["seed"])
+            except (ValueError, TypeError):
+                pass
+
+        if image_path:
+            img_bytes = await self._get_image_bytes(image_path)
+            if isinstance(img_bytes, ToolResult):
+                return img_bytes
+            image_b64 = base64.b64encode(img_bytes).decode("utf-8")
+            input_params["image"] = f"data:image/png;base64,{image_b64}"
+            _log(f"🎬 Video (Replicate): Using input image '{image_path}'")
+
+        _log(f"🎬 Calling Replicate seedance-1.5-pro | duration={duration}s | aspect={aspect}")
+        logger.info(f"🎬 Replicate: prompt='{prompt[:50]}...' duration={duration}s")
+
+        output = await asyncio.to_thread(
+            replicate.run,
+            "bytedance/seedance-1.5-pro",
+            input=input_params
+        )
+
+        if hasattr(output, "read"):
+            result_bytes = output.read()
+        elif hasattr(output, "url"):
+            async with httpx.AsyncClient() as client:
+                response = await client.get(str(output.url), timeout=120.0)
+                response.raise_for_status()
+                result_bytes = response.content
+        else:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(str(output), timeout=120.0)
+                response.raise_for_status()
+                result_bytes = response.content
+
+        video_filename = f"generated_video_{uuid.uuid4().hex[:8]}.mp4"
+        sandbox_path = f"{self.workspace_path}/{video_filename}"
+        await self.sandbox.fs.upload_file(result_bytes, sandbox_path)
+
+        video_cost = calculate_video_cost("seedance-1.5-pro", duration)
+        _log(f"🎬 Video saved (Replicate): {video_filename} ({len(result_bytes)} bytes) | cost=${video_cost:.4f}")
+        logger.info(f"🎬 Video saved (Replicate): {video_filename} | duration={duration}s | cost=${video_cost:.4f}")
+
+        usage_data = {
+            "video_cost": video_cost,
+            "model": "seedance-1.5-pro",
+            "mode": "video",
+            "duration": duration,
+        }
+
+        return self.success_response(
+            f"Successfully generated video ({duration}s). Video saved as: {video_filename}",
+            usage_data=usage_data
+        )
 
     async def _get_image_bytes(self, image_path: str) -> bytes | ToolResult:
         """Get image bytes from URL or local file path."""

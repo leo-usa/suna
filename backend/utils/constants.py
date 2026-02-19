@@ -332,7 +332,10 @@ IMAGE_PRICING = {
 VIDEO_PRICING = {
     "seedance-1.5-pro": {
         "cost_per_second": 0.05,  # $0.05 per second of output video (720p, Replicate)
-    }
+    },
+    "laozhang-sora2": {
+        "cost_per_call": 0.30,  # $0.30 flat per video (sora-2, 720p, laozhang.ai)
+    },
 }
 
 # Derived structures (auto-generated from MODELS)

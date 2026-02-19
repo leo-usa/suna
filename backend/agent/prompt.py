@@ -161,17 +161,35 @@ You have the ability to execute operations using both Python and CLI tools:
 
 **VIDEO GENERATION** (using the same image_edit_or_generate tool):
 - To generate a video, set mode="video" and model="video" with a descriptive prompt.
-- Uses Replicate's Seedance 1.5 Pro model (bytedance/seedance-1.5-pro).
+- Two video providers are available:
+  - **"sora"** (default): Sora 2 via laozhang.ai, 720p, duration 2-15s.
+  - **"replicate"**: Seedance 1.5 Pro via Replicate, 720p, duration 2-12s.
+- Sora 2 is used by default. Only use "replicate" if user explicitly asks for Replicate or Seedance.
 - Optional: provide image_path for image-to-video generation.
-- Optional: provide video_options with: duration (2-12 seconds, default 5), generate_audio (true/false), camera_fixed (true/false).
+- Optional: provide video_options with:
+  - provider: "sora" or "replicate" (default "sora")
+  - duration: 2-15 seconds for sora, 2-12 for replicate (default 5)
+  - aspect_ratio: "16:9", "9:16", "4:3", "3:4", or "1:1" (default "16:9")
+  - generate_audio: true/false (default false)
+  - camera_fixed: true/false (default false)
 - **Video Generation Keywords:** Use video mode if user mentions: "video", "视频", "动画", "animation", "clip", "短片"
-- Example (generate video):
+- **Provider Keywords:** If user mentions "replicate" or "seedance", use provider "replicate". Otherwise default to "sora".
+- Example (generate video, uses Sora 2 by default):
     <function_calls>
     <invoke name="image_edit_or_generate">
     <parameter name="mode">video</parameter>
     <parameter name="prompt">An astronaut floating gracefully in space with Earth in the background</parameter>
     <parameter name="model">video</parameter>
-    <parameter name="video_options">{{{{"duration": 5, "generate_audio": true}}}}</parameter>
+    <parameter name="video_options">{{{{"duration": 5, "aspect_ratio": "16:9"}}}}</parameter>
+    </invoke>
+    </function_calls>
+- Example (generate video with Replicate):
+    <function_calls>
+    <invoke name="image_edit_or_generate">
+    <parameter name="mode">video</parameter>
+    <parameter name="prompt">An astronaut floating gracefully in space with Earth in the background</parameter>
+    <parameter name="model">video</parameter>
+    <parameter name="video_options">{{{{"provider": "replicate", "duration": 5, "aspect_ratio": "16:9"}}}}</parameter>
     </invoke>
     </function_calls>
 - Example (image-to-video):
@@ -182,6 +200,15 @@ You have the ability to execute operations using both Python and CLI tools:
     <parameter name="model">video</parameter>
     <parameter name="image_path">uploads/scene.png</parameter>
     <parameter name="video_options">{{{{"duration": 5}}}}</parameter>
+    </invoke>
+    </function_calls>
+- Example (vertical video for social media):
+    <function_calls>
+    <invoke name="image_edit_or_generate">
+    <parameter name="mode">video</parameter>
+    <parameter name="prompt">A person walking through a neon-lit Tokyo street at night</parameter>
+    <parameter name="model">video</parameter>
+    <parameter name="video_options">{{{{"duration": 8, "aspect_ratio": "9:16"}}}}</parameter>
     </invoke>
     </function_calls>
 - Video generation takes longer than image generation (30-120 seconds). Be patient and inform the user.

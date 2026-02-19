@@ -572,16 +572,19 @@ def calculate_image_cost(model: str, mode: str, size: str = "1024x1024") -> floa
         return 0.0
 
 def calculate_video_cost(model: str, duration_seconds: int) -> float:
-    """Calculate the cost for video generation."""
+    """Calculate the cost for video generation. Supports per-second and flat-rate pricing."""
     try:
         if model not in VIDEO_PRICING:
             logger.warning(f"No pricing found for video model {model}")
             return 0.0
         
         pricing = VIDEO_PRICING[model]
-        cost_per_second = pricing["cost_per_second"]
         
-        total_cost = cost_per_second * duration_seconds * TOKEN_PRICE_MULTIPLIER
+        if "cost_per_call" in pricing:
+            total_cost = pricing["cost_per_call"] * TOKEN_PRICE_MULTIPLIER
+        else:
+            total_cost = pricing["cost_per_second"] * duration_seconds * TOKEN_PRICE_MULTIPLIER
+        
         return total_cost
         
     except Exception as e:
