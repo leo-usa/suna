@@ -13,7 +13,7 @@ from utils.config import config, EnvMode
 from services.supabase import DBConnection
 from utils.auth_utils import get_current_user_id_from_jwt
 from pydantic import BaseModel, Field
-from utils.constants import MODEL_ACCESS_TIERS, MODEL_NAME_ALIASES, HARDCODED_MODEL_PRICES, IMAGE_PRICING, VIDEO_PRICING, PAID_TIER_MODELS
+from utils.constants import MODEL_ACCESS_TIERS, MODEL_NAME_ALIASES, HARDCODED_MODEL_PRICES, IMAGE_PRICING, VIDEO_PRICING, SPEECH_PRICING, PAID_TIER_MODELS
 from litellm.cost_calculator import cost_per_token
 import time
 
@@ -336,6 +336,9 @@ async def process_credit_deduction_for_response(client, user_id: str, usage_cont
                 if 'video_cost' in usage_item:
                     cost += usage_item['video_cost']
                     logger.info(f"Including video cost ${usage_item['video_cost']:.4f} in credit deduction for user {user_id}")
+                if 'speech_cost' in usage_item:
+                    cost += usage_item['speech_cost']
+                    logger.info(f"Including speech cost ${usage_item['speech_cost']:.4f} in credit deduction for user {user_id}")
         
         if cost > 0:
             success = await deduct_user_credits(client, user_id, cost)
@@ -445,6 +448,9 @@ async def get_usage_logs(client, user_id: str, page: int = 0, items_per_page: in
                     if 'video_cost' in usage_item:
                         estimated_cost += usage_item['video_cost']
                         logger.info(f"Added video cost: ${usage_item['video_cost']:.4f} for model {usage_item.get('model', 'unknown')} duration={usage_item.get('duration', '?')}s")
+                    if 'speech_cost' in usage_item:
+                        estimated_cost += usage_item['speech_cost']
+                        logger.info(f"Added speech cost: ${usage_item['speech_cost']:.4f} for model {usage_item.get('model', 'unknown')}")
             
             # Safely extract project_id from threads relationship
             project_id = 'unknown'
@@ -590,6 +596,24 @@ def calculate_video_cost(model: str, duration_seconds: int) -> float:
     except Exception as e:
         logger.error(f"Error calculating video cost for model {model}, duration {duration_seconds}s: {str(e)}")
         return 0.0
+
+
+def calculate_speech_cost(model: str, num_effective_characters: int) -> float:
+    """Calculate the cost for speech/TTS. $0.10 per 1000 chars (Chinese char = 2)."""
+    try:
+        if model not in SPEECH_PRICING:
+            logger.warning(f"No pricing found for speech model {model}")
+            return 0.0
+
+        pricing = SPEECH_PRICING[model]
+        cost_per_1000 = pricing.get("cost_per_1000_chars", 0)
+        total_cost = (num_effective_characters / 1000.0) * cost_per_1000
+        return total_cost
+
+    except Exception as e:
+        logger.error(f"Error calculating speech cost for model {model}, chars {num_effective_characters}: {str(e)}")
+        return 0.0
+
 
 async def get_allowed_models_for_user(client, user_id: str):
     """

@@ -328,6 +328,13 @@ IMAGE_PRICING = {
     }
 }
 
+# Speech/TTS pricing configuration (Replicate MiniMax Speech-02-HD)
+SPEECH_PRICING = {
+    "speech-02-hd": {
+        "cost_per_1000_chars": 0.20,  # $0.20 per 1,000 characters (Chinese char = 2)
+    },
+}
+
 # Video generation pricing configuration
 VIDEO_PRICING = {
     "seedance-1.5-pro": {
