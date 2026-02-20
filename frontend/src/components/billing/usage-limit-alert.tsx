@@ -11,6 +11,9 @@ interface BillingErrorAlertProps {
   currentUsage?: number;
   limit?: number;
   accountId?: string | null;
+  monthlyLimit?: number;
+  overageAmount?: number;
+  insufficientCredits?: boolean;
   onDismiss: () => void;
   isOpen: boolean;
 }
@@ -20,6 +23,9 @@ export function BillingErrorAlert({
   currentUsage,
   limit,
   accountId,
+  monthlyLimit,
+  overageAmount,
+  insufficientCredits,
   onDismiss,
   isOpen,
 }: BillingErrorAlertProps) {
@@ -52,7 +58,13 @@ export function BillingErrorAlert({
             <p className="text-sm text-muted-foreground mb-3">
               {message && message.toLowerCase().includes('payment required')
                 ? t('billing.paymentRequired', 'Payment Required')
-                : message}
+                : insufficientCredits && monthlyLimit != null && overageAmount != null
+                  ? t('billing.monthlyLimitOverageNoCredits', {
+                      limit: monthlyLimit,
+                      overage: overageAmount.toFixed(2),
+                      defaultValue: message,
+                    })
+                  : message}
             </p>
 
             <div className="flex gap-2">

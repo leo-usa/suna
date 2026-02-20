@@ -363,6 +363,7 @@ export default function ThreadPage({
       onStatusChange: handleStreamStatusChange,
       onError: handleStreamError,
       onClose: handleStreamClose,
+      onBillingLimitReached: checkBillingLimits,
     },
     threadId,
     setMessages,

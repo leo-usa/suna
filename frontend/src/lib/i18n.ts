@@ -381,6 +381,7 @@ const zhTranslation = {
         upgradeRequiredDescription: '您已达到计划的使用限制。升级以继续享受我们的优质功能。',
         planExhaustedMessage: '您当前的计划在此计费期间已用完。',
         monthlyUsageLimitReached: '本月使用限制已达，请升级。',
+        monthlyLimitOverageNoCredits: '本月${{limit}}限额已用尽，超出${{overage}}。您暂无可用积分。请购买更多积分或升级方案。',
         paymentRequired: '需要付款',
         errorLoading: '加载账单状态时出错',
         loading: '加载中...',
@@ -1196,6 +1197,7 @@ const resources = {
         upgradeRequiredDescription: "You've reached your plan's usage limit. Upgrade to continue enjoying our premium features.",
         planExhaustedMessage: 'Your current plan has been exhausted for this billing period.',
         monthlyUsageLimitReached: 'Monthly usage limit reached. Please upgrade.',
+        monthlyLimitOverageNoCredits: 'Monthly limit of ${{limit}} reached with ${{overage}} overage. You have no credits available. Please purchase more credits or upgrade your plan.',
         paymentRequired: 'Payment Required',
         noActiveSubscription: 'No active subscription or prepaid credits found.',
         upgradeDialog: {

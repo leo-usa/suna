@@ -138,6 +138,9 @@ export function ThreadLayout({
         currentUsage={billingData.currentUsage}
         limit={billingData.limit}
         accountId={billingData.accountId}
+        monthlyLimit={billingData.monthlyLimit}
+        overageAmount={billingData.overageAmount}
+        insufficientCredits={billingData.insufficientCredits}
         onDismiss={onDismissBilling}
         isOpen={showBillingAlert}
       />

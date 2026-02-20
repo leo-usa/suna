@@ -33,15 +33,18 @@ export function useBilling(
     }
 
     try {
-      await billingStatusQuery.refetch();
-      const result = billingStatusQuery.data;
+      const { data: result } = await billingStatusQuery.refetch();
 
       if (result && !result.can_run) {
+        const sub = result.subscription as { monthly_limit?: number; overage_amount?: number; insufficient_credits?: boolean } | undefined;
         setBillingData({
           currentUsage: result.subscription?.minutes_limit || 0,
           limit: result.subscription?.minutes_limit || 0,
           message: result.message || t('billing.usageLimitReached', 'Usage limit reached'),
           accountId: projectAccountId || null,
+          monthlyLimit: sub?.monthly_limit,
+          overageAmount: sub?.overage_amount,
+          insufficientCredits: sub?.insufficient_credits,
         });
         setShowBillingAlert(true);
         return true;

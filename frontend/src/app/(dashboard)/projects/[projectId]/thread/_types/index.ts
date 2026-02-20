@@ -35,6 +35,9 @@ export interface BillingData {
   limit?: number;
   message?: string;
   accountId?: string | null;
+  monthlyLimit?: number;
+  overageAmount?: number;
+  insufficientCredits?: boolean;
 }
 
 export type AgentStatus = 'idle' | 'running' | 'connecting' | 'error'; 

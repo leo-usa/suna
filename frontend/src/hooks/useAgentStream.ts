@@ -50,6 +50,7 @@ export interface AgentStreamCallbacks {
   onClose?: (finalStatus: string) => void; // Optional: Notify when streaming definitively ends
   onAssistantStart?: () => void; // Optional: Notify when assistant starts streaming
   onAssistantChunk?: (chunk: { content: string }) => void; // Optional: Notify on each assistant message chunk
+  onBillingLimitReached?: () => void; // Optional: Notify when agent stopped due to quota/billing limit
 }
 
 // Helper function to map API messages to UnifiedMessages
@@ -268,7 +269,7 @@ export function useAgentStream(
         return;
       }
 
-      // --- Check for error messages first ---
+      // --- Check for error and stopped messages first ---
       try {
         const jsonData = JSON.parse(processedData);
         if (jsonData.status === 'error') {
@@ -296,6 +297,14 @@ export function useAgentStream(
           setError(errorMessage);
           toast.error(errorMessage, { duration: 15000 });
           callbacks.onError?.(errorMessage);
+          return;
+        }
+        // Handle agent stopped (e.g. billing limit reached) - show popup immediately
+        // status can be "stopped" (from agent) or "STOP" (from control signal - may arrive before billing message)
+        const isStopped = jsonData.type === 'status' && (jsonData.status === 'stopped' || jsonData.status === 'STOP');
+        if (isStopped) {
+          callbacks.onBillingLimitReached?.();
+          finalizeStream('stopped', currentRunIdRef.current);
           return;
         }
       } catch (jsonError) {
