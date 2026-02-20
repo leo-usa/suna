@@ -1,4 +1,4 @@
-"""Text-to-speech tool using Replicate MiniMax Speech-02-HD with Dr. Pang voice support."""
+"""Text-to-speech tool using Replicate MiniMax Speech-2.6-HD with Dr. Pang voice support."""
 
 from typing import Optional
 from agentpress.tool import ToolResult, openapi_schema, xml_schema
@@ -30,7 +30,7 @@ DR_PANG_VOICE_ID = "R8_S8I1HHEO"  # Dr. Pang / 庞博士 (only when user specifi
 
 
 class SandboxTTSTool(SandboxToolsBase):
-    """Generate speech from text using MiniMax Speech-02-HD via Replicate."""
+    """Generate speech from text using MiniMax Speech-2.6-HD via Replicate."""
 
     def __init__(self, project_id: str, thread_manager: ThreadManager):
         super().__init__(project_id, thread_manager)
@@ -40,7 +40,7 @@ class SandboxTTSTool(SandboxToolsBase):
             "type": "function",
             "function": {
                 "name": "replicate_generate_speech",
-                "description": "Generate high-quality speech from text using MiniMax Speech-02-HD. Default: Friendly_Person (male). Use Wise_Woman for female. Use R8_S8I1HHEO only when user asks for Dr. Pang or 庞博士. Saves MP3 to workspace.",
+                "description": "Generate high-quality speech from text using MiniMax Speech-2.6-HD. Default: Friendly_Person (male). Use Wise_Woman for female. Use R8_S8I1HHEO only when user asks for Dr. Pang or 庞博士. Saves MP3 to workspace.",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -108,7 +108,7 @@ class SandboxTTSTool(SandboxToolsBase):
         volume: float = 1.5,
         emotion: str = "auto",
     ) -> ToolResult:
-        """Generate speech from text using MiniMax Speech-02-HD."""
+        """Generate speech from text using MiniMax Speech-2.6-HD."""
         logger.info(f"🎤 TTS: text_len={len(text)} voice_id={voice_id}")
         try:
             await self._ensure_sandbox()
@@ -142,7 +142,7 @@ class SandboxTTSTool(SandboxToolsBase):
 
             output = await asyncio.to_thread(
                 replicate.run,
-                "minimax/speech-02-hd",
+                "minimax/speech-2.6-hd",
                 input=input_params,
             )
 
@@ -170,12 +170,12 @@ class SandboxTTSTool(SandboxToolsBase):
             await self.sandbox.fs.upload_file(result_bytes, sandbox_path)
 
             effective_chars = _effective_char_count(text)
-            speech_cost = calculate_speech_cost("speech-02-hd", effective_chars)
+            speech_cost = calculate_speech_cost("speech-2.6-hd", effective_chars)
             logger.info(f"🎤 TTS saved: {filename} ({len(result_bytes)} bytes) | effective_chars={effective_chars} | cost=${speech_cost:.4f}")
 
             usage_data = {
                 "speech_cost": speech_cost,
-                "model": "speech-02-hd",
+                "model": "speech-2.6-hd",
                 "characters": effective_chars,
                 "voice_id": voice_id,
             }

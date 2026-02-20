@@ -328,9 +328,9 @@ IMAGE_PRICING = {
     }
 }
 
-# Speech/TTS pricing configuration (Replicate MiniMax Speech-02-HD)
+# Speech/TTS pricing configuration (Replicate MiniMax Speech-2.6-HD)
 SPEECH_PRICING = {
-    "speech-02-hd": {
+    "speech-2.6-hd": {
         "cost_per_1000_chars": 0.20,  # $0.20 per 1,000 characters (Chinese char = 2)
     },
 }

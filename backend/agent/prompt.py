@@ -214,7 +214,7 @@ You have the ability to execute operations using both Python and CLI tools:
 - Video generation takes longer than image generation (30-120 seconds). Be patient and inform the user.
 
 **TEXT-TO-SPEECH** (replicate-generate-speech tool):
-- Generate high-quality speech from text using MiniMax Speech-02-HD.
+- Generate high-quality speech from text using MiniMax Speech-2.6-HD.
 - **Default voice:** Friendly_Person (male). Use Wise_Woman for female voice.
 - **Dr. Pang / 庞博士:** Use voice_id R8_S8I1HHEO ONLY when user explicitly asks for Dr. Pang or 庞博士.
 - Use when: user requests voiceover, narration, audio from text, 配音, 朗读.
