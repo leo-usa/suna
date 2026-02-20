@@ -206,8 +206,8 @@ MODELS = {
         "max_output_tokens": 66000,
         "recommended_safe_limit": 52000
     },
-    "openrouter/google/gemini-3-pro-preview": {
-        "aliases": ["google/gemini-3-pro-preview"],
+    "openrouter/google/gemini-3.1-pro-preview": {
+        "aliases": ["google/gemini-3.1-pro-preview"],
         "pricing": {
             "input_cost_per_million_tokens": 2.00,
             "output_cost_per_million_tokens": 12.00
