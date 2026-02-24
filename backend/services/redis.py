@@ -33,10 +33,10 @@ def initialize():
     max_connections = int(os.getenv("REDIS_MAX_CONNECTIONS", "10" if redis_ssl else "80"))
     socket_timeout = 15.0            # 15 seconds socket timeout
     connect_timeout = 10.0           # 10 seconds connection timeout
-    # Disable retry and health_check to avoid RecursionError when Redis rejects connections
-    # (e.g. "Too many connections") - see redis-py issue #3745
-    retry_on_timeout = False
-    health_check_interval = 0
+    # Default False/0 to avoid RecursionError when Redis rejects connections (redis-py #3745).
+    # Override with REDIS_RETRY_ON_TIMEOUT=true, REDIS_HEALTH_CHECK_INTERVAL=30 if needed.
+    retry_on_timeout = os.getenv("REDIS_RETRY_ON_TIMEOUT", "false").lower() == "true"
+    health_check_interval = int(os.getenv("REDIS_HEALTH_CHECK_INTERVAL", "0"))
 
     logger.info(f"Initializing Redis connection pool to {redis_host}:{redis_port} with SSL={redis_ssl} and max {max_connections} connections")
 

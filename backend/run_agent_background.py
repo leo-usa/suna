@@ -28,7 +28,6 @@ redis_host = os.getenv('REDIS_HOST', 'redis')
 redis_port = int(os.getenv('REDIS_PORT', 6379))
 redis_password = os.getenv('REDIS_PASSWORD', '')
 redis_ssl = os.getenv('REDIS_SSL', 'False').lower() == 'true'
-redis_max_conn = int(os.getenv('REDIS_MAX_CONNECTIONS', '10' if redis_ssl else '50'))
 broker_max_conn = int(os.getenv('REDIS_BROKER_MAX_CONNECTIONS', '10' if redis_ssl else '30'))
 
 import redis as redis_sync
