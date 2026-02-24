@@ -23,18 +23,28 @@ from utils.retry import retry
 import sentry_sdk
 from typing import Dict, Any
 
-# Configure Dramatiq broker using Redis instead of RabbitMQ
+# Configure Dramatiq broker using Redis - limit connections for provider limits (Render 250)
 redis_host = os.getenv('REDIS_HOST', 'redis')
 redis_port = int(os.getenv('REDIS_PORT', 6379))
 redis_password = os.getenv('REDIS_PASSWORD', '')
 redis_ssl = os.getenv('REDIS_SSL', 'False').lower() == 'true'
+redis_max_conn = int(os.getenv('REDIS_MAX_CONNECTIONS', '10' if redis_ssl else '50'))
+broker_max_conn = int(os.getenv('REDIS_BROKER_MAX_CONNECTIONS', '10' if redis_ssl else '30'))
 
-# Create Redis broker with proper authentication and SSL settings
+import redis as redis_sync
+if redis_ssl:
+    broker_pool = redis_sync.ConnectionPool(
+        connection_class=redis_sync.connection.SSLConnection,
+        host=redis_host, port=redis_port, password=redis_password or None,
+        ssl_cert_reqs=None, max_connections=broker_max_conn, decode_responses=True,
+    )
+else:
+    broker_pool = redis_sync.ConnectionPool(
+        host=redis_host, port=redis_port, password=redis_password or None,
+        max_connections=broker_max_conn, decode_responses=True,
+    )
 redis_broker = RedisBroker(
-    host=redis_host, 
-    port=redis_port, 
-    password=redis_password,
-    ssl=redis_ssl,
+    client=redis_sync.Redis(connection_pool=broker_pool),
     middleware=[dramatiq.middleware.AsyncIO()]
 )
 dramatiq.set_broker(redis_broker)

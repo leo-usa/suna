@@ -29,11 +29,14 @@ def initialize():
     redis_password = os.getenv("REDIS_PASSWORD", "")
     redis_ssl = os.getenv("REDIS_SSL", "False").lower() == "true"
     
-    # Connection pool configuration - optimized for production
-    max_connections = 128            # Reasonable limit for production
+    # Connection pool - cap for provider limits (Upstash/SSL=10, Render 250 limit=80)
+    max_connections = int(os.getenv("REDIS_MAX_CONNECTIONS", "10" if redis_ssl else "80"))
     socket_timeout = 15.0            # 15 seconds socket timeout
     connect_timeout = 10.0           # 10 seconds connection timeout
-    retry_on_timeout = not (os.getenv("REDIS_RETRY_ON_TIMEOUT", "True").lower() != "true")
+    # Disable retry and health_check to avoid RecursionError when Redis rejects connections
+    # (e.g. "Too many connections") - see redis-py issue #3745
+    retry_on_timeout = False
+    health_check_interval = 0
 
     logger.info(f"Initializing Redis connection pool to {redis_host}:{redis_port} with SSL={redis_ssl} and max {max_connections} connections")
 
@@ -47,7 +50,7 @@ def initialize():
         'socket_connect_timeout': connect_timeout,
         'socket_keepalive': True,
         'retry_on_timeout': retry_on_timeout,
-        'health_check_interval': 30,
+        'health_check_interval': health_check_interval,
         'max_connections': max_connections,
     }
     
