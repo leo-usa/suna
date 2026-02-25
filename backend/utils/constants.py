@@ -65,7 +65,7 @@ MODELS = {
         "recommended_safe_limit": 100000
     },
     "openrouter/minimax/minimax-m2.5": {
-        "aliases": ["minimax/minimax-m2.5"],
+        "aliases": ["minimax/minimax-m2.5", "minimax/minimax-m2.1", "minimax-m2.1"],
         "pricing": {
             "input_cost_per_million_tokens": 0.30,
             "output_cost_per_million_tokens": 1.20
