@@ -31,16 +31,17 @@ redis_ssl = os.getenv('REDIS_SSL', 'False').lower() == 'true'
 broker_max_conn = int(os.getenv('REDIS_BROKER_MAX_CONNECTIONS', '10' if redis_ssl else '30'))
 
 import redis as redis_sync
+# Dramatiq expects bytes from Redis for message decoding - do NOT use decode_responses=True
 if redis_ssl:
     broker_pool = redis_sync.ConnectionPool(
         connection_class=redis_sync.connection.SSLConnection,
         host=redis_host, port=redis_port, password=redis_password or None,
-        ssl_cert_reqs=None, max_connections=broker_max_conn, decode_responses=True,
+        ssl_cert_reqs=None, max_connections=broker_max_conn, decode_responses=False,
     )
 else:
     broker_pool = redis_sync.ConnectionPool(
         host=redis_host, port=redis_port, password=redis_password or None,
-        max_connections=broker_max_conn, decode_responses=True,
+        max_connections=broker_max_conn, decode_responses=False,
     )
 redis_broker = RedisBroker(
     client=redis_sync.Redis(connection_pool=broker_pool),
