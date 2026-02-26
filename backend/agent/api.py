@@ -844,6 +844,7 @@ async def stream_agent_run(
             error_str = str(e).lower()
             is_transient_error = (
                 'too many connections' in error_str or
+                'timeout' in error_str or
                 'connection' in error_str and ('pool' in error_str or 'limit' in error_str)
             )
             

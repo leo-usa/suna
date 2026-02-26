@@ -9,16 +9,21 @@ from utils.retry import retry
 # Redis client and connection pool
 client: redis.Redis | None = None
 pool: redis.ConnectionPool | None = None
+# Dedicated pubsub client with longer socket timeout (listen() blocks; agent runs can have long gaps)
+pubsub_client: redis.Redis | None = None
+pubsub_pool: redis.ConnectionPool | None = None
 _initialized = False
 _init_lock = asyncio.Lock()
 
 # Constants
 REDIS_KEY_TTL = 3600 * 24  # 24 hour TTL as safety mechanism
+# Pubsub needs long timeout - agent stream listen() blocks until messages; LLM/tool gaps can exceed 15s
+REDIS_PUBSUB_SOCKET_TIMEOUT = 300.0  # 5 minutes
 
 
 def initialize():
     """Initialize Redis connection pool and client using environment variables."""
-    global client, pool
+    global client, pool, pubsub_client, pubsub_pool
 
     # Load environment variables if not already loaded
     load_dotenv()
@@ -37,6 +42,7 @@ def initialize():
     # Override with REDIS_RETRY_ON_TIMEOUT=true, REDIS_HEALTH_CHECK_INTERVAL=30 if needed.
     retry_on_timeout = os.getenv("REDIS_RETRY_ON_TIMEOUT", "false").lower() == "true"
     health_check_interval = int(os.getenv("REDIS_HEALTH_CHECK_INTERVAL", "0"))
+    pubsub_socket_timeout = float(os.getenv("REDIS_PUBSUB_SOCKET_TIMEOUT", str(REDIS_PUBSUB_SOCKET_TIMEOUT)))
 
     logger.info(f"Initializing Redis connection pool to {redis_host}:{redis_port} with SSL={redis_ssl} and max {max_connections} connections")
 
@@ -65,6 +71,14 @@ def initialize():
 
     # Create Redis client from connection pool
     client = redis.Redis(connection_pool=pool)
+
+    # Pubsub pool: longer socket_timeout for listen() - agent runs can have long gaps between messages
+    pubsub_connection_kwargs = {**connection_kwargs, 'socket_timeout': pubsub_socket_timeout, 'max_connections': 10}
+    if redis_ssl:
+        pubsub_pool = redis.ConnectionPool(connection_class=redis.SSLConnection, **pubsub_connection_kwargs)
+    else:
+        pubsub_pool = redis.ConnectionPool(**pubsub_connection_kwargs)
+    pubsub_client = redis.Redis(connection_pool=pubsub_pool)
 
     return client
 
@@ -99,7 +113,21 @@ async def initialize_async():
 
 async def close():
     """Close Redis connection and connection pool."""
-    global client, pool, _initialized
+    global client, pool, pubsub_client, pubsub_pool, _initialized
+    if pubsub_client:
+        try:
+            await asyncio.wait_for(pubsub_client.aclose(), timeout=5.0)
+        except (asyncio.TimeoutError, Exception) as e:
+            logger.warning(f"Error closing pubsub client: {e}")
+        finally:
+            pubsub_client = None
+    if pubsub_pool:
+        try:
+            await asyncio.wait_for(pubsub_pool.aclose(), timeout=5.0)
+        except (asyncio.TimeoutError, Exception) as e:
+            logger.warning(f"Error closing pubsub pool: {e}")
+        finally:
+            pubsub_pool = None
     if client:
         logger.info("Closing Redis connection")
         try:
@@ -161,9 +189,9 @@ async def publish(channel: str, message: str):
 
 
 async def create_pubsub():
-    """Create a Redis pubsub object."""
-    redis_client = await get_client()
-    return redis_client.pubsub()
+    """Create a Redis pubsub object. Uses dedicated client with longer socket timeout for listen()."""
+    await get_client()  # Ensure main client initialized (pubsub_pool created with it)
+    return pubsub_client.pubsub()
 
 
 # List operations
