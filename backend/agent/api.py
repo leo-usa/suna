@@ -772,6 +772,10 @@ async def stream_agent_run(
                             await message_queue.put({"type": "error", "data": "Listener stopped unexpectedly"})
                             return
                         except Exception as e:
+                            err_str = str(e)
+                            if "closed by server" in err_str.lower():
+                                logger.debug(f"Listener for {agent_run_id} ended (connection closed by server - run completed)")
+                                return
                             logger.error(f"Error in listener for {agent_run_id}: {e}")
                             await message_queue.put({"type": "error", "data": "Listener failed"})
                             return
