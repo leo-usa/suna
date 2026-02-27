@@ -36,7 +36,7 @@ def _log(msg: str):
 
 
 class SandboxImageEditTool(SandboxToolsBase):
-    """Tool for generating or editing images using GPT Image 1 or Gemini 3 Pro Image."""
+    """Tool for generating or editing images using GPT Image 1 or Gemini 3.1 Flash Image."""
 
     def __init__(self, project_id: str, thread_id: str, thread_manager: ThreadManager):
         super().__init__(project_id, thread_manager)
@@ -80,7 +80,7 @@ class SandboxImageEditTool(SandboxToolsBase):
         return {"b64_data": b64_data, "model": "gpt-image-1.5"}
 
     async def _generate_with_gemini(self, prompt: str, aspect_ratio: str, image_bytes: Optional[bytes] = None) -> dict:
-        """Generate or edit image using Gemini 3 Pro Image via OpenRouter (direct API call)."""
+        """Generate or edit image using Gemini 3.1 Flash Image via OpenRouter (direct API call)."""
         import os
         
         # Get OpenRouter API key
@@ -120,11 +120,11 @@ class SandboxImageEditTool(SandboxToolsBase):
         
         # Direct API call to OpenRouter (bypassing LiteLLM)
         _log(f"🔍🔍🔍 CALLING OPENROUTER DIRECTLY (no LiteLLM) 🔍🔍🔍")
-        _log(f"🔍 Model: google/gemini-3-pro-image-preview")
+        _log(f"🔍 Model: google/gemini-3.1-flash-image-preview")
         _log(f"🔍 Prompt: {prompt[:100]}...")
         
         payload = {
-            "model": "google/gemini-3-pro-image-preview",
+            "model": "google/gemini-3.1-flash-image-preview",
             "messages": messages,
             "modalities": ["image", "text"]
         }
@@ -170,11 +170,11 @@ class SandboxImageEditTool(SandboxToolsBase):
                 if image_url.startswith("data:") and "," in image_url:
                     b64_data = image_url.split(",", 1)[1]
                     _log(f"🎨 SUCCESS: Extracted base64 image ({len(b64_data)} chars)")
-                    return {"b64_data": b64_data, "model": "gemini-3-pro-image"}
+                    return {"b64_data": b64_data, "model": "gemini-3.1-flash-image"}
                 else:
                     # Might be raw base64 without data URL prefix
                     _log(f"🎨 SUCCESS: Using raw image URL as base64")
-                    return {"b64_data": image_url, "model": "gemini-3-pro-image"}
+                    return {"b64_data": image_url, "model": "gemini-3.1-flash-image"}
         
         # Method 2: Check for 'parts' with 'inline_data' (Google native format)
         parts = message.get("parts", [])
@@ -186,7 +186,7 @@ class SandboxImageEditTool(SandboxToolsBase):
                     b64_data = inline_data.get("data", "")
                     if b64_data:
                         _log(f"🎨 SUCCESS: Found image in parts[{i}].inline_data ({len(b64_data)} chars)")
-                        return {"b64_data": b64_data, "model": "gemini-3-pro-image"}
+                        return {"b64_data": b64_data, "model": "gemini-3.1-flash-image"}
         
         # Method 3: Check content for text response (possible rejection)
         content = message.get("content", "")
@@ -203,7 +203,7 @@ class SandboxImageEditTool(SandboxToolsBase):
             "type": "function",
             "function": {
                 "name": "image_edit_or_generate",
-                "description": "Generate a new image from a prompt, edit an existing image, or generate a video. REQUIRED: You MUST specify the 'model' parameter ('gemini', 'gpt-image-1.5', or 'video'). Also specify 'aspect_ratio' when user requests a specific format. Video uses Sora 2 (default) with Replicate seedance-1.5-pro fallback.",
+                "description": "Generate a new image from a prompt, edit an existing image, or generate a video. REQUIRED: You MUST specify the 'model' parameter ('gemini', 'gpt-image-1.5', or 'video'). Also specify 'aspect_ratio' when user requests a specific format. Gemini uses 3.1 Flash Image. Video uses Sora 2 (default) with Replicate seedance-1.5-pro fallback.",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -229,7 +229,7 @@ class SandboxImageEditTool(SandboxToolsBase):
                         "model": {
                             "type": "string",
                             "enum": ["gpt-image-1.5", "gemini", "video"],
-                            "description": "REQUIRED: Model to use. 'gemini' (Google Gemini 3 Pro Image), 'gpt-image-1.5' (OpenAI), or 'video' (video generation via Sora 2 with Replicate fallback).",
+                            "description": "REQUIRED: Model to use. 'gemini' (Google Gemini 3.1 Flash Image), 'gpt-image-1.5' (OpenAI), or 'video' (video generation via Sora 2 with Replicate fallback).",
                         },
                         "video_options": {
                             "type": "object",
@@ -301,8 +301,8 @@ class SandboxImageEditTool(SandboxToolsBase):
 
             # Route to appropriate model
             if model == "gemini":
-                _log(f"🎨🎨🎨 IMAGE GENERATION: Using GEMINI 3 Pro Image | mode={mode} | aspect_ratio={aspect_ratio}")
-                logger.info(f"🎨 IMAGE GENERATION: Using GEMINI 3 Pro Image | mode={mode} | aspect_ratio={aspect_ratio}")
+                _log(f"🎨🎨🎨 IMAGE GENERATION: Using GEMINI 3.1 Flash Image | mode={mode} | aspect_ratio={aspect_ratio}")
+                logger.info(f"🎨 IMAGE GENERATION: Using GEMINI 3.1 Flash Image | mode={mode} | aspect_ratio={aspect_ratio}")
                 result = await self._generate_with_gemini(prompt, aspect_ratio, image_bytes)
                 _log(f"🎨🎨🎨 IMAGE GENERATION: GEMINI completed successfully")
                 logger.info(f"🎨 IMAGE GENERATION: GEMINI completed successfully")

@@ -312,18 +312,16 @@ IMAGE_PRICING = {
         }
     },
     "gemini-3-pro-image": {
-        "generation_cost_per_image": 0.150,  # $0.150 per image generation (2K tier)
-        "editing_cost_per_image": 0.300,     # $0.300 per image editing
+        "generation_cost_per_image": 0.150,  # Legacy - alias for gemini-3.1-flash-image
+        "editing_cost_per_image": 0.300,
+        "sizes": {"1024x1024": 1.0, "1024x1536": 1.0, "1536x1024": 1.0, "2048x2048": 1.0, "2048x3072": 2.0, "3072x2048": 2.0, "4096x4096": 2.0}
+    },
+    "gemini-3.1-flash-image": {
+        "generation_cost_per_image": 0.075,   # $0.075 per image (half of pro)
+        "editing_cost_per_image": 0.150,      # $0.150 per edit (half of pro)
         "sizes": {
-            # 2K tier (up to 2048x2048) - same cost
-            "1024x1024": 1.0,      # Base multiplier
-            "1024x1536": 1.0,      # Same cost (within 2K tier)
-            "1536x1024": 1.0,      # Same cost (within 2K tier)
-            "2048x2048": 1.0,      # Same cost (within 2K tier)
-            # 4K tier (up to 4096x4096) - higher cost
-            "2048x3072": 2.0,      # 4K tier (~$0.240 actual cost)
-            "3072x2048": 2.0,      # 4K tier
-            "4096x4096": 2.0,      # 4K tier (highest supported)
+            "1024x1024": 1.0, "1024x1536": 1.0, "1536x1024": 1.0,
+            "2048x2048": 1.0, "2048x3072": 2.0, "3072x2048": 2.0, "4096x4096": 2.0,
         }
     }
 }
