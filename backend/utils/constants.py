@@ -194,7 +194,17 @@ MODELS = {
         "max_output_tokens": 8192,
         "recommended_safe_limit": 7000
     },
-    
+    "openrouter/stepfun/step-3.5-flash:free": {
+        "aliases": ["stepfun/step-3.5-flash:free", "step-3.5-flash"],
+        "pricing": {
+            "input_cost_per_million_tokens": 0.10,
+            "output_cost_per_million_tokens": 0.30
+        },
+        "tier_availability": ["free", "paid"],
+        "max_output_tokens": 200000,
+        "recommended_safe_limit": 180000
+    },
+
     # Paid tier only models
     "openrouter/google/gemini-2.5-pro": {
         "aliases": ["google/gemini-2.5-pro"],
@@ -391,6 +401,9 @@ def _generate_model_structures():
             pricing[legacy_name] = config["pricing"]
         elif model_name.startswith("openrouter/moonshotai/"):
             # Add pricing for moonshotai/ variant (without openrouter/ prefix)
+            legacy_name = model_name.replace("openrouter/", "")
+            pricing[legacy_name] = config["pricing"]
+        elif model_name.startswith("openrouter/stepfun/"):
             legacy_name = model_name.replace("openrouter/", "")
             pricing[legacy_name] = config["pricing"]
         elif model_name.startswith("anthropic/"):
