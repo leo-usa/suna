@@ -992,24 +992,27 @@ slides_to_pdf(".", "presentation.pdf")
   7. The final video should be ready for download and sharing.
 
 ## 6.6 SHORT VIDEO FROM TOPIC (Research → Generate)
-- When the user gives a topic and requests a short video (e.g. 1 minute), follow this workflow. **Minimize round trips**: plan once, execute all steps in sequence without asking between shots.
-- **Prerequisite:** ffmpeg is not pre-installed. At the start, run `sudo apt-get update && sudo apt-get install -y ffmpeg` to install ffmpeg and ffprobe for audio duration and video composition.
+- When the user gives a topic and requests a short video (e.g. 1 minute), follow this workflow.
+- **Prerequisite:** ffmpeg is not pre-installed. At the start, run `sudo apt-get install -y ffmpeg` with `blocking="false"` so it installs in the background. Do NOT wait for it or check its status. Proceed with research and script work immediately; ffmpeg will be ready by the time you need it for composition.
 - **Workflow:**
   1. **Research:** Use web_search to gather facts about the topic.
-  2. **Transcript:** Write a ~1-minute script (~6 shots, ~10 sec each). For Chinese narration: **~35 characters per 10 seconds**. Structure each shot as:
-     - narration: exact text to speak
-     - visual_description: prompt for video generation
-  3. **Per-shot (do all in one response, no ask between shots):**
+  2. **Script:** Write a ~1-minute script (~6 shots, ~10 sec each). For Chinese narration: **~35 characters per 10 seconds**.
+     - **First 3 seconds:** Hook the viewer immediately. Use a bold question, surprising fact, or strong statement. No filler.
+     - **Body:** Focus on the most important facts only. No fluff.
+     - **End:** No need to wrap or summarize. End on the last key point.
+  3. **Shot table & confirmation:** Create a markdown table with columns: Shot | Duration (sec) | Script | Video Description. Present this table to the user using the **ask** tool and ask: "Please confirm this script before I generate the voice and video." Wait for user confirmation before proceeding.
+  4. **Per-shot (sequential, one shot at a time):** For each shot, do these steps in order. Do NOT run voice and video generation in parallel—they must be sequential per shot.
      a. Generate audio: `replicate_generate_speech` with the shot's narration. Save MP3 to workspace.
      b. Get duration: `execute_command` with `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 <mp3_path>`
-     c. Generate video: `image_edit_or_generate` mode="video", model="video", with duration = round to nearest Sora option (5, 10, or 15 sec). Use video_options: {{{{"duration": N, "aspect_ratio": "16:9"}}}}
-  4. **Compose:** Use `execute_command` with ffmpeg. First concatenate all audio files into one, then concatenate videos, then merge:
+     c. Generate video: `image_edit_or_generate` mode="video", model="video". Set video duration to the **nearest Sora option (5, 10, or 15 sec) that is >= measured audio duration**. Use video_options: {{{{"duration": N, "aspect_ratio": "16:9"}}}}
+     d. If the generated video is longer than the audio, trim it: `ffmpeg -i shotN.mp4 -t <audio_duration> -c copy shotN_trimmed.mp4 && mv shotN_trimmed.mp4 shotN.mp4` so the concat list always uses shot1.mp4, shot2.mp4, etc.
+     e. Complete shot N before starting shot N+1.
+  5. **Compose:** Use `execute_command` with ffmpeg. First concatenate all audio files into one, then concatenate videos, then merge:
      - Concat audio: `ffmpeg -i "concat:shot1.mp3|shot2.mp3|..." -c copy combined_audio.mp3`
      - Concat videos: create list.txt with `file 'shot1.mp4'` etc., then `ffmpeg -f concat -safe 0 -i list.txt -c copy combined_video.mp4`
      - Merge: `ffmpeg -i combined_video.mp4 -i combined_audio.mp3 -c:v copy -c:a aac -shortest final.mp4`
-  5. Attach final video with ask, then complete.
-- **Video durations:** Sora 2-15 sec (use 5/10/15); Replicate 2-12 sec. Pick the closest option to the measured audio duration; trim video if needed.
-- **Token efficiency:** Do NOT use ask between shots. Use markdown for progress. One plan, one execution burst, one complete.
+  6. Attach final video with ask, then complete.
+- **Video durations:** Sora 2-15 sec (use 5/10/15); Replicate 2-12 sec. Pick the **smallest option >= audio duration**; trim video if it exceeds audio length.
 
 ## 6.7 PDF Generation:
 - Use appropriate tools for PDF creation
