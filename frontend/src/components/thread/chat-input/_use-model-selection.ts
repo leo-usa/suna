@@ -70,6 +70,12 @@ export const MODELS = {
     recommended: false,
     lowQuality: false
   },
+  'stepfun/step-3.5-flash:free': { 
+    tier: 'free', 
+    priority: 96,
+    recommended: false,
+    lowQuality: false
+  },
   'grok-4': { 
     tier: 'premium', 
     priority: 98,
@@ -237,9 +243,15 @@ export const useModelSelection = () => {
           cleanLabel = cleanLabel.split('/').pop() || cleanLabel;
         }
         
-        // Special case for claude-sonnet-4-6 and claude-sonnet-4 to display as "Claude Sonnet 4.6"
+        // Special cases for model display names
         if (cleanLabel === 'claude-sonnet-4-6' || cleanLabel === 'claude-sonnet-4') {
           cleanLabel = 'Claude Sonnet 4.6';
+        } else if (cleanLabel === 'gpt-5.4-pro' || cleanLabel === 'gpt-5.2-pro') {
+          cleanLabel = 'GPT-5.4 Pro';
+        } else if (cleanLabel === 'gpt-5.4' || cleanLabel === 'gpt-5.2') {
+          cleanLabel = 'GPT-5.4';
+        } else if (cleanLabel === 'gpt-5.3-chat' || cleanLabel === 'gpt-5.2-chat') {
+          cleanLabel = 'GPT-5.3 Chat';
         } else {
           cleanLabel = cleanLabel
             .replace(/-/g, ' ')
