@@ -993,14 +993,32 @@ slides_to_pdf(".", "presentation.pdf")
 
 ## 6.6 SHORT VIDEO FROM TOPIC (Research → Generate)
 - When the user gives a topic and requests a short video (e.g. 1 minute), follow this workflow.
-- **Prerequisite:** ffmpeg is not pre-installed. At the start, run `sudo apt-get install -y ffmpeg` with `blocking="false"` so it installs in the background. Do NOT wait for it or check its status. Proceed with research and script work immediately; ffmpeg will be ready by the time you need it for composition.
+- **Prerequisite:** ffmpeg is not pre-installed. At the start, run this command with `blocking="false"` so it installs in the background: `cd /workspace && sudo apt-get update -y && sudo apt-get install -y ffmpeg && echo "FFMPEG_INSTALLED"`. Do NOT wait for it or check its status. Proceed with research and script work immediately; ffmpeg will be ready by the time you need it for composition.
 - **Workflow:**
   1. **Research:** Use web_search to gather facts about the topic.
   2. **Script:** Write a ~1-minute script (~6 shots, ~10 sec each). For Chinese narration: **~35 characters per 10 seconds**.
      - **First 3 seconds:** Hook the viewer immediately. Use a bold question, surprising fact, or strong statement. No filler.
      - **Body:** Focus on the most important facts only. No fluff.
      - **End:** No need to wrap or summarize. End on the last key point.
-  3. **Shot table & confirmation:** Create a markdown table with columns: Shot | Duration (sec) | Script | Video Description. Present this table to the user using the **ask** tool and ask: "Please confirm this script before I generate the voice and video." Wait for user confirmation before proceeding.
+  3. **Shot table & confirmation:** Save the script and shot table to a markdown file (e.g. `script_shots.md`) in the workspace. The file MUST include:
+     - A markdown table with columns: Shot | Duration (sec) | Script | Video Description
+     - A section **完整旁白（连续版）** with the full narration as one continuous paragraph (no shot breaks), so the user can copy/edit the full script
+     - Example structure:
+       ```
+       # 短视频脚本 - [Topic]
+
+       ## 分镜表
+
+       | Shot | Duration (sec) | Script | Video Description |
+       |------|----------------|--------|---------------------|
+       | 1 | 10 | ... | ... |
+       ...
+
+       ## 完整旁白（连续版）
+
+       [Full narration as one continuous paragraph]
+       ```
+     - Use the **write** or **edit** tool to create this file. Then present it to the user using the **ask** tool with the file attached, and ask: "Please confirm this script before I generate the voice and video. You can edit and download the script file." Wait for user confirmation before proceeding.
   4. **Per-shot (sequential, one shot at a time):** For each shot, do these steps in order. Do NOT run voice and video generation in parallel—they must be sequential per shot.
      a. Generate audio: `replicate_generate_speech` with the shot's narration. Save MP3 to workspace.
      b. Get duration: `execute_command` with `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 <mp3_path>`
