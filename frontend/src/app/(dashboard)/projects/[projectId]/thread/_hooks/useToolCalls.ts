@@ -67,7 +67,8 @@ function parseToolContent(content: any): {
 export function useToolCalls(
   messages: UnifiedMessage[],
   setLeftSidebarOpen: (open: boolean) => void,
-  agentStatus?: AgentStatus
+  agentStatus?: AgentStatus,
+  isMobile?: boolean
 ): UseToolCallsReturn {
   const [toolCalls, setToolCalls] = useState<ToolCallInput[]>([]);
   const [currentToolIndex, setCurrentToolIndex] = useState<number>(0);
@@ -213,13 +214,14 @@ export function useToolCalls(
         setCurrentToolIndex(historicalToolPairs.length - 1);
       } else if (isSidePanelOpen && !userClosedPanelRef.current && !userNavigatedRef.current) {
         setCurrentToolIndex(historicalToolPairs.length - 1);
-      } else if (!isSidePanelOpen && !autoOpenedPanel && !userClosedPanelRef.current) {
+      } else if (!isSidePanelOpen && !autoOpenedPanel && !userClosedPanelRef.current && !isMobile) {
+        // On mobile, keep panel closed so chat is visible first
         setCurrentToolIndex(historicalToolPairs.length - 1);
         setIsSidePanelOpen(true);
         setAutoOpenedPanel(true);
       }
     }
-  }, [messages, isSidePanelOpen, autoOpenedPanel, agentStatus]);
+  }, [messages, isSidePanelOpen, autoOpenedPanel, agentStatus, isMobile]);
 
   // Reset user navigation flag when agent stops
   useEffect(() => {
@@ -304,6 +306,7 @@ export function useToolCalls(
       console.log('[STREAM] Received tool call:', toolName, '(raw:', rawToolName, ')');
 
       if (userClosedPanelRef.current) return;
+      if (isMobile) return; // On mobile, keep panel closed; user can tap snackbar to expand
 
       const toolArguments = toolCall.arguments || '';
       let formattedContent = toolArguments;
@@ -380,7 +383,7 @@ export function useToolCalls(
       
       setIsSidePanelOpen(true);
     },
-    [toolCalls.length],
+    [toolCalls.length, isMobile],
   );
 
   return {

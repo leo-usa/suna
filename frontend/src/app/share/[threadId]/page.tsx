@@ -28,6 +28,7 @@ import {
 } from '@/components/thread/types';
 import { safeJsonParse } from '@/components/thread/utils';
 import { useAgentStream } from '@/hooks/useAgentStream';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { ThreadSkeleton } from '@/components/thread/content/ThreadSkeleton';
 import { extractToolName } from '@/components/thread/tool-views/xml-parser';
 
@@ -107,6 +108,7 @@ export default function ThreadPage({
   const [streamingTextContent, setStreamingTextContent] = useState('');
 
   const userClosedPanelRef = useRef(false);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     userClosedPanelRef.current = true;
@@ -602,6 +604,7 @@ export default function ThreadPage({
     setCurrentToolIndex,
     onFileViewerOpen: handleOpenFileViewer,
     projectName: projectName || 'Shared Conversation',
+    isMobile,
   });
 
   const {

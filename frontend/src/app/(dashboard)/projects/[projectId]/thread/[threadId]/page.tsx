@@ -114,7 +114,7 @@ export default function ThreadPage({
     toggleSidePanel,
     handleSidePanelNavigate,
     userClosedPanelRef,
-  } = useToolCalls(messages, setLeftSidebarOpen, agentStatus);
+  } = useToolCalls(messages, setLeftSidebarOpen, agentStatus, isMobile);
 
   const {
     showBillingAlert,
@@ -540,6 +540,9 @@ export default function ThreadPage({
     if (initialLoadCompleted && !initialPanelOpenAttempted) {
       setInitialPanelOpenAttempted(true);
 
+      // On mobile, keep panel closed by default so chat is visible first
+      if (isMobile) return;
+
       if (toolCalls.length > 0) {
         setIsSidePanelOpen(true);
         setCurrentToolIndex(toolCalls.length - 1);
@@ -549,7 +552,7 @@ export default function ThreadPage({
         }
       }
     }
-  }, [initialPanelOpenAttempted, messages, toolCalls, initialLoadCompleted, setIsSidePanelOpen, setCurrentToolIndex]);
+  }, [initialPanelOpenAttempted, messages, toolCalls, initialLoadCompleted, isMobile, setIsSidePanelOpen, setCurrentToolIndex]);
 
   useEffect(() => {
     if (agentRunId && agentRunId !== currentHookRunId) {

@@ -42,6 +42,7 @@ export interface PlaybackControlsProps {
   setCurrentToolIndex: (index: number) => void;
   onFileViewerOpen: () => void;
   projectName?: string;
+  isMobile?: boolean;
 }
 
 export interface PlaybackState {
@@ -73,6 +74,7 @@ export const PlaybackControls = ({
   setCurrentToolIndex,
   onFileViewerOpen,
   projectName = 'Shared Conversation',
+  isMobile = false,
 }: PlaybackControlsProps): PlaybackController => {
   const { t } = useTranslation();
   const [playbackState, setPlaybackState] = useState<PlaybackState>({
@@ -107,11 +109,11 @@ export const PlaybackControls = ({
       isPlaying: !isPlaying,
     });
 
-    // When starting playback, show the side panel
-    if (!isPlaying && !isSidePanelOpen) {
+    // When starting playback, show the side panel (on desktop only; on mobile keep chat visible)
+    if (!isPlaying && !isSidePanelOpen && !isMobile) {
       onToggleSidePanel();
     }
-  }, [isPlaying, isSidePanelOpen, onToggleSidePanel]);
+  }, [isPlaying, isSidePanelOpen, isMobile, onToggleSidePanel]);
 
   const resetPlayback = useCallback(() => {
     updatePlaybackState({
@@ -138,7 +140,7 @@ export const PlaybackControls = ({
 
     if (toolCalls.length > 0) {
       setCurrentToolIndex(toolCalls.length - 1);
-      if (!isSidePanelOpen) {
+      if (!isSidePanelOpen && !isMobile) {
         onToggleSidePanel();
       }
     }
@@ -146,6 +148,7 @@ export const PlaybackControls = ({
     messages,
     toolCalls,
     isSidePanelOpen,
+    isMobile,
     onToggleSidePanel,
     setCurrentToolIndex,
     updatePlaybackState,

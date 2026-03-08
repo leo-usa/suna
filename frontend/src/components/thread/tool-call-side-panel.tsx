@@ -447,15 +447,18 @@ export function ToolCallSidePanel({
                         {agentName ? `${agentName}'s Computer` : 'Suna\'s Computer'}
                       </h2>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={handleClose}
-                      className="h-8 w-8"
-                      title={t('tooltips.minimizeToFloatingPreview', 'Minimize to floating preview')}
-                    >
-                      <Minimize2 className="h-4 w-4" />
-                    </Button>
+              <Button
+                    variant={isMobile ? 'secondary' : 'ghost'}
+                    size={isMobile ? 'sm' : 'icon'}
+                    onClick={handleClose}
+                    className={isMobile ? 'h-8 px-3 gap-1.5' : 'h-8 w-8'}
+                    title={t('tooltips.minimizeToFloatingPreview', 'Minimize to floating preview')}
+                  >
+                    <Minimize2 className="h-4 w-4" />
+                    {isMobile && (
+                      <span className="text-xs font-medium">{t('tooltips.viewChat', 'View chat')}</span>
+                    )}
+                  </Button>
                   </div>
                 </div>
                 <div className="flex-1 p-4 overflow-auto">
@@ -486,12 +489,20 @@ export function ToolCallSidePanel({
                 </h2>
               </div>
               <Button
-                variant="ghost"
-                size="icon"
+                variant={isMobile ? 'secondary' : 'ghost'}
+                size={isMobile ? 'sm' : 'icon'}
                 onClick={handleClose}
-                className="h-8 w-8"
+                className={isMobile ? 'h-8 px-3 gap-1.5' : 'h-8 w-8'}
+                title={t('tooltips.viewChat', 'View chat')}
               >
-                <X className="h-4 w-4" />
+                {isMobile ? (
+                  <>
+                    <Minimize2 className="h-4 w-4" />
+                    <span className="text-xs font-medium">{t('tooltips.viewChat', 'View chat')}</span>
+                  </>
+                ) : (
+                  <X className="h-4 w-4" />
+                )}
               </Button>
             </div>
           </div>
@@ -537,12 +548,20 @@ export function ToolCallSidePanel({
                     <span>Running</span>
                   </div>
                   <Button
-                    variant="ghost"
-                    size="icon"
+                    variant={isMobile ? 'secondary' : 'ghost'}
+                    size={isMobile ? 'sm' : 'icon'}
                     onClick={handleClose}
-                    className="h-8 w-8 ml-1"
+                    className={isMobile ? 'h-8 px-3 gap-1.5 ml-1' : 'h-8 w-8 ml-1'}
+                    title={t('tooltips.viewChat', 'View chat')}
                   >
-                    <X className="h-4 w-4" />
+                    {isMobile ? (
+                      <>
+                        <Minimize2 className="h-4 w-4" />
+                        <span className="text-xs font-medium">{t('tooltips.viewChat', 'View chat')}</span>
+                      </>
+                    ) : (
+                      <X className="h-4 w-4" />
+                    )}
                   </Button>
                 </div>
               </div>
@@ -578,12 +597,20 @@ export function ToolCallSidePanel({
                 </h2>
               </div>
               <Button
-                variant="ghost"
-                size="icon"
+                variant={isMobile ? 'secondary' : 'ghost'}
+                size={isMobile ? 'sm' : 'icon'}
                 onClick={handleClose}
-                className="h-8 w-8"
+                className={isMobile ? 'h-8 px-3 gap-1.5' : 'h-8 w-8'}
+                title={t('tooltips.viewChat', 'View chat')}
               >
-                <X className="h-4 w-4" />
+                {isMobile ? (
+                  <>
+                    <Minimize2 className="h-4 w-4" />
+                    <span className="text-xs font-medium">{t('tooltips.viewChat', 'View chat')}</span>
+                  </>
+                ) : (
+                  <X className="h-4 w-4" />
+                )}
               </Button>
             </div>
           </div>
@@ -631,13 +658,16 @@ export function ToolCallSidePanel({
             {displayToolCall.toolResult?.content && !isStreaming && (
               <div className="flex items-center gap-2">
                 <Button
-                  variant="ghost"
-                  size="icon"
+                  variant={isMobile ? 'secondary' : 'ghost'}
+                  size={isMobile ? 'sm' : 'icon'}
                   onClick={handleClose}
-                  className="h-8 w-8 ml-1"
+                  className={isMobile ? 'h-8 px-3 gap-1.5' : 'h-8 w-8 ml-1'}
                   title={t('tooltips.minimizeToFloatingPreview', 'Minimize to floating preview')}
                 >
                   <Minimize2 className="h-4 w-4" />
+                  {isMobile && (
+                    <span className="text-xs font-medium">{t('tooltips.viewChat', 'View chat')}</span>
+                  )}
                 </Button>
               </div>
             )}
@@ -649,26 +679,32 @@ export function ToolCallSidePanel({
                   <span>{t('tooltips.running', 'Running')}</span>
                 </div>
                 <Button
-                  variant="ghost"
-                  size="icon"
+                  variant={isMobile ? 'secondary' : 'ghost'}
+                  size={isMobile ? 'sm' : 'icon'}
                   onClick={handleClose}
-                  className="h-8 w-8 ml-1"
+                  className={isMobile ? 'h-8 px-3 gap-1.5' : 'h-8 w-8 ml-1'}
                   title={t('tooltips.minimizeToFloatingPreview', 'Minimize to floating preview')}
                 >
                   <Minimize2 className="h-4 w-4" />
+                  {isMobile && (
+                    <span className="text-xs font-medium">{t('tooltips.viewChat', 'View chat')}</span>
+                  )}
                 </Button>
               </div>
             )}
 
             {!displayToolCall.toolResult?.content && !isStreaming && (
               <Button
-                variant="ghost"
-                size="icon"
+                variant={isMobile ? 'secondary' : 'ghost'}
+                size={isMobile ? 'sm' : 'icon'}
                 onClick={handleClose}
-                className="h-8 w-8"
+                className={isMobile ? 'h-8 px-3 gap-1.5' : 'h-8 w-8'}
                 title={t('tooltips.minimizeToFloatingPreview', 'Minimize to floating preview')}
               >
                 <Minimize2 className="h-4 w-4" />
+                {isMobile && (
+                  <span className="text-xs font-medium">{t('tooltips.viewChat', 'View chat')}</span>
+                )}
               </Button>
             )}
           </div>
