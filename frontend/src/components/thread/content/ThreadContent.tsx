@@ -372,7 +372,7 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
     const messagesContainerRef = useRef<HTMLDivElement>(null);
     const latestMessageRef = useRef<HTMLDivElement>(null);
     const [showScrollButton, setShowScrollButton] = useState(false);
-    const [, setUserHasScrolled] = useState(false);
+    const [userHasScrolled, setUserHasScrolled] = useState(false);
     const { session } = useAuth();
 
     // React Query file preloader
@@ -396,6 +396,20 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
     const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
         messagesEndRef.current?.scrollIntoView({ behavior });
     }, []);
+
+    // In playback mode, auto-scroll to keep the latest content visible as playback progresses
+    const lastScrollRef = React.useRef(0);
+    React.useEffect(() => {
+        if (!readOnly || userHasScrolled) return;
+        if (!visibleMessages && !streamingText && !currentToolCall) return;
+
+        const now = Date.now();
+        // Throttle to at most once per 80ms during rapid updates (e.g. streaming text)
+        if (streamingText && now - lastScrollRef.current < 80) return;
+        lastScrollRef.current = now;
+
+        scrollToBottom('smooth');
+    }, [readOnly, userHasScrolled, visibleMessages, streamingText, currentToolCall, scrollToBottom]);
 
     // Preload all message attachments when messages change or sandboxId is provided
     React.useEffect(() => {
