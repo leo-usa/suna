@@ -839,6 +839,18 @@ const zhTranslation = {
     startPlayback: '开始播放',
     skipToEnd: '跳至结尾'
   },
+  communityPost: {
+    copyLink: '复制链接',
+    attribution: '由 Dobby 生成',
+    postNotFound: '帖子未找到。',
+    floatingBar: {
+      researchReport: '本内容由 Dobby 智能体研究和生成',
+      tagline: 'Dobby，你的AI打工狗',
+      description: '帮你做研究，写报告，建网站，做PPT',
+      visitHomepage: '点我到 Dobby 主页',
+      website: '网址：https://dobby.now'
+    }
+  },
   changelog: {
     title: '更新日志',
     description: 'Dobby 的最新更新和改进。',
