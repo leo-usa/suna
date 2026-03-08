@@ -448,7 +448,7 @@ export function ToolCallSidePanel({
                       </h2>
                     </div>
               <Button
-                    variant={isMobile ? 'secondary' : 'ghost'}
+                    variant={isMobile ? 'default' : 'ghost'}
                     size={isMobile ? 'sm' : 'icon'}
                     onClick={handleClose}
                     className={isMobile ? 'h-8 px-3 gap-1.5' : 'h-8 w-8'}
@@ -489,7 +489,7 @@ export function ToolCallSidePanel({
                 </h2>
               </div>
               <Button
-                variant={isMobile ? 'secondary' : 'ghost'}
+                variant={isMobile ? 'default' : 'ghost'}
                 size={isMobile ? 'sm' : 'icon'}
                 onClick={handleClose}
                 className={isMobile ? 'h-8 px-3 gap-1.5' : 'h-8 w-8'}
@@ -548,7 +548,7 @@ export function ToolCallSidePanel({
                     <span>Running</span>
                   </div>
                   <Button
-                    variant={isMobile ? 'secondary' : 'ghost'}
+                    variant={isMobile ? 'default' : 'ghost'}
                     size={isMobile ? 'sm' : 'icon'}
                     onClick={handleClose}
                     className={isMobile ? 'h-8 px-3 gap-1.5 ml-1' : 'h-8 w-8 ml-1'}
@@ -597,7 +597,7 @@ export function ToolCallSidePanel({
                 </h2>
               </div>
               <Button
-                variant={isMobile ? 'secondary' : 'ghost'}
+                variant={isMobile ? 'default' : 'ghost'}
                 size={isMobile ? 'sm' : 'icon'}
                 onClick={handleClose}
                 className={isMobile ? 'h-8 px-3 gap-1.5' : 'h-8 w-8'}
@@ -658,7 +658,7 @@ export function ToolCallSidePanel({
             {displayToolCall.toolResult?.content && !isStreaming && (
               <div className="flex items-center gap-2">
                 <Button
-                  variant={isMobile ? 'secondary' : 'ghost'}
+                  variant={isMobile ? 'default' : 'ghost'}
                   size={isMobile ? 'sm' : 'icon'}
                   onClick={handleClose}
                   className={isMobile ? 'h-8 px-3 gap-1.5' : 'h-8 w-8 ml-1'}
@@ -679,7 +679,7 @@ export function ToolCallSidePanel({
                   <span>{t('tooltips.running', 'Running')}</span>
                 </div>
                 <Button
-                  variant={isMobile ? 'secondary' : 'ghost'}
+                  variant={isMobile ? 'default' : 'ghost'}
                   size={isMobile ? 'sm' : 'icon'}
                   onClick={handleClose}
                   className={isMobile ? 'h-8 px-3 gap-1.5' : 'h-8 w-8 ml-1'}
@@ -695,7 +695,7 @@ export function ToolCallSidePanel({
 
             {!displayToolCall.toolResult?.content && !isStreaming && (
               <Button
-                variant={isMobile ? 'secondary' : 'ghost'}
+                variant={isMobile ? 'default' : 'ghost'}
                 size={isMobile ? 'sm' : 'icon'}
                 onClick={handleClose}
                 className={isMobile ? 'h-8 px-3 gap-1.5' : 'h-8 w-8'}
