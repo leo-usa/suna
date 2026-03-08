@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Play, Pause, ArrowDown, FileText, Info } from 'lucide-react';
 import { UnifiedMessage } from '@/components/thread/types';
@@ -73,6 +74,7 @@ export const PlaybackControls = ({
   onFileViewerOpen,
   projectName = 'Shared Conversation',
 }: PlaybackControlsProps): PlaybackController => {
+  const { t } = useTranslation();
   const [playbackState, setPlaybackState] = useState<PlaybackState>({
     isPlaying: false,
     currentMessageIndex: 0,
@@ -541,7 +543,7 @@ export const PlaybackControls = ({
                 onClick={skipToEnd}
                 className="text-xs"
               >
-                Skip to end
+                {t('playback.skipToEnd', 'Skip to end')}
               </Button>
             </div>
           </div>
@@ -556,6 +558,7 @@ export const PlaybackControls = ({
       messages.length,
       resetPlayback,
       skipToEnd,
+      t,
       togglePlayback,
     ],
   );
@@ -574,11 +577,10 @@ export const PlaybackControls = ({
                 <Play className="h-5 w-5 text-primary" />
               </div>
               <h3 className="text-lg font-medium mb-2 text-white">
-                Watch this agent in action
+                {t('playback.watchAgentInAction', 'Watch this agent in action')}
               </h3>
               <p className="text-sm text-white/80 mb-4">
-                This is a shared view-only agent run. Click play to replay the
-                entire conversation with realistic timing.
+                {t('playback.sharedViewOnlyDescription', 'This is a shared view-only agent run. Click play to replay the entire conversation with realistic timing.')}
               </p>
               <Button
                 onClick={togglePlayback}
@@ -587,14 +589,14 @@ export const PlaybackControls = ({
                 variant="outline"
               >
                 <Play className="h-4 w-4 mr-2" />
-                Start Playback
+                {t('playback.startPlayback', 'Start Playback')}
               </Button>
             </div>
           </div>
         )}
       </>
     ),
-    [currentToolCall, streamingText, togglePlayback, visibleMessages.length],
+    [currentToolCall, streamingText, t, togglePlayback, visibleMessages.length],
   );
 
   return {
