@@ -64,8 +64,13 @@ MODELS = {
         "max_output_tokens": 128000,
         "recommended_safe_limit": 100000
     },
-    "openrouter/minimax/minimax-m2.5": {
-        "aliases": ["minimax/minimax-m2.5", "minimax/minimax-m2.1", "minimax-m2.1"],
+    "openrouter/minimax/minimax-m2.7": {
+        "aliases": [
+            "minimax/minimax-m2.7",
+            "minimax/minimax-m2.5",
+            "minimax/minimax-m2.1",
+            "minimax-m2.1",
+        ],
         "pricing": {
             "input_cost_per_million_tokens": 0.30,
             "output_cost_per_million_tokens": 1.20
@@ -74,11 +79,11 @@ MODELS = {
         "max_output_tokens": 128000,
         "recommended_safe_limit": 100000
     },
-    "openrouter/z-ai/glm-5": {
-        "aliases": ["z-ai/glm-5"],
+    "openrouter/z-ai/glm-5-turbo": {
+        "aliases": ["z-ai/glm-5-turbo", "z-ai/glm-5"],
         "pricing": {
-            "input_cost_per_million_tokens": 0.80,
-            "output_cost_per_million_tokens": 2.56
+            "input_cost_per_million_tokens": 1.20,
+            "output_cost_per_million_tokens": 4.00
         },
         "tier_availability": ["free", "paid"],
         "max_output_tokens": 128000,
@@ -404,6 +409,9 @@ def _generate_model_structures():
             legacy_name = model_name.replace("openrouter/", "")
             pricing[legacy_name] = config["pricing"]
         elif model_name.startswith("openrouter/stepfun/"):
+            legacy_name = model_name.replace("openrouter/", "")
+            pricing[legacy_name] = config["pricing"]
+        elif model_name.startswith("openrouter/z-ai/"):
             legacy_name = model_name.replace("openrouter/", "")
             pricing[legacy_name] = config["pricing"]
         elif model_name.startswith("anthropic/"):

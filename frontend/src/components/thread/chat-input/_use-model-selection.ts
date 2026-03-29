@@ -58,13 +58,13 @@ export const MODELS = {
     recommended: false,
     lowQuality: false
   },
-  'minimax/minimax-m2.5': { 
+  'minimax/minimax-m2.7': { 
     tier: 'free', 
     priority: 98,
     recommended: false,
     lowQuality: false
   },
-  'z-ai/glm-5': { 
+  'z-ai/glm-5-turbo': { 
     tier: 'free', 
     priority: 97,
     recommended: false,
@@ -252,6 +252,10 @@ export const useModelSelection = () => {
           cleanLabel = 'GPT-5.4';
         } else if (cleanLabel === 'gpt-5.3-chat' || cleanLabel === 'gpt-5.2-chat') {
           cleanLabel = 'GPT-5.3 Chat';
+        } else if (cleanLabel === 'minimax-m2.7' || cleanLabel === 'minimax m2.7') {
+          cleanLabel = 'MiniMax M2.7';
+        } else if (cleanLabel === 'glm-5-turbo' || cleanLabel === 'glm 5 turbo') {
+          cleanLabel = 'GLM 5 Turbo';
         } else {
           cleanLabel = cleanLabel
             .replace(/-/g, ' ')
