@@ -31,6 +31,7 @@ import { useAgentStream } from '@/hooks/useAgentStream';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { ThreadSkeleton } from '@/components/thread/content/ThreadSkeleton';
 import { extractToolName } from '@/components/thread/tool-views/xml-parser';
+import { FloatingAttributionBar } from '@/components/shared/floating-attribution-bar';
 
 const threadErrorCodeMessages: Record<string, string> = {
   PGRST116: 'The requested chat does not exist, has been deleted, or you do not have access to it.',
@@ -812,6 +813,8 @@ export default function ThreadPage({
         initialFilePath={fileToView}
         project={project}
       />
+
+      <FloatingAttributionBar />
     </div>
   );
 }
