@@ -52,11 +52,11 @@ export const MODELS = {
   // },
 
   // Premium/Paid tier models (require subscription) - except specific free models
-  'moonshotai/kimi-k2.5': { 
-    tier: 'free', 
+  'moonshotai/kimi-k2.6': {
+    tier: 'free',
     priority: 99,
     recommended: false,
-    lowQuality: false
+    lowQuality: false,
   },
   'minimax/minimax-m2.7': { 
     tier: 'free', 

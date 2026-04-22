@@ -54,15 +54,19 @@ MODELS = {
     #     "max_output_tokens": 8192,
     #     "recommended_safe_limit": 7000
     # },
-    "openrouter/moonshotai/kimi-k2.5": {
-        "aliases": ["moonshotai/kimi-k2.5"],
+    "openrouter/moonshotai/kimi-k2.6": {
+        "aliases": [
+            "moonshotai/kimi-k2.6",
+            "moonshotai/kimi-k2.5",
+            "openrouter/moonshotai/kimi-k2.5",
+        ],
         "pricing": {
-            "input_cost_per_million_tokens": 0.50,
-            "output_cost_per_million_tokens": 2.80
+            "input_cost_per_million_tokens": 0.55,
+            "output_cost_per_million_tokens": 2.50,
         },
         "tier_availability": ["free", "paid"],
         "max_output_tokens": 128000,
-        "recommended_safe_limit": 100000
+        "recommended_safe_limit": 100000,
     },
     "openrouter/minimax/minimax-m2.7": {
         "aliases": [
