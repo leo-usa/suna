@@ -36,7 +36,7 @@ def _log(msg: str):
 
 
 class SandboxImageEditTool(SandboxToolsBase):
-    """Tool for generating or editing images using GPT Image 1 or Gemini 3.1 Flash Image."""
+    """Tool for generating or editing images using GPT Image 2 or Gemini 3.1 Flash Image."""
 
     def __init__(self, project_id: str, thread_id: str, thread_manager: ThreadManager):
         super().__init__(project_id, thread_manager)
@@ -53,31 +53,31 @@ class SandboxImageEditTool(SandboxToolsBase):
         return size_mapping.get(aspect_ratio, "1024x1024")  # Default to square if invalid
 
     async def _generate_with_gpt_image(self, prompt: str, size: str) -> dict:
-        """Generate image using GPT Image 1."""
+        """Generate image using GPT Image 2."""
         response = await aimage_generation(
-            model="gpt-image-1.5",
+            model="gpt-image-2",
             prompt=prompt,
             n=1,
             size=size,
         )
         # Extract base64 from GPT response
         b64_data = response.data[0].b64_json
-        return {"b64_data": b64_data, "model": "gpt-image-1.5"}
+        return {"b64_data": b64_data, "model": "gpt-image-2"}
 
     async def _edit_with_gpt_image(self, prompt: str, image_bytes: bytes, size: str) -> dict:
-        """Edit image using GPT Image 1."""
+        """Edit image using GPT Image 2."""
         image_io = BytesIO(image_bytes)
         image_io.name = "image.png"
         
         response = await aimage_edit(
             image=[image_io],
             prompt=prompt,
-            model="gpt-image-1.5",
+            model="gpt-image-2",
             n=1,
             size=size,
         )
         b64_data = response.data[0].b64_json
-        return {"b64_data": b64_data, "model": "gpt-image-1.5"}
+        return {"b64_data": b64_data, "model": "gpt-image-2"}
 
     async def _generate_with_gemini(self, prompt: str, aspect_ratio: str, image_bytes: Optional[bytes] = None) -> dict:
         """Generate or edit image using Gemini 3.1 Flash Image via OpenRouter (direct API call)."""
@@ -203,7 +203,7 @@ class SandboxImageEditTool(SandboxToolsBase):
             "type": "function",
             "function": {
                 "name": "image_edit_or_generate",
-                "description": "Generate a new image from a prompt, edit an existing image, or generate a video. REQUIRED: You MUST specify the 'model' parameter ('gemini', 'gpt-image-1.5', or 'video'). Also specify 'aspect_ratio' when user requests a specific format. Gemini uses 3.1 Flash Image. Video uses Sora 2 (default) with Replicate seedance-1.5-pro fallback.",
+                "description": "Generate a new image from a prompt, edit an existing image, or generate a video. REQUIRED: You MUST specify the 'model' parameter ('gemini', 'gpt-image-2', or 'video'). Also specify 'aspect_ratio' when user requests a specific format. Gemini uses 3.1 Flash Image. Video uses Sora 2 (default) with Replicate seedance-1.5-pro fallback.",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -228,8 +228,8 @@ class SandboxImageEditTool(SandboxToolsBase):
                         },
                         "model": {
                             "type": "string",
-                            "enum": ["gpt-image-1.5", "gemini", "video"],
-                            "description": "REQUIRED: Model to use. 'gemini' (Google Gemini 3.1 Flash Image), 'gpt-image-1.5' (OpenAI), or 'video' (video generation via Sora 2 with Replicate fallback).",
+                            "enum": ["gpt-image-2", "gemini", "video"],
+                            "description": "REQUIRED: Model to use. 'gemini' (Google Gemini 3.1 Flash Image), 'gpt-image-2' (OpenAI), or 'video' (video generation via Sora 2 with Replicate fallback).",
                         },
                         "video_options": {
                             "type": "object",
@@ -278,7 +278,7 @@ class SandboxImageEditTool(SandboxToolsBase):
         aspect_ratio: str = "square",
         video_options: Optional[dict] = None,
     ) -> ToolResult:
-        """Generate or edit images using GPT Image 1 or Gemini 3 Pro Image, or generate videos using Sora 2 / Replicate."""
+        """Generate or edit images using GPT Image 2 or Gemini 3 Pro Image, or generate videos using Sora 2 / Replicate."""
         _log(f"🎨🎨🎨 MEDIA TOOL CALLED: mode={mode} | model={model} | aspect_ratio={aspect_ratio} | prompt={prompt[:50]}...")
         try:
             await self._ensure_sandbox()
@@ -307,17 +307,17 @@ class SandboxImageEditTool(SandboxToolsBase):
                 _log(f"🎨🎨🎨 IMAGE GENERATION: GEMINI completed successfully")
                 logger.info(f"🎨 IMAGE GENERATION: GEMINI completed successfully")
             else:
-                # GPT Image 1
-                _log(f"🎨🎨🎨 IMAGE GENERATION: Using GPT Image 1 | mode={mode} | size={size} | aspect_ratio={aspect_ratio}")
-                logger.info(f"🎨 IMAGE GENERATION: Using GPT Image 1 | mode={mode} | size={size} | aspect_ratio={aspect_ratio}")
+                # GPT Image 2
+                _log(f"🎨🎨🎨 IMAGE GENERATION: Using GPT Image 2 | mode={mode} | size={size} | aspect_ratio={aspect_ratio}")
+                logger.info(f"🎨 IMAGE GENERATION: Using GPT Image 2 | mode={mode} | size={size} | aspect_ratio={aspect_ratio}")
                 if mode == "generate":
                     result = await self._generate_with_gpt_image(prompt, size)
                 elif mode == "edit":
                     result = await self._edit_with_gpt_image(prompt, image_bytes, size)
                 else:
                     return self.fail_response("Invalid mode. Use 'generate', 'edit', or 'video'.")
-                _log(f"🎨🎨🎨 IMAGE GENERATION: GPT Image 1 completed successfully")
-                logger.info(f"🎨 IMAGE GENERATION: GPT Image 1 completed successfully")
+                _log(f"🎨🎨🎨 IMAGE GENERATION: GPT Image 2 completed successfully")
+                logger.info(f"🎨 IMAGE GENERATION: GPT Image 2 completed successfully")
 
             # Decode and save the image
             image_data = base64.b64decode(result["b64_data"])

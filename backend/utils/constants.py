@@ -317,9 +317,9 @@ MODELS = {
 
 # Image generation pricing configuration
 IMAGE_PRICING = {
-    "gpt-image-1.5": {
-        "generation_cost_per_image": 0.08,  # $0.08 per image generation
-        "editing_cost_per_image": 0.16,     # $0.16 per image editing
+    "gpt-image-2": {
+        "generation_cost_per_image": 0.13,  # $0.13 per image generation
+        "editing_cost_per_image": 0.25,     # $0.25 per image editing
         "sizes": {
             "1024x1024": 1.0,      # Base multiplier
             "1024x1536": 1.5,      # Same cost
