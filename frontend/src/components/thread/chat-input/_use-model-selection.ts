@@ -76,6 +76,12 @@ export const MODELS = {
     recommended: false,
     lowQuality: false
   },
+  'google/gemma-4-31b-it': {
+    tier: 'free',
+    priority: 95,
+    recommended: false,
+    lowQuality: false,
+  },
   'grok-4': { 
     tier: 'premium', 
     priority: 98,
@@ -256,6 +262,8 @@ export const useModelSelection = () => {
           cleanLabel = 'MiniMax M2.7';
         } else if (cleanLabel === 'glm-5-turbo' || cleanLabel === 'glm 5 turbo') {
           cleanLabel = 'GLM 5 Turbo';
+        } else if (cleanLabel === 'gemma-4-31b-it') {
+          cleanLabel = 'Gemma 4 31B';
         } else {
           cleanLabel = cleanLabel
             .replace(/-/g, ' ')

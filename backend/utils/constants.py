@@ -213,6 +213,16 @@ MODELS = {
         "max_output_tokens": 200000,
         "recommended_safe_limit": 180000
     },
+    "openrouter/google/gemma-4-31b-it": {
+        "aliases": ["google/gemma-4-31b-it"],
+        "pricing": {
+            "input_cost_per_million_tokens": 0.13,
+            "output_cost_per_million_tokens": 0.38,
+        },
+        "tier_availability": ["free", "paid"],
+        "max_output_tokens": 128000,
+        "recommended_safe_limit": 100000,
+    },
 
     # Paid tier only models
     "openrouter/google/gemini-2.5-pro": {
