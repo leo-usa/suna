@@ -55,7 +55,7 @@ class SandboxImageEditTool(SandboxToolsBase):
     async def _generate_with_gpt_image(self, prompt: str, size: str) -> dict:
         """Generate image using GPT Image 2."""
         response = await aimage_generation(
-            model="gpt-image-2",
+            model="openai/gpt-image-2",
             prompt=prompt,
             n=1,
             size=size,
@@ -72,7 +72,7 @@ class SandboxImageEditTool(SandboxToolsBase):
         response = await aimage_edit(
             image=[image_io],
             prompt=prompt,
-            model="gpt-image-2",
+            model="openai/gpt-image-2",
             n=1,
             size=size,
         )
