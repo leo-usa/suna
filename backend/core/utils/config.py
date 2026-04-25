@@ -52,7 +52,7 @@ class Configuration:
     
     # Model selection
     # Options: "bedrock", "anthropic", "minimax", "grok", "openai"
-    MAIN_LLM: str = "bedrock"
+    MAIN_LLM: str = "anthropic"
     # Optional: Override the default model for the selected provider
     # If not set, uses the default model for the provider:
     #   - anthropic: anthropic/claude-haiku-4-5-20251001

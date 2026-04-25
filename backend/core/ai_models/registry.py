@@ -121,7 +121,7 @@ def _should_use_bedrock() -> bool:
 
 
 def _get_main_llm() -> str:
-    return getattr(config, 'MAIN_LLM', 'bedrock')
+    return getattr(config, 'MAIN_LLM', 'anthropic')
 
 
 def _get_main_llm_model() -> Optional[str]:

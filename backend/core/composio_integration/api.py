@@ -28,7 +28,7 @@ from .composio_trigger_service import ComposioTriggerService
 from .trigger_schema import TriggerSchemaService
 from core.triggers.trigger_service import get_trigger_service, TriggerEvent, TriggerType
 from core.triggers.execution_service import get_execution_service
-from .client import ComposioClient
+from .client import ComposioClient, resolve_composio_api_key
 from core.triggers.api import sync_triggers_to_version_config
 
 router = APIRouter(prefix="/composio", tags=["composio"])
@@ -564,6 +564,13 @@ async def get_toolkit_icon(
     current_user_id: Optional[str] = Depends(get_optional_current_user_id_from_jwt)
 ):
     try:
+        if not resolve_composio_api_key():
+            return {
+                "success": False,
+                "toolkit_slug": toolkit_slug,
+                "icon_url": None,
+                "message": "Composio API key not configured",
+            }
         toolkit_service = ToolkitService()
         icon_url = await toolkit_service.get_toolkit_icon(toolkit_slug)
         
@@ -581,6 +588,16 @@ async def get_toolkit_icon(
                 "message": "Icon not found"
             }
     
+    except ValueError as e:
+        if "COMPOSIO_API_KEY" in str(e):
+            return {
+                "success": False,
+                "toolkit_slug": toolkit_slug,
+                "icon_url": None,
+                "message": "Composio API key not configured",
+            }
+        logger.error(f"Error getting toolkit icon: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
     except Exception as e:
         logger.error(f"Error getting toolkit icon: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
@@ -602,6 +619,9 @@ async def get_toolkit_icons_batch(
         
         if len(toolkit_slugs) > 50:
             toolkit_slugs = toolkit_slugs[:50]
+        
+        if not resolve_composio_api_key():
+            return {"success": True, "icons": {}}
         
         toolkit_service = ToolkitService()
         
@@ -788,7 +808,7 @@ async def create_composio_trigger(req: CreateComposioTriggerRequest, current_use
 
         qualified_name = f'composio.{toolkit_slug}' if toolkit_slug and toolkit_slug != 'composio' else 'composio'
 
-        api_key = os.getenv("COMPOSIO_API_KEY")
+        api_key = resolve_composio_api_key()
         if not api_key:
             raise HTTPException(status_code=500, detail="COMPOSIO_API_KEY not configured")
 

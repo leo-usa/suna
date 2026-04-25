@@ -121,8 +121,8 @@ class ToolManager:
             enabled_methods = self._get_enabled_methods_for_tool('image_search_tool')
             self.thread_manager.add_tool(SandboxImageSearchTool, function_names=enabled_methods, thread_manager=self.thread_manager, project_id=self.project_id)
         
-        # Browser tool
-        if self._is_tool_enabled('browser_tool'):
+        # Browser tool requires Gemini for Stagehand browser automation.
+        if config.GEMINI_API_KEY and self._is_tool_enabled('browser_tool'):
             from core.tools.browser_tool import BrowserTool
             enabled_methods = self._get_enabled_methods_for_tool('browser_tool')
             self.thread_manager.add_tool(
@@ -132,6 +132,8 @@ class ToolManager:
                 thread_id=self.thread_id, 
                 thread_manager=self.thread_manager
             )
+        elif self._is_tool_enabled('browser_tool'):
+            logger.debug("Skipping browser_tool: GEMINI_API_KEY is not configured")
         
         # Core sandbox tools - only register if enabled
         core_sandbox_tools = [

@@ -37,6 +37,8 @@ const tutorials: Tutorial[] = [
     duration: '3 min',
     icon: Sparkles,
     embedCode: `<div style="position: relative; padding-bottom: calc(57.3684% + 41px); height: 0px; width: 100%;"><iframe src="https://demo.arcade.software/iG83WENBBNvLFbzIf8kE?embed&embed_mobile=tab&embed_desktop=inline&show_copy_link=true" title="Explore Templates and AI-Powered Content Generation Modes" frameborder="0" loading="lazy" webkitallowfullscreen mozallowfullscreen allowfullscreen allow="clipboard-write" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; color-scheme: light;" ></iframe></div>`,
+    // Arcade links are frequently unpublished; avoid showing 404 embeds in self-hosted installs.
+    isPlaceholder: true,
   },
   {
     id: 'getting-started-first-task',
@@ -45,6 +47,7 @@ const tutorials: Tutorial[] = [
     duration: '4 min',
     icon: Rocket,
     embedCode: `<div style="position: relative; padding-bottom: calc(57.3684% + 41px); height: 0px; width: 100%;"><iframe src="https://demo.arcade.software/8tC4UfBbqMpsUo6CM30i?embed&embed_mobile=tab&embed_desktop=inline&show_copy_link=true" title="Your first task with Kortix" frameborder="0" loading="lazy" webkitallowfullscreen mozallowfullscreen allowfullscreen allow="clipboard-write" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; color-scheme: light;" ></iframe></div>`,
+    isPlaceholder: true,
   },
   {
     id: 'create-export-presentations',
@@ -53,6 +56,7 @@ const tutorials: Tutorial[] = [
     duration: '4 min',
     icon: Presentation,
     embedCode: `<div style="position: relative; padding-bottom: calc(57.3684% + 41px); height: 0px; width: 100%;"><iframe src="https://demo.arcade.software/p1ot4ZaAhDZYY61npOrT?embed&embed_mobile=tab&embed_desktop=inline&show_copy_link=true" title="Create a Q4 Business Review Presentation with Slide Templates" frameborder="0" loading="lazy" webkitallowfullscreen mozallowfullscreen allowfullscreen allow="clipboard-write" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; color-scheme: light;" ></iframe></div>`,
+    isPlaceholder: true,
   },
   {
     id: 'create-manage-files',
@@ -61,6 +65,7 @@ const tutorials: Tutorial[] = [
     duration: '3 min',
     icon: FolderOpen,
     embedCode: `<div style="position: relative; padding-bottom: calc(57.3684% + 41px); height: 0px; width: 100%;"><iframe src="https://demo.arcade.software/8augEzFC6kfwzfGxGg7H?embed&embed_mobile=tab&embed_desktop=inline&show_copy_link=true" title="Download Tesla Market Share Data to Excel" frameborder="0" loading="lazy" webkitallowfullscreen mozallowfullscreen allowfullscreen allow="clipboard-write" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; color-scheme: light;" ></iframe></div>`,
+    isPlaceholder: true,
   },
   {
     id: 'create-videos-images',
@@ -69,6 +74,7 @@ const tutorials: Tutorial[] = [
     duration: '3 min',
     icon: Video,
     embedCode: `<div style="position: relative; padding-bottom: calc(57.3684% + 41px); height: 0px; width: 100%;"><iframe src="https://demo.arcade.software/0FLRZoBUHFwGEbpIfUnP?embed&embed_mobile=tab&embed_desktop=inline&show_copy_link=true" title="Generate a Photorealistic Image and Adventure Video" frameborder="0" loading="lazy" webkitallowfullscreen mozallowfullscreen allowfullscreen allow="clipboard-write" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; color-scheme: light;" ></iframe></div>`,
+    isPlaceholder: true,
   },
   {
     id: 'canvas-feature',
@@ -77,6 +83,7 @@ const tutorials: Tutorial[] = [
     duration: '4 min',
     icon: PenTool,
     embedCode: `<div style="position: relative; padding-bottom: calc(57.3684% + 41px); height: 0px; width: 100%;"><iframe src="https://demo.arcade.software/ilHFhqxU66uwWw9NEOEI?embed&embed_mobile=tab&embed_desktop=inline&show_copy_link=true" title="Design and Export a Custom Coffee Logo in Canvas Mode" frameborder="0" loading="lazy" webkitallowfullscreen mozallowfullscreen allowfullscreen allow="clipboard-write" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; color-scheme: light;" ></iframe></div>`,
+    isPlaceholder: true,
   },
   {
     id: 'custom-workers-manual',
@@ -85,6 +92,7 @@ const tutorials: Tutorial[] = [
     duration: '5 min',
     icon: Bot,
     embedCode: `<div style="position: relative; padding-bottom: calc(57.3684% + 41px); height: 0px; width: 100%;"><iframe src="https://demo.arcade.software/UCjRrraJVUHYeniHKJHS?embed&embed_mobile=tab&embed_desktop=inline&show_copy_link=true" title="Set Up a New AI Assistant Worker and Explore Integration Options" frameborder="0" loading="lazy" webkitallowfullscreen mozallowfullscreen allowfullscreen allow="clipboard-write" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; color-scheme: light;" ></iframe></div>`,
+    isPlaceholder: true,
   },
 ];
 
@@ -178,8 +186,8 @@ function TutorialCard({ tutorial, index }: { tutorial: Tutorial; index: number }
                   <div className="w-16 h-16 rounded-full bg-accent/50 flex items-center justify-center mx-auto mb-4">
                     <Play className="w-8 h-8 text-muted-foreground" />
                   </div>
-                  <p className="text-muted-foreground font-medium">Tutorial video coming soon</p>
-                  <p className="text-sm text-muted-foreground/70 mt-1">Check back for updates</p>
+                  <p className="text-muted-foreground font-medium">Tutorial temporarily unavailable</p>
+                  <p className="text-sm text-muted-foreground/70 mt-1">The embedded demo link was deleted or archived.</p>
                 </div>
               </div>
             </div>
