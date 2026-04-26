@@ -67,9 +67,8 @@ export const pricingTiers: PricingTier[] = [
     isPopular: false,
     hours: '2 hours',
     baseCredits: 2000,
-    bonusCredits: 2000,
     features: [
-      'CREDITS_BONUS:2000:4000',
+      '2,000 credits/month',
       'Unlimited Chats',
       '3 concurrent runs - Run multiple Chats simultaneously',
       '5 custom AI Workers - Create Kortix Workers with custom Knowledge, Tools & Integrations',
@@ -93,9 +92,8 @@ export const pricingTiers: PricingTier[] = [
     isPopular: true,
     hours: '6 hours',
     baseCredits: 5000,
-    bonusCredits: 5000,
     features: [
-      'CREDITS_BONUS:5000:10000',
+      '5,000 credits/month',
       'Unlimited Chats',
       '5 concurrent runs - Run multiple Chats simultaneously',
       '20 custom AI Workers - Create Kortix Workers with custom Knowledge, Tools & Integrations',
@@ -141,9 +139,8 @@ export const pricingTiers: PricingTier[] = [
     isPopular: false,
     hours: '25 hours',
     baseCredits: 20000,
-    bonusCredits: 20000,
     features: [
-      'CREDITS_BONUS:20000:40000',
+      '20,000 credits/month',
       'Unlimited Chats',
       '20 concurrent runs - Run multiple Chats simultaneously',
       '100 custom AI Workers - Create Kortix Workers with custom Knowledge, Tools & Integrations',

@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from decimal import Decimal
-from typing import Optional
+from typing import Literal, Optional
 
 class CreateCheckoutSessionRequest(BaseModel):
     tier_key: str  # Backend tier key like 'tier_2_20', 'free', etc.
@@ -16,6 +16,8 @@ class PurchaseCreditsRequest(BaseModel):
     amount: Decimal
     success_url: str
     cancel_url: str
+    payment_method: Literal["card", "alipay", "wechat_pay"] = "card"
+    locale: Optional[str] = None
 
 class TrialStartRequest(BaseModel):
     success_url: str

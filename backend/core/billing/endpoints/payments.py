@@ -22,9 +22,13 @@ async def purchase_credits_checkout(
             amount=request.amount,
             success_url=request.success_url,
             cancel_url=request.cancel_url,
+            payment_method=request.payment_method,
+            locale=request.locale,
             get_user_subscription_tier_func=subscription_service.get_user_subscription_tier
         )
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"[BILLING] Error creating credit purchase checkout: {e}")
         raise HTTPException(status_code=500, detail=str(e))

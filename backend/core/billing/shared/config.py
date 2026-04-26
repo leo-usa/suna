@@ -9,7 +9,7 @@ TRIAL_DURATION_DAYS = 7
 TRIAL_TIER = "tier_2_20"
 TRIAL_CREDITS = Decimal("5.00")
 
-TOKEN_PRICE_MULTIPLIER = Decimal('1.2')
+TOKEN_PRICE_MULTIPLIER = Decimal('1.5')
 MINIMUM_CREDIT_FOR_RUN = Decimal('0.01')
 DEFAULT_TOKEN_COST = Decimal('0.000002')
 
@@ -45,7 +45,7 @@ TIERS: Dict[str, Tier] = {
         price_ids=[],
         monthly_credits=Decimal('0.00'),
         display_name='No Plan',
-        can_purchase_credits=False,
+        can_purchase_credits=True,
         models=['haiku'],
         project_limit=0,
         thread_limit=0,
@@ -64,7 +64,7 @@ TIERS: Dict[str, Tier] = {
         price_ids=[config.STRIPE_FREE_TIER_ID],
         monthly_credits=Decimal('0.00'),
         display_name='Basic',
-        can_purchase_credits=False,
+        can_purchase_credits=True,
         models=['haiku'],
         project_limit=20,  # 2x thread_limit (safety buffer for orphan projects)
         thread_limit=10,
@@ -91,9 +91,9 @@ TIERS: Dict[str, Tier] = {
             config.STRIPE_TIER_2_20_YEARLY_ID,
             config.STRIPE_TIER_2_17_YEARLY_COMMITMENT_ID
         ],
-        monthly_credits=Decimal('40.00'),
+        monthly_credits=Decimal('20.00'),
         display_name='Plus',
-        can_purchase_credits=False,
+        can_purchase_credits=True,
         models=['all'],
         # Frontend advertises "Unlimited Chats" on paid tiers.
         # Threads are effectively "chats" and each thread creates a project, so both
@@ -124,9 +124,9 @@ TIERS: Dict[str, Tier] = {
             config.STRIPE_TIER_6_50_YEARLY_ID,
             config.STRIPE_TIER_6_42_YEARLY_COMMITMENT_ID
         ],
-        monthly_credits=Decimal('100.00'),
+        monthly_credits=Decimal('50.00'),
         display_name='Pro',
-        can_purchase_credits=False,
+        can_purchase_credits=True,
         models=['all'],
         project_limit=UNLIMITED_PROJECT_LIMIT,  # 2x thread_limit
         thread_limit=UNLIMITED_THREAD_LIMIT,
@@ -154,7 +154,7 @@ TIERS: Dict[str, Tier] = {
             config.STRIPE_TIER_25_200_YEARLY_ID,
             config.STRIPE_TIER_25_170_YEARLY_COMMITMENT_ID
         ],
-        monthly_credits=Decimal('400.00'),
+        monthly_credits=Decimal('200.00'),
         display_name='Ultra',
         can_purchase_credits=True,
         models=['all'],

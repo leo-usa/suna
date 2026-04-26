@@ -203,6 +203,8 @@ export interface PurchaseCreditsRequest {
   amount: number;
   success_url: string;
   cancel_url: string;
+  payment_method?: 'card' | 'alipay' | 'wechat_pay';
+  locale?: string;
 }
 
 export interface PurchaseCreditsResponse {

@@ -1320,7 +1320,7 @@ export function PricingSection({
                     </div>
                     <p className="text-sm text-muted-foreground">
                       {promo.promoCode === 'KORTIX26'
-                        ? `Use code ${promo.promoCode} to get 30% off for the first three months + 2X credits as welcome bonus`
+                        ? `Use code ${promo.promoCode} to get 30% off for the first three months`
                         : promo.description}
                     </p>
                   </div>

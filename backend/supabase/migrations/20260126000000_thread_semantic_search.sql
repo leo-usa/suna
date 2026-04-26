@@ -20,8 +20,6 @@
 -- 3. When a user searches, their query also becomes a vector. We then find chunks
 --    whose vectors are "close" to the query vector using cosine similarity.
 --    Closer vectors = more semantically similar content.
---
--
 -- Enable pgvector extension (idempotent - safe to run multiple times)
 CREATE EXTENSION IF NOT EXISTS vector;
 

@@ -69,23 +69,23 @@ class Configuration:
     SYSTEM_ADMIN_USER_ID: Optional[str] = None  # User ID that owns shared/fallback agents
 
     # Subscription tier IDs - Production
-    STRIPE_FREE_TIER_ID_PROD: Optional[str] = 'price_1RILb4G6l1KZGqIrK4QLrx9i'
-    STRIPE_TIER_2_20_ID_PROD: Optional[str] = 'price_1RILb4G6l1KZGqIrhomjgDnO'
-    STRIPE_TIER_6_50_ID_PROD: Optional[str] = 'price_1RILb4G6l1KZGqIr5q0sybWn'
-    STRIPE_TIER_12_100_ID_PROD: Optional[str] = 'price_1RILb4G6l1KZGqIr5Y20ZLHm'
-    STRIPE_TIER_25_200_ID_PROD: Optional[str] = 'price_1RILb4G6l1KZGqIrGAD8rNjb'
-    STRIPE_TIER_50_400_ID_PROD: Optional[str] = 'price_1RILb4G6l1KZGqIruNBUMTF1'
-    STRIPE_TIER_125_800_ID_PROD: Optional[str] = 'price_1RILb3G6l1KZGqIrbJA766tN'
-    STRIPE_TIER_200_1000_ID_PROD: Optional[str] = 'price_1RILb3G6l1KZGqIrmauYPOiN'
+    STRIPE_FREE_TIER_ID_PROD: Optional[str] = 'price_1RMBu0P2cIDuyWfbQGxAsOZ7'
+    STRIPE_TIER_2_20_ID_PROD: Optional[str] = 'price_1RMBKOP2cIDuyWfbH6DrdJoH'
+    STRIPE_TIER_6_50_ID_PROD: Optional[str] = 'price_1RMBRfP2cIDuyWfbmh1dYuQg'
+    STRIPE_TIER_12_100_ID_PROD: Optional[str] = 'price_1RMBRfP2cIDuyWfbMUDqfrgy'
+    STRIPE_TIER_25_200_ID_PROD: Optional[str] = 'price_1RMBRfP2cIDuyWfby99jVvXT'
+    STRIPE_TIER_50_400_ID_PROD: Optional[str] = 'price_1RMBRfP2cIDuyWfbHMBX01JN'
+    STRIPE_TIER_125_800_ID_PROD: Optional[str] = 'price_1RMBRfP2cIDuyWfbVPuRpDkq'
+    STRIPE_TIER_200_1000_ID_PROD: Optional[str] = 'price_1RMBRfP2cIDuyWfbJZh9gNHu'
     
     # Yearly subscription tier IDs - Production (15% discount)
-    STRIPE_TIER_2_20_YEARLY_ID_PROD: Optional[str] = 'price_1ReHB5G6l1KZGqIrD70I1xqM'
-    STRIPE_TIER_6_50_YEARLY_ID_PROD: Optional[str] = 'price_1ReHAsG6l1KZGqIrlAog487C'
-    STRIPE_TIER_12_100_YEARLY_ID_PROD: Optional[str] = 'price_1ReHAWG6l1KZGqIrBHer2PQc'
-    STRIPE_TIER_25_200_YEARLY_ID_PROD: Optional[str] = 'price_1ReH9uG6l1KZGqIrsvMLHViC'
-    STRIPE_TIER_50_400_YEARLY_ID_PROD: Optional[str] = 'price_1ReH9fG6l1KZGqIrsPtu5KIA'
-    STRIPE_TIER_125_800_YEARLY_ID_PROD: Optional[str] = 'price_1ReH9GG6l1KZGqIrfgqaJyat'
-    STRIPE_TIER_200_1000_YEARLY_ID_PROD: Optional[str] = 'price_1ReH8qG6l1KZGqIrK1akY90q'
+    STRIPE_TIER_2_20_YEARLY_ID_PROD: Optional[str] = 'price_1RnOhYP2cIDuyWfbryEigAqQ'
+    STRIPE_TIER_6_50_YEARLY_ID_PROD: Optional[str] = 'price_1RnOjXP2cIDuyWfbP2eZnMOE'
+    STRIPE_TIER_12_100_YEARLY_ID_PROD: Optional[str] = 'price_1RnOl0P2cIDuyWfb0M8AFcf0'
+    STRIPE_TIER_25_200_YEARLY_ID_PROD: Optional[str] = 'price_1RnOljP2cIDuyWfbnXSXPVNR'
+    STRIPE_TIER_50_400_YEARLY_ID_PROD: Optional[str] = 'price_1RnOnUP2cIDuyWfbTBzltbAK'
+    STRIPE_TIER_125_800_YEARLY_ID_PROD: Optional[str] = 'price_1RnOoDP2cIDuyWfbaWewDX98'
+    STRIPE_TIER_200_1000_YEARLY_ID_PROD: Optional[str] = 'price_1RnOokP2cIDuyWfbEzXTcgCN'
 
     # Yearly commitment prices - Production (15% discount, monthly payments with 12-month commitment via schedules)
     STRIPE_TIER_2_17_YEARLY_COMMITMENT_ID_PROD: Optional[str] = 'price_1RqtqiG6l1KZGqIrhjVPtE1s'  # $17/month
@@ -372,7 +372,7 @@ class Configuration:
     REVENUECAT_PROJECT_ID: Optional[str] = None
     
     # Stripe Product IDs
-    STRIPE_PRODUCT_ID_PROD: Optional[str] = 'prod_SCl7AQ2C8kK1CD'
+    STRIPE_PRODUCT_ID_PROD: Optional[str] = 'prod_SGilmTbng755w0'
     STRIPE_PRODUCT_ID_STAGING: Optional[str] = 'prod_SCgIj3G7yPOAWY'
     
     # Sandbox configuration

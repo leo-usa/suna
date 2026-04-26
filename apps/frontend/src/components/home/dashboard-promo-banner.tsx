@@ -75,7 +75,7 @@ export function DashboardPromoBanner() {
                 <span className="text-xs sm:text-sm font-medium text-foreground">
                   <span className="text-primary">{promo.promoCode}</span>
                   <span className="text-muted-foreground mx-1.5">·</span>
-                  30% off + 2X credits
+                  30% off
                 </span>
               </div>
 

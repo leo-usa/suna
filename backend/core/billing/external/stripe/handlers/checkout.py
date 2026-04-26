@@ -22,7 +22,10 @@ class CheckoutHandler:
         logger.info(f"[WEBHOOK] Checkout session completed - ID: {session.get('id')}, Has subscription: {bool(session.get('subscription'))}, Metadata: {session.get('metadata', {})}")
         
         if session.get('metadata', {}).get('type') == 'credit_purchase':
-            await CheckoutHandler._handle_credit_purchase(session)
+            stripe_event_id = getattr(event, 'id', None)
+            if not stripe_event_id and hasattr(event, 'get'):
+                stripe_event_id = event.get('id')
+            await CheckoutHandler._handle_credit_purchase(session, stripe_event_id=stripe_event_id)
         elif session.get('metadata', {}).get('type') == 'yearly_upgrade':
             await CheckoutHandler._handle_yearly_upgrade_payment(session)
         elif session.get('subscription'):
@@ -32,12 +35,19 @@ class CheckoutHandler:
             logger.warning(f"[WEBHOOK] Checkout session has neither credit_purchase type nor subscription")
 
     @staticmethod
-    async def _handle_credit_purchase(session):
+    async def _handle_credit_purchase(session, stripe_event_id: str = None):
         metadata = session.get('metadata', {})
         account_id = metadata.get('account_id')
         credit_amount_str = metadata.get('credit_amount')
         
         if not account_id or not credit_amount_str:
+            return
+
+        if session.get('payment_status') and session.get('payment_status') != 'paid':
+            logger.warning(
+                f"[PAYMENT] Credit purchase checkout {session.get('id')} completed with "
+                f"payment_status={session.get('payment_status')}; skipping credit grant"
+            )
             return
             
         try:
@@ -76,7 +86,9 @@ class CheckoutHandler:
                 account_id=account_id,
                 amount=credit_amount,
                 is_expiring=False,
-                description=f"Purchased ${credit_amount} credits"
+                description=f"Purchased ${credit_amount} credits",
+                type='purchase',
+                stripe_event_id=stripe_event_id or metadata.get('purchase_id') or session.get('id')
             )
             
             if not result.get('success'):

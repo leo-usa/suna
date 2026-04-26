@@ -1,5 +1,5 @@
 from fastapi import HTTPException
-from typing import Dict
+from typing import Dict, Optional
 from decimal import Decimal
 from datetime import datetime, timezone
 import stripe
@@ -8,6 +8,10 @@ from ..external.stripe import generate_credit_purchase_idempotency_key, StripeAP
 from .interfaces import PaymentProcessorInterface
 from core.utils.config import config
 from core.billing import repo as billing_repo
+
+MIN_CREDIT_PURCHASE_AMOUNT = Decimal("1.00")
+MAX_CREDIT_PURCHASE_AMOUNT = Decimal("5000.00")
+SUPPORTED_CREDIT_PAYMENT_METHODS = {"card", "alipay", "wechat_pay"}
 
 class PaymentService(PaymentProcessorInterface):
     def __init__(self):
@@ -28,7 +32,9 @@ class PaymentService(PaymentProcessorInterface):
     ) -> Dict:
         return await self.create_credit_purchase_checkout(
             account_id, amount, success_url, cancel_url,
-            self._get_user_subscription_tier
+            get_user_subscription_tier_func=self._get_user_subscription_tier,
+            payment_method="card",
+            locale=None
         )
     
     async def _get_user_subscription_tier(self, account_id: str):
@@ -41,18 +47,25 @@ class PaymentService(PaymentProcessorInterface):
         amount: Decimal, 
         success_url: str, 
         cancel_url: str,
-        get_user_subscription_tier_func
+        get_user_subscription_tier_func=None,
+        payment_method: str = "card",
+        locale: Optional[str] = None
     ) -> Dict:
-        tier = await get_user_subscription_tier_func(account_id)
-        if not tier.get('can_purchase_credits', False):
-            raise HTTPException(status_code=403, detail="Credit purchases not available for your tier")
-        
-        customer_data = await billing_repo.get_billing_customer(account_id)
-        
-        if not customer_data:
-            raise HTTPException(status_code=400, detail="No billing customer found")
-        
-        customer_id = customer_data['id']
+        amount = Decimal(str(amount))
+        payment_method = payment_method or "card"
+
+        if amount < MIN_CREDIT_PURCHASE_AMOUNT:
+            raise HTTPException(status_code=400, detail=f"Minimum credit purchase is ${MIN_CREDIT_PURCHASE_AMOUNT}")
+        if amount > MAX_CREDIT_PURCHASE_AMOUNT:
+            raise HTTPException(status_code=400, detail=f"Maximum credit purchase is ${MAX_CREDIT_PURCHASE_AMOUNT}")
+        if payment_method not in SUPPORTED_CREDIT_PAYMENT_METHODS:
+            raise HTTPException(status_code=400, detail="Unsupported credit purchase payment method")
+        if not config.STRIPE_SECRET_KEY:
+            raise HTTPException(status_code=500, detail="Stripe is not configured")
+
+        from ..subscriptions.handlers.customer import CustomerHandler
+
+        customer_id = await CustomerHandler.get_or_create_stripe_customer(account_id)
         
         try:
             await StripeAPIWrapper.safe_stripe_call(
@@ -70,18 +83,21 @@ class PaymentService(PaymentProcessorInterface):
             raise
         
         purchase_id = None
+        purchase_metadata = {'amount': float(amount), 'payment_method': payment_method}
         try:
             purchase_record = await billing_repo.create_credit_purchase(
                 account_id=account_id,
                 amount_dollars=float(amount),
                 status='pending',
                 stripe_payment_intent_id=None,
-                metadata={'amount': float(amount)}
+                metadata=purchase_metadata
             )
             
             if purchase_record:
                 purchase_id = purchase_record['id']
                 logger.info(f"[PAYMENT] Created purchase record {purchase_id} for account {account_id}")
+            else:
+                raise Exception("No purchase record returned")
         except Exception as e:
             logger.error(f"[PAYMENT FAILURE] Failed to create purchase record: {e}")
             raise HTTPException(status_code=500, detail="Failed to initialize payment")
@@ -90,10 +106,18 @@ class PaymentService(PaymentProcessorInterface):
         idempotency_key = hashlib.sha256(f"{account_id}_{purchase_id}_{amount}".encode()).hexdigest()[:40]
         
         try:
-            session = await StripeAPIWrapper.create_checkout_session(
-                customer=customer_id,
-                payment_method_types=['card'],
-                line_items=[{
+            payment_method_params = self._build_payment_method_params(payment_method)
+            metadata = {
+                'type': 'credit_purchase',
+                'account_id': account_id,
+                'credit_amount': str(amount),
+                'purchase_id': str(purchase_id),
+                'payment_method': payment_method
+            }
+            session_params = {
+                'customer': customer_id,
+                **payment_method_params,
+                'line_items': [{
                     'price_data': {
                         'currency': 'usd',
                         'product_data': {'name': f'${amount} Credits'},
@@ -101,18 +125,17 @@ class PaymentService(PaymentProcessorInterface):
                     },
                     'quantity': 1
                 }],
-                mode='payment',
-                success_url=success_url,
-                cancel_url=cancel_url,
-                allow_promotion_codes=True,
-                metadata={
-                    'type': 'credit_purchase',
-                    'account_id': account_id,
-                    'credit_amount': str(amount),
-                    'purchase_id': str(purchase_id)
-                },
-                idempotency_key=idempotency_key
-            )
+                'mode': 'payment',
+                'success_url': success_url,
+                'cancel_url': cancel_url,
+                'allow_promotion_codes': True,
+                'metadata': metadata,
+                'idempotency_key': idempotency_key
+            }
+            if locale:
+                session_params['locale'] = locale
+
+            session = await StripeAPIWrapper.create_checkout_session(**session_params)
             
             payment_intent_id = session.payment_intent if session.payment_intent else None
             
@@ -123,7 +146,12 @@ class PaymentService(PaymentProcessorInterface):
                 purchase_id=purchase_id,
                 status='pending',
                 stripe_payment_intent_id=payment_intent_id,
-                metadata={'session_id': session.id, 'amount': float(amount), 'purchase_id': str(purchase_id)}
+                metadata={
+                    'session_id': session.id,
+                    'amount': float(amount),
+                    'purchase_id': str(purchase_id),
+                    'payment_method': payment_method
+                }
             )
             
             logger.info(f"[PAYMENT SUCCESS] Created checkout session {session.id} for purchase {purchase_id}")
@@ -145,6 +173,21 @@ class PaymentService(PaymentProcessorInterface):
                 logger.error(f"[PAYMENT FAILURE] Failed to update purchase record: {log_error}")
             
             raise HTTPException(status_code=500, detail="Failed to create payment session")
+
+    @staticmethod
+    def _build_payment_method_params(payment_method: str) -> Dict:
+        if payment_method == "wechat_pay":
+            return {
+                "payment_method_types": ["wechat_pay"],
+                "payment_method_options": {
+                    "wechat_pay": {
+                        "client": "web"
+                    }
+                }
+            }
+        if payment_method == "alipay":
+            return {"payment_method_types": ["alipay"]}
+        return {"payment_method_types": ["card"]}
 
 
 payment_service = PaymentService() 

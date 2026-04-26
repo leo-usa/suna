@@ -11,13 +11,16 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { AlertCircle, CreditCard } from 'lucide-react';
 import { KortixLoader } from '@/components/ui/kortix-loader';
 import { billingApi } from '@/lib/api/billing';
 import { toast } from '@/lib/toast';
 import { formatCredits } from '@agentpress/shared';
 import { useUserCurrency } from '@/hooks/use-user-currency';
-import { formatPrice, getCurrencySymbol } from '@/lib/utils/currency';
+import { formatPrice } from '@/lib/utils/currency';
+import { useLocale } from 'next-intl';
 
 interface CreditPurchaseProps {
     open: boolean;
@@ -32,6 +35,8 @@ interface CreditPackage {
     price: number;
     popular?: boolean;
 }
+
+type CreditPaymentMethod = 'card' | 'alipay' | 'wechat_pay';
 
 const CREDIT_PACKAGES: CreditPackage[] = [
     { amount: 10, price: 10 },
@@ -50,9 +55,12 @@ export function CreditPurchaseModal({
     onPurchaseComplete
 }: CreditPurchaseProps) {
     const { currency } = useUserCurrency();
-    const symbol = getCurrencySymbol(currency);
+    const locale = useLocale();
     const [selectedPackage, setSelectedPackage] = useState<CreditPackage | null>(null);
     const [customAmount, setCustomAmount] = useState<string>('');
+    const [paymentMethod, setPaymentMethod] = useState<CreditPaymentMethod>(
+        locale?.startsWith('zh') ? 'alipay' : 'card'
+    );
     const [isProcessing, setIsProcessing] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -71,7 +79,9 @@ export function CreditPurchaseModal({
             const response = await billingApi.purchaseCredits({
                 amount: amount,
                 success_url: `${window.location.origin}/dashboard?credit_purchase=success`,
-                cancel_url: `${window.location.origin}/dashboard?credit_purchase=cancelled`
+                cancel_url: `${window.location.origin}/dashboard?credit_purchase=cancelled`,
+                payment_method: paymentMethod,
+                locale: locale?.startsWith('zh') ? 'zh' : 'en'
             });
             if (response.checkout_url) {
                 window.location.href = response.checkout_url;
@@ -116,13 +126,13 @@ export function CreditPurchaseModal({
                     <DialogHeader>
                         <DialogTitle>Credits Not Available</DialogTitle>
                         <DialogDescription>
-                            Credit purchases are only available for users on the {formatPrice(200, currency)}/month subscription tier.
+                            Prepaid credits are not available for this account right now.
                         </DialogDescription>
                     </DialogHeader>
                     <Alert>
                         <AlertCircle className="h-4 w-4" />
                         <AlertDescription>
-                            Please upgrade your subscription to the {formatPrice(200, currency)}/month tier to unlock credit purchases for unlimited usage.
+                            Please refresh the page or contact support if you believe this is a mistake.
                         </AlertDescription>
                     </Alert>
                     <div className="flex justify-end">
@@ -141,7 +151,7 @@ export function CreditPurchaseModal({
                 <DialogHeader>
                     <DialogTitle>Get additional credits</DialogTitle>
                     <DialogDescription>
-                        Add credits to your account for usage beyond your subscription limit.
+                        Add prepaid credits to continue using Suna. Credits do not expire.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -170,6 +180,43 @@ export function CreditPurchaseModal({
                                 </Card>
                             ))}
                         </div>
+                    </div>
+                    <div className="space-y-2">
+                        <Label className="text-sm font-medium">Payment method</Label>
+                        <RadioGroup
+                            value={paymentMethod}
+                            onValueChange={(value) => setPaymentMethod(value as CreditPaymentMethod)}
+                            className="grid gap-2 sm:grid-cols-3"
+                        >
+                            <Label
+                                htmlFor="credit-payment-card"
+                                className="flex cursor-pointer items-center gap-3 rounded-lg border p-3 text-sm hover:bg-muted/50"
+                            >
+                                <RadioGroupItem value="card" id="credit-payment-card" />
+                                <CreditCard className="h-4 w-4" />
+                                <span>Card</span>
+                            </Label>
+                            <Label
+                                htmlFor="credit-payment-alipay"
+                                className="flex cursor-pointer items-center gap-3 rounded-lg border p-3 text-sm hover:bg-muted/50"
+                            >
+                                <RadioGroupItem value="alipay" id="credit-payment-alipay" />
+                                <span className="flex h-4 w-4 items-center justify-center rounded-sm bg-blue-600 text-[9px] font-semibold text-white">
+                                    A
+                                </span>
+                                <span>Alipay</span>
+                            </Label>
+                            <Label
+                                htmlFor="credit-payment-wechat"
+                                className="flex cursor-pointer items-center gap-3 rounded-lg border p-3 text-sm hover:bg-muted/50"
+                            >
+                                <RadioGroupItem value="wechat_pay" id="credit-payment-wechat" />
+                                <span className="flex h-4 w-4 items-center justify-center rounded-sm bg-green-600 text-[9px] font-semibold text-white">
+                                    W
+                                </span>
+                                <span>WeChat Pay</span>
+                            </Label>
+                        </RadioGroup>
                     </div>
                     {error && (
                         <Alert variant="destructive">
