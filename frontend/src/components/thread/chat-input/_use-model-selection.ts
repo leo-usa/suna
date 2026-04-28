@@ -88,6 +88,18 @@ export const MODELS = {
     recommended: false,
     lowQuality: false
   },
+  'gpt-5.5-pro': {
+    tier: 'premium',
+    priority: 100,
+    recommended: false,
+    lowQuality: false,
+  },
+  'gpt-5.5': {
+    tier: 'premium',
+    priority: 99,
+    recommended: false,
+    lowQuality: false,
+  },
   'sonnet-3.7': { 
     tier: 'premium', 
     priority: 97, 
@@ -252,6 +264,10 @@ export const useModelSelection = () => {
         // Special cases for model display names
         if (cleanLabel === 'claude-sonnet-4-6' || cleanLabel === 'claude-sonnet-4') {
           cleanLabel = 'Claude Sonnet 4.6';
+        } else if (cleanLabel === 'gpt-5.5-pro') {
+          cleanLabel = 'GPT-5.5 Pro';
+        } else if (cleanLabel === 'gpt-5.5') {
+          cleanLabel = 'GPT-5.5';
         } else if (cleanLabel === 'gpt-5.4-pro' || cleanLabel === 'gpt-5.2-pro') {
           cleanLabel = 'GPT-5.4 Pro';
         } else if (cleanLabel === 'gpt-5.4' || cleanLabel === 'gpt-5.2') {
