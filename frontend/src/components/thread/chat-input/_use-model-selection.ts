@@ -82,6 +82,18 @@ export const MODELS = {
     recommended: false,
     lowQuality: false,
   },
+  'deepseek/deepseek-v4-flash': {
+    tier: 'free',
+    priority: 94,
+    recommended: false,
+    lowQuality: false,
+  },
+  'deepseek/deepseek-v4-pro': {
+    tier: 'free',
+    priority: 93,
+    recommended: false,
+    lowQuality: false,
+  },
   'grok-4': { 
     tier: 'premium', 
     priority: 98,
@@ -280,6 +292,10 @@ export const useModelSelection = () => {
           cleanLabel = 'GLM 5 Turbo';
         } else if (cleanLabel === 'gemma-4-31b-it') {
           cleanLabel = 'Gemma 4 31B';
+        } else if (cleanLabel === 'deepseek-v4-flash') {
+          cleanLabel = 'DeepSeek V4 Flash';
+        } else if (cleanLabel === 'deepseek-v4-pro') {
+          cleanLabel = 'DeepSeek V4 Pro';
         } else {
           cleanLabel = cleanLabel
             .replace(/-/g, ' ')

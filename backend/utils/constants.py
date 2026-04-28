@@ -93,6 +93,26 @@ MODELS = {
         "max_output_tokens": 128000,
         "recommended_safe_limit": 100000
     },
+    "openrouter/deepseek/deepseek-v4-flash": {
+        "aliases": ["deepseek/deepseek-v4-flash", "deepseek-v4-flash"],
+        "pricing": {
+            "input_cost_per_million_tokens": 0.14,
+            "output_cost_per_million_tokens": 0.28
+        },
+        "tier_availability": ["free", "paid"],
+        "max_output_tokens": 128000,
+        "recommended_safe_limit": 100000
+    },
+    "openrouter/deepseek/deepseek-v4-pro": {
+        "aliases": ["deepseek/deepseek-v4-pro", "deepseek-v4-pro"],
+        "pricing": {
+            "input_cost_per_million_tokens": 0.435,
+            "output_cost_per_million_tokens": 0.87
+        },
+        "tier_availability": ["free", "paid"],
+        "max_output_tokens": 128000,
+        "recommended_safe_limit": 100000
+    },
         "openrouter/openai/gpt-5.1-chat": {
         "aliases": ["gpt-5.1-chat"],
         "pricing": {
