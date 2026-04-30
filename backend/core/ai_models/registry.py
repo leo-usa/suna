@@ -88,6 +88,77 @@ class PricingPresets:
         cached_read_cost_per_million_tokens=0.014,
     )
 
+    DEEPSEEK_V4_FLASH = ModelPricing(
+        input_cost_per_million_tokens=0.14,
+        output_cost_per_million_tokens=0.28,
+    )
+
+    DEEPSEEK_V4_PRO = ModelPricing(
+        input_cost_per_million_tokens=0.435,
+        output_cost_per_million_tokens=0.87,
+    )
+
+    CLAUDE_SONNET_4_6 = ModelPricing(
+        input_cost_per_million_tokens=3.00,
+        output_cost_per_million_tokens=15.00,
+        cached_read_cost_per_million_tokens=0.30,
+        cache_write_5m_cost_per_million_tokens=3.75,
+    )
+
+    CLAUDE_OPUS_4_7 = ModelPricing(
+        input_cost_per_million_tokens=5.00,
+        output_cost_per_million_tokens=25.00,
+        cached_read_cost_per_million_tokens=0.50,
+        cache_write_5m_cost_per_million_tokens=6.25,
+    )
+
+    GEMINI_2_5_PRO = ModelPricing(
+        input_cost_per_million_tokens=1.25,
+        output_cost_per_million_tokens=10.00,
+    )
+
+    GEMINI_3_1_PRO = ModelPricing(
+        input_cost_per_million_tokens=2.00,
+        output_cost_per_million_tokens=12.00,
+        cached_read_cost_per_million_tokens=0.20,
+        cache_write_5m_cost_per_million_tokens=0.375,
+    )
+
+    GEMMA_4_31B = ModelPricing(
+        input_cost_per_million_tokens=0.13,
+        output_cost_per_million_tokens=0.38,
+    )
+
+    GROK_4 = ModelPricing(
+        input_cost_per_million_tokens=5.00,
+        output_cost_per_million_tokens=15.00,
+    )
+
+    KIMI_K2_6 = ModelPricing(
+        input_cost_per_million_tokens=0.55,
+        output_cost_per_million_tokens=2.50,
+    )
+
+    GLM_5_TURBO = ModelPricing(
+        input_cost_per_million_tokens=1.20,
+        output_cost_per_million_tokens=4.00,
+    )
+
+    MINIMAX_M2_7 = ModelPricing(
+        input_cost_per_million_tokens=0.30,
+        output_cost_per_million_tokens=1.20,
+    )
+
+    GPT_5_5 = ModelPricing(
+        input_cost_per_million_tokens=5.00,
+        output_cost_per_million_tokens=30.00,
+    )
+
+    GPT_5_5_PRO = ModelPricing(
+        input_cost_per_million_tokens=30.00,
+        output_cost_per_million_tokens=180.00,
+    )
+
 
 FREE_MODEL_ID = "kortix/minimax"
 PREMIUM_MODEL_ID = "kortix/power"
@@ -128,7 +199,6 @@ def _get_main_llm_model() -> Optional[str]:
     return getattr(config, 'MAIN_LLM_MODEL', None)
 
 class ModelFactory:
-    
     @staticmethod
     def create_anthropic_haiku(use_bedrock: bool = False) -> Model:
         if use_bedrock:
@@ -194,7 +264,7 @@ class ModelFactory:
         # Default models per provider
         default_models = {
             "bedrock": BedrockConfig.get_haiku_arn(),
-            "anthropic": "anthropic/claude-haiku-4-5-20251001",
+            "anthropic": "openrouter/anthropic/claude-sonnet-4.6",
             "grok": "openrouter/x-ai/grok-4.1-fast",
             "openai": "openrouter/openai/gpt-4o-mini",
             "minimax": "openrouter/minimax/minimax-m2.1",
@@ -350,7 +420,7 @@ class ModelFactory:
         # Default models per provider (same as basic for now)
         default_models = {
             "bedrock": BedrockConfig.get_haiku_arn(),
-            "anthropic": "anthropic/claude-haiku-4-5-20251001",
+            "anthropic": "openrouter/anthropic/claude-sonnet-4.6",
             "grok": "openrouter/x-ai/grok-4.1-fast",
             "openai": "openrouter/openai/gpt-4o-mini",
             "minimax": "openrouter/minimax/minimax-m2.1",
@@ -548,6 +618,27 @@ class ModelFactory:
             recommended=False,
             enabled=True,
         )
+
+    @staticmethod
+    def create_grok_4() -> Model:
+        return Model(
+            id="kortix/grok-4",
+            name="Grok 4",
+            litellm_model_id="openrouter/x-ai/grok-4",
+            provider=ModelProvider.OPENROUTER,
+            aliases=["grok-4", "x-ai/grok-4"],
+            context_window=256_000,
+            capabilities=[
+                ModelCapability.CHAT,
+                ModelCapability.FUNCTION_CALLING,
+                ModelCapability.VISION,
+            ],
+            pricing=PricingPresets.GROK_4,
+            tier_availability=["paid"],
+            priority=91,
+            recommended=False,
+            enabled=True,
+        )
     
     @staticmethod
     def create_gpt4o_mini() -> Model:
@@ -629,6 +720,265 @@ class ModelFactory:
             pricing=PricingPresets.DEEPSEEK_V3,
             tier_availability=["free", "paid"],
             priority=90,
+            recommended=False,
+            enabled=True,
+        )
+
+    @staticmethod
+    def create_deepseek_v4_flash() -> Model:
+        return Model(
+            id="kortix/deepseek-v4-flash",
+            name="DeepSeek V4 Flash",
+            litellm_model_id="openrouter/deepseek/deepseek-v4-flash",
+            provider=ModelProvider.OPENROUTER,
+            aliases=["deepseek-v4-flash", "deepseek/deepseek-v4-flash"],
+            context_window=1_048_576,
+            capabilities=[
+                ModelCapability.CHAT,
+                ModelCapability.FUNCTION_CALLING,
+            ],
+            pricing=PricingPresets.DEEPSEEK_V4_FLASH,
+            tier_availability=["free", "paid"],
+            priority=94,
+            recommended=False,
+            enabled=True,
+        )
+
+    @staticmethod
+    def create_deepseek_v4_pro() -> Model:
+        return Model(
+            id="kortix/deepseek-v4-pro",
+            name="DeepSeek V4 Pro",
+            litellm_model_id="openrouter/deepseek/deepseek-v4-pro",
+            provider=ModelProvider.OPENROUTER,
+            aliases=["deepseek-v4-pro", "deepseek/deepseek-v4-pro"],
+            context_window=1_048_576,
+            capabilities=[
+                ModelCapability.CHAT,
+                ModelCapability.FUNCTION_CALLING,
+            ],
+            pricing=PricingPresets.DEEPSEEK_V4_PRO,
+            tier_availability=["free", "paid"],
+            priority=93,
+            recommended=False,
+            enabled=True,
+        )
+
+    @staticmethod
+    def create_claude_sonnet_4_6() -> Model:
+        return Model(
+            id="kortix/claude-sonnet-4.6",
+            name="Claude Sonnet 4.6",
+            litellm_model_id="openrouter/anthropic/claude-sonnet-4.6",
+            provider=ModelProvider.OPENROUTER,
+            aliases=["claude-sonnet-4.6", "claude-sonnet-4-6", "anthropic/claude-sonnet-4.6"],
+            context_window=1_000_000,
+            capabilities=[
+                ModelCapability.CHAT,
+                ModelCapability.FUNCTION_CALLING,
+                ModelCapability.VISION,
+                ModelCapability.THINKING,
+                ModelCapability.PROMPT_CACHING,
+            ],
+            pricing=PricingPresets.CLAUDE_SONNET_4_6,
+            tier_availability=["free", "paid"],
+            priority=103,
+            recommended=False,
+            enabled=True,
+        )
+
+    @staticmethod
+    def create_claude_opus_4_7() -> Model:
+        return Model(
+            id="kortix/claude-opus-4.7",
+            name="Claude Opus 4.7",
+            litellm_model_id="openrouter/anthropic/claude-opus-4.7",
+            provider=ModelProvider.OPENROUTER,
+            aliases=["claude-opus-4.7", "claude-opus-4-7", "anthropic/claude-opus-4.7"],
+            context_window=1_000_000,
+            capabilities=[
+                ModelCapability.CHAT,
+                ModelCapability.FUNCTION_CALLING,
+                ModelCapability.VISION,
+                ModelCapability.THINKING,
+                ModelCapability.PROMPT_CACHING,
+            ],
+            pricing=PricingPresets.CLAUDE_OPUS_4_7,
+            tier_availability=["paid"],
+            priority=98,
+            recommended=False,
+            enabled=True,
+        )
+
+    @staticmethod
+    def create_gemini_2_5_pro() -> Model:
+        return Model(
+            id="kortix/gemini-2.5-pro",
+            name="Gemini 2.5 Pro",
+            litellm_model_id="openrouter/google/gemini-2.5-pro",
+            provider=ModelProvider.OPENROUTER,
+            aliases=["gemini-2.5-pro", "google/gemini-2.5-pro"],
+            context_window=1_048_576,
+            capabilities=[
+                ModelCapability.CHAT,
+                ModelCapability.FUNCTION_CALLING,
+                ModelCapability.VISION,
+                ModelCapability.THINKING,
+            ],
+            pricing=PricingPresets.GEMINI_2_5_PRO,
+            tier_availability=["paid"],
+            priority=96,
+            recommended=False,
+            enabled=True,
+        )
+
+    @staticmethod
+    def create_gemini_3_1_pro() -> Model:
+        return Model(
+            id="kortix/gemini-3.1-pro-preview",
+            name="Gemini 3.1 Pro Preview",
+            litellm_model_id="openrouter/google/gemini-3.1-pro-preview",
+            provider=ModelProvider.OPENROUTER,
+            aliases=["gemini-3.1-pro-preview", "google/gemini-3.1-pro-preview"],
+            context_window=1_048_576,
+            capabilities=[
+                ModelCapability.CHAT,
+                ModelCapability.FUNCTION_CALLING,
+                ModelCapability.VISION,
+                ModelCapability.THINKING,
+                ModelCapability.PROMPT_CACHING,
+            ],
+            pricing=PricingPresets.GEMINI_3_1_PRO,
+            tier_availability=["free", "paid"],
+            priority=92,
+            recommended=False,
+            enabled=True,
+        )
+
+    @staticmethod
+    def create_gemma_4_31b() -> Model:
+        return Model(
+            id="kortix/gemma-4-31b",
+            name="Gemma 4 31B",
+            litellm_model_id="openrouter/google/gemma-4-31b-it",
+            provider=ModelProvider.OPENROUTER,
+            aliases=["gemma-4-31b", "google/gemma-4-31b-it"],
+            context_window=128_000,
+            capabilities=[
+                ModelCapability.CHAT,
+                ModelCapability.FUNCTION_CALLING,
+            ],
+            pricing=PricingPresets.GEMMA_4_31B,
+            tier_availability=["free", "paid"],
+            priority=89,
+            recommended=False,
+            enabled=True,
+        )
+
+    @staticmethod
+    def create_kimi_k2_6() -> Model:
+        return Model(
+            id="kortix/kimi-k2.6",
+            name="Kimi K2.6",
+            litellm_model_id="openrouter/moonshotai/kimi-k2.6",
+            provider=ModelProvider.OPENROUTER,
+            aliases=["kimi-k2.6", "moonshotai/kimi-k2.6"],
+            context_window=256_000,
+            capabilities=[
+                ModelCapability.CHAT,
+                ModelCapability.FUNCTION_CALLING,
+                ModelCapability.VISION,
+                ModelCapability.PROMPT_CACHING,
+                ModelCapability.THINKING,
+            ],
+            pricing=PricingPresets.KIMI_K2_6,
+            tier_availability=["free", "paid"],
+            priority=106,
+            recommended=False,
+            enabled=True,
+            config=_create_kimi_model_config(),
+        )
+
+    @staticmethod
+    def create_glm_5_turbo() -> Model:
+        return Model(
+            id="kortix/glm-5-turbo",
+            name="GLM 5 Turbo",
+            litellm_model_id="openrouter/z-ai/glm-5-turbo",
+            provider=ModelProvider.OPENROUTER,
+            aliases=["glm-5-turbo", "z-ai/glm-5-turbo", "z-ai/glm-5"],
+            context_window=128_000,
+            capabilities=[
+                ModelCapability.CHAT,
+                ModelCapability.FUNCTION_CALLING,
+                ModelCapability.THINKING,
+            ],
+            pricing=PricingPresets.GLM_5_TURBO,
+            tier_availability=["free", "paid"],
+            priority=88,
+            recommended=False,
+            enabled=True,
+        )
+
+    @staticmethod
+    def create_minimax_m2_7() -> Model:
+        return Model(
+            id="kortix/minimax-m2.7",
+            name="MiniMax M2.7",
+            litellm_model_id="openrouter/minimax/minimax-m2.7",
+            provider=ModelProvider.OPENROUTER,
+            aliases=["minimax-m2.7", "minimax/minimax-m2.7", "minimax-m2.5", "minimax/minimax-m2.5"],
+            context_window=200_000,
+            capabilities=[
+                ModelCapability.CHAT,
+                ModelCapability.FUNCTION_CALLING,
+                ModelCapability.THINKING,
+                ModelCapability.PROMPT_CACHING,
+            ],
+            pricing=PricingPresets.MINIMAX_M2_7,
+            tier_availability=["free", "paid"],
+            priority=99,
+            recommended=False,
+            enabled=True,
+            config=_create_minimax_model_config(),
+        )
+
+    @staticmethod
+    def create_gpt_5_5() -> Model:
+        return Model(
+            id="kortix/gpt-5.5",
+            name="GPT-5.5",
+            litellm_model_id="openrouter/openai/gpt-5.5",
+            provider=ModelProvider.OPENROUTER,
+            aliases=["gpt-5.5", "openai/gpt-5.5"],
+            context_window=1_050_000,
+            capabilities=[
+                ModelCapability.CHAT,
+                ModelCapability.FUNCTION_CALLING,
+            ],
+            pricing=PricingPresets.GPT_5_5,
+            tier_availability=["paid"],
+            priority=100,
+            recommended=False,
+            enabled=True,
+        )
+
+    @staticmethod
+    def create_gpt_5_5_pro() -> Model:
+        return Model(
+            id="kortix/gpt-5.5-pro",
+            name="GPT-5.5 Pro",
+            litellm_model_id="openrouter/openai/gpt-5.5-pro",
+            provider=ModelProvider.OPENROUTER,
+            aliases=["gpt-5.5-pro", "openai/gpt-5.5-pro"],
+            context_window=1_050_000,
+            capabilities=[
+                ModelCapability.CHAT,
+                ModelCapability.FUNCTION_CALLING,
+            ],
+            pricing=PricingPresets.GPT_5_5_PRO,
+            tier_availability=["paid"],
+            priority=99,
             recommended=False,
             enabled=True,
         )
@@ -729,13 +1079,26 @@ class ModelRegistry:
         self.register(ModelFactory.create_power_model(main_llm, custom_model))
         self.register(ModelFactory.create_anthropic_haiku(use_bedrock))
         self.register(ModelFactory.create_grok_4_1_fast())
+        self.register(ModelFactory.create_grok_4())
         self.register(ModelFactory.create_gpt4o_mini())
         self.register(ModelFactory.create_mimo_v2_flash())
         self.register(ModelFactory.create_kimi_k2())
         self.register(ModelFactory.create_kimi_k2_5())
+        self.register(ModelFactory.create_kimi_k2_6())
         self.register(ModelFactory.create_minimax_m2())
+        self.register(ModelFactory.create_minimax_m2_7())
         self.register(ModelFactory.create_haiku_3_5())
         self.register(ModelFactory.create_deepseek_v3())
+        self.register(ModelFactory.create_deepseek_v4_flash())
+        self.register(ModelFactory.create_deepseek_v4_pro())
+        self.register(ModelFactory.create_claude_sonnet_4_6())
+        self.register(ModelFactory.create_claude_opus_4_7())
+        self.register(ModelFactory.create_gemini_2_5_pro())
+        self.register(ModelFactory.create_gemini_3_1_pro())
+        self.register(ModelFactory.create_gemma_4_31b())
+        self.register(ModelFactory.create_glm_5_turbo())
+        self.register(ModelFactory.create_gpt_5_5())
+        self.register(ModelFactory.create_gpt_5_5_pro())
 
         if config.ENV_MODE != EnvMode.PRODUCTION:
             self.register(ModelFactory.create_test_model())
@@ -749,8 +1112,21 @@ class ModelRegistry:
         self._litellm_id_to_pricing["openrouter/xiaomi/mimo-v2-flash"] = PricingPresets.MIMO_V2_FLASH
         self._litellm_id_to_pricing["openrouter/moonshotai/kimi-k2"] = PricingPresets.KIMI_K2
         self._litellm_id_to_pricing["openrouter/moonshotai/kimi-k2.5"] = PricingPresets.KIMI_K2_5
+        self._litellm_id_to_pricing["openrouter/moonshotai/kimi-k2.6"] = PricingPresets.KIMI_K2_6
         self._litellm_id_to_pricing["bedrock/anthropic.claude-3-5-haiku-20241022-v1:0"] = PricingPresets.HAIKU_3_5
         self._litellm_id_to_pricing["openrouter/deepseek/deepseek-chat-v3-0324"] = PricingPresets.DEEPSEEK_V3
+        self._litellm_id_to_pricing["openrouter/deepseek/deepseek-v4-flash"] = PricingPresets.DEEPSEEK_V4_FLASH
+        self._litellm_id_to_pricing["openrouter/deepseek/deepseek-v4-pro"] = PricingPresets.DEEPSEEK_V4_PRO
+        self._litellm_id_to_pricing["openrouter/anthropic/claude-sonnet-4.6"] = PricingPresets.CLAUDE_SONNET_4_6
+        self._litellm_id_to_pricing["openrouter/anthropic/claude-opus-4.7"] = PricingPresets.CLAUDE_OPUS_4_7
+        self._litellm_id_to_pricing["openrouter/google/gemini-2.5-pro"] = PricingPresets.GEMINI_2_5_PRO
+        self._litellm_id_to_pricing["openrouter/google/gemini-3.1-pro-preview"] = PricingPresets.GEMINI_3_1_PRO
+        self._litellm_id_to_pricing["openrouter/google/gemma-4-31b-it"] = PricingPresets.GEMMA_4_31B
+        self._litellm_id_to_pricing["openrouter/x-ai/grok-4"] = PricingPresets.GROK_4
+        self._litellm_id_to_pricing["openrouter/z-ai/glm-5-turbo"] = PricingPresets.GLM_5_TURBO
+        self._litellm_id_to_pricing["openrouter/minimax/minimax-m2.7"] = PricingPresets.MINIMAX_M2_7
+        self._litellm_id_to_pricing["openrouter/openai/gpt-5.5"] = PricingPresets.GPT_5_5
+        self._litellm_id_to_pricing["openrouter/openai/gpt-5.5-pro"] = PricingPresets.GPT_5_5_PRO
     
     def register(self, model: Model) -> None:
         self._models[model.id] = model
