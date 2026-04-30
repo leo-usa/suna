@@ -5,7 +5,7 @@ Handles pricing for image and video generation via Replicate and OpenRouter.
 Pricing is based on actual API costs with our standard markup.
 
 Replicate Pricing (approximate):
-- openai/gpt-image-1.5: $0.02 (low), $0.05 (medium), $0.136 (high/auto) per image
+- openai/gpt-image-2: $0.012 (low), $0.047 (medium), $0.128 (high/auto) per image
 - bytedance/seedance-1.5-pro: ~$0.026-0.052 per second of video
 - 851-labs/background-remover: ~$0.01 per image
 - recraft-ai/recraft-crisp-upscale: ~$0.01 per 4x upscale
@@ -22,13 +22,13 @@ from typing import Optional, Dict, Literal
 from core.utils.logger import logger
 from ..shared.config import TOKEN_PRICE_MULTIPLIER
 
-# GPT Image 1.5 variant pricing (USD per image)
-# Source: https://replicate.com/openai/gpt-image-1.5
+# GPT Image 2 variant pricing (USD per output image on Replicate)
+# Source: https://replicate.com/openai/gpt-image-2
 GPT_IMAGE_VARIANTS: Dict[str, Decimal] = {
-    "low": Decimal("0.02"),
-    "medium": Decimal("0.05"),
-    "high": Decimal("0.136"),
-    "auto": Decimal("0.136"),  # Auto resolves to high pricing
+    "low": Decimal("0.012"),
+    "medium": Decimal("0.047"),
+    "high": Decimal("0.128"),
+    "auto": Decimal("0.128"),  # Auto billed same as high on Replicate
 }
 
 # Quality tier distribution for image generation
@@ -40,11 +40,11 @@ FREE_TIERS = {"none", "free"}
 # Replicate model pricing (USD per unit)
 # Source: https://replicate.com/pricing (as of Dec 2024)
 REPLICATE_PRICING: Dict[str, Dict] = {
-    # GPT Image 1.5 - variant-based pricing (see GPT_IMAGE_VARIANTS)
+    # GPT Image 2 - variant-based pricing (see GPT_IMAGE_VARIANTS)
     # Default cost here is for fallback only
-    "openai/gpt-image-1.5": {
+    "openai/gpt-image-2": {
         "type": "per_image",
-        "cost_usd": Decimal("0.05"),  # Default to medium
+        "cost_usd": Decimal("0.047"),  # Default to medium
         "has_variants": True,
         "variants": GPT_IMAGE_VARIANTS,
         "description": "GPT Image Generation"
@@ -177,7 +177,7 @@ def get_variant_cost(model: str, variant: str) -> Decimal:
     Get the cost for a specific model variant.
     
     Args:
-        model: Model identifier (e.g., 'openai/gpt-image-1.5')
+        model: Model identifier (e.g., 'openai/gpt-image-2')
         variant: Quality variant (e.g., 'low', 'medium', 'high')
         
     Returns:
@@ -203,7 +203,7 @@ def calculate_replicate_image_cost(model: str, count: int = 1, variant: Optional
     Calculate cost for Replicate image operations.
     
     Args:
-        model: Replicate model identifier (e.g., "openai/gpt-image-1.5")
+        model: Replicate model identifier (e.g., "openai/gpt-image-2")
         count: Number of images generated
         variant: Quality variant ('low', 'medium', 'high') - only for models with variants
         

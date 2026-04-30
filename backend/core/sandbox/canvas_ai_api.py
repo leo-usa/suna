@@ -23,7 +23,7 @@ router = APIRouter(prefix="/canvas-ai", tags=["Canvas AI"])
 
 # Model configurations
 MODELS = {
-    "replicate-gpt": "openai/gpt-image-1.5",  # GPT Image via Replicate
+    "replicate-gpt": "openai/gpt-image-2",  # GPT Image via Replicate
     "gemini-pro": "google/gemini-3-pro-image-preview",  # OpenRouter
     "gemini-flash": "google/gemini-2.5-flash-image",  # OpenRouter - fast & reliable
     "replicate-remove-bg": "851-labs/background-remover",
@@ -99,8 +99,8 @@ class OCRResponse(BaseModel):
 ACTION_MODELS = {
     "remove_bg": "replicate-remove-bg",   # Replicate 851-labs/background-remover
     "upscale": "replicate-upscale",       # Replicate recraft-ai/recraft-crisp-upscale
-    "edit_text": "replicate-gpt",         # Replicate GPT Image 1.5 (quality: low)
-    "mark_edit": "replicate-gpt",         # Replicate GPT Image 1.5 (quality: low)
+    "edit_text": "replicate-gpt",         # Replicate GPT Image 2 (quality: low)
+    "mark_edit": "replicate-gpt",         # Replicate GPT Image 2 (quality: low)
 }
 
 
@@ -136,26 +136,26 @@ def get_action_prompt(action: str, user_prompt: Optional[str] = None) -> str:
 
 
 async def process_with_replicate_gpt(image_bytes: bytes, mime_type: str, prompt: str) -> str:
-    """Process image using GPT Image via Replicate (openai/gpt-image-1.5) with quality: low"""
+    """Process image using GPT Image via Replicate (openai/gpt-image-2) with quality: low"""
     _get_replicate_token()
     
     # Convert bytes to data URL
     image_b64 = base64.b64encode(image_bytes).decode('utf-8')
     image_data_url = f"data:{mime_type};base64,{image_b64}"
     
-    logger.info(f"Calling Replicate openai/gpt-image-1.5 for editing with quality: low (image size: {len(image_bytes)} bytes)")
+    logger.info(f"Calling Replicate openai/gpt-image-2 for editing with quality: low (image size: {len(image_bytes)} bytes)")
     
     try:
         # Wrap replicate.run() in thread pool to avoid blocking event loop
         output = await asyncio.to_thread(
             replicate.run,
-            "openai/gpt-image-1.5",
+            "openai/gpt-image-2",
             input={
                 "prompt": prompt,
                 "input_images": [image_data_url],  # For editing, use input_images array
                 "aspect_ratio": "1:1",
                 "number_of_images": 1,
-                "quality": "low",  # Use low quality for cost efficiency ($0.02/image)
+                "quality": "low",  # Use low quality for cost efficiency (~$0.012/image on Replicate)
             }
         )
         
@@ -408,7 +408,7 @@ async def process_image(
         billing_model = MODELS.get(model_key, model_key)
         provider = "replicate" if model_key.startswith("replicate-") else "openrouter"
         
-        # For GPT Image 1.5, specify quality variant for correct pricing
+        # For GPT Image 2, specify quality variant for correct pricing
         billing_kwargs = {
             "account_id": user_id,
             "provider": provider,
@@ -418,7 +418,7 @@ async def process_image(
             "description": f"Canvas {request.action}",
         }
         if model_key == "replicate-gpt":
-            billing_kwargs["variant"] = "low"  # GPT Image quality: low ($0.02/image)
+            billing_kwargs["variant"] = "low"  # GPT Image 2 quality: low (~$0.012/image)
         
         await media_billing.deduct_media_credits(**billing_kwargs)
         
@@ -484,10 +484,10 @@ async def merge_images(
                 error="Merge prompt is required"
             )
         
-        # Limit to 4 images max (GPT Image 1.5 limit)
+        # Limit to 4 images max (GPT Image multi-image limit)
         images_to_merge = request.images[:4]
         
-        # Build data URLs for GPT Image 1.5 input_images array
+        # Build data URLs for GPT Image input_images array
         input_images = []
         for i, img_b64 in enumerate(images_to_merge):
             try:
@@ -516,19 +516,19 @@ The result should be a high-quality merged image."""
 
         _get_replicate_token()
         
-        logger.info(f"Calling Replicate openai/gpt-image-1.5 for merge with {len(input_images)} images")
+        logger.info(f"Calling Replicate openai/gpt-image-2 for merge with {len(input_images)} images")
         
         try:
             # Wrap replicate.run() in thread pool to avoid blocking event loop
             output = await asyncio.to_thread(
                 replicate.run,
-                "openai/gpt-image-1.5",
+                "openai/gpt-image-2",
                 input={
                     "prompt": merge_prompt,
                     "input_images": input_images,
                     "aspect_ratio": "1:1",
                     "number_of_images": 1,
-                    "quality": "low",  # Cost-efficient ($0.02/image)
+                    "quality": "low",  # Cost-efficient (~$0.012/image on Replicate)
                 }
             )
             
@@ -543,7 +543,7 @@ The result should be a high-quality merged image."""
             await media_billing.deduct_media_credits(
                 account_id=user_id,
                 provider="replicate",
-                model="openai/gpt-image-1.5",
+                model="openai/gpt-image-2",
                 media_type="image",
                 count=1,
                 description="Canvas image merge",

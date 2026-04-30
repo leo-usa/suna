@@ -332,7 +332,7 @@ Generate, edit, upscale, or remove background from images. Video generation supp
                 if account_id and not use_mock and len(image_files) > 0:
                     await media_billing.deduct_replicate_image(
                         account_id=account_id,
-                        model="openai/gpt-image-1.5",
+                        model="openai/gpt-image-2",
                         count=len(image_files),
                         description=f"Batch image {mode} ({len(image_files)} images, quality={quality_variant})",
                         thread_id=thread_id,
@@ -467,7 +467,7 @@ Generate, edit, upscale, or remove background from images. Video generation supp
                 if account_id and not use_mock:
                     await media_billing.deduct_replicate_image(
                         account_id=account_id,
-                        model="openai/gpt-image-1.5",
+                        model="openai/gpt-image-2",
                         count=1,
                         description=f"Image {mode} (quality={quality_variant})",
                         thread_id=thread_id,
@@ -512,7 +512,7 @@ Generate, edit, upscale, or remove background from images. Video generation supp
     ) -> str | ToolResult:
         """
         Helper function to execute a single image generation or edit operation.
-        Uses Replicate with GPT Image 1.5 for both generation and editing.
+        Uses Replicate with GPT Image 2 for both generation and editing.
         
         Parameters:
         - mode: 'generate' or 'edit'
@@ -544,11 +544,11 @@ Generate, edit, upscale, or remove background from images. Video generation supp
             self._get_replicate_token()
 
             if mode == "generate":
-                logger.info(f"Calling Replicate openai/gpt-image-1.5 for generation (quality={quality}, aspect_ratio={aspect_ratio})")
+                logger.info(f"Calling Replicate openai/gpt-image-2 for generation (quality={quality}, aspect_ratio={aspect_ratio})")
                 # Wrap replicate.run() in thread pool to avoid blocking event loop
                 output = await asyncio.to_thread(
                     replicate.run,
-                    "openai/gpt-image-1.5",
+                    "openai/gpt-image-2",
                     input={
                         "prompt": prompt,
                         "aspect_ratio": aspect_ratio,
@@ -568,11 +568,11 @@ Generate, edit, upscale, or remove background from images. Video generation supp
                 image_b64 = base64.b64encode(image_bytes).decode('utf-8')
                 image_data_url = f"data:image/png;base64,{image_b64}"
 
-                logger.info(f"Calling Replicate openai/gpt-image-1.5 for editing (quality={quality}, aspect_ratio={aspect_ratio}) with image_path='{image_path}' (image size: {len(image_bytes)} bytes)")
+                logger.info(f"Calling Replicate openai/gpt-image-2 for editing (quality={quality}, aspect_ratio={aspect_ratio}) with image_path='{image_path}' (image size: {len(image_bytes)} bytes)")
                 # Wrap replicate.run() in thread pool to avoid blocking event loop
                 output = await asyncio.to_thread(
                     replicate.run,
-                    "openai/gpt-image-1.5",
+                    "openai/gpt-image-2",
                     input={
                         "prompt": prompt,
                         "input_images": [image_data_url],  # Note: input_images is an ARRAY
