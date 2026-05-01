@@ -7,7 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useMediaQuery } from '@/hooks/utils';
-import { useState, useEffect, Suspense, lazy, useRef } from 'react';
+import { useState, useEffect, useMemo, Suspense, lazy, useRef } from 'react';
 import { signUp, verifyOtp } from './actions';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Mail, MailCheck, Clock, ExternalLink } from 'lucide-react';
@@ -49,6 +49,15 @@ function LoginContent() {
   const [acceptedTerms, setAcceptedTerms] = useState(false); // GDPR requires explicit opt-in
 
   const { wasLastMethod: wasEmailLastMethod, markAsUsed: markEmailAsUsed } = useAuthMethodTracking('email');
+
+  const passwordAuthHref = useMemo(() => {
+    const params = new URLSearchParams();
+    if (returnUrl) params.set('returnUrl', returnUrl);
+    const ref = referralCodeParam || referralCode;
+    if (ref) params.set('ref', ref);
+    const qs = params.toString();
+    return qs ? `/auth/password?${qs}` : '/auth/password';
+  }, [returnUrl, referralCodeParam, referralCode]);
 
   useEffect(() => {
     // Redirect to dashboard if user is logged in
@@ -738,6 +747,15 @@ function LoginContent() {
               {/* Magic Link Explanation */}
               <p className="text-[11px] sm:text-xs text-muted-foreground text-center leading-relaxed">
                 {t('magicLinkExplanation')}
+              </p>
+
+              <p className="text-[11px] sm:text-xs text-center">
+                <Link
+                  href={passwordAuthHref}
+                  className="text-primary font-medium hover:underline underline-offset-2"
+                >
+                  {t('signInWithPassword')}
+                </Link>
               </p>
 
               {/* Minimal Referral Link */}

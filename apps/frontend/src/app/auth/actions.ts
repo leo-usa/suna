@@ -242,7 +242,7 @@ export async function signInWithPassword(prevState: any, formData: FormData) {
   // Determine if new user (for analytics)
   const isNewUser = data.user && (Date.now() - new Date(data.user.created_at).getTime()) < 60000;
   const authEvent = isNewUser ? 'signup' : 'login';
-  
+
   // Return success - client will handle redirect with auth tracking params
   const finalReturnUrl = returnUrl || '/dashboard';
   const redirectUrl = new URL(finalReturnUrl, 'http://localhost');

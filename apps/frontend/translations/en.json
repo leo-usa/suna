@@ -760,6 +760,7 @@
     "signInOrCreateAccountToTalk": "Sign in or create an account to talk with Kortix",
     "orContinueWithEmail": "or continue with email",
     "signInWithEmail": "Sign in with email",
+    "signInWithPassword": "Sign in with password instead",
     "createNewAccount": "Create new account",
     "byContinuingYouAgreeSimple": "By continuing, you agree to our",
     "phoneVerification": {

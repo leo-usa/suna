@@ -752,6 +752,7 @@
     "signInOrCreateAccountToTalk": "ログインまたはアカウントを作成してKortixと話す",
     "orContinueWithEmail": "またはメールで続ける",
     "signInWithEmail": "メールでログイン",
+    "signInWithPassword": "パスワードでログイン",
     "createNewAccount": "新しいアカウントを作成",
     "byContinuingYouAgreeSimple": "続行することで、",
     "phoneVerification": {

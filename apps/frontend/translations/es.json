@@ -752,6 +752,7 @@
     "signInOrCreateAccountToTalk": "Inicia sesión o crea una cuenta para hablar con Kortix",
     "orContinueWithEmail": "o continúa con email",
     "signInWithEmail": "Iniciar sesión con email",
+    "signInWithPassword": "Iniciar sesión con contraseña",
     "createNewAccount": "Crear nueva cuenta",
     "byContinuingYouAgreeSimple": "Al continuar, aceptas nuestra",
     "phoneVerification": {
