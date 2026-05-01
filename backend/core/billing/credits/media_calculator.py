@@ -6,7 +6,7 @@ Pricing is based on actual API costs with our standard markup.
 
 Replicate Pricing (approximate):
 - openai/gpt-image-2: $0.012 (low), $0.047 (medium), $0.128 (high/auto) per image
-- bytedance/seedance-1.5-pro: ~$0.026-0.052 per second of video
+- bytedance/seedance-2.0: per second of output; rate depends on reference video vs not × resolution (480p/720p/1080p); see REPLICATE_PRICING
 - 851-labs/background-remover: ~$0.01 per image
 - recraft-ai/recraft-crisp-upscale: ~$0.01 per 4x upscale
 - recraft-ai/recraft-vectorize: ~$0.01 per SVG conversion
@@ -50,15 +50,28 @@ REPLICATE_PRICING: Dict[str, Dict] = {
         "description": "GPT Image Generation"
     },
     
-    # Seedance Video - pricing depends on audio
-    # with_audio: $0.052/sec, without_audio: $0.026/sec
-    "bytedance/seedance-1.5-pro": {
-        "type": "per_second",
-        "cost_usd_per_second_with_audio": Decimal("0.052"),
-        "cost_usd_per_second_without_audio": Decimal("0.026"),
-        "min_seconds": 2,
-        "max_seconds": 12,
-        "description": "Seedance Video Generation"
+    # Seedance 2.0 — Replicate bills per output second by input mode × resolution
+    # Source: https://replicate.com/bytedance/seedance-2.0
+    # video_in: reference video(s); non_video_in: text / image first-frame only (no reference videos)
+    "bytedance/seedance-2.0": {
+        "type": "per_second_tiered_video",
+        "min_seconds": -1,
+        "max_seconds": 15,
+        "positive_duration_min": 2,
+        "default_resolution": "720p",
+        "rates": {
+            "video_in": {
+                "480p": Decimal("0.10"),
+                "720p": Decimal("0.22"),
+                "1080p": Decimal("0.55"),
+            },
+            "non_video_in": {
+                "480p": Decimal("0.08"),
+                "720p": Decimal("0.18"),
+                "1080p": Decimal("0.45"),
+            },
+        },
+        "description": "Seedance 2.0 Video Generation"
     },
     
     # Background removal
@@ -236,17 +249,21 @@ def calculate_replicate_image_cost(model: str, count: int = 1, variant: Optional
 
 
 def calculate_replicate_video_cost(
-    model: str, 
+    model: str,
     duration_seconds: int = 5,
-    with_audio: bool = False
+    with_audio: bool = False,
+    resolution: Optional[str] = None,
+    video_input: bool = False,
 ) -> Decimal:
     """
     Calculate cost for Replicate video generation.
     
     Args:
-        model: Replicate model identifier (e.g., "bytedance/seedance-1.5-pro")
-        duration_seconds: Video duration in seconds
-        with_audio: Whether audio generation is enabled (affects pricing)
+        model: Replicate model identifier (e.g., "bytedance/seedance-2.0")
+        duration_seconds: Video duration in seconds (-1 = model-chosen length; billed at max duration)
+        with_audio: Legacy flag for audio-split models (ignored for tiered video pricing)
+        resolution: Output resolution tier for models that bill by resolution (e.g. "720p")
+        video_input: True if reference video input is used (Replicate "video_in" tier)
         
     Returns:
         Total cost in USD with markup applied
@@ -254,7 +271,29 @@ def calculate_replicate_video_cost(
     try:
         pricing = REPLICATE_PRICING.get(model)
         
-        if pricing and pricing.get("type") == "per_second":
+        if pricing and pricing.get("type") == "per_second_tiered_video":
+            rates_root = pricing.get("rates") or {}
+            mode = "video_in" if video_input else "non_video_in"
+            rate_table = rates_root.get(mode) or rates_root.get("non_video_in", {})
+            default_res = pricing.get("default_resolution", "720p")
+            res = (resolution or default_res).lower().strip()
+            if res not in rate_table:
+                res = default_res if default_res in rate_table else next(iter(rate_table.keys()))
+            cost_per_second = rate_table.get(res, DEFAULT_VIDEO_COST_PER_SECOND_USD)
+
+            max_secs = int(pricing.get("max_seconds", 15))
+            if duration_seconds == -1:
+                clamped_duration = max_secs
+            else:
+                pos_min = int(pricing.get("positive_duration_min", 2))
+                try:
+                    d = int(duration_seconds)
+                except (TypeError, ValueError):
+                    d = pos_min
+                clamped_duration = max(pos_min, min(max_secs, d))
+
+            base_cost = cost_per_second * Decimal(clamped_duration)
+        elif pricing and pricing.get("type") == "per_second":
             # Clamp duration to valid range
             min_secs = pricing.get("min_seconds", 2)
             max_secs = pricing.get("max_seconds", 12)
@@ -272,15 +311,25 @@ def calculate_replicate_video_cost(
             base_cost = cost_per_second * Decimal(clamped_duration)
         else:
             logger.warning(f"[MEDIA_BILLING] No video pricing found for model '{model}', using default")
-            base_cost = DEFAULT_VIDEO_COST_PER_SECOND_USD * Decimal(duration_seconds)
+            try:
+                d = int(duration_seconds) if duration_seconds != -1 else int(pricing.get("max_seconds", 15) if pricing else 15)
+            except (TypeError, ValueError):
+                d = 5
+            base_cost = DEFAULT_VIDEO_COST_PER_SECOND_USD * Decimal(d)
         
         total_cost = base_cost * TOKEN_PRICE_MULTIPLIER
-        logger.debug(f"[MEDIA_BILLING] Replicate video cost: model={model}, duration={duration_seconds}s, audio={with_audio}, base=${base_cost:.4f}, total=${total_cost:.4f}")
+        logger.debug(
+            f"[MEDIA_BILLING] Replicate video cost: model={model}, duration={duration_seconds}s, "
+            f"audio={with_audio}, resolution={resolution}, video_input={video_input}, "
+            f"base=${base_cost:.4f}, total=${total_cost:.4f}"
+        )
         return total_cost
         
     except Exception as e:
         logger.error(f"[MEDIA_BILLING] Error calculating Replicate video cost: {e}")
-        return DEFAULT_VIDEO_COST_PER_SECOND_USD * Decimal(duration_seconds) * TOKEN_PRICE_MULTIPLIER
+        return DEFAULT_VIDEO_COST_PER_SECOND_USD * Decimal(
+            15 if duration_seconds == -1 else max(2, min(15, int(duration_seconds or 5)))
+        ) * TOKEN_PRICE_MULTIPLIER
 
 
 def calculate_replicate_voice_cost(model: str, char_count: int) -> Decimal:
@@ -365,7 +414,9 @@ def calculate_media_cost(
     duration_seconds: Optional[int] = None,
     with_audio: bool = False,
     variant: Optional[str] = None,
-    char_count: Optional[int] = None
+    char_count: Optional[int] = None,
+    resolution: Optional[str] = None,
+    video_input: bool = False,
 ) -> Decimal:
     """
     Unified function to calculate media generation cost.
@@ -379,13 +430,21 @@ def calculate_media_cost(
         with_audio: Whether audio is enabled (for videos, affects pricing)
         variant: Quality variant for image models (e.g., 'low', 'medium', 'high')
         char_count: Number of characters (for voice)
+        resolution: Video resolution tier when applicable (e.g. "720p")
+        video_input: Whether reference-video pricing applies (Replicate Seedance 2.0)
 
     Returns:
         Total cost in USD with markup applied
     """
     if provider == "replicate":
         if media_type == "video":
-            return calculate_replicate_video_cost(model, duration_seconds or 5, with_audio)
+            return calculate_replicate_video_cost(
+                model,
+                duration_seconds or 5,
+                with_audio,
+                resolution=resolution,
+                video_input=video_input,
+            )
         elif media_type == "voice":
             return calculate_replicate_voice_cost(model, char_count or 0)
         else:

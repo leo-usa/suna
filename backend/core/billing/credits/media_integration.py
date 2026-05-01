@@ -85,6 +85,8 @@ class MediaBillingIntegration:
         message_id: Optional[str] = None,
         variant: Optional[str] = None,
         char_count: Optional[int] = None,
+        resolution: Optional[str] = None,
+        video_input: bool = False,
     ) -> Dict:
         """
         Deduct credits for media generation.
@@ -101,6 +103,8 @@ class MediaBillingIntegration:
             message_id: Optional message ID for tracking
             variant: Quality variant for image models ('low', 'medium', 'high')
             char_count: Number of characters (for voice)
+            resolution: Video resolution (e.g. '720p') for tiered video pricing
+            video_input: Reference-video pricing tier (Seedance 2.0 on Replicate)
 
         Returns:
             Dict with success status and details
@@ -126,7 +130,9 @@ class MediaBillingIntegration:
                 duration_seconds=duration_seconds,
                 with_audio=with_audio,
                 variant=variant,
-                char_count=char_count
+                char_count=char_count,
+                resolution=resolution,
+                video_input=video_input,
             )
 
             if cost <= 0:
@@ -208,6 +214,8 @@ class MediaBillingIntegration:
         with_audio: bool = False,
         description: Optional[str] = None,
         thread_id: Optional[str] = None,
+        resolution: Optional[str] = None,
+        video_input: bool = False,
     ) -> Dict:
         """Convenience method for Replicate video billing."""
         return await MediaBillingIntegration.deduct_media_credits(
@@ -219,6 +227,8 @@ class MediaBillingIntegration:
             with_audio=with_audio,
             description=description,
             thread_id=thread_id,
+            resolution=resolution,
+            video_input=video_input,
         )
     
     @staticmethod
@@ -268,7 +278,9 @@ class MediaBillingIntegration:
         duration_seconds: Optional[int] = None,
         with_audio: bool = False,
         variant: Optional[str] = None,
-        char_count: Optional[int] = None
+        char_count: Optional[int] = None,
+        resolution: Optional[str] = None,
+        video_input: bool = False,
     ) -> Decimal:
         """
         Estimate cost without deducting (for UI display).
@@ -283,7 +295,9 @@ class MediaBillingIntegration:
             duration_seconds=duration_seconds,
             with_audio=with_audio,
             variant=variant,
-            char_count=char_count
+            char_count=char_count,
+            resolution=resolution,
+            video_input=video_input,
         )
     
     @staticmethod

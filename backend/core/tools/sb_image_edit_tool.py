@@ -91,7 +91,7 @@ image_edit_or_generate(
 )
 ```
 
-**video_options:** duration (2-12s), aspect_ratio ("16:9"), generate_audio (bool)
+**video_options:** duration (2-15s, or -1 for auto length), resolution ("480p"|"720p"|"1080p"), aspect_ratio (e.g. "16:9"), generate_audio (bool), last_frame_image (path; requires start image)
 **canvas_path:** Optionally add result to a canvas (e.g., "canvases/my-design.kanvax")
 """
 )
@@ -177,7 +177,7 @@ Generate, edit, upscale, or remove background from images. Video generation supp
                         },
                         "video_options": {
                             "type": "object",
-                            "description": "**OPTIONAL** - Include this to generate VIDEO instead of image. Provide an object with optional properties: duration (number, e.g., 5), aspect_ratio (string, e.g., \"16:9\"), fps (number, e.g., 24), generate_audio (boolean), camera_fixed (boolean), last_frame_image (string path)."
+                            "description": "**OPTIONAL** - Include this to generate VIDEO instead of image. Optional: duration (2-15 seconds, or -1 for model-chosen length), resolution (\"480p\"|\"720p\"|\"1080p\"), aspect_ratio (e.g. \"16:9\"), generate_audio (boolean), seed (integer), last_frame_image (string path; requires image_path)."
                         },
                         "canvas_path": {"type": "string", "description": "⚠️ REQUIRED when using frame_id! Path to canvas file. Example: 'canvases/instagram-promo.kanvax'"},
                         "canvas_x": {"type": "number", "description": "X position on canvas in pixels. Ignored when frame_id is provided."},
@@ -440,14 +440,27 @@ Generate, edit, upscale, or remove background from images. Video generation supp
                     
                     # BILLING: Deduct credits for successful video generation
                     if account_id and not use_mock:
-                        video_duration = (video_options or {}).get("duration", 5)
-                        generate_audio = (video_options or {}).get("generate_audio", False)
+                        vopts = video_options or {}
+                        try:
+                            video_duration = int(vopts.get("duration", 5))
+                        except (TypeError, ValueError):
+                            video_duration = 5
+                        resolution = str(vopts.get("resolution", "720p")).lower().strip()
+                        if resolution not in ("480p", "720p", "1080p"):
+                            resolution = "720p"
+                        generate_audio = bool(vopts.get("generate_audio", False))
                         await media_billing.deduct_replicate_video(
                             account_id=account_id,
-                            model="bytedance/seedance-1.5-pro",
+                            model="bytedance/seedance-2.0",
                             duration_seconds=video_duration,
                             with_audio=generate_audio,
-                            description=f"Video generation ({video_duration}s{' + audio' if generate_audio else ''})",
+                            resolution=resolution,
+                            video_input=False,
+                            description=(
+                                f"Video generation (auto, {resolution}{' + audio' if generate_audio else ''})"
+                                if video_duration == -1
+                                else f"Video generation ({video_duration}s, {resolution}{' + audio' if generate_audio else ''})"
+                            ),
                             thread_id=thread_id,
                         )
                     
@@ -628,12 +641,13 @@ Generate, edit, upscale, or remove background from images. Video generation supp
         use_mock: bool
     ) -> str | ToolResult:
         """
-        Generate video using bytedance/seedance-1.5-pro via Replicate.
+        Generate video using bytedance/seedance-2.0 via Replicate.
         
         Parameters:
         - prompt: Text prompt describing the video
-        - image_path: Optional input image for image-to-video
-        - video_options: Dict with duration, aspect_ratio, fps, camera_fixed, generate_audio, seed, last_frame_image
+        - image_path: Optional input image for image-to-video (first frame)
+        - video_options: Dict with duration (-1 or 2-15), resolution (480p/720p/1080p),
+          aspect_ratio, generate_audio, seed, last_frame_image
         - use_mock: Whether to use mock mode
         
         Returns:
@@ -657,26 +671,23 @@ Generate, edit, upscale, or remove background from images. Video generation supp
             # Add video options with defaults - ensure proper types
             opts = video_options or {}
             
-            # Duration must be integer between 2-12
+            # Duration: -1 = intelligent length; otherwise 2-15 seconds (Seedance 2.0 API)
             duration = opts.get("duration", 5)
             try:
                 duration = int(duration)
             except (ValueError, TypeError):
                 duration = 5
-            duration = max(2, min(12, duration))  # Clamp to valid range
+            if duration != -1:
+                duration = max(2, min(15, duration))
             input_params["duration"] = duration
             
-            # Other params
             input_params["aspect_ratio"] = str(opts.get("aspect_ratio", "16:9"))
-            
-            fps = opts.get("fps", 24)
-            try:
-                fps = int(fps)
-            except (ValueError, TypeError):
-                fps = 24
-            input_params["fps"] = fps
-            
-            input_params["camera_fixed"] = bool(opts.get("camera_fixed", False))
+
+            resolution = str(opts.get("resolution", "720p")).lower().strip()
+            if resolution not in ("480p", "720p", "1080p"):
+                resolution = "720p"
+            input_params["resolution"] = resolution
+
             input_params["generate_audio"] = bool(opts.get("generate_audio", False))
             
             if "seed" in opts:
@@ -707,13 +718,17 @@ Generate, edit, upscale, or remove background from images. Video generation supp
                     input_params["last_frame_image"] = f"data:image/png;base64,{last_frame_b64}"
                     logger.info(f"Video: Using last frame image (size: {len(last_frame_bytes)} bytes)")
             
-            logger.info(f"Calling Replicate bytedance/seedance-1.5-pro for video generation")
-            logger.debug(f"Video params: duration={input_params.get('duration')}, aspect_ratio={input_params.get('aspect_ratio')}, generate_audio={input_params.get('generate_audio')}, has_image={'image' in input_params}")
+            logger.info(f"Calling Replicate bytedance/seedance-2.0 for video generation")
+            logger.debug(
+                f"Video params: duration={input_params.get('duration')}, resolution={input_params.get('resolution')}, "
+                f"aspect_ratio={input_params.get('aspect_ratio')}, generate_audio={input_params.get('generate_audio')}, "
+                f"has_image={'image' in input_params}"
+            )
             
             # Wrap replicate.run() in thread pool to avoid blocking event loop
             output = await asyncio.to_thread(
                 replicate.run,
-                "bytedance/seedance-1.5-pro",
+                "bytedance/seedance-2.0",
                 input=input_params
             )
             
