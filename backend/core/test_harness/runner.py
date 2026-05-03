@@ -45,7 +45,7 @@ class TestHarnessRunner:
             cleanup_threads: Whether to delete test threads after completion (default: True)
         """
         self.base_url = base_url or "http://localhost:8000/v1"
-        self.admin_api_key = admin_api_key or config.KORTIX_ADMIN_API_KEY
+        self.admin_api_key = admin_api_key or config.DOBBY_ADMIN_API_KEY
         self.test_account_id = test_account_id  # Will be set on first use
         self.cleanup_threads = cleanup_threads
         self.metrics = MetricsCollector()
@@ -59,7 +59,7 @@ class TestHarnessRunner:
         """
         Ensure test user exists and return their ID.
         
-        Looks for user with email 'testuser@kortix.ai' and creates if not exists.
+        Looks for user with email 'testuser@dobby.ai' and creates if not exists.
         
         Returns:
             user_id: UUID of the test user
@@ -67,7 +67,7 @@ class TestHarnessRunner:
         if self._test_user_initialized and self.test_account_id:
             return self.test_account_id
         
-        TEST_USER_EMAIL = "testuser@kortix.ai"
+        TEST_USER_EMAIL = "testuser@dobby.ai"
         
         from core.services.supabase import DBConnection
         db = DBConnection()
@@ -244,7 +244,7 @@ class TestHarnessRunner:
         self,
         prompt_ids: Optional[List[str]] = None,
         concurrency: int = 1,
-        model: str = "kortix/basic",
+        model: str = "dobby/basic",
         metadata: Optional[Dict[str, Any]] = None
     ) -> str:
         """
@@ -437,7 +437,7 @@ class TestHarnessRunner:
         self,
         prompt,
         run_id: str,
-        model: str = "kortix/basic"
+        model: str = "dobby/basic"
     ) -> Optional[BenchmarkResult]:
         """
         Execute a single test prompt and collect metrics

@@ -1,4 +1,4 @@
-# Kortix SDK
+# Dobby SDK
 
 [![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://python.org)
 
@@ -7,7 +7,7 @@
 > 
 > The API is subject to breaking changes, features may be incomplete, and documentation may be outdated. Use at your own risk.
 
-A Python SDK that enables you to create, manage, and interact with AI Workers on [Kortix](https://www.kortix.com).
+A Python SDK that enables you to create, manage, and interact with AI Workers on [Dobby](https://www.dobby.com).
 
 ## 📦 Installation
 
@@ -32,12 +32,12 @@ from kortix import kortix
 async def main():
     mcp_tools = kortix.MCPTools(
         "http://localhost:4000/mcp/",  # Point to any HTTP MCP server
-        "Kortix",
+        "Dobby",
     )
     await mcp_tools.initialize()
 
     # Initialize the client
-    client = kortix.Kortix(api_key="your-api-key")
+    client = kortix.Dobby(api_key="your-api-key")
 
     # Create an agent
     agent = await client.Agent.create(
@@ -64,7 +64,7 @@ if __name__ == "__main__":
 
 ## 🔑 Environment Setup
 
-Get your API key from [https://www.kortix.com/settings/api-keys](https://www.kortix.com/settings/api-keys)
+Get your API key from [https://www.dobby.com/settings/api-keys](https://www.dobby.com/settings/api-keys)
 
 ## 🧪 Running Examples
 

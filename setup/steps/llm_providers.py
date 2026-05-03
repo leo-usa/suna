@@ -45,7 +45,7 @@ class LLMProvidersStep(BaseStep):
     required = True
     depends_on = ["requirements"]
 
-    # Main LLM provider options for kortix/basic and kortix/power models
+    # Main LLM provider options for dobby/basic and dobby/power models
     # Format: (display_name, provider_id, required_api_key, default_model)
     MAIN_LLM_PROVIDERS: Dict[str, Tuple[str, str, str, str]] = {
         "1": (
@@ -120,11 +120,11 @@ class LLMProvidersStep(BaseStep):
         return ("bedrock", "AWS_BEARER_TOKEN_BEDROCK", "bedrock/anthropic.claude-3-haiku-20240307-v1:0")
 
     def _configure_main_provider(self) -> None:
-        """Configure the main LLM model (required for kortix/basic)."""
+        """Configure the main LLM model (required for dobby/basic)."""
         self.console.print("\n" + "=" * 60)
         self.console.print("[bold]Main LLM Model Selection[/bold]")
         self.console.print("=" * 60)
-        self.info("Kortix Suna requires a main LLM to power 'kortix/basic' and 'kortix/power'.")
+        self.info("Dobby Suna requires a main LLM to power 'dobby/basic' and 'dobby/power'.")
         self.console.print("")
 
         # Get codebase default
@@ -285,7 +285,7 @@ class LLMProvidersStep(BaseStep):
                 self.success(f"{provider_name} API key saved!")
                 break
             else:
-                self.error(f"{provider_name} API key is REQUIRED for Kortix to function.")
+                self.error(f"{provider_name} API key is REQUIRED for Dobby to function.")
                 self.info("Please provide a valid API key to continue.")
 
     def _configure_optional_providers(self) -> None:

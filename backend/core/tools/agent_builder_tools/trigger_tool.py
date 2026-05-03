@@ -216,7 +216,7 @@ class TriggerTool(AgentBuilderBaseTool):
                     },
                     "include_kortix": {
                         "type": "boolean",
-                        "description": "Whether to include the built-in Kortix worker in results. Defaults to false."
+                        "description": "Whether to include the built-in Dobby worker in results. Defaults to false."
                     }
                 },
                 "required": []
@@ -309,7 +309,7 @@ class TriggerTool(AgentBuilderBaseTool):
                     },
                     "model": {
                         "type": "string",
-                        "description": "Model to use for the scheduled execution. Options: 'kortix/basic' (default, free tier) or 'kortix/power' (requires paid subscription). If not specified, defaults to 'kortix/basic'."
+                        "description": "Model to use for the scheduled execution. Options: 'dobby/basic' (default, free tier) or 'dobby/power' (requires paid subscription). If not specified, defaults to 'dobby/basic'."
                     }
                 },
                 "required": ["name", "cron_expression", "agent_prompt"]
@@ -345,7 +345,7 @@ class TriggerTool(AgentBuilderBaseTool):
                 "cron_expression": cron_expression,
                 "provider_id": "schedule",
                 "agent_prompt": agent_prompt,
-                "model": model or "kortix/basic"
+                "model": model or "dobby/basic"
             }
             
             if variables:
@@ -438,7 +438,7 @@ class TriggerTool(AgentBuilderBaseTool):
                     "description": trigger.description,
                     "cron_expression": trigger.config.get("cron_expression"),
                     "agent_prompt": trigger.config.get("agent_prompt"),
-                    "model": trigger.config.get("model", "kortix/basic"),
+                    "model": trigger.config.get("model", "dobby/basic"),
                     "is_active": trigger.is_active
                 }
                 
@@ -647,7 +647,7 @@ class TriggerTool(AgentBuilderBaseTool):
                     "name": {"type": "string", "description": "Optional friendly name for the trigger"},
                     "agent_prompt": {"type": "string", "description": "Prompt to pass to the agent when triggered. Can include variables like {{variable_name}} that will be replaced when users install the template. For example: 'New email received for {{company_name}}...'"},
                     "connected_account_id": {"type": "string", "description": "Optional Composio connected account id (format: ca_...). If omitted, it is auto-derived from profile_id when possible. Do not pass profile UUID here."},
-                    "model": {"type": "string", "description": "Model to use for the event execution. Options: 'kortix/basic' (default, free tier) or 'kortix/power' (requires paid subscription). If not specified, defaults to 'kortix/basic'."}
+                    "model": {"type": "string", "description": "Model to use for the event execution. Options: 'dobby/basic' (default, free tier) or 'dobby/power' (requires paid subscription). If not specified, defaults to 'dobby/basic'."}
                 },
                 "required": ["slug", "profile_id", "agent_prompt"]
             }
@@ -838,7 +838,7 @@ class TriggerTool(AgentBuilderBaseTool):
                 "profile_id": resolved_profile_id,
                 "connected_account_id": resolved_connected_account_id,
                 "agent_prompt": agent_prompt,
-                "model": model or "kortix/basic"
+                "model": model or "dobby/basic"
             }
             
             if variables:

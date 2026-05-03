@@ -1069,7 +1069,7 @@ class AgentCreationTool(Tool):
                     },
                     "model": {
                         "type": "string",
-                        "description": "Model to use for scheduled runs. Defaults to 'kortix/basic'."
+                        "description": "Model to use for scheduled runs. Defaults to 'dobby/basic'."
                     }
                 },
                 "required": ["agent_id", "name", "cron_expression", "agent_prompt"]
@@ -1099,7 +1099,7 @@ class AgentCreationTool(Tool):
             if not agent_prompt:
                 return self.fail_response("agent_prompt is required")
             
-            selected_model = model or "kortix/basic"
+            selected_model = model or "dobby/basic"
 
             trigger_config = {
                 "cron_expression": cron_expression,

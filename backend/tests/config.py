@@ -12,7 +12,7 @@ class E2ETestConfig:
     supabase_url: str = os.getenv("SUPABASE_URL", "")
     supabase_anon_key: str = os.getenv("SUPABASE_ANON_KEY", "")
     supabase_jwt_secret: str = os.getenv("SUPABASE_JWT_SECRET", "")
-    admin_api_key: str = os.getenv("KORTIX_ADMIN_API_KEY", "")
+    admin_api_key: str = os.getenv("DOBBY_ADMIN_API_KEY", "")
     test_user_password: str = os.getenv("TEST_USER_PASSWORD", "test_password_e2e_12345")
     request_timeout: float = float(os.getenv("TEST_REQUEST_TIMEOUT", "30.0"))
     agent_timeout: float = float(os.getenv("TEST_AGENT_TIMEOUT", "120.0"))

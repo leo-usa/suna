@@ -64,7 +64,7 @@ export function ListAccountWorkersToolView({
               {(search || include_kortix) && (
                 <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
                   {search ? `Filter: "${search}"` : 'Showing all workers'}
-                  {include_kortix ? ' (including Kortix)' : ''}
+                  {include_kortix ? ' (including Dobby)' : ''}
                 </p>
               )}
             </div>
@@ -132,7 +132,7 @@ export function ListAccountWorkersToolView({
                         )}
                         {worker.is_kortix && (
                           <Badge variant="outline" className="text-xs">
-                            Kortix
+                            Dobby
                           </Badge>
                         )}
                       </div>

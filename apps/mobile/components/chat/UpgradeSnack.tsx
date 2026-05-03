@@ -174,7 +174,7 @@ export const UpgradeSnack = React.memo(function UpgradeSnack({
               className="text-sm font-roobert-medium text-foreground"
               numberOfLines={1}
             >
-              Unlock the full Kortix experience
+              Unlock the full Dobby experience
             </Text>
             <Text
               className="text-xs text-muted-foreground"

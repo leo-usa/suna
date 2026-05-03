@@ -1,5 +1,12 @@
 import { siteConfig } from '@/lib/site-config';
 
+/** Bump when plan badge SVGs change so browsers/CDNs fetch fresh assets. */
+const PLAN_ICON_VERSION = 'dobby-elf-1';
+
+function planIconPath(filename: string): string {
+  return `/plan-icons/${filename}?v=${PLAN_ICON_VERSION}`;
+}
+
 /**
  * Helper function to get plan name - uses tier_key to match cloudPricingItems tier name
  * 
@@ -39,28 +46,28 @@ export function getPlanName(subscriptionData: any, isLocal: boolean = false): st
  * @returns The path to the plan icon SVG, or null if no icon exists (e.g., Basic tier)
  */
 export function getPlanIcon(planName: string, isLocal: boolean = false): string | null {
-  if (isLocal) return '/plan-icons/ultra.svg';
+  if (isLocal) return planIconPath('ultra.svg');
 
   const plan = planName?.toLowerCase();
 
   // Basic/Free tier - no icon
   if (plan?.includes('free') || plan?.includes('basic')) {
-    return '/plan-icons/basic.svg';
+    return planIconPath('basic.svg');
   }
 
   // Ultra tier
   if (plan?.includes('ultra')) {
-    return '/plan-icons/ultra.svg';
+    return planIconPath('ultra.svg');
   }
 
   // Pro tier (Pro, Business, Enterprise, Scale, Max)
   if (plan?.includes('pro') || plan?.includes('business') || plan?.includes('enterprise') || plan?.includes('scale') || plan?.includes('max')) {
-    return '/plan-icons/pro.svg';
+    return planIconPath('pro.svg');
   }
 
   // Plus tier
   if (plan?.includes('plus')) {
-    return '/plan-icons/plus.svg';
+    return planIconPath('plus.svg');
   }
 
   // Default to null for any unrecognized plans

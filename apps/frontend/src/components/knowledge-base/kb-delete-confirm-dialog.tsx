@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { KortixLoader } from '@/components/ui/kortix-loader';
+import { DobbyLoader } from '@/components/ui/dobby-loader';
 
 import {
   AlertDialog,
@@ -57,7 +57,7 @@ export function KBDeleteConfirmDialog({
           >
             {isDeleting ? (
               <>
-                <KortixLoader size="small" className="mr-2" />
+                <DobbyLoader size="small" className="mr-2" />
                 Deleting...
               </>
             ) : (

@@ -329,13 +329,13 @@ async def log_requests_middleware(request: Request, call_next):
 
 # Define allowed origins based on environment
 allowed_origins = [
-    "https://www.kortix.com",
-    "https://kortix.com",
-    "https://dev.kortix.com",
-    "https://staging.kortix.com",
-    "https://prod-test.kortix.com",
+    "https://www.dobby.com",
+    "https://dobby.com",
+    "https://dev.dobby.com",
+    "https://staging.dobby.com",
+    "https://prod-test.dobby.com",
 ]
-# Allow all *.kortix.com subdomains and Vercel preview deployments
+# Allow all *.dobby.com subdomains and Vercel preview deployments
 allow_origin_regex = r"https://([a-z0-9-]+\.)?kortix\.com|https://.*-kortixai\.vercel\.app"
 
 # Add local origins for development
@@ -345,7 +345,7 @@ if config.ENV_MODE == EnvMode.LOCAL:
 
 # Add staging-specific origins
 if config.ENV_MODE == EnvMode.STAGING:
-    allowed_origins.append("https://staging.kortix.com")
+    allowed_origins.append("https://staging.dobby.com")
     allowed_origins.append("http://localhost:3000")
 
 app.add_middleware(

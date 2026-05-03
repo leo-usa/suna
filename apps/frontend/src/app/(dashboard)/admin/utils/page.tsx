@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Settings, Clock } from "lucide-react";
-import { KortixLoader } from '@/components/ui/kortix-loader';
+import { DobbyLoader } from '@/components/ui/dobby-loader';
 import { toast } from "@/lib/toast";
 import {
   useSystemStatus,
@@ -95,7 +95,7 @@ export default function AdminUtilsPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <KortixLoader size="large" />
+        <DobbyLoader size="large" />
       </div>
     );
   }

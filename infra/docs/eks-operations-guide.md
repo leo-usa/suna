@@ -1,4 +1,4 @@
-# Kortix EKS Operations Guide
+# Dobby EKS Operations Guide
 
 Everything you need to know about how our Kubernetes setup works, how to monitor, scale, and what happens when things go wrong.
 
@@ -26,7 +26,7 @@ Production runs on three targets simultaneously:
 
 ```
 User request
-  → Cloudflare DNS (api-eks.kortix.com)
+  → Cloudflare DNS (api-eks.dobby.com)
   → AWS Application Load Balancer (ALB)
   → EKS cluster (suna-eks)          ← this is the primary
   → Your app pods
@@ -36,7 +36,7 @@ We also have:
   → ECS cluster (suna-ecs)           ← legacy, still running
 ```
 
-The EKS cluster is the main production target. Lightsail and ECS are still deployed to, but EKS handles the real traffic through `api-eks.kortix.com`.
+The EKS cluster is the main production target. Lightsail and ECS are still deployed to, but EKS handles the real traffic through `api-eks.dobby.com`.
 
 **Region:** `us-west-2` (Oregon)
 
@@ -454,7 +454,7 @@ Better Stack collects logs and metrics from all containers in the cluster using 
 
 - **Logs:** Telemetry → Logs (or Live tail)
 - **Dashboards:** Telemetry → Dashboards
-- **Uptime:** Set up HTTP monitors for `api-eks.kortix.com`
+- **Uptime:** Set up HTTP monitors for `api-eks.dobby.com`
 
 ### 3. Terminal monitoring
 

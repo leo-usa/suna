@@ -15,17 +15,17 @@ export const siteConfig = {
   },
   hero: {
     description:
-      'Kortix – open-source platform to build, manage and train your AI Workforce.',
+      'Dobby – open-source platform to build, manage and train your AI Workforce.',
   },
   cloudPricingItems: pricingTiers,
   footerLinks: [
     {
-      title: 'Kortix',
+      title: 'Dobby',
       links: [
         { id: 1, title: 'About', url: '/about' },
         { id: 2, title: 'Careers', url: '/careers' },
         { id: 3, title: 'Support', url: '/support' },
-        { id: 4, title: 'Contact', url: 'mailto:hey@kortix.com' },
+        { id: 4, title: 'Contact', url: 'mailto:hey@dobby.com' },
       ],
     },
     {

@@ -1,4 +1,4 @@
-# Requirements for Kortix Suna Setup Package
+# Requirements for Dobby Suna Setup Package
 # Install with: uv pip install -r setup/requirements.txt
 
 # Required - Core dependencies

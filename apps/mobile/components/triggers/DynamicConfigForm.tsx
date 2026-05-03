@@ -3,7 +3,7 @@
  *
  * Renders form fields based on JSON schema from trigger config
  * Supports string, number, boolean, and array field types
- * Uses Kortix design tokens
+ * Uses Dobby design tokens
  */
 
 import React from 'react';

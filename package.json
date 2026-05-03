@@ -2,9 +2,9 @@
   "name": "agentpress",
   "private": true,
   "scripts": {
-    "dev:frontend": "pnpm --filter Kortix dev",
-    "dev:mobile": "pnpm --filter kortix dev",
-    "build:frontend": "pnpm --filter Kortix build"
+    "dev:frontend": "pnpm --filter Dobby dev",
+    "dev:mobile": "pnpm --filter dobby dev",
+    "build:frontend": "pnpm --filter Dobby build"
   },
   "pnpm": {
     "overrides": {

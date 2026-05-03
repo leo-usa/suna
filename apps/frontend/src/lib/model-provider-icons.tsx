@@ -14,19 +14,19 @@ export type ModelProvider =
   | 'kortix';
 
 /**
- * Check if a model ID corresponds to a Kortix mode (Basic, Advanced, or Test)
+ * Check if a model ID corresponds to a Dobby mode (Basic, Advanced, or Test)
  */
 export function isKortixMode(modelId: string): boolean {
-  // New Kortix registry IDs
-  if (modelId === 'kortix/basic' || modelId === 'kortix/power' || modelId === 'kortix/test' ||
+  // New Dobby registry IDs
+  if (modelId === 'dobby/basic' || modelId === 'dobby/power' || modelId === 'dobby/test' ||
       modelId === 'kortix-basic' || modelId === 'kortix-power' || modelId === 'kortix-test') {
     return true;
   }
-  // Legacy: Kortix Basic (Haiku 4.5)
+  // Legacy: Dobby Basic (Haiku 4.5)
   if (modelId.includes('claude-haiku-4-5') || modelId.includes('heol2zyy5v48')) {
     return true;
   }
-  // Legacy: Kortix Advanced Mode (Sonnet 4.5)
+  // Legacy: Dobby Advanced Mode (Sonnet 4.5)
   if (modelId.includes('claude-sonnet-4-5') || modelId.includes('few7z4l830xh')) {
     return true;
   }
@@ -37,7 +37,7 @@ export function isKortixMode(modelId: string): boolean {
  * Get the provider from a model ID
  */
 export function getModelProvider(modelId: string): ModelProvider {
-  // Check for Kortix modes first
+  // Check for Dobby modes first
   if (isKortixMode(modelId)) {
     return 'kortix';
   }
@@ -94,7 +94,7 @@ export function ModelProviderIcon({
   const provider = getModelProvider(modelId);
 
   const iconMap: Record<ModelProvider, string> = {
-    kortix: '/kortix-symbol.svg', // Kortix modes use the Kortix symbol
+    kortix: '/dobby-symbol.svg', // Dobby modes use the Dobby symbol
     anthropic: '/images/models/Anthropic.svg',
     openai: '/images/models/OAI.svg',
     google: '/images/models/Gemini.svg',
@@ -104,7 +104,7 @@ export function ModelProviderIcon({
     openrouter: '/images/models/OAI.svg', // Default to OpenAI icon for OpenRouter
   };
 
-  // Special handling for Kortix symbol - needs different invert behavior
+  // Special handling for Dobby symbol - needs different invert behavior
   const isKortix = provider === 'kortix';
 
   const iconSrc = iconMap[provider];
@@ -143,7 +143,7 @@ export function ModelProviderIcon({
         height={size * 0.6}
         className={cn(
           "object-contain",
-          // Kortix symbol: invert in dark mode (black symbol → white)
+          // Dobby symbol: invert in dark mode (black symbol → white)
           // Other icons: invert in dark mode (black icons → white)
           isKortix ? "dark:invert" : "dark:brightness-0 dark:invert"
         )}
@@ -160,7 +160,7 @@ export function getModelProviderName(modelId: string): string {
   const provider = getModelProvider(modelId);
 
   const nameMap: Record<ModelProvider, string> = {
-    kortix: 'Kortix',
+    kortix: 'Dobby',
     anthropic: 'Anthropic',
     openai: 'OpenAI',
     google: 'Google',

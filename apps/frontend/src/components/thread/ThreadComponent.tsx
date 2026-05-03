@@ -67,7 +67,7 @@ import { fileQueryKeys } from '@/hooks/files';
 import { useProjectRealtime } from '@/hooks/threads';
 import { handleGoogleSlidesUpload } from './tool-views/utils/presentation-utils';
 import { useTranslations } from 'next-intl';
-import { useKortixComputerStore, useSetIsSidePanelOpen } from '@/stores/kortix-computer-store';
+import { useDobbyComputerStore, useSetIsSidePanelOpen } from '@/stores/dobby-computer-store';
 import { useToolStreamStore } from '@/stores/tool-stream-store';
 import { useOptimisticFilesStore } from '@/stores/optimistic-files-store';
 import { useProcessStreamOperation } from '@/stores/spreadsheet-store';
@@ -345,9 +345,9 @@ export function ThreadComponent({ projectId, threadId, compact = false, configur
     setAutoOpenedPanel(true);
   }, [setIsSidePanelOpen, setAutoOpenedPanel]);
 
-  const openFileInComputer = useKortixComputerStore((state) => state.openFileInComputer);
-  const openFileBrowser = useKortixComputerStore((state) => state.openFileBrowser);
-  const setSandboxContext = useKortixComputerStore((state) => state.setSandboxContext);
+  const openFileInComputer = useDobbyComputerStore((state) => state.openFileInComputer);
+  const openFileBrowser = useDobbyComputerStore((state) => state.openFileBrowser);
+  const setSandboxContext = useDobbyComputerStore((state) => state.setSandboxContext);
 
   const billingModal = useBillingModal();
   const threadBilling = useThreadBilling(
@@ -847,7 +847,7 @@ export function ThreadComponent({ projectId, threadId, compact = false, configur
     url.searchParams.delete('modeStarter');
     window.history.replaceState({}, '', url.pathname + url.search);
     
-    // Open the side panel to show KortixComputer
+    // Open the side panel to show DobbyComputer
     if (!isSidePanelOpen) {
       toggleSidePanel();
     }
@@ -871,7 +871,7 @@ export function ThreadComponent({ projectId, threadId, compact = false, configur
     url.searchParams.delete('modeStarter');
     window.history.replaceState({}, '', url.pathname + url.search);
     
-    // Open the side panel to show KortixComputer
+    // Open the side panel to show DobbyComputer
     if (!isSidePanelOpen) {
       toggleSidePanel();
     }
@@ -912,7 +912,7 @@ export function ThreadComponent({ projectId, threadId, compact = false, configur
       }
     }, 100);
 
-    // Keep the side panel open to show KortixComputer
+    // Keep the side panel open to show DobbyComputer
     if (!isSidePanelOpen) {
       toggleSidePanel();
     }
@@ -1531,7 +1531,7 @@ export function ThreadComponent({ projectId, threadId, compact = false, configur
   // SEO title update
   useEffect(() => {
     if (projectName) {
-      document.title = `${projectName} | Kortix`;
+      document.title = `${projectName} | Dobby`;
 
       const metaDescription = document.querySelector(
         'meta[name="description"]',
@@ -1539,13 +1539,13 @@ export function ThreadComponent({ projectId, threadId, compact = false, configur
       if (metaDescription) {
         metaDescription.setAttribute(
           'content',
-          `${projectName} - Interactive Worker conversation powered by Kortix`,
+          `${projectName} - Interactive Worker conversation powered by Dobby`,
         );
       }
 
       const ogTitle = document.querySelector('meta[property="og:title"]');
       if (ogTitle) {
-        ogTitle.setAttribute('content', `${projectName} | Kortix`);
+        ogTitle.setAttribute('content', `${projectName} | Dobby`);
       }
 
       const ogDescription = document.querySelector(

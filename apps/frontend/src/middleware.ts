@@ -28,7 +28,7 @@ const PUBLIC_ROUTES = [
   '/master-login', // Master password admin login
   '/checkout', // Public checkout wrapper for Apple compliance
   '/support', // Support page should be public
-  '/suna', // Kortix rebrand page should be public for SEO
+  '/suna', // Dobby rebrand page should be public for SEO
   '/help', // Help center and documentation should be public
   '/credits-explained', // Credits explained page should be public
   '/agents-101',
@@ -60,7 +60,7 @@ const PROTECTED_ROUTES = [
 
 // App store links for mobile redirect
 const APP_STORE_LINKS = {
-  ios: 'https://apps.apple.com/ie/app/kortix/id6754448524',
+  ios: 'https://apps.apple.com/ie/app/dobby/id6754448524',
   android: 'https://play.google.com/store/apps/details?id=com.kortix.app',
 };
 

@@ -1,7 +1,7 @@
 {
-  "name": "Kortix the Super Mega Giga Worker",
-  "short_name": "Kortix",
-  "description": "Kortix the Super Mega Giga Worker – A generalist AI Worker that is able to autonomously tackle complex tasks, browse the web, write and execute code, manage files, conduct research, automate workflows, and accomplish real-world objectives through natural conversation.",
+  "name": "Dobby the Super Mega Giga Worker",
+  "short_name": "Dobby",
+  "description": "Dobby the Super Mega Giga Worker – A generalist AI Worker that is able to autonomously tackle complex tasks, browse the web, write and execute code, manage files, conduct research, automate workflows, and accomplish real-world objectives through natural conversation.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#000000",
@@ -39,7 +39,7 @@
     },
     {
       "platform": "itunes",
-      "url": "https://apps.apple.com/ie/app/kortix/id6754448524"
+      "url": "https://apps.apple.com/ie/app/dobby/id6754448524"
     }
   ],
   "prefer_related_applications": true

@@ -1,11 +1,11 @@
 {
-  "name": "kortix-desktop",
+  "name": "dobby-desktop",
   "version": "1.0.0",
-  "description": "Kortix Desktop",
+  "description": "Dobby Desktop",
   "author": {
-    "name": "Kortix",
-    "email": "support@kortix.com",
-    "url": "https://kortix.com"
+    "name": "Dobby",
+    "email": "support@dobby.com",
+    "url": "https://dobby.com"
   },
   "main": "main.js",
   "scripts": {
@@ -24,11 +24,11 @@
     "electron-builder": "^25.1.8"
   },
   "build": {
-    "appId": "com.kortix.desktop",
-    "productName": "Kortix",
+    "appId": "com.dobby.desktop",
+    "productName": "Dobby",
     "protocols": {
-      "name": "Kortix",
-      "schemes": ["kortix"]
+      "name": "Dobby",
+      "schemes": ["dobby"]
     },
     "mac": {
       "target": "dmg",

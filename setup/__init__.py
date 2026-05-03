@@ -1,7 +1,7 @@
 """
-Kortix Suna Setup Package
+Dobby Suna Setup Package
 
-A modular, testable, and extensible setup system for Kortix Suna.
+A modular, testable, and extensible setup system for Dobby Suna.
 Supports interactive wizard mode, non-interactive config file mode,
 dry-run preview, and individual step execution.
 """

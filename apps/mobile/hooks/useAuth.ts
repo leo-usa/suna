@@ -253,7 +253,7 @@ export function useAuth() {
             data: {
               full_name: fullName,
             },
-            emailRedirectTo: 'kortix://auth/callback',
+            emailRedirectTo: 'dobby://auth/callback',
           },
         });
 
@@ -358,7 +358,7 @@ export function useAuth() {
       
       // Create redirect URL using expo-auth-session
       const redirectTo = makeRedirectUri({
-        scheme: 'kortix',
+        scheme: 'dobby',
         path: 'auth/callback',
       });
 
@@ -623,7 +623,7 @@ export function useAuth() {
   /**
    * Sign in with magic link (passwordless)
    * Auto-creates account if it doesn't exist
-   * Uses kortix:// deep link - works when app is installed
+   * Uses dobby:// deep link - works when app is installed
    */
   const signInWithMagicLink = useCallback(async ({ email, acceptedTerms }: { email: string; acceptedTerms?: boolean }) => {
     try {
@@ -637,7 +637,7 @@ export function useAuth() {
         params.set('terms_accepted', 'true');
       }
       
-      const emailRedirectTo = `kortix://auth/callback${params.toString() ? `?${params.toString()}` : ''}`;
+      const emailRedirectTo = `dobby://auth/callback${params.toString() ? `?${params.toString()}` : ''}`;
 
       log.log('📱 Magic link redirect URL:', emailRedirectTo);
 
@@ -654,7 +654,7 @@ export function useAuth() {
           message: magicLinkError.message,
           status: magicLinkError.status,
           attemptedUrl: emailRedirectTo,
-          hint: 'Make sure kortix://auth/callback is in Supabase Dashboard → Auth → Redirect URLs',
+          hint: 'Make sure dobby://auth/callback is in Supabase Dashboard → Auth → Redirect URLs',
         });
       }
 
@@ -690,7 +690,7 @@ export function useAuth() {
       setError(null);
 
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: 'kortix://auth/reset-password',
+        redirectTo: 'dobby://auth/reset-password',
       });
 
       if (resetError) {

@@ -9,7 +9,7 @@ import {
   Copy,
   Check,
 } from 'lucide-react';
-import { KortixLoader } from '@/components/ui/kortix-loader';
+import { DobbyLoader } from '@/components/ui/dobby-loader';
 import { ToolViewProps } from '../types';
 import { getToolTitle } from '../utils';
 import { extractWebScrapeData } from './_utils';
@@ -200,8 +200,8 @@ export function WebScrapeToolView({
                       )}
                     </span>
 
-                    {/* Kortix loading animation */}
-                    <KortixLoader customSize={16} />
+                    {/* Dobby loading animation */}
+                    <DobbyLoader customSize={16} />
                   </motion.div>
                 );
               })}

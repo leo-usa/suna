@@ -503,7 +503,7 @@ class TestSnapshotArchiverDelta:
         assert first.message_count == 2
         assert second.message_count == 0, "Second archive should be delta-noop for same message_ids"
 
-        manifest_path = "/workspace/.kortix/context/manifest.json"
+        manifest_path = "/workspace/.dobby/context/manifest.json"
         assert manifest_path in files
         manifest = json.loads(files[manifest_path].decode("utf-8"))
         assert len(manifest["batches"]) == 1, "No new batch should be created for duplicate snapshot"

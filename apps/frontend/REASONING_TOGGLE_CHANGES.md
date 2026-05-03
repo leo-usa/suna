@@ -9,7 +9,7 @@ This document catalogs all frontend changes made in the `new_reasoning_design` b
 **File:** `apps/frontend/src/components/thread/content/ReasoningSection.tsx`
 
 ### Design Changes
-- **Kortix Logo**: Added animated logo that pulses when reasoning is active
+- **Dobby Logo**: Added animated logo that pulses when reasoning is active
 - **Collapsed by Default**: Section starts collapsed (previously auto-expanded)
 - **Shimmer Animation**: "Show Reasoning" text and chevron animate with shimmer during active reasoning
 - **Left Border**: Content has a left border indentation (`border-l-2 border-muted-foreground/20`)
@@ -191,8 +191,8 @@ The loader layout now matches ReasoningSection header layout for smooth visual t
 {/* Match ReasoningSection header layout for smooth transition */}
 <div className="flex items-center gap-3">
   <img
-    src="/kortix-logomark-white.svg"
-    alt="Kortix"
+    src="/dobby-logomark-white.svg"
+    alt="Dobby"
     className="dark:invert-0 invert flex-shrink-0 animate-pulse"
     style={{ height: '14px', width: 'auto' }}
   />

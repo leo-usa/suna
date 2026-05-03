@@ -372,7 +372,7 @@ class MarketplaceTemplatesResponse(BaseModel):
     templates: List[TemplateResponse]
     pagination: MarketplacePaginationInfo
 
-@router.get("/kortix-all", response_model=MarketplaceTemplatesResponse)
+@router.get("/dobby-all", response_model=MarketplaceTemplatesResponse)
 async def get_all_kortix_templates(
     request: Request = None
 ):
@@ -419,7 +419,7 @@ async def get_all_kortix_templates(
             error_str = str(e)
         except Exception:
             error_str = f"Error of type {type(e).__name__}"
-        logger.error(f"Error getting all Kortix templates: {error_str}")
+        logger.error(f"Error getting all Dobby templates: {error_str}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.get("/marketplace", response_model=MarketplaceTemplatesResponse)

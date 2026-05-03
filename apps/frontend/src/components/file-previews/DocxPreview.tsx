@@ -5,7 +5,7 @@
 'use client';
 
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { KortixLoader } from '@/components/ui/kortix-loader';
+import { DobbyLoader } from '@/components/ui/dobby-loader';
 import { useFileContentQuery } from '@/hooks/files/use-file-queries';
 import { cn } from '@/lib/utils';
 
@@ -199,7 +199,7 @@ export function DocxPreview({
             {/* Loading overlay */}
             {showLoading && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-muted/50 z-10">
-                    <KortixLoader size="medium" />
+                    <DobbyLoader size="medium" />
                     {retryCount > 0 && (
                         <div className="text-xs text-muted-foreground mt-2">
                             Loading... (attempt {retryCount + 1})

@@ -347,7 +347,7 @@ export function MarkdownEditor({
         showOnlyWhenEditable: true,
       }),
       CharacterCount,
-      Dropcursor.configure({ color: 'hsl(var(--primary))', width: 2 }),
+      Dropcursor.configure({ color: 'var(--primary)', width: 2 }),
       Gapcursor,
       Typography,
       Mathematics,
@@ -706,7 +706,7 @@ export function MarkdownEditor({
               width: 1rem;
               height: 1rem;
               cursor: pointer;
-              accent-color: hsl(var(--primary));
+              accent-color: var(--primary);
             }
             .tiptap-editor ul[data-type="taskList"] li > div {
               flex: 1;
@@ -750,13 +750,13 @@ export function MarkdownEditor({
             }
             /* Selected cell highlight */
             .tiptap-editor .selectedCell {
-              background-color: hsl(var(--primary) / 0.1) !important;
+              background-color: color-mix(in oklab, var(--primary) 10%, transparent) !important;
             }
             .tiptap-editor .selectedCell::after {
               content: "";
               position: absolute;
               inset: 0;
-              border: 2px solid hsl(var(--primary));
+              border: 2px solid var(--primary);
               pointer-events: none;
             }
             /* Column resize handle */
@@ -766,7 +766,7 @@ export function MarkdownEditor({
               top: 0;
               bottom: 0;
               width: 4px;
-              background-color: hsl(var(--primary));
+              background-color: var(--primary);
               cursor: col-resize;
               opacity: 0;
               transition: opacity 0.15s;

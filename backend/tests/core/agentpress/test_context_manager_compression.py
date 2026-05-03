@@ -504,7 +504,7 @@ class TestLargeContextCompression200k:
         
         # Mock save_compressed_messages to avoid DB calls
         with patch.object(context_manager, 'save_compressed_messages', new_callable=AsyncMock):
-            model = "kortix/basic"  # 200k context window
+            model = "dobby/basic"  # 200k context window
             system_prompt = create_system_prompt(6000)
             
             # Count actual tokens
@@ -554,7 +554,7 @@ class TestLargeContextCompression200k:
         
         # Mock save_compressed_messages to avoid DB calls
         with patch.object(context_manager, 'save_compressed_messages', new_callable=AsyncMock):
-            model = "kortix/basic"  # 200k context window -> 168k max tokens
+            model = "dobby/basic"  # 200k context window -> 168k max tokens
             system_prompt = create_system_prompt(6000)
             
             # Count actual tokens
@@ -603,7 +603,7 @@ class TestLargeContextCompression500k:
         
         # Mock save_compressed_messages to avoid DB calls
         with patch.object(context_manager, 'save_compressed_messages', new_callable=AsyncMock):
-            model = "kortix/basic"
+            model = "dobby/basic"
             system_prompt = create_system_prompt(6000)
             
             # Test that compression works with explicit max_tokens
@@ -641,7 +641,7 @@ class TestLargeContextCompression1M:
         
         # Mock save_compressed_messages to avoid DB calls
         with patch.object(context_manager, 'save_compressed_messages', new_callable=AsyncMock):
-            model = "kortix/basic"
+            model = "dobby/basic"
             system_prompt = create_system_prompt(6000)
             
             # Test compression with a target that forces aggressive compression
@@ -672,7 +672,7 @@ class TestLargeContextCompression1M:
         
         # Mock save_compressed_messages to avoid DB calls
         with patch.object(context_manager, 'save_compressed_messages', new_callable=AsyncMock):
-            model = "kortix/basic"
+            model = "dobby/basic"
             system_prompt = create_system_prompt(6000)
             
             # Force extreme compression (target is 10% of original)
@@ -839,7 +839,7 @@ class TestCompressionTokenLimits:
             tool_result_size=5000
         )
         
-        model = "kortix/basic"
+        model = "dobby/basic"
         system_prompt = create_system_prompt(6000)
         
         with patch.object(context_manager, 'save_compressed_messages', new_callable=AsyncMock):
@@ -858,7 +858,7 @@ class TestCompressionTokenLimits:
     @pytest.mark.timeout(UNIT_TEST_TIMEOUT)
     async def test_no_compression_when_under_limit(self, context_manager, small_conversation):
         """Verify no compression when already under limit."""
-        model = "kortix/basic"
+        model = "dobby/basic"
         system_prompt = create_system_prompt(6000)
         
         # Small conversation should not need compression
@@ -891,8 +891,8 @@ class TestPromptCaching:
         from core.agentpress.prompt_caching import supports_prompt_caching
         
         # Models with PROMPT_CACHING capability should return True
-        assert supports_prompt_caching("kortix/basic") is True
-        assert supports_prompt_caching("kortix/power") is True
+        assert supports_prompt_caching("dobby/basic") is True
+        assert supports_prompt_caching("dobby/power") is True
         
     @pytest.mark.asyncio
     @pytest.mark.timeout(UNIT_TEST_TIMEOUT)
@@ -961,7 +961,7 @@ class TestPromptCaching:
         result = await apply_anthropic_caching_strategy(
             system_prompt,
             messages,
-            "kortix/basic",
+            "dobby/basic",
             thread_id=None,
             force_recalc=True
         )
@@ -1058,7 +1058,7 @@ class TestCompressionPerformance:
             
             await context_manager.compress_messages(
                 conversation,
-                "kortix/basic",
+                "dobby/basic",
                 max_tokens=20000,  # Force compression
                 thread_id="test"
             )
@@ -1118,7 +1118,7 @@ class TestRealLargeContext200k:
             f"Generator failed: got {actual_generated:,}, expected >= {int(TARGET_TOKENS * 0.95):,}"
         
         with patch.object(context_manager, 'save_compressed_messages', new_callable=AsyncMock):
-            model = "kortix/basic"
+            model = "dobby/basic"
             system_prompt = create_system_prompt(6000)
             
             # Count tokens including system prompt
@@ -1200,7 +1200,7 @@ class TestRealLargeContext500k:
             f"Generator failed: got {actual_generated:,}, expected >= {int(TARGET_TOKENS * 0.95):,}"
         
         with patch.object(context_manager, 'save_compressed_messages', new_callable=AsyncMock):
-            model = "kortix/basic"
+            model = "dobby/basic"
             system_prompt = create_system_prompt(6000)
             
             # Count tokens including system prompt
@@ -1283,7 +1283,7 @@ class TestRealLargeContext1M:
             f"Generator failed: got {actual_generated:,}, expected >= {int(TARGET_TOKENS * 0.95):,}"
         
         with patch.object(context_manager, 'save_compressed_messages', new_callable=AsyncMock):
-            model = "kortix/basic"
+            model = "dobby/basic"
             system_prompt = create_system_prompt(6000)
             
             # Count tokens including system prompt

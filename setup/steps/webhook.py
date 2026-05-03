@@ -26,7 +26,7 @@ class WebhookStep(BaseStep):
         else:
             self.info("Webhook base URL is required for workflows to receive callbacks.")
             self.info(
-                "This must be a publicly accessible URL where Kortix Suna API can receive "
+                "This must be a publicly accessible URL where Dobby Suna API can receive "
                 "webhooks from Supabase Cron."
             )
             self.info(

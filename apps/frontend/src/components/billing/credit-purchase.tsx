@@ -14,7 +14,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { AlertCircle, CreditCard } from 'lucide-react';
-import { KortixLoader } from '@/components/ui/kortix-loader';
+import { DobbyLoader } from '@/components/ui/dobby-loader';
 import { billingApi } from '@/lib/api/billing';
 import { toast } from '@/lib/toast';
 import { formatCredits } from '@agentpress/shared';
@@ -233,7 +233,7 @@ export function CreditPurchaseModal({
                     >
                         {isProcessing ? (
                             <>
-                                <KortixLoader size="small" className="mr-2" />
+                                <DobbyLoader size="small" className="mr-2" />
                                 Processing...
                             </>
                         ) : (

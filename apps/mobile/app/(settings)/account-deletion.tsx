@@ -9,7 +9,7 @@ import { Icon } from '@/components/ui/icon';
 import { Trash2, Calendar, AlertTriangle, CheckCircle } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
-import { KortixLoader } from '@/components/ui';
+import { DobbyLoader } from '@/components/ui';
 import {
   useAccountDeletionStatus,
   useRequestAccountDeletion,
@@ -286,7 +286,7 @@ function ActionButton({
     >
       {isLoading ? (
         <>
-          <KortixLoader size="small" forceTheme={colorScheme === 'dark' ? 'dark' : 'light'} />
+          <DobbyLoader size="small" forceTheme={colorScheme === 'dark' ? 'dark' : 'light'} />
           <Text className={`${textColor} text-sm font-roobert-medium`}>
             {t('accountDeletion.processing')}
           </Text>

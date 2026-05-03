@@ -19,7 +19,7 @@ def generate_encryption_key() -> str:
 
 def generate_admin_api_key() -> str:
     """
-    Generate a secure admin API key for Kortix.
+    Generate a secure admin API key for Dobby.
 
     Returns:
         A 32-byte key encoded as hex (64 characters)

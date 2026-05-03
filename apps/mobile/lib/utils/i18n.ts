@@ -15,7 +15,7 @@ import zh from '@/locales/zh.json';
 import ja from '@/locales/ja.json';
 import { log } from '@/lib/logger';
 
-const LANGUAGE_KEY = '@kortix_language';
+const LANGUAGE_KEY = '@dobby_language';
 
 // Language resources
 const resources = {

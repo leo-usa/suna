@@ -341,7 +341,7 @@ async def start_agent_run(
     elif agent_config and agent_config.get('model'):
         effective_model = agent_config['model']
     else:
-        effective_model = "kortix/basic"
+        effective_model = "dobby/basic"
     
     if not is_new_thread and not project_id:
         from core.threads import repo as threads_repo
@@ -774,13 +774,13 @@ async def unified_agent_start(
     elif model_name != "mock-ai":
         model_name = model_manager.resolve_model_id(model_name)
 
-    if model_name in ("kortix/basic", "kortix-basic") and config.ENV_MODE != EnvMode.LOCAL:
+    if model_name in ("dobby/basic", "kortix-basic") and config.ENV_MODE != EnvMode.LOCAL:
         from core.billing.subscriptions import subscription_service
         from core.cache.runtime_cache import get_cached_tier_info
         tier_info = await get_cached_tier_info(account_id) or await subscription_service.get_user_subscription_tier(account_id)
         if tier_info.get('name') in ('free', 'none'):
             logger.info(f"⚡ [MODEL_OVERRIDE] Free tier user {account_id} - using minimax instead of basic")
-            model_name = "kortix/minimax"
+            model_name = "dobby/minimax"
 
     memory_enabled_bool = memory_enabled.lower() == 'true' if memory_enabled else None
     

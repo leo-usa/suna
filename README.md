@@ -1,6 +1,6 @@
 <div align="center">
 
-# Kortix
+# Dobby
 
 **The complete platform for creating autonomous AI agents that work for you**
 
@@ -21,19 +21,19 @@ Build, manage, and train sophisticated AI agents for any use case. Create powerf
 [Русский](https://www.readme-i18n.com/kortix-ai/suna?lang=ru) | 
 [中文](https://www.readme-i18n.com/kortix-ai/suna?lang=zh)
 
-![Kortix Screenshot](apps/frontend/public/banner.png)
+![Dobby Screenshot](apps/frontend/public/banner.png)
 </div>
 
 
 
 
-## 🌟 What Makes Kortix Special
+## 🌟 What Makes Dobby Special
 
-### 🤖 Includes Kortix Super Worker – Flagship Generalist AI Worker
-Meet Kortix Super Worker, our showcase agent that demonstrates the full power of the Kortix platform. Through natural conversation, Kortix Super Worker handles research, data analysis, browser automation, file management, and complex workflows – showing you what's possible when you build with Kortix.
+### 🤖 Includes Dobby Super Worker – Flagship Generalist AI Worker
+Meet Dobby Super Worker, our showcase agent that demonstrates the full power of the Dobby platform. Through natural conversation, Dobby Super Worker handles research, data analysis, browser automation, file management, and complex workflows – showing you what's possible when you build with Dobby.
 
-### 🔧 Build Custom Kortix Super Worker-Type Agents
-Create your own specialized agents tailored to specific domains, workflows, or business needs. Whether you need agents for customer service, data processing, content creation, or industry-specific tasks, Kortix provides the infrastructure and tools to build, deploy, and scale them.
+### 🔧 Build Custom Dobby Super Worker-Type Agents
+Create your own specialized agents tailored to specific domains, workflows, or business needs. Whether you need agents for customer service, data processing, content creation, or industry-specific tasks, Dobby provides the infrastructure and tools to build, deploy, and scale them.
 
 ### 🚀 Complete Platform Capabilities
 - **Browser Automation**: Navigate websites, extract data, fill forms, automate web workflows
@@ -45,7 +45,7 @@ Create your own specialized agents tailored to specific domains, workflows, or b
 
 ## 📋 Table of Contents
 
-- [🌟 What Makes Kortix Special](#-what-makes-kortix-special)
+- [🌟 What Makes Dobby Special](#-what-makes-kortix-special)
 - [🎯 Agent Examples & Use Cases](#-agent-examples--use-cases)
 - [🏗️ Platform Architecture](#️-platform-architecture)
 - [🚀 Quick Start](#-quick-start)
@@ -55,9 +55,9 @@ Create your own specialized agents tailored to specific domains, workflows, or b
 
 ## 🎯 Agent Examples & Use Cases
 
-### Kortix Super Worker - Your Generalist AI Worker
+### Dobby Super Worker - Your Generalist AI Worker
 
-Kortix Super Worker demonstrates the full capabilities of the Kortix platform as a versatile AI worker that can:
+Dobby Super Worker demonstrates the full capabilities of the Dobby platform as a versatile AI worker that can:
 
 **🔍 Research & Analysis**
 - Conduct comprehensive web research across multiple sources
@@ -91,7 +91,7 @@ Kortix Super Worker demonstrates the full capabilities of the Kortix platform as
 
 ### Build Your Own Specialized Agents
 
-The Kortix platform enables you to create agents tailored to specific needs:
+The Dobby platform enables you to create agents tailored to specific needs:
 
 **🎧 Customer Service Agents**
 - Handle support tickets and FAQ responses
@@ -129,7 +129,7 @@ Each agent can be configured with custom tools, workflows, knowledge bases, and 
 
 ![Architecture Diagram](docs/images/diagram.png)
 
-Kortix consists of four main components that work together to provide a complete AI agent development platform:
+Dobby consists of four main components that work together to provide a complete AI agent development platform:
 
 ### 🔧 Backend API
 Python/FastAPI service that powers the agent platform with REST endpoints, thread management, agent orchestration, and LLM integration with Anthropic, OpenAI, and others via LiteLLM. Includes agent builder tools, workflow management, and extensible tool system.
@@ -145,7 +145,7 @@ Supabase-powered data layer handling authentication, user management, agent conf
 
 ## 🚀 Quick Start
 
-Get your Kortix platform running in minutes with our automated setup wizard:
+Get your Dobby platform running in minutes with our automated setup wizard:
 
 ### 1️⃣ Clone the Repository
 ```bash
@@ -199,7 +199,7 @@ After initial setup, you can run `python setup.py` again to:
 - **Add/Update API Keys** - Configure additional LLM providers (Anthropic, OpenAI, Groq, etc.), search APIs (Tavily, Firecrawl, etc.), and other integrations
 - **Clear setup and start fresh** - Remove all configuration and start over
 
-That's it! Your Kortix platform will be running with Kortix Super Worker ready to assist you. Ty mate
+That's it! Your Dobby platform will be running with Dobby Super Worker ready to assist you. Ty mate
 ---
 
 <div align="center">

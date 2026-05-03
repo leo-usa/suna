@@ -1,4 +1,4 @@
-# Kortix Frontend
+# Dobby Frontend
 
 ## Quick Setup
 

@@ -16,7 +16,7 @@ async def main():
     
     runner = AgentEvalRunner(
         project_name="Test",
-        model_name="kortix/basic",  # Use default model
+        model_name="dobby/basic",  # Use default model
         max_iterations=5,
         timeout_seconds=30.0,
     )

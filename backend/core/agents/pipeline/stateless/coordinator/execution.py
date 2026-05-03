@@ -580,16 +580,16 @@ class ExecutionEngine:
                 "[ARCHIVED CONTEXT ACTIVE] Earlier messages were compressed into a summary. "
                 "The summary does NOT contain specific data (numbers, URLs, statistics, findings). "
                 "When the user asks for specific details from earlier work, you MUST read the archived "
-                "files at /workspace/.kortix/context/ BEFORE answering. Do NOT guess or use general knowledge.\n\n"
+                "files at /workspace/.dobby/context/ BEFORE answering. Do NOT guess or use general knowledge.\n\n"
             )
             archive_hint = (
                 "\n\n## Archived Context — Retrieval Instructions\n"
                 "When the user asks for specific details from earlier work: "
                 "DO NOT respond first. DO NOT say \"I don't have access\". DO NOT ask permission. "
                 "Your FIRST tool call must be read_file or grep on the archived files, THEN respond with results.\n"
-                "**For links/URLs:** read_file /workspace/.kortix/context/messages/batch_NNN/links.md\n"
-                "**For specific data:** grep -ri \"keyword\" /workspace/.kortix/context/messages/\n"
-                "**To see all files:** read_file /workspace/.kortix/context/messages/batch_NNN/index.md\n"
+                "**For links/URLs:** read_file /workspace/.dobby/context/messages/batch_NNN/links.md\n"
+                "**For specific data:** grep -ri \"keyword\" /workspace/.dobby/context/messages/\n"
+                "**To see all files:** read_file /workspace/.dobby/context/messages/batch_NNN/index.md\n"
                 "Do NOT use cat. Do NOT guess filenames. Read links.md or index.md first.\n"
                 "The files are in your sandbox. You have full access. Read them immediately."
             )

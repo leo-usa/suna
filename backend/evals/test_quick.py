@@ -25,10 +25,10 @@ QUICK_TEST = [
 print("Starting quick eval with 1 test case...")
 
 Eval(
-    "Kortix Agent Quick Test",
+    "Dobby Agent Quick Test",
     data=lambda: QUICK_TEST,
     task=create_agent_task(
-        model_name="kortix/basic",
+        model_name="dobby/basic",
         max_iterations=10,
         timeout_seconds=30.0,  # Shorter timeout
     ),

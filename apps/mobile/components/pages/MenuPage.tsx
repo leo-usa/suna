@@ -9,7 +9,7 @@ import { Text } from '@/components/ui/text';
 import { Icon } from '@/components/ui/icon';
 import { Button } from '@/components/ui/button';
 import { SearchBar } from '@/components/ui/SearchBar';
-import { KortixLoader } from '@/components/ui';
+import { DobbyLoader } from '@/components/ui';
 import {
   Search,
   Plus,
@@ -125,7 +125,7 @@ function EmptyState({
   if (type === 'loading') {
     return (
       <View className="flex-1 items-center justify-center px-8" style={{ minHeight: 300 }}>
-        <KortixLoader size="large" />
+        <DobbyLoader size="large" />
         <Text className="mt-4 text-center font-roobert text-sm text-muted-foreground">{title}</Text>
       </View>
     );

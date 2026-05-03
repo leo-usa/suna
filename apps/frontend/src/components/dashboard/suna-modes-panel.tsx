@@ -72,7 +72,7 @@ import {
   NotebookPen,
   type LucideIcon,
 } from 'lucide-react';
-import { KortixLoader } from '@/components/ui/kortix-loader';
+import { DobbyLoader } from '@/components/ui/dobby-loader';
 import { Button } from '@/components/ui/button';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Card } from '@/components/ui/card';
@@ -1142,7 +1142,7 @@ export function SunaModesPanel({
 
   return (
     <div className="w-full space-y-4">
-      {/* Mode Tabs - Kortix minimal design */}
+      {/* Mode Tabs - Dobby minimal design */}
       <motion.div 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -1164,7 +1164,7 @@ export function SunaModesPanel({
                 whileTap={{ scale: 0.98 }}
                 transition={{ type: "spring", stiffness: 400, damping: 25 }}
                 className={cn(
-                  // Base button styles matching Kortix design
+                  // Base button styles matching Dobby design
                   "inline-flex items-center justify-center whitespace-nowrap text-sm font-medium",
                   "outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px]",
                   "relative h-10 px-3 sm:px-4 gap-2 shrink-0 rounded-2xl cursor-pointer",
@@ -2400,7 +2400,7 @@ export function SunaModesPanel({
                 {isPdfLoading && (
                   <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm rounded-lg z-10">
                     <div className="flex flex-col items-center gap-3">
-                      <KortixLoader size="medium" />
+                      <DobbyLoader size="medium" />
                       <p className="text-sm text-muted-foreground">Loading preview...</p>
                     </div>
                   </div>

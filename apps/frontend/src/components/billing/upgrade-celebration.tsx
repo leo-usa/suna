@@ -4,7 +4,7 @@ import React, { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import { TierBadge } from './tier-badge';
-import { KortixLogo } from '@/components/sidebar/kortix-logo';
+import { DobbyLogo } from '@/components/sidebar/dobby-logo';
 
 interface UpgradeCelebrationProps {
   isOpen: boolean;
@@ -98,13 +98,13 @@ export function UpgradeCelebration({ isOpen, onClose, planName, isLoading = fals
               damping: 20
             }}
           >
-            {/* Kortix Logo */}
+            {/* Dobby Logo */}
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.05, duration: 0.3 }}
             >
-              <KortixLogo size={36} variant="logomark" />
+              <DobbyLogo size={36} variant="logomark" />
             </motion.div>
 
             {/* Welcome text */}

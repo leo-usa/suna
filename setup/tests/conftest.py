@@ -71,8 +71,8 @@ def mock_config() -> SetupConfig:
     # Composio
     config.composio.COMPOSIO_API_KEY = "test-composio-api-key"
 
-    # Kortix
-    config.kortix.KORTIX_ADMIN_API_KEY = "test-admin-api-key"
+    # Dobby
+    config.dobby.DOBBY_ADMIN_API_KEY = "test-admin-api-key"
 
     return config
 

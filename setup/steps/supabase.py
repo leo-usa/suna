@@ -23,7 +23,7 @@ class SupabaseStep(BaseStep):
 
     def run(self) -> StepResult:
         self.info(
-            "Kortix Suna REQUIRES a Supabase project to function. "
+            "Dobby Suna REQUIRES a Supabase project to function. "
             "Without these keys, the application will crash on startup."
         )
 

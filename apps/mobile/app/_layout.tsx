@@ -263,11 +263,11 @@ export default function RootLayout() {
         scheme: parsedUrl.scheme,
       });
 
-      // Check for universal links (https://kortix.com/share/xxx or https://staging.kortix.com/share/xxx)
+      // Check for universal links (https://dobby.com/share/xxx or https://staging.dobby.com/share/xxx)
       const isUniversalLink = parsedUrl.scheme === 'https' &&
-        (parsedUrl.hostname === 'kortix.com' ||
-          parsedUrl.hostname === 'www.kortix.com' ||
-          parsedUrl.hostname === 'staging.kortix.com');
+        (parsedUrl.hostname === 'dobby.com' ||
+          parsedUrl.hostname === 'www.dobby.com' ||
+          parsedUrl.hostname === 'staging.dobby.com');
 
       // Handle universal link share paths first
       if (isUniversalLink && parsedUrl.path?.startsWith('/share/')) {
@@ -283,7 +283,7 @@ export default function RootLayout() {
         return;
       }
 
-      // Handle custom scheme: kortix://auth/callback
+      // Handle custom scheme: dobby://auth/callback
       if (parsedUrl.hostname === 'auth' && parsedUrl.path === 'callback') {
         log.log('📧 Auth callback received, processing...');
 
@@ -452,7 +452,7 @@ export default function RootLayout() {
           router.replace('/auth');
         }
       } else if (parsedUrl.path?.startsWith('share/') || parsedUrl.hostname === 'share') {
-        // Handle share links: kortix://share/xxx or https://kortix.com/share/xxx
+        // Handle share links: dobby://share/xxx or https://dobby.com/share/xxx
         console.log('🔗 Share link detected');
 
         // Extract thread ID from path
@@ -462,7 +462,7 @@ export default function RootLayout() {
           // Path format: share/xxx
           threadId = parsedUrl.path.replace('share/', '');
         } else if (parsedUrl.hostname === 'share' && parsedUrl.path) {
-          // Custom scheme format: kortix://share/xxx -> hostname=share, path=xxx
+          // Custom scheme format: dobby://share/xxx -> hostname=share, path=xxx
           threadId = parsedUrl.path.replace(/^\//, '');
         }
 

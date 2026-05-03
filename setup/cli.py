@@ -13,7 +13,7 @@ def create_parser() -> argparse.ArgumentParser:
     """Create and configure the argument parser."""
     parser = argparse.ArgumentParser(
         prog="setup",
-        description="Kortix Suna Setup Wizard - Configure and install Kortix Suna",
+        description="Dobby Suna Setup Wizard - Configure and install Dobby Suna",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -193,7 +193,7 @@ def list_steps(console: "Console") -> int:
         ("morph", "Morph API Key", False),
         ("search_apis", "Search API Keys", False),
         ("rapidapi", "RapidAPI Key", False),
-        ("kortix", "Kortix Admin Key", True),
+        ("dobby", "Dobby Admin Key", True),
         ("webhook", "Webhook Configuration", False),
         ("mcp", "MCP Configuration", False),
         ("composio", "Composio Configuration", True),

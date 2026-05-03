@@ -81,7 +81,7 @@
     "guest": {
       "label": "Invité",
       "title": "Browse Without\nan Account",
-      "description": "Try Kortix with limited features. No signup required!",
+      "description": "Try Dobby with limited features. No signup required!",
       "continue": "Continue as Guest",
       "signUp": "Sign Up Instead",
       "agreement": "By continuing, you agree to our",
@@ -99,7 +99,7 @@
     "resetFailed": "Impossible d'envoyer l'email. Réessaie.",
     "passwordsDontMatch": "Les mots de passe ne correspondent pas",
     "passwordTooShort": "Le mot de passe doit contenir au moins 8 caractères",
-    "welcomeTitle": "Engager Kortix pour",
+    "welcomeTitle": "Engager Dobby pour",
     "rotatingPhrases": {
       "presentations": "présentations",
       "writing": "écriture",
@@ -123,12 +123,12 @@
     }
   },
   "onboarding": {
-    "welcome": "Découvrez ce que Kortix peut faire",
+    "welcome": "Découvrez ce que Dobby peut faire",
     "welcomeSubtitle": "Votre assistant IA qui passe à l'action",
     "skip": "Passer",
     "next": "Suivant",
     "getStarted": "Commencer",
-    "kortixComputer": "Kortix Computer",
+    "kortixComputer": "Dobby Computer",
     "ready": "Prêt",
     "examples": {
       "presentations": {
@@ -237,8 +237,8 @@
   },
   "chat": {
     "newChat": "Nouveau Chat",
-    "placeholder": "Donne une tâche à Kortix...",
-    "inputPlaceholder": "Demande n'importe quoi à Kortix...",
+    "placeholder": "Donne une tâche à Dobby...",
+    "inputPlaceholder": "Demande n'importe quoi à Dobby...",
     "recording": "Enregistrement...",
     "cancelRecording": "Annuler",
     "stopRecording": "Arrêter",
@@ -251,7 +251,7 @@
     "rateThisResult": "Évaluer ce résultat",
     "feedbackHelpsImprove": "Vos commentaires nous aident à nous améliorer",
     "additionalFeedbackOptional": "Commentaire supplémentaire (optionnel)",
-    "helpKortixImprove": "Aidez Kortix à s'améliorer avec mes commentaires",
+    "helpKortixImprove": "Aidez Dobby à s'améliorer avec mes commentaires",
     "submit": "Envoyer",
     "submitting": "Envoi en cours...",
     "suggestedFollowUps": "Suggestions de suivi",
@@ -266,7 +266,7 @@
     "newWorker": "Nouveau Worker",
     "myWorkers": "Mes Workers",
     "searchAgents": "Rechercher workers",
-    "defaultAgent": "Kortix",
+    "defaultAgent": "Dobby",
     "defaultDescription": "IA polyvalente pour toutes les tâches",
     "superWorker": "Super Worker",
     "coder": "Coder",
@@ -484,8 +484,8 @@
   "billing": {
     "loadingPaywall": "Chargement des plans...",
     "checkoutUnavailable": "Paiement mobile non disponible",
-    "checkoutUnavailableMessage": "Pour t'abonner à un plan, visite kortix.com sur le web.",
-    "goToWeb": "Aller sur kortix.com",
+    "checkoutUnavailableMessage": "Pour t'abonner à un plan, visite dobby.com sur le web.",
+    "goToWeb": "Aller sur dobby.com",
     "billingStatus": "Statut de Facturation",
     "loading": "Chargement des informations de facturation...",
     "error": "Échec du chargement des informations de facturation",
@@ -534,12 +534,12 @@
   "beta": {
     "title": "Fonctionnalités Bêta",
     "webSupportTitle": "Entièrement Pris en Charge sur le Web",
-    "webSupportDescription": "Disponible sur Kortix.com. Bientôt sur mobile—encore en développement ici.",
-    "visitKortix": "Visiter Kortix.com",
+    "webSupportDescription": "Disponible sur Dobby.com. Bientôt sur mobile—encore en développement ici.",
+    "visitKortix": "Visiter Dobby.com",
     "advancedFeatures": "Fonctionnalités Avancées",
     "mobileBeta": "Bêta Mobile",
     "pleaseNote": "Note Importante",
-    "mobileWarning": "En développement sur mobile et peut avoir des problèmes. Pour la meilleure expérience, utilise Kortix.com."
+    "mobileWarning": "En développement sur mobile et peut avoir des problèmes. Pour la meilleure expérience, utilise Dobby.com."
   },
   "accountDeletion": {
     "title": "Supprimer le Compte",
@@ -575,7 +575,7 @@
     "chooseModelFor": "Choisis un modèle pour le worker {{agent}}"
   },
   "placeholders": {
-    "default": "Donne une tâche à Kortix...",
+    "default": "Donne une tâche à Dobby...",
     "search": "Rechercher...",
     "searchConversations": "Rechercher chats",
     "searchAgents": "Rechercher workers",

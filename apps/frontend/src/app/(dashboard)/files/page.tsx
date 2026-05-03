@@ -2,12 +2,12 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { KortixLoader } from '@/components/ui/kortix-loader';
+import { DobbyLoader } from '@/components/ui/dobby-loader';
 import { useThreads } from '@/hooks/threads/use-threads';
-import { FileBrowserView } from '@/components/thread/kortix-computer/FileBrowserView';
-import { FileViewerView } from '@/components/thread/kortix-computer/FileViewerView';
-import { SandboxStatusView } from '@/components/thread/kortix-computer/components/SandboxStatusView';
-import { useKortixComputerStore } from '@/stores/kortix-computer-store';
+import { FileBrowserView } from '@/components/thread/dobby-computer/FileBrowserView';
+import { FileViewerView } from '@/components/thread/dobby-computer/FileViewerView';
+import { SandboxStatusView } from '@/components/thread/dobby-computer/components/SandboxStatusView';
+import { useDobbyComputerStore } from '@/stores/dobby-computer-store';
 import { useSandboxStatusWithAutoStart, isSandboxUsable } from '@/hooks/files/use-sandbox-details';
 import { Button } from '@/components/ui/button';
 import {
@@ -23,8 +23,8 @@ export default function FilesPage() {
   const router = useRouter();
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   
-  // Get store state - exactly like KortixComputer
-  const { navigateToPath, filesSubView, selectedFilePath } = useKortixComputerStore();
+  // Get store state - exactly like DobbyComputer
+  const { navigateToPath, filesSubView, selectedFilePath } = useDobbyComputerStore();
 
   // Fetch threads to build project list
   const { data: threadsResponse, isLoading: isThreadsLoading } = useThreads({
@@ -73,7 +73,7 @@ export default function FilesPage() {
   const threadId = selectedProject?.threadId;
   const project = selectedProject?.project;
 
-  // Get sandbox status - exactly like KortixComputer
+  // Get sandbox status - exactly like DobbyComputer
   const { data: sandboxStatus } = useSandboxStatusWithAutoStart(projectId || undefined);
   const isSandboxLive = sandboxStatus?.status ? isSandboxUsable(sandboxStatus.status) : false;
 
@@ -94,7 +94,7 @@ export default function FilesPage() {
   if (isThreadsLoading) {
     return (
       <div className="flex items-center justify-center h-[100dvh] bg-background">
-        <KortixLoader size="medium" />
+        <DobbyLoader size="medium" />
       </div>
     );
   }
@@ -139,14 +139,14 @@ export default function FilesPage() {
     </div>
   );
 
-  // Render IDENTICAL to KortixComputer's renderFilesView
+  // Render IDENTICAL to DobbyComputer's renderFilesView
   const renderFilesView = () => {
-    // Show status view if sandbox is not LIVE - identical to KortixComputer
+    // Show status view if sandbox is not LIVE - identical to DobbyComputer
     if (!isSandboxLive) {
       return <SandboxStatusView projectId={projectId} />;
     }
 
-    // Show file viewer if viewing a specific file - identical to KortixComputer
+    // Show file viewer if viewing a specific file - identical to DobbyComputer
     if (filesSubView === 'viewer' && selectedFilePath) {
       return (
         <FileViewerView
@@ -158,7 +158,7 @@ export default function FilesPage() {
       );
     }
 
-    // Show file browser - identical to KortixComputer
+    // Show file browser - identical to DobbyComputer
     return (
       <FileBrowserView
         sandboxId={sandboxId}
@@ -171,12 +171,12 @@ export default function FilesPage() {
 
   return (
     <div className="h-[100dvh] bg-background flex flex-col">
-      {/* Project selector header - only difference from KortixComputer */}
+      {/* Project selector header - only difference from DobbyComputer */}
       <div className="px-4 py-3 border-b flex items-center justify-between flex-shrink-0">
         <h1 className="text-lg font-semibold">Files</h1>
         {projectSelector}
       </div>
-      {/* Content - IDENTICAL to KortixComputer */}
+      {/* Content - IDENTICAL to DobbyComputer */}
       <div className="flex-1 overflow-hidden">
         {renderFilesView()}
       </div>

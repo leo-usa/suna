@@ -17,7 +17,7 @@ import {
   CheckCircle,
   Zap
 } from 'lucide-react';
-import { KortixLoader } from '@/components/ui/kortix-loader';
+import { DobbyLoader } from '@/components/ui/dobby-loader';
 import { cn } from '@/lib/utils';
 import { ProfileConnector } from './streamlined-profile-connector';
 import { CustomServerStep } from './custom-server-step';
@@ -337,7 +337,7 @@ export const StreamlinedInstallDialog: React.FC<StreamlinedInstallDialogProps> =
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <div className="flex items-center gap-2">
-                <KortixLoader customSize={20} />
+                <DobbyLoader customSize={20} />
                 <span className="text-sm">Preparing installation...</span>
               </div>
             </div>
@@ -496,7 +496,7 @@ export const StreamlinedInstallDialog: React.FC<StreamlinedInstallDialogProps> =
             >
               {isInstalling ? (
                 <>
-                  <KortixLoader customSize={16} />
+                  <DobbyLoader customSize={16} />
                   Installing...
                 </>
               ) : (
@@ -514,7 +514,7 @@ export const StreamlinedInstallDialog: React.FC<StreamlinedInstallDialogProps> =
             >
               {isInstalling ? (
                 <>
-                  <KortixLoader customSize={16} />
+                  <DobbyLoader customSize={16} />
                   Installing...
                 </>
               ) : (

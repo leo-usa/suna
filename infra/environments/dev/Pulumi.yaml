@@ -1,5 +1,5 @@
 name: kortix-infra-dev
-description: Kortix DEV environment - Lightsail + Cloudflare Tunnel
+description: Dobby DEV environment - Lightsail + Cloudflare Tunnel
 runtime:
   name: nodejs
   options:

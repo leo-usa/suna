@@ -25,10 +25,10 @@ SIMPLE_DATASET = [
 print(f"Running simple eval with {len(SIMPLE_DATASET)} test cases...")
 
 Eval(
-    "Kortix Agent - Simple",
+    "Dobby Agent - Simple",
     data=lambda: SIMPLE_DATASET,
     task=create_agent_task(
-        model_name="kortix/basic",
+        model_name="dobby/basic",
         max_iterations=5,  # Keep it short
         timeout_seconds=30.0,  # 30 seconds max per case
     ),

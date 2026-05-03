@@ -160,9 +160,9 @@ class PricingPresets:
     )
 
 
-FREE_MODEL_ID = "kortix/minimax"
-PREMIUM_MODEL_ID = "kortix/power"
-IMAGE_MODEL_ID = "kortix/haiku"
+FREE_MODEL_ID = "dobby/minimax"
+PREMIUM_MODEL_ID = "dobby/power"
+IMAGE_MODEL_ID = "dobby/haiku"
 
 
 def _create_anthropic_model_config() -> ModelConfig:
@@ -172,7 +172,7 @@ def _create_anthropic_model_config() -> ModelConfig:
 def _create_minimax_model_config() -> ModelConfig:
     return ModelConfig(
         reasoning=ReasoningSettings(enabled=True, split_output=True),
-        extra_body={"app": "Kortix.com"},
+        extra_body={"app": "Dobby.com"},
     )
 
 def _create_kimi_model_config() -> ModelConfig:
@@ -209,7 +209,7 @@ class ModelFactory:
             provider = ModelProvider.ANTHROPIC
         
         return Model(
-            id="kortix/haiku",
+            id="dobby/haiku",
             name="Claude Haiku 4.5",
             litellm_model_id=litellm_id,
             provider=provider,
@@ -239,7 +239,7 @@ class ModelFactory:
             provider = ModelProvider.MINIMAX
         
         return Model(
-            id="kortix/minimax",
+            id="dobby/minimax",
             name="MiniMax M2.1",
             litellm_model_id=litellm_id,
             provider=provider,
@@ -273,11 +273,11 @@ class ModelFactory:
 
         if main_llm == "kimi":
             return Model(
-                id="kortix/basic",
-                name="Kortix Basic",
+                id="dobby/basic",
+                name="Dobby Basic",
                 litellm_model_id=custom_model or default_models["kimi"],
                 provider=ModelProvider.OPENROUTER,
-                aliases=["kortix-basic", "Kortix Basic"],
+                aliases=["kortix-basic", "Dobby Basic"],
                 context_window=262_144,
                 capabilities=[
                     ModelCapability.CHAT,
@@ -295,11 +295,11 @@ class ModelFactory:
             )
         elif main_llm == "bedrock":
             return Model(
-                id="kortix/basic",
-                name="Kortix Basic",
+                id="dobby/basic",
+                name="Dobby Basic",
                 litellm_model_id=custom_model or default_models["bedrock"],
                 provider=ModelProvider.BEDROCK,
-                aliases=["kortix-basic", "Kortix Basic"],
+                aliases=["kortix-basic", "Dobby Basic"],
                 context_window=200_000,
                 capabilities=[
                     ModelCapability.CHAT,
@@ -316,11 +316,11 @@ class ModelFactory:
             )
         elif main_llm == "anthropic":
             return Model(
-                id="kortix/basic",
-                name="Kortix Basic",
+                id="dobby/basic",
+                name="Dobby Basic",
                 litellm_model_id=custom_model or default_models["anthropic"],
                 provider=ModelProvider.ANTHROPIC,
-                aliases=["kortix-basic", "Kortix Basic"],
+                aliases=["kortix-basic", "Dobby Basic"],
                 context_window=200_000,
                 capabilities=[
                     ModelCapability.CHAT,
@@ -337,11 +337,11 @@ class ModelFactory:
             )
         elif main_llm == "grok":
             return Model(
-                id="kortix/basic",
-                name="Kortix Basic",
+                id="dobby/basic",
+                name="Dobby Basic",
                 litellm_model_id=custom_model or default_models["grok"],
                 provider=ModelProvider.OPENROUTER,
-                aliases=["kortix-basic", "Kortix Basic"],
+                aliases=["kortix-basic", "Dobby Basic"],
                 context_window=2_000_000,
                 capabilities=[
                     ModelCapability.CHAT,
@@ -357,11 +357,11 @@ class ModelFactory:
             )
         elif main_llm == "openai":
             return Model(
-                id="kortix/basic",
-                name="Kortix Basic",
+                id="dobby/basic",
+                name="Dobby Basic",
                 litellm_model_id=custom_model or default_models["openai"],
                 provider=ModelProvider.OPENROUTER,
-                aliases=["kortix-basic", "Kortix Basic"],
+                aliases=["kortix-basic", "Dobby Basic"],
                 context_window=128_000,
                 capabilities=[
                     ModelCapability.CHAT,
@@ -377,11 +377,11 @@ class ModelFactory:
         elif main_llm == "openrouter":
             # Generic OpenRouter - use custom model or fallback to minimax
             return Model(
-                id="kortix/basic",
-                name="Kortix Basic",
+                id="dobby/basic",
+                name="Dobby Basic",
                 litellm_model_id=custom_model or default_models["minimax"],
                 provider=ModelProvider.OPENROUTER,
-                aliases=["kortix-basic", "Kortix Basic"],
+                aliases=["kortix-basic", "Dobby Basic"],
                 context_window=200_000,
                 capabilities=[
                     ModelCapability.CHAT,
@@ -395,11 +395,11 @@ class ModelFactory:
             )
         else:  # minimax or unknown
             return Model(
-                id="kortix/basic",
-                name="Kortix Basic",
+                id="dobby/basic",
+                name="Dobby Basic",
                 litellm_model_id=custom_model or default_models["minimax"],
                 provider=ModelProvider.OPENROUTER,
-                aliases=["kortix-basic", "Kortix Basic"],
+                aliases=["kortix-basic", "Dobby Basic"],
                 context_window=200_000,
                 capabilities=[
                     ModelCapability.CHAT,
@@ -429,11 +429,11 @@ class ModelFactory:
 
         if main_llm == "kimi":
             return Model(
-                id="kortix/power",
-                name="Kortix Advanced Mode",
+                id="dobby/power",
+                name="Dobby Advanced Mode",
                 litellm_model_id=custom_model or default_models["kimi"],
                 provider=ModelProvider.OPENROUTER,
-                aliases=["kortix-power", "Kortix POWER Mode", "Kortix Power", "Kortix Advanced Mode"],
+                aliases=["kortix-power", "Dobby POWER Mode", "Dobby Power", "Dobby Advanced Mode"],
                 context_window=262_144,
                 capabilities=[
                     ModelCapability.CHAT,
@@ -451,11 +451,11 @@ class ModelFactory:
             )
         elif main_llm == "bedrock":
             return Model(
-                id="kortix/power",
-                name="Kortix Advanced Mode",
+                id="dobby/power",
+                name="Dobby Advanced Mode",
                 litellm_model_id=custom_model or default_models["bedrock"],
                 provider=ModelProvider.BEDROCK,
-                aliases=["kortix-power", "Kortix POWER Mode", "Kortix Power", "Kortix Advanced Mode"],
+                aliases=["kortix-power", "Dobby POWER Mode", "Dobby Power", "Dobby Advanced Mode"],
                 context_window=200_000,
                 capabilities=[
                     ModelCapability.CHAT,
@@ -473,11 +473,11 @@ class ModelFactory:
             )
         elif main_llm == "anthropic":
             return Model(
-                id="kortix/power",
-                name="Kortix Advanced Mode",
+                id="dobby/power",
+                name="Dobby Advanced Mode",
                 litellm_model_id=custom_model or default_models["anthropic"],
                 provider=ModelProvider.ANTHROPIC,
-                aliases=["kortix-power", "Kortix POWER Mode", "Kortix Power", "Kortix Advanced Mode"],
+                aliases=["kortix-power", "Dobby POWER Mode", "Dobby Power", "Dobby Advanced Mode"],
                 context_window=200_000,
                 capabilities=[
                     ModelCapability.CHAT,
@@ -495,11 +495,11 @@ class ModelFactory:
             )
         elif main_llm == "grok":
             return Model(
-                id="kortix/power",
-                name="Kortix Advanced Mode",
+                id="dobby/power",
+                name="Dobby Advanced Mode",
                 litellm_model_id=custom_model or default_models["grok"],
                 provider=ModelProvider.OPENROUTER,
-                aliases=["kortix-power", "Kortix POWER Mode", "Kortix Power", "Kortix Advanced Mode"],
+                aliases=["kortix-power", "Dobby POWER Mode", "Dobby Power", "Dobby Advanced Mode"],
                 context_window=2_000_000,
                 capabilities=[
                     ModelCapability.CHAT,
@@ -516,11 +516,11 @@ class ModelFactory:
             )
         elif main_llm == "openai":
             return Model(
-                id="kortix/power",
-                name="Kortix Advanced Mode",
+                id="dobby/power",
+                name="Dobby Advanced Mode",
                 litellm_model_id=custom_model or default_models["openai"],
                 provider=ModelProvider.OPENROUTER,
-                aliases=["kortix-power", "Kortix POWER Mode", "Kortix Power", "Kortix Advanced Mode"],
+                aliases=["kortix-power", "Dobby POWER Mode", "Dobby Power", "Dobby Advanced Mode"],
                 context_window=128_000,
                 capabilities=[
                     ModelCapability.CHAT,
@@ -536,11 +536,11 @@ class ModelFactory:
         elif main_llm == "openrouter":
             # Generic OpenRouter - use custom model or fallback to minimax
             return Model(
-                id="kortix/power",
-                name="Kortix Advanced Mode",
+                id="dobby/power",
+                name="Dobby Advanced Mode",
                 litellm_model_id=custom_model or default_models["minimax"],
                 provider=ModelProvider.OPENROUTER,
-                aliases=["kortix-power", "Kortix POWER Mode", "Kortix Power", "Kortix Advanced Mode"],
+                aliases=["kortix-power", "Dobby POWER Mode", "Dobby Power", "Dobby Advanced Mode"],
                 context_window=200_000,
                 capabilities=[
                     ModelCapability.CHAT,
@@ -554,11 +554,11 @@ class ModelFactory:
             )
         else:  # minimax or unknown
             return Model(
-                id="kortix/power",
-                name="Kortix Advanced Mode",
+                id="dobby/power",
+                name="Dobby Advanced Mode",
                 litellm_model_id=custom_model or default_models["minimax"],
                 provider=ModelProvider.OPENROUTER,
-                aliases=["kortix-power", "Kortix POWER Mode", "Kortix Power", "Kortix Advanced Mode"],
+                aliases=["kortix-power", "Dobby POWER Mode", "Dobby Power", "Dobby Advanced Mode"],
                 context_window=200_000,
                 capabilities=[
                     ModelCapability.CHAT,
@@ -577,11 +577,11 @@ class ModelFactory:
     @staticmethod
     def create_test_model() -> Model:
         return Model(
-            id="kortix/test",
-            name="Kortix Test",
+            id="dobby/test",
+            name="Dobby Test",
             litellm_model_id="openrouter/minimax/minimax-m2.1",
             provider=ModelProvider.OPENROUTER,
-            aliases=["kortix-test", "Kortix Test"],
+            aliases=["kortix-test", "Dobby Test"],
             context_window=200_000,
             capabilities=[
                 ModelCapability.CHAT,
@@ -600,7 +600,7 @@ class ModelFactory:
     @staticmethod
     def create_grok_4_1_fast() -> Model:
         return Model(
-            id="kortix/grok-4-1-fast",
+            id="dobby/grok-4-1-fast",
             name="Grok 4.1 Fast",
             litellm_model_id="openrouter/x-ai/grok-4.1-fast",
             provider=ModelProvider.OPENROUTER,
@@ -622,7 +622,7 @@ class ModelFactory:
     @staticmethod
     def create_grok_4() -> Model:
         return Model(
-            id="kortix/grok-4",
+            id="dobby/grok-4",
             name="Grok 4",
             litellm_model_id="openrouter/x-ai/grok-4",
             provider=ModelProvider.OPENROUTER,
@@ -643,7 +643,7 @@ class ModelFactory:
     @staticmethod
     def create_gpt4o_mini() -> Model:
         return Model(
-            id="kortix/gpt4o-mini",
+            id="dobby/gpt4o-mini",
             name="GPT-4o Mini",
             litellm_model_id="openrouter/openai/gpt-4o-mini",
             provider=ModelProvider.OPENROUTER,
@@ -664,7 +664,7 @@ class ModelFactory:
     @staticmethod
     def create_gpt5_mini() -> Model:
         return Model(
-            id="kortix/gpt-5-mini",
+            id="dobby/gpt-5-mini",
             name="GPT-5 Mini",
             litellm_model_id="openrouter/openai/gpt-4o-mini",
             provider=ModelProvider.OPENROUTER,
@@ -685,7 +685,7 @@ class ModelFactory:
     @staticmethod
     def create_mimo_v2_flash() -> Model:
         return Model(
-            id="kortix/mimo-v2-flash",
+            id="dobby/mimo-v2-flash",
             name="MiMo Flash",
             litellm_model_id="openrouter/xiaomi/mimo-v2-flash",
             provider=ModelProvider.OPENROUTER,
@@ -706,7 +706,7 @@ class ModelFactory:
     @staticmethod
     def create_deepseek_v3() -> Model:
         return Model(
-            id="kortix/deepseek-v3",
+            id="dobby/deepseek-v3",
             name="DeepSeek V3",
             litellm_model_id="openrouter/deepseek/deepseek-chat-v3-0324",
             provider=ModelProvider.OPENROUTER,
@@ -727,7 +727,7 @@ class ModelFactory:
     @staticmethod
     def create_deepseek_v4_flash() -> Model:
         return Model(
-            id="kortix/deepseek-v4-flash",
+            id="dobby/deepseek-v4-flash",
             name="DeepSeek V4 Flash",
             litellm_model_id="openrouter/deepseek/deepseek-v4-flash",
             provider=ModelProvider.OPENROUTER,
@@ -747,7 +747,7 @@ class ModelFactory:
     @staticmethod
     def create_deepseek_v4_pro() -> Model:
         return Model(
-            id="kortix/deepseek-v4-pro",
+            id="dobby/deepseek-v4-pro",
             name="DeepSeek V4 Pro",
             litellm_model_id="openrouter/deepseek/deepseek-v4-pro",
             provider=ModelProvider.OPENROUTER,
@@ -767,7 +767,7 @@ class ModelFactory:
     @staticmethod
     def create_claude_sonnet_4_6() -> Model:
         return Model(
-            id="kortix/claude-sonnet-4.6",
+            id="dobby/claude-sonnet-4.6",
             name="Claude Sonnet 4.6",
             litellm_model_id="openrouter/anthropic/claude-sonnet-4.6",
             provider=ModelProvider.OPENROUTER,
@@ -790,7 +790,7 @@ class ModelFactory:
     @staticmethod
     def create_claude_opus_4_7() -> Model:
         return Model(
-            id="kortix/claude-opus-4.7",
+            id="dobby/claude-opus-4.7",
             name="Claude Opus 4.7",
             litellm_model_id="openrouter/anthropic/claude-opus-4.7",
             provider=ModelProvider.OPENROUTER,
@@ -813,7 +813,7 @@ class ModelFactory:
     @staticmethod
     def create_gemini_2_5_pro() -> Model:
         return Model(
-            id="kortix/gemini-2.5-pro",
+            id="dobby/gemini-2.5-pro",
             name="Gemini 2.5 Pro",
             litellm_model_id="openrouter/google/gemini-2.5-pro",
             provider=ModelProvider.OPENROUTER,
@@ -835,7 +835,7 @@ class ModelFactory:
     @staticmethod
     def create_gemini_3_1_pro() -> Model:
         return Model(
-            id="kortix/gemini-3.1-pro-preview",
+            id="dobby/gemini-3.1-pro-preview",
             name="Gemini 3.1 Pro Preview",
             litellm_model_id="openrouter/google/gemini-3.1-pro-preview",
             provider=ModelProvider.OPENROUTER,
@@ -858,7 +858,7 @@ class ModelFactory:
     @staticmethod
     def create_gemma_4_31b() -> Model:
         return Model(
-            id="kortix/gemma-4-31b",
+            id="dobby/gemma-4-31b",
             name="Gemma 4 31B",
             litellm_model_id="openrouter/google/gemma-4-31b-it",
             provider=ModelProvider.OPENROUTER,
@@ -878,7 +878,7 @@ class ModelFactory:
     @staticmethod
     def create_kimi_k2_6() -> Model:
         return Model(
-            id="kortix/kimi-k2.6",
+            id="dobby/kimi-k2.6",
             name="Kimi K2.6",
             litellm_model_id="openrouter/moonshotai/kimi-k2.6",
             provider=ModelProvider.OPENROUTER,
@@ -902,7 +902,7 @@ class ModelFactory:
     @staticmethod
     def create_glm_5_turbo() -> Model:
         return Model(
-            id="kortix/glm-5-turbo",
+            id="dobby/glm-5-turbo",
             name="GLM 5 Turbo",
             litellm_model_id="openrouter/z-ai/glm-5-turbo",
             provider=ModelProvider.OPENROUTER,
@@ -923,7 +923,7 @@ class ModelFactory:
     @staticmethod
     def create_minimax_m2_7() -> Model:
         return Model(
-            id="kortix/minimax-m2.7",
+            id="dobby/minimax-m2.7",
             name="MiniMax M2.7",
             litellm_model_id="openrouter/minimax/minimax-m2.7",
             provider=ModelProvider.OPENROUTER,
@@ -946,7 +946,7 @@ class ModelFactory:
     @staticmethod
     def create_gpt_5_5() -> Model:
         return Model(
-            id="kortix/gpt-5.5",
+            id="dobby/gpt-5.5",
             name="GPT-5.5",
             litellm_model_id="openrouter/openai/gpt-5.5",
             provider=ModelProvider.OPENROUTER,
@@ -966,7 +966,7 @@ class ModelFactory:
     @staticmethod
     def create_gpt_5_5_pro() -> Model:
         return Model(
-            id="kortix/gpt-5.5-pro",
+            id="dobby/gpt-5.5-pro",
             name="GPT-5.5 Pro",
             litellm_model_id="openrouter/openai/gpt-5.5-pro",
             provider=ModelProvider.OPENROUTER,
@@ -986,7 +986,7 @@ class ModelFactory:
     @staticmethod
     def create_haiku_3_5() -> Model:
         return Model(
-            id="kortix/haiku-3.5",
+            id="dobby/haiku-3.5",
             name="Claude Haiku 3.5",
             litellm_model_id="bedrock/anthropic.claude-3-5-haiku-20241022-v1:0",
             provider=ModelProvider.BEDROCK,
@@ -1009,7 +1009,7 @@ class ModelFactory:
     @staticmethod
     def create_kimi_k2() -> Model:
         return Model(
-            id="kortix/kimi-k2",
+            id="dobby/kimi-k2",
             name="Kimi K2",
             litellm_model_id="openrouter/moonshotai/kimi-k2",
             provider=ModelProvider.OPENROUTER,
@@ -1031,7 +1031,7 @@ class ModelFactory:
     @staticmethod
     def create_kimi_k2_5() -> Model:
         return Model(
-            id="kortix/kimi-k2.5",
+            id="dobby/kimi-k2.5",
             name="Kimi K2.5",
             litellm_model_id="openrouter/moonshotai/kimi-k2.5",
             provider=ModelProvider.OPENROUTER,

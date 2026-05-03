@@ -40,7 +40,7 @@ import {
   MessageSquare,
   ExternalLink,
 } from 'lucide-react';
-import { KortixLoader } from '@/components/ui/kortix-loader';
+import { DobbyLoader } from '@/components/ui/dobby-loader';
 import { useAdminUserDetails, useAdminUserThreads, useAdminUserActivity } from '@/hooks/admin/use-admin-users';
 import {
   useUserBillingSummary,
@@ -676,7 +676,7 @@ export function AdminUserDetailsDialog({
                       >
                         {processRefundMutation.isPending ? (
                           <>
-                            <KortixLoader size="small" className="mr-2" />
+                            <DobbyLoader size="small" className="mr-2" />
                             Processing...
                           </>
                         ) : (

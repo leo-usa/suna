@@ -172,7 +172,7 @@ export function useAgentStartInput(options: UseAgentStartInputOptions = {}): Use
   const isSunaAgent = !user 
     ? true // Unauthenticated users always see Suna modes
     : isLoadingAgents 
-      ? true // Show Kortix modes while loading
+      ? true // Show Dobby modes while loading
       : (selectedAgent?.metadata?.is_suna_default || (!selectedAgentId && sunaAgent !== undefined) || false);
   
   // Initialize agent selection when agents are loaded

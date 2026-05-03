@@ -13,7 +13,7 @@ class EnvironmentStep(BaseStep):
     display_name = "Configuring Environment Files"
     order = 13
     required = True
-    depends_on = ["supabase", "daytona", "composio", "kortix"]
+    depends_on = ["supabase", "daytona", "composio", "dobby"]
 
     def run(self) -> StepResult:
         # Create config writer

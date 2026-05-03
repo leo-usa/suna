@@ -38,7 +38,7 @@ class ContextArchiver:
     Archives conversation messages to sandbox filesystem for on-demand retrieval.
 
     Structure:
-    /workspace/.kortix/context/
+    /workspace/.dobby/context/
       manifest.json
       summaries/
         batch_001.md                    # Small summary (~500 tokens)
@@ -50,7 +50,7 @@ class ContextArchiver:
           ...
     """
 
-    BASE_DIR = ".kortix/context"
+    BASE_DIR = ".dobby/context"
     WORKSPACE_PATH = "/workspace"
 
     def __init__(self, project_id: str, account_id: str, thread_id: str, db_client=None):
@@ -106,7 +106,7 @@ class ContextArchiver:
             "[ARCHIVED CONTEXT]\n\n"
             "# Archive Reuse\n"
             f"{summary}\n\n"
-            "Use existing archive files in /workspace/.kortix/context/messages/."
+            "Use existing archive files in /workspace/.dobby/context/messages/."
         )
 
         return ArchiveResult(

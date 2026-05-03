@@ -177,7 +177,7 @@ export function DashboardContent() {
             item_name: checkoutData.item_name,   // e.g., "Pro Yearly" - matches add_to_cart
             coupon: couponId,
             discount: discountAmount,
-            item_brand: 'Kortix AI',
+            item_brand: 'Dobby AI',
             item_category: 'Plans',
             item_list_id: 'plans_listing',
             item_list_name: 'Plans Listing',
@@ -294,7 +294,7 @@ export function DashboardContent() {
           aria-hidden="true"
         >
           <img
-            src="/kortix-brandmark-bg.svg"
+            src="/dobby-brandmark-bg.svg"
             alt=""
             className="absolute left-1/2 -translate-x-1/2 top-[-10%] sm:top-1/2 sm:-translate-y-1/2 w-[140vw] min-w-[700px] h-auto sm:w-[160vw] sm:min-w-[1000px] md:min-w-[1200px] lg:w-[162vw] lg:min-w-[1620px] object-contain select-none invert dark:invert-0"
             draggable={false}

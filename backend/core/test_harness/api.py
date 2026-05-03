@@ -30,7 +30,7 @@ class StartTestRequest(BaseModel):
     mode: str = Field(..., description="Test mode: 'core_test' or 'stress_test'")
     prompt_ids: Optional[List[str]] = Field(None, description="List of prompt IDs to test (None = all)")
     concurrency: int = Field(1, description="Number of concurrent requests", ge=1, le=100)
-    model: str = Field("kortix/basic", description="Model to use (core_test only)")
+    model: str = Field("dobby/basic", description="Model to use (core_test only)")
     num_executions: int = Field(100, description="Number of executions (stress_test only)", ge=1, le=10000)
     cleanup_threads: bool = Field(True, description="Delete test threads after completion")
     metadata: Optional[dict] = Field(None, description="Additional metadata")

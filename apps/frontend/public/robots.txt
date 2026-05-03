@@ -1,9 +1,9 @@
-# Kortix Robots.txt
+# Dobby Robots.txt
 User-agent: *
 Allow: /
 
 # Sitemap
-Sitemap: https://kortix.com/sitemap.xml
+Sitemap: https://dobby.com/sitemap.xml
 
 # Disallow sensitive routes
 Disallow: /api/

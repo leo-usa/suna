@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { GitBranch, ChevronDown, Clock, RotateCcw, Check, AlertCircle } from 'lucide-react';
-import { KortixLoader } from '@/components/ui/kortix-loader';
+import { DobbyLoader } from '@/components/ui/dobby-loader';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import {
@@ -113,7 +113,7 @@ export function AgentVersionSwitcher({
   if (isLoading) {
     return (
       <div className="flex items-center gap-2 px-3 py-2">
-        <KortixLoader customSize={16} />
+        <DobbyLoader customSize={16} />
       </div>
     );
   }

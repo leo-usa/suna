@@ -26,7 +26,7 @@ class MorphStep(BaseStep):
             self.info("AI-powered code editing is enabled using Morph.")
             return StepResult.ok("Morph already configured")
 
-        self.info("Kortix Suna uses Morph for fast, intelligent code editing.")
+        self.info("Dobby Suna uses Morph for fast, intelligent code editing.")
         self.info("This is optional but highly recommended for the best experience.")
         self.info("Learn more about Morph at: https://morphllm.com/")
 

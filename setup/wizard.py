@@ -24,7 +24,7 @@ from setup.steps.llm_providers import LLMProvidersStep
 from setup.steps.morph import MorphStep
 from setup.steps.search_apis import SearchAPIsStep
 from setup.steps.rapidapi import RapidAPIStep
-from setup.steps.kortix import KortixStep
+from setup.steps.dobby import DobbyStep
 from setup.steps.webhook import WebhookStep
 from setup.steps.mcp import MCPStep
 from setup.steps.composio import ComposioStep
@@ -55,7 +55,7 @@ class SetupWizard:
         MorphStep,
         SearchAPIsStep,
         RapidAPIStep,
-        KortixStep,
+        DobbyStep,
         WebhookStep,
         MCPStep,
         ComposioStep,
@@ -183,7 +183,7 @@ class SetupWizard:
 
         # Optional steps (6-11) - mark as complete if their dependencies are met
         # These are optional, so we mark them complete to allow the wizard to proceed
-        optional_steps = ["morph", "search_apis", "rapidapi", "kortix", "webhook", "mcp"]
+        optional_steps = ["morph", "search_apis", "rapidapi", "dobby", "webhook", "mcp"]
         for step_name in optional_steps:
             if self._should_mark_complete(step_name):
                 # Check if the step's dependencies are complete
@@ -229,7 +229,7 @@ class SetupWizard:
         # Print banner
         self.console.print_banner()
         self.console.print(
-            "This wizard will guide you through setting up Kortix Suna, "
+            "This wizard will guide you through setting up Dobby Suna, "
             "an open-source generalist AI Worker.\n"
         )
 
@@ -594,15 +594,15 @@ class SetupWizard:
 
     def _show_final_instructions(self) -> None:
         """Show final instructions to the user."""
-        self.console.print("\n✨ Kortix Suna Setup Complete! ✨\n")
+        self.console.print("\n✨ Dobby Suna Setup Complete! ✨\n")
 
-        self.console.info("Kortix Suna is configured with your API keys and ready to use.")
+        self.console.info("Dobby Suna is configured with your API keys and ready to use.")
         self.console.info("Delete the .setup_progress file to reset the setup.")
 
         compose_cmd_str = format_compose_cmd(self.compose_cmd)
 
         if self.config.setup_method == SetupMethod.DOCKER:
-            self.console.info("Your Kortix Suna instance is ready to use!")
+            self.console.info("Your Dobby Suna instance is ready to use!")
             self.console.print("\nUseful Docker commands:")
             self.console.print(f"  {compose_cmd_str} up -d     - Start all services")
             self.console.print(f"  {compose_cmd_str} down       - Stop all services")
@@ -615,7 +615,7 @@ class SetupWizard:
                 self.console.print("  Supabase Dashboard: https://supabase.com/dashboard")
                 self.console.print(f"  Project URL: {self.config.supabase.SUPABASE_URL}")
         else:
-            self.console.info("To start Kortix Suna, run these commands in separate terminals:")
+            self.console.info("To start Dobby Suna, run these commands in separate terminals:")
             self.console.print(f"\n1. Start Redis (in project root):")
             self.console.print(f"   {compose_cmd_str} up redis -d")
             self.console.print(f"\n2. Start Backend (in a new terminal):")
@@ -624,4 +624,4 @@ class SetupWizard:
             self.console.print(f"   cd apps/frontend && pnpm run dev")
             self.console.print(f"\nTip: Use 'python start.py' for automatic start/stop")
 
-        self.console.print("\nOnce all services are running, access Kortix Suna at: http://localhost:3000")
+        self.console.print("\nOnce all services are running, access Dobby Suna at: http://localhost:3000")

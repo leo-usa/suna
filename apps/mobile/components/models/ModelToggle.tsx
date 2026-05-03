@@ -37,7 +37,7 @@ export function ModelToggle({
 
   const basicModel = React.useMemo(() => {
     return models.find(m =>
-      m.id === 'kortix/basic' ||
+      m.id === 'dobby/basic' ||
       m.id === 'kortix-basic' ||
       m.id.includes('claude-haiku-4-5')
     );
@@ -45,7 +45,7 @@ export function ModelToggle({
 
   const advancedModel = React.useMemo(() => {
     return models.find(m =>
-      m.id === 'kortix/power' ||
+      m.id === 'dobby/power' ||
       m.id === 'kortix-power' ||
       m.id.includes('claude-sonnet-4-5')
     );

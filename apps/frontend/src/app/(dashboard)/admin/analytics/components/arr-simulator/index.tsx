@@ -1402,9 +1402,9 @@ export function ARRSimulator({ analyticsSource }: ARRSimulatorProps) {
                     type="monotone" 
                     dataKey="actualArr" 
                     name="Actual"
-                    stroke="hsl(var(--primary))" 
+                    stroke="var(--primary)" 
                     strokeWidth={3}
-                    dot={{ fill: 'hsl(var(--primary))', strokeWidth: 2, r: 5 }}
+                    dot={{ fill: 'var(--primary)', strokeWidth: 2, r: 5 }}
                     activeDot={{ r: 7 }}
                   />
                 </LineChart>
@@ -1951,7 +1951,7 @@ export function ARRSimulator({ analyticsSource }: ARRSimulatorProps) {
                     <Tooltip formatter={(v: number) => [`$${v.toLocaleString()}`, '']} />
                     <Legend />
                     <Line type="monotone" dataKey="goalARR" name="Goal" stroke="#10b981" strokeWidth={2} dot={false} strokeDasharray="5 5" />
-                    <Line type="monotone" dataKey="actualARR" name="Actual" stroke="hsl(var(--primary))" strokeWidth={3} dot={{ r: 4, fill: '#fff', stroke: '#000', strokeWidth: 2 }} activeDot={{ r: 6, fill: '#fff', stroke: 'hsl(var(--primary))', strokeWidth: 2 }} />
+                    <Line type="monotone" dataKey="actualARR" name="Actual" stroke="var(--primary)" strokeWidth={3} dot={{ r: 4, fill: '#fff', stroke: '#000', strokeWidth: 2 }} activeDot={{ r: 6, fill: '#fff', stroke: 'var(--primary)', strokeWidth: 2 }} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>

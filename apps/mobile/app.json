@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "Kortix",
-    "slug": "kortix",
+    "name": "Dobby",
+    "slug": "dobby",
     "version": "1.1.2",
     "orientation": "portrait",
     "icon": "./assets/images/AppIcon-Light.png",
-    "scheme": "kortix",
+    "scheme": "dobby",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
@@ -21,15 +21,15 @@
       "bundleIdentifier": "com.kortix.app",
       "usesAppleSignIn": true,
       "associatedDomains": [
-        "applinks:kortix.com",
-        "applinks:www.kortix.com",
-        "applinks:staging.kortix.com"
+        "applinks:dobby.com",
+        "applinks:www.dobby.com",
+        "applinks:staging.dobby.com"
       ],
       "infoPlist": {
-        "NSCameraUsageDescription": "Kortix needs camera access to let you capture photos and attach them to your saved conversations with the AI Worker. For example, you can photograph a document, whiteboard, or product for analysis and receive insights that are stored in your conversation history.",
-        "NSPhotoLibraryUsageDescription": "Kortix needs access to your photo library so you can select and share images in your saved conversations with the AI Worker. For example, you can attach screenshots, documents, or images for review—all stored in your personalized conversation history.",
-        "NSMicrophoneUsageDescription": "Kortix needs microphone access to enable voice input for your conversations. For example, you can speak your messages instead of typing, and the app will transcribe your speech to text for your AI Worker conversations.",
-        "NSUserTrackingUsageDescription": "Kortix uses analytics to improve your experience and understand how features are used. For example, we track which AI features are most helpful so we can make the app better for everyone."
+        "NSCameraUsageDescription": "Dobby needs camera access to let you capture photos and attach them to your saved conversations with the AI Worker. For example, you can photograph a document, whiteboard, or product for analysis and receive insights that are stored in your conversation history.",
+        "NSPhotoLibraryUsageDescription": "Dobby needs access to your photo library so you can select and share images in your saved conversations with the AI Worker. For example, you can attach screenshots, documents, or images for review—all stored in your personalized conversation history.",
+        "NSMicrophoneUsageDescription": "Dobby needs microphone access to enable voice input for your conversations. For example, you can speak your messages instead of typing, and the app will transcribe your speech to text for your AI Worker conversations.",
+        "NSUserTrackingUsageDescription": "Dobby uses analytics to improve your experience and understand how features are used. For example, we track which AI features are most helpful so we can make the app better for everyone."
       }
     },
     "android": {
@@ -47,17 +47,17 @@
           "data": [
             {
               "scheme": "https",
-              "host": "kortix.com",
+              "host": "dobby.com",
               "pathPrefix": "/auth/callback"
             },
             {
               "scheme": "https",
-              "host": "www.kortix.com",
+              "host": "www.dobby.com",
               "pathPrefix": "/auth/callback"
             },
             {
               "scheme": "https",
-              "host": "staging.kortix.com",
+              "host": "staging.dobby.com",
               "pathPrefix": "/auth/callback"
             }
           ],
@@ -72,17 +72,17 @@
           "data": [
             {
               "scheme": "https",
-              "host": "kortix.com",
+              "host": "dobby.com",
               "pathPrefix": "/share"
             },
             {
               "scheme": "https",
-              "host": "www.kortix.com",
+              "host": "www.dobby.com",
               "pathPrefix": "/share"
             },
             {
               "scheme": "https",
-              "host": "staging.kortix.com",
+              "host": "staging.dobby.com",
               "pathPrefix": "/share"
             }
           ],
@@ -119,21 +119,21 @@
       [
         "expo-image-picker",
         {
-          "cameraPermission": "Kortix needs camera access to let you capture photos and attach them to your saved conversations with the AI Worker. For example, you can photograph a document, whiteboard, or product for analysis and receive insights that are stored in your conversation history.",
-          "photosPermission": "Kortix needs access to your photo library so you can select and share images in your saved conversations with the AI Worker. For example, you can attach screenshots, documents, or images for review—all stored in your personalized conversation history.",
-          "microphonePermission": "Kortix needs microphone access to record videos with audio. For example, you can record a video to share with the AI Worker for analysis and save it to your conversation history."
+          "cameraPermission": "Dobby needs camera access to let you capture photos and attach them to your saved conversations with the AI Worker. For example, you can photograph a document, whiteboard, or product for analysis and receive insights that are stored in your conversation history.",
+          "photosPermission": "Dobby needs access to your photo library so you can select and share images in your saved conversations with the AI Worker. For example, you can attach screenshots, documents, or images for review—all stored in your personalized conversation history.",
+          "microphonePermission": "Dobby needs microphone access to record videos with audio. For example, you can record a video to share with the AI Worker for analysis and save it to your conversation history."
         }
       ],
       [
         "expo-audio",
         {
-          "microphonePermission": "Kortix needs microphone access to enable voice input for your conversations. For example, you can speak your messages instead of typing, and the app will transcribe your speech to text for your AI Worker conversations."
+          "microphonePermission": "Dobby needs microphone access to enable voice input for your conversations. For example, you can speak your messages instead of typing, and the app will transcribe your speech to text for your AI Worker conversations."
         }
       ],
       [
         "expo-tracking-transparency",
         {
-          "userTrackingPermission": "Kortix uses analytics to improve your experience and understand how features are used. For example, we track which AI features are most helpful so we can make the app better for everyone."
+          "userTrackingPermission": "Dobby uses analytics to improve your experience and understand how features are used. For example, we track which AI features are most helpful so we can make the app better for everyone."
         }
       ],
       [

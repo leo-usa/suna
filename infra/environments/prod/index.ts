@@ -141,7 +141,7 @@ const apiWorkload = new ApiWorkload("suna-api", {
   },
   ingress: {
     enabled: true,
-    host: config.get("primaryDomain") || "api-eks.kortix.com",
+    host: config.get("primaryDomain") || "api-eks.dobby.com",
     annotations: {
       "alb.ingress.kubernetes.io/certificate-arn": config.get("acmCertificateArn") || "",
       "alb.ingress.kubernetes.io/subnets": networkConfig.publicSubnets.join(","),
@@ -200,7 +200,7 @@ export const outputs = {
   },
 
   endpoints: {
-    primary: config.get("primaryDomain") || "api-eks.kortix.com",
-    lightsail: config.get("lightsailDomain") || "api-lightsail.kortix.com",
+    primary: config.get("primaryDomain") || "api-eks.dobby.com",
+    lightsail: config.get("lightsailDomain") || "api-lightsail.dobby.com",
   },
 };

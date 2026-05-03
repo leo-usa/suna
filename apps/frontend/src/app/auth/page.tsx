@@ -11,12 +11,12 @@ import { useState, useEffect, useMemo, Suspense, lazy, useRef } from 'react';
 import { signUp, verifyOtp } from './actions';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Mail, MailCheck, Clock, ExternalLink } from 'lucide-react';
-import { KortixLoader } from '@/components/ui/kortix-loader';
+import { DobbyLoader } from '@/components/ui/dobby-loader';
 import { useAuth } from '@/components/AuthProvider';
 import { useAuthMethodTracking } from '@/stores/auth-tracking';
 import { toast } from '@/lib/toast';
 import { useTranslations } from 'next-intl';
-import { KortixLogo } from '@/components/sidebar/kortix-logo';
+import { DobbyLogo } from '@/components/sidebar/dobby-logo';
 import { ReferralCodeDialog } from '@/components/referrals/referral-code-dialog';
 import { isElectron, getAuthOrigin } from '@/lib/utils/is-electron';
 import { ExampleShowcase } from '@/components/auth/example-showcase';
@@ -274,7 +274,7 @@ function LoginContent() {
   if (isLoading || user) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <KortixLoader size="medium" />
+        <DobbyLoader size="medium" />
       </div>
     );
   }
@@ -337,11 +337,11 @@ function LoginContent() {
             {autoSendingCode ? (
               // Loading: Auto-sending new code
               <div className="flex flex-col items-center gap-6 animate-in fade-in duration-300">
-                <KortixLogo size={32} />
+                <DobbyLogo size={32} />
 
                 <div className="relative">
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-foreground/5 to-transparent animate-pulse" />
-                  <KortixLoader size="medium" />
+                  <DobbyLoader size="medium" />
                 </div>
 
                 <div className="text-center space-y-2">
@@ -356,7 +356,7 @@ function LoginContent() {
             ) : newCodeSent ? (
               // Success: New code sent, show OTP input
               <div className="flex flex-col items-center gap-6 w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <KortixLogo size={32} />
+                <DobbyLogo size={32} />
 
                 {/* Success indicator */}
                 <div className="relative">
@@ -473,7 +473,7 @@ function LoginContent() {
             ) : (
               // No email provided or auto-send failed - show manual form
               <div className="flex flex-col items-center gap-6 w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <KortixLogo size={32} />
+                <DobbyLogo size={32} />
 
                 {/* Warning indicator */}
                 <div className="relative">
@@ -556,7 +556,7 @@ function LoginContent() {
 
           <div className="relative z-10 w-full max-w-[456px] flex flex-col items-center gap-8">
             {/* Logo */}
-            <KortixLogo size={32} />
+            <DobbyLogo size={32} />
 
             {/* Title */}
             <h1 className="text-[43px] font-normal tracking-tight text-foreground leading-none text-center whitespace-nowrap">
@@ -636,7 +636,7 @@ function LoginContent() {
     <div className="min-h-[100dvh] bg-background relative">
       <div className="absolute top-4 sm:top-6 left-4 sm:left-6 z-10">
         <Link href="/" className="flex items-center space-x-2">
-          <KortixLogo size={24} className="sm:w-7 sm:h-7" />
+          <DobbyLogo size={24} className="sm:w-7 sm:h-7" />
         </Link>
       </div>
       <div className="flex min-h-[100dvh]">
@@ -701,7 +701,7 @@ function LoginContent() {
                     privacyPolicy: (chunks) => {
                       return (
                         <a
-                          href="https://www.kortix.com/legal?tab=privacy"
+                          href="https://www.dobby.com/legal?tab=privacy"
                           target="_blank"
                           rel="noopener noreferrer"
                           className="hover:underline underline-offset-2 text-primary"
@@ -714,7 +714,7 @@ function LoginContent() {
                     termsOfService: (chunks) => {
                       return (
                         <a
-                          href="https://www.kortix.com/legal?tab=terms"
+                          href="https://www.dobby.com/legal?tab=terms"
                           target="_blank"
                           rel="noopener noreferrer"
                           className="hover:underline underline-offset-2 text-primary"
@@ -814,7 +814,7 @@ export default function Login() {
     <Suspense
       fallback={
         <div className="min-h-screen bg-background flex items-center justify-center">
-          <KortixLoader size="medium" />
+          <DobbyLoader size="medium" />
         </div>
       }
     >

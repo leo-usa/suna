@@ -68,7 +68,7 @@ class MetricsCollector:
         
         Args:
             run_type: 'core_test' or 'stress_test'
-            model_name: Model being tested (e.g., 'kortix/basic')
+            model_name: Model being tested (e.g., 'dobby/basic')
             concurrency_level: Number of concurrent requests
             total_prompts: Total number of prompts to execute
             metadata: Additional metadata (git commit, branch, etc.)

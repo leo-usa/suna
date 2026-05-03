@@ -22,7 +22,7 @@ class SupabaseSetupMethod(str, Enum):
 
 
 class MainLLMProvider(str, Enum):
-    """Main LLM provider for kortix/basic model."""
+    """Main LLM provider for dobby/basic model."""
 
     ANTHROPIC = "anthropic"  # Requires ANTHROPIC_API_KEY
     OPENROUTER = "openrouter"  # Requires OPENROUTER_API_KEY (supports grok, openai, minimax via OpenRouter)
@@ -211,10 +211,10 @@ class ComposioConfig(BaseModel):
         return bool(self.COMPOSIO_API_KEY)
 
 
-class KortixConfig(BaseModel):
-    """Kortix admin configuration."""
+class DobbyConfig(BaseModel):
+    """Dobby admin configuration."""
 
-    KORTIX_ADMIN_API_KEY: str = ""
+    DOBBY_ADMIN_API_KEY: str = ""
 
 
 class VAPIConfig(BaseModel):
@@ -293,7 +293,7 @@ class SetupConfig(BaseModel):
     webhook: WebhookConfig = Field(default_factory=WebhookConfig)
     mcp: MCPConfig = Field(default_factory=MCPConfig)
     composio: ComposioConfig = Field(default_factory=ComposioConfig)
-    kortix: KortixConfig = Field(default_factory=KortixConfig)
+    dobby: DobbyConfig = Field(default_factory=DobbyConfig)
     vapi: VAPIConfig = Field(default_factory=VAPIConfig)
     stripe: StripeConfig = Field(default_factory=StripeConfig)
     langfuse: LangfuseConfig = Field(default_factory=LangfuseConfig)
@@ -322,7 +322,7 @@ class SetupConfig(BaseModel):
             "webhook",
             "mcp",
             "composio",
-            "kortix",
+            "dobby",
             "vapi",
             "stripe",
             "langfuse",

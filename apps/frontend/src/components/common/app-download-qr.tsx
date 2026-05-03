@@ -2,7 +2,7 @@
 
 import { cn } from '@/lib/utils';
 
-// Kortix symbol SVG
+// Dobby symbol SVG
 function KortixSymbol({ size = 24, className }: { size?: number; className?: string }) {
   return (
     <svg 
@@ -20,14 +20,14 @@ function KortixSymbol({ size = 24, className }: { size?: number; className?: str
 /**
  * Universal app download URL - middleware auto-redirects to correct store based on device
  */
-export const APP_DOWNLOAD_URL = 'https://www.kortix.com/app';
+export const APP_DOWNLOAD_URL = 'https://www.dobby.com/app';
 
 export interface AppDownloadQRProps {
   /** Size of the QR code in pixels */
   size?: number;
   /** Additional class names for the container */
   className?: string;
-  /** Whether to show the Kortix logo in the center */
+  /** Whether to show the Dobby logo in the center */
   showLogo?: boolean;
   /** Size of the center logo */
   logoSize?: number;
@@ -49,7 +49,7 @@ export function AppDownloadQR({
     <div className={cn("relative bg-white rounded-2xl p-4 shadow-lg", className)}>
       <img 
         src={qrUrl}
-        alt="Scan to download Kortix - redirects to App Store or Google Play based on your device"
+        alt="Scan to download Dobby - redirects to App Store or Google Play based on your device"
         width={size}
         height={size}
         className="block"

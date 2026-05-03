@@ -73,14 +73,14 @@ class AgentEvalRunner:
     
     def __init__(
         self,
-        project_name: str = "Kortix Agent",
-        model_name: Optional[str] = "kortix/basic",
+        project_name: str = "Dobby Agent",
+        model_name: Optional[str] = "dobby/basic",
         max_iterations: int = 50,
         timeout_seconds: float = 120.0,
         project_id: Optional[str] = None,  # Optional project with sandbox for tool access
     ):
         self.project_name = project_name
-        self.model_name = model_name or "kortix/basic"  # Fallback to default
+        self.model_name = model_name or "dobby/basic"  # Fallback to default
         self.max_iterations = max_iterations
         self.timeout_seconds = timeout_seconds
         self.project_id = project_id or os.getenv("EVAL_PROJECT_ID")  # Use env var if not specified
@@ -645,7 +645,7 @@ def create_agent_task(
         from evals.runner import create_agent_task
         
         Eval(
-            "Kortix Agent",
+            "Dobby Agent",
             data=lambda: [...],
             task=create_agent_task(project_id="your-project-id"),  # Enable sandbox tools
             scores=[...],

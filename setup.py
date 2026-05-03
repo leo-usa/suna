@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Kortix Suna Setup Wizard
+Dobby Suna Setup Wizard
 
 This is a compatibility wrapper that redirects to the new modular setup package.
 Run: python -m setup
