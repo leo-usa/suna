@@ -184,13 +184,13 @@ export function ThreadSearchModal({ open, onOpenChange }: ThreadSearchModalProps
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-2xl p-0 overflow-hidden bg-background" hideCloseButton>
                 <VisuallyHidden>
-                    <DialogTitle>Search chats</DialogTitle>
+                    <DialogTitle>{t('searchChats')}</DialogTitle>
                 </VisuallyHidden>
                 <Command className="bg-background border-0" shouldFilter={false}>
                     <div className="px-4 py-3 border-b">
                         <div className="relative">
                             <CommandInput
-                                placeholder="Search chats..."
+                                placeholder={t('searchChatsPlaceholder')}
                                 value={search}
                                 onValueChange={setSearch}
                                 className=" px-0 focus-visible:ring-0 focus-visible:ring-offset-0"
@@ -214,12 +214,12 @@ export function ThreadSearchModal({ open, onOpenChange }: ThreadSearchModalProps
                             <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
                                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground/40 mb-3" />
                                 <p className="text-sm text-muted-foreground">
-                                    Searching...
+                                    {t('threadSearchSearching')}
                                 </p>
                             </div>
                         ) : filtered.length === 0 ? (
                             <CommandEmpty className="py-6 text-center text-sm text-muted-foreground">
-                                No chats found
+                                {t('noChatsFound')}
                             </CommandEmpty>
                         ) : (
                             <CommandGroup className="p-0 [&_[cmdk-group-heading]]:hidden">

@@ -2,6 +2,7 @@
 
 import React, { useEffect } from 'react';
 import { DobbyLoader } from '@/components/ui/dobby-loader';
+import { useTranslations } from 'next-intl';
 
 import {
   AlertDialog,
@@ -20,19 +21,21 @@ interface DeleteConfirmationDialogProps {
   onConfirm: () => void;
   threadName: string;
   isDeleting: boolean;
+  /** Multiple selected threads — different title and confirmation wording */
+  isBulk?: boolean;
 }
 
-/**
- * Confirmation dialog for deleting a conversation
- */
 export function DeleteConfirmationDialog({
   isOpen,
   onClose,
   onConfirm,
   threadName,
   isDeleting,
+  isBulk = false,
 }: DeleteConfirmationDialogProps) {
-  // Reset pointer events when dialog opens
+  const t = useTranslations('sidebar');
+  const tCommon = useTranslations('common');
+
   useEffect(() => {
     if (isOpen) {
       document.body.style.pointerEvents = 'auto';
@@ -43,16 +46,28 @@ export function DeleteConfirmationDialog({
     <AlertDialog open={isOpen} onOpenChange={onClose}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete conversation</AlertDialogTitle>
-          <AlertDialogDescription>
-            Are you sure you want to delete the conversation{' '}
-            <span className="font-semibold">"{threadName}"</span>?
-            <br />
-            This action cannot be undone.
+          <AlertDialogTitle>
+            {isBulk ? t('deleteConversationsTitle') : t('deleteConversationTitle')}
+          </AlertDialogTitle>
+          <AlertDialogDescription asChild>
+            <div className="text-muted-foreground text-sm space-y-2">
+              <p>
+                {isBulk
+                  ? t.rich('deleteConversationsBulkDescriptionRich', {
+                      name: threadName,
+                      bold: (chunks) => <span className="font-semibold">{chunks}</span>,
+                    })
+                  : t.rich('deleteConversationDescriptionRich', {
+                      name: threadName,
+                      bold: (chunks) => <span className="font-semibold">{chunks}</span>,
+                    })}
+              </p>
+              <p>{t('deleteConversationCannotUndo')}</p>
+            </div>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={isDeleting}>{tCommon('cancel')}</AlertDialogCancel>
           <AlertDialogAction
             onClick={(e) => {
               e.preventDefault();
@@ -64,10 +79,10 @@ export function DeleteConfirmationDialog({
             {isDeleting ? (
               <>
                 <DobbyLoader size="small" className="mr-2" />
-                Deleting...
+                {t('deleteConversationDeleting')}
               </>
             ) : (
-              'Delete'
+              tCommon('delete')
             )}
           </AlertDialogAction>
         </AlertDialogFooter>

@@ -4,10 +4,12 @@ import { siteConfig } from '@/lib/site-config';
 import { motion } from 'framer-motion';
 import React, { useRef, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 interface NavItem {
-  name: string;
+  id: number;
   href: string;
+  i18nKey: string;
 }
 
 interface NavMenuProps {
@@ -15,6 +17,7 @@ interface NavMenuProps {
 }
 
 export function NavMenu({ links }: NavMenuProps = {}) {
+  const t = useTranslations('common');
   const navs: NavItem[] = links || siteConfig.nav.links;
   const ref = useRef<HTMLUListElement>(null);
   const [left, setLeft] = useState(0);
@@ -155,14 +158,14 @@ export function NavMenu({ links }: NavMenuProps = {}) {
       >
         {navs.map((item) => (
           <li
-            key={item.name}
+            key={item.id}
             className={`z-10 cursor-pointer h-full flex items-center justify-center px-4 py-2 text-sm font-medium transition-colors duration-200 ${(item.href.startsWith('#') && pathname === '/' && activeSection === item.href.substring(1)) || (item.href === pathname)
                 ? 'text-primary'
                 : 'text-primary/60 hover:text-primary'
               } tracking-tight`}
           >
             <a href={item.href} onClick={(e) => handleClick(e, item)}>
-              {item.name}
+              {t(`nav.${item.i18nKey}`)}
             </a>
           </li>
         ))}

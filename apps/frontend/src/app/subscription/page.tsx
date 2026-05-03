@@ -12,6 +12,7 @@ import { clearUserLocalStorage } from '@/lib/utils/clear-local-storage';
 import { useMaintenanceNoticeQuery } from '@/hooks/edge-flags';
 import { useAdminRole } from '@/hooks/admin';
 import { useAccountState } from '@/hooks/billing';
+import { SUPPORT_EMAIL, SUPPORT_MAILTO } from '@/lib/site-config';
 
 // Lazy load heavy components
 const PricingSection = lazy(() => import('@/components/billing/pricing').then(mod => ({ default: mod.PricingSection })));
@@ -141,8 +142,8 @@ export default function SubscriptionRequiredPage() {
         <div className="text-center text-sm text-muted-foreground -mt-10">
           <p>
             Questions? Contact us at{' '}
-            <a href="mailto:support@dobby.com" className="underline hover:text-primary">
-              support@dobby.com
+            <a href={SUPPORT_MAILTO} className="underline hover:text-primary">
+              {SUPPORT_EMAIL}
             </a>
           </p>
         </div>

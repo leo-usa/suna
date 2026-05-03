@@ -47,6 +47,7 @@ const TaskItem: React.FC<{
   onDelete,
 }) => {
   const [isHovering, setIsHovering] = useState(false);
+  const t = useTranslations('sidebar');
 
   return (
     <Link
@@ -118,7 +119,7 @@ const TaskItem: React.FC<{
             className="text-destructive focus:text-destructive"
           >
             <Trash2 className="mr-2 h-3.5 w-3.5" />
-            Delete
+            {t('threadMenuDelete')}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -259,7 +260,7 @@ export function NavTasks() {
           {
             onSuccess: () => {
               queryClient.invalidateQueries({ queryKey: threadKeys.lists() });
-              toast.success('Task deleted successfully');
+              toast.success(t('toastConversationDeletedSuccess'));
             },
             onSettled: () => {
               setThreadToDelete(null);

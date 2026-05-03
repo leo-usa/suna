@@ -4,8 +4,35 @@ interface UpgradePlan {
   /** @deprecated */
   hours: string;
   price: string;
-  tierKey: string;  // Backend tier key
+  tierKey: string;
 }
+
+/** Structured plan feature for i18n (resolved via billing.pricingFeatureItems). */
+export type PricingFeatureItem =
+  | { kind: 'credits_monthly'; credits: number }
+  | { kind: 'credits_bonus'; original: number; bonus: number }
+  | { kind: 'unlimited_chats' }
+  | { kind: 'weekly_credits'; credits: number }
+  | { kind: 'concurrent_run_single' }
+  | { kind: 'basic_mode' }
+  | { kind: 'concurrent_runs'; count: number }
+  | { kind: 'custom_workers'; count: number }
+  | { kind: 'custom_workers_short'; count: number }
+  | { kind: 'scheduled_triggers'; count: number }
+  | { kind: 'app_triggers'; count: number }
+  | { kind: 'integrations_100' }
+  | { kind: 'advanced_mode' }
+  | { kind: 'private_projects' }
+  | { kind: 'premium_models' }
+  | { kind: 'priority_support' }
+  | { kind: 'account_manager' }
+  | { kind: 'custom_deployment' };
+
+export type PricingDisabledItem =
+  | { kind: 'no_custom_workers' }
+  | { kind: 'no_scheduled_triggers' }
+  | { kind: 'no_app_triggers' }
+  | { kind: 'no_integrations' };
 
 export interface PricingTier {
   name: string;
@@ -17,11 +44,11 @@ export interface PricingTier {
   isPopular: boolean;
   /** @deprecated */
   hours: string;
-  features: string[];
-  disabledFeatures?: string[];
+  features: PricingFeatureItem[];
+  disabledFeatures?: PricingDisabledItem[];
   baseCredits?: number;
   bonusCredits?: number;
-  tierKey: string;  // Backend tier key (e.g., 'tier_2_20', 'free')
+  tierKey: string;
   upgradePlans: UpgradePlan[];
   hidden?: boolean;
   billingPeriod?: 'monthly' | 'yearly';
@@ -42,15 +69,15 @@ export const pricingTiers: PricingTier[] = [
     isPopular: false,
     hours: '0 hours',
     features: [
-      '300 weekly credits - Refreshes every 7 days',
-      '1 concurrent run',
-      'Basic Mode - Core Dobby experience with basic autonomy',
+      { kind: 'weekly_credits', credits: 300 },
+      { kind: 'concurrent_run_single' },
+      { kind: 'basic_mode' },
     ],
     disabledFeatures: [
-      'No custom AI Workers',
-      'No scheduled triggers',
-      'No app-based triggers',
-      'No integrations',
+      { kind: 'no_custom_workers' },
+      { kind: 'no_scheduled_triggers' },
+      { kind: 'no_app_triggers' },
+      { kind: 'no_integrations' },
     ],
     tierKey: config.SUBSCRIPTION_TIERS.FREE_TIER.tierKey,
     upgradePlans: [],
@@ -68,14 +95,14 @@ export const pricingTiers: PricingTier[] = [
     hours: '2 hours',
     baseCredits: 2000,
     features: [
-      '2,000 credits/month',
-      'Unlimited Chats',
-      '3 concurrent runs - Run multiple Chats simultaneously',
-      '5 custom AI Workers - Create Dobby Workers with custom Knowledge, Tools & Integrations',
-      '5 scheduled triggers - Run at 9am daily, every Monday, first of month...',
-      '25 app triggers - Auto-respond to new emails, Slack messages, form submissions...',
-      '100+ Integrations - Google Drive, Slack, Notion, Gmail, Calendar, GitHub & more',
-      'Dobby Advanced mode - Strongest autonomy & decision-making capabilities',
+      { kind: 'credits_monthly', credits: 2000 },
+      { kind: 'unlimited_chats' },
+      { kind: 'concurrent_runs', count: 3 },
+      { kind: 'custom_workers', count: 5 },
+      { kind: 'scheduled_triggers', count: 5 },
+      { kind: 'app_triggers', count: 25 },
+      { kind: 'integrations_100' },
+      { kind: 'advanced_mode' },
     ],
     tierKey: config.SUBSCRIPTION_TIERS.TIER_2_20.tierKey,
     upgradePlans: [],
@@ -93,14 +120,14 @@ export const pricingTiers: PricingTier[] = [
     hours: '6 hours',
     baseCredits: 5000,
     features: [
-      '5,000 credits/month',
-      'Unlimited Chats',
-      '5 concurrent runs - Run multiple Chats simultaneously',
-      '20 custom AI Workers - Create Dobby Workers with custom Knowledge, Tools & Integrations',
-      '10 scheduled triggers - Run at 9am daily, every Monday, first of month...',
-      '50 app triggers - Auto-respond to new emails, Slack messages, form submissions...',
-      '100+ Integrations - Google Drive, Slack, Notion, Gmail, Calendar, GitHub & more',
-      'Dobby Advanced mode - Strongest autonomy & decision-making capabilities',
+      { kind: 'credits_monthly', credits: 5000 },
+      { kind: 'unlimited_chats' },
+      { kind: 'concurrent_runs', count: 5 },
+      { kind: 'custom_workers', count: 20 },
+      { kind: 'scheduled_triggers', count: 10 },
+      { kind: 'app_triggers', count: 50 },
+      { kind: 'integrations_100' },
+      { kind: 'advanced_mode' },
     ],
     tierKey: config.SUBSCRIPTION_TIERS.TIER_6_50.tierKey,
     upgradePlans: [],
@@ -117,11 +144,11 @@ export const pricingTiers: PricingTier[] = [
     isPopular: false,
     hours: '12 hours',
     features: [
-      '10,000 credits/month',
-      '20 custom workers',
-      'Private projects',
-      '100+ integrations',
-      'Premium AI Models',
+      { kind: 'credits_monthly', credits: 10_000 },
+      { kind: 'custom_workers_short', count: 20 },
+      { kind: 'private_projects' },
+      { kind: 'integrations_100' },
+      { kind: 'premium_models' },
     ],
     tierKey: config.SUBSCRIPTION_TIERS.TIER_12_100.tierKey,
     upgradePlans: [],
@@ -140,14 +167,14 @@ export const pricingTiers: PricingTier[] = [
     hours: '25 hours',
     baseCredits: 20000,
     features: [
-      '20,000 credits/month',
-      'Unlimited Chats',
-      '20 concurrent runs - Run multiple Chats simultaneously',
-      '100 custom AI Workers - Create Dobby Workers with custom Knowledge, Tools & Integrations',
-      '50 scheduled triggers - Run at 9am daily, every Monday, first of month...',
-      '200 app triggers - Auto-respond to new emails, Slack messages, form submissions...',
-      '100+ Integrations - Google Drive, Slack, Notion, Gmail, Calendar, GitHub & more',
-      'Dobby Advanced mode - Strongest autonomy & decision-making capabilities',
+      { kind: 'credits_monthly', credits: 20_000 },
+      { kind: 'unlimited_chats' },
+      { kind: 'concurrent_runs', count: 20 },
+      { kind: 'custom_workers', count: 100 },
+      { kind: 'scheduled_triggers', count: 50 },
+      { kind: 'app_triggers', count: 200 },
+      { kind: 'integrations_100' },
+      { kind: 'advanced_mode' },
     ],
     tierKey: config.SUBSCRIPTION_TIERS.TIER_25_200.tierKey,
     upgradePlans: [],
@@ -164,11 +191,11 @@ export const pricingTiers: PricingTier[] = [
     isPopular: false,
     hours: '50 hours',
     features: [
-      '40,000 credits/month',
-      'Private projects',
-      '100+ integrations',
-      'Premium AI Models',
-      'Priority support',
+      { kind: 'credits_monthly', credits: 40_000 },
+      { kind: 'private_projects' },
+      { kind: 'integrations_100' },
+      { kind: 'premium_models' },
+      { kind: 'priority_support' },
     ],
     tierKey: config.SUBSCRIPTION_TIERS.TIER_50_400.tierKey,
     upgradePlans: [],
@@ -186,12 +213,12 @@ export const pricingTiers: PricingTier[] = [
     isPopular: false,
     hours: '125 hours',
     features: [
-      '80,000 credits/month',
-      'Private projects',
-      '100+ integrations',
-      'Premium AI Models',
-      'Priority support',
-      'Dedicated account manager',
+      { kind: 'credits_monthly', credits: 80_000 },
+      { kind: 'private_projects' },
+      { kind: 'integrations_100' },
+      { kind: 'premium_models' },
+      { kind: 'priority_support' },
+      { kind: 'account_manager' },
     ],
     tierKey: config.SUBSCRIPTION_TIERS.TIER_125_800.tierKey,
     upgradePlans: [],
@@ -209,17 +236,16 @@ export const pricingTiers: PricingTier[] = [
     isPopular: false,
     hours: '200 hours',
     features: [
-      '100,000 credits/month',
-      'Private projects',
-      '100+ integrations',
-      'Premium AI Models',
-      'Priority support',
-      'Dedicated account manager',
-      'Custom deployment',
+      { kind: 'credits_monthly', credits: 100_000 },
+      { kind: 'private_projects' },
+      { kind: 'integrations_100' },
+      { kind: 'premium_models' },
+      { kind: 'priority_support' },
+      { kind: 'account_manager' },
+      { kind: 'custom_deployment' },
     ],
     tierKey: config.SUBSCRIPTION_TIERS.TIER_200_1000.tierKey,
     upgradePlans: [],
     hidden: true,
   },
 ];
-

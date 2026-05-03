@@ -17,9 +17,9 @@ export function KnowledgeBaseSettings() {
                 <FileText className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold">{t('title') || 'Knowledge Base'}</h3>
+                <h3 className="text-lg font-semibold">{t('title')}</h3>
                 <p className="text-sm text-muted-foreground mt-0.5">
-                  {t('description') || 'Upload and manage documents for your agents'}
+                  {t('description')}
                 </p>
               </div>
             </div>
@@ -29,9 +29,9 @@ export function KnowledgeBaseSettings() {
         <Alert className="border-primary/20 bg-primary/5">
           <Sparkles className="h-4 w-4 text-primary" />
           <AlertDescription className="text-sm">
-            <strong className="text-foreground">Coming Soon</strong>
+            <strong className="text-foreground">{t('comingSoonTitle')}</strong>
             <p className="text-muted-foreground mt-1">
-              Knowledge Base is currently under development. This feature will allow you to upload documents and files that your agents can reference to provide more accurate and context-aware responses.
+              {t('comingSoonDescription')}
             </p>
           </AlertDescription>
         </Alert>

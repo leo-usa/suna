@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import {
     Dialog,
@@ -95,7 +95,7 @@ import ThreadUsage from '@/components/billing/thread-usage';
 import { UsageLimitsCard } from '@/components/billing/usage-limits-card';
 import { formatCredits } from '@agentpress/shared';
 import { LanguageSwitcher } from './language-switcher';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { ReferralsTab } from '@/components/referrals/referrals-tab';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { MemorySettings } from '@/components/memory/MemorySettings';
@@ -125,22 +125,30 @@ export function UserSettingsModal({
 }: UserSettingsModalProps) {
     const router = useRouter();
     const isMobile = useIsMobile();
+    const tSettings = useTranslations('settings');
     const [activeTab, setActiveTab] = useState<TabId>(defaultTab);
     const [showPlanModal, setShowPlanModal] = useState(false);
     const isLocal = isLocalMode();
     const isProduction = isProductionMode();
-    const tabs: Tab[] = [
-        { id: 'general', label: 'General', icon: Settings },
-        { id: 'plan', label: 'Plan', icon: Zap },
-        { id: 'billing', label: 'Billing', icon: CreditCard },
-        { id: 'usage', label: 'Usage', icon: TrendingDown },
-        { id: 'memory', label: 'Memory', icon: Brain },
-        ...(!isProduction ? [{ id: 'referrals' as TabId, label: 'Referrals', icon: Users }] : []),
-        { id: 'knowledge-base', label: 'Knowledge Base', icon: FileText },
-        { id: 'integrations', label: 'Integrations', icon: Plug },
-        { id: 'api-keys', label: 'API Keys', icon: Key },
-        ...(isLocal ? [{ id: 'env-manager' as TabId, label: 'Env Manager', icon: KeyRound }] : []),
-    ];
+    const tabs: Tab[] = useMemo(
+        () => [
+            { id: 'general', label: tSettings('tabs.general'), icon: Settings },
+            { id: 'plan', label: tSettings('tabs.plan'), icon: Zap },
+            { id: 'billing', label: tSettings('tabs.billing'), icon: CreditCard },
+            { id: 'usage', label: tSettings('tabs.usage'), icon: TrendingDown },
+            { id: 'memory', label: tSettings('tabs.memory'), icon: Brain },
+            ...(!isProduction
+                ? [{ id: 'referrals' as TabId, label: tSettings('tabs.referrals'), icon: Users }]
+                : []),
+            { id: 'knowledge-base', label: tSettings('tabs.knowledgeBase'), icon: FileText },
+            { id: 'integrations', label: tSettings('tabs.integrations'), icon: Plug },
+            { id: 'api-keys', label: tSettings('tabs.apiKeys'), icon: Key },
+            ...(isLocal
+                ? [{ id: 'env-manager' as TabId, label: tSettings('tabs.envManager'), icon: KeyRound }]
+                : []),
+        ],
+        [isProduction, isLocal, tSettings]
+    );
     
     useEffect(() => {
         setActiveTab(defaultTab);
@@ -174,7 +182,7 @@ export function UserSettingsModal({
                 )}
                 hideCloseButton={true}
             >
-                <DialogTitle className="sr-only">Settings</DialogTitle>
+                <DialogTitle className="sr-only">{tSettings('title')}</DialogTitle>
                 
                 {isMobile ? (
                     /* Mobile Layout - Full Screen */
@@ -182,7 +190,7 @@ export function UserSettingsModal({
                         {/* Mobile Header */}
                         <div className="px-4 py-3 border-b border-border flex-shrink-0 bg-background">
                             <div className="flex items-center justify-between">
-                                <div className="text-lg font-semibold">Settings</div>
+                                <div className="text-lg font-semibold">{tSettings('title')}</div>
                                 <Button
                                     variant="ghost"
                                     size="icon"
@@ -304,6 +312,7 @@ export function UserSettingsModal({
 function GeneralTab({ onClose }: { onClose: () => void }) {
     const t = useTranslations('settings.general');
     const tCommon = useTranslations('common');
+    const locale = useLocale();
     const [userName, setUserName] = useState('');
     const [userEmail, setUserEmail] = useState('');
     const [avatarUrl, setAvatarUrl] = useState('');
@@ -469,11 +478,11 @@ function GeneralTab({ onClose }: { onClose: () => void }) {
 
     const formatDate = (dateString: string | null) => {
         if (!dateString) return '';
-        return new Date(dateString).toLocaleDateString('en-US', {
+        return new Intl.DateTimeFormat(locale, {
             year: 'numeric',
             month: 'long',
             day: 'numeric',
-        });
+        }).format(new Date(dateString));
     };
 
     if (isLoading) {
@@ -827,6 +836,9 @@ function NotificationToggle({ icon: Icon, label, description, enabled, onToggle 
 // Billing Tab Component - Usage, credits, subscription management
 function BillingTab({ returnUrl, onOpenPlanModal, isActive }: { returnUrl: string; onOpenPlanModal: () => void; isActive: boolean }) {
     const { session, isLoading: authLoading } = useAuth();
+    const t = useTranslations('settings.billing');
+    const tCommon = useTranslations('common');
+    const locale = useLocale();
     const [showCreditPurchaseModal, setShowCreditPurchaseModal] = useState(false);
     const [showCancelDialog, setShowCancelDialog] = useState(false);
     const queryClient = useQueryClient();
@@ -859,7 +871,7 @@ function BillingTab({ returnUrl, onOpenPlanModal, isActive }: { returnUrl: strin
     
     const getFrontendTierName = (tierKey: string) => {
         const tier = siteConfig.cloudPricingItems.find(p => p.tierKey === tierKey);
-        return tier?.name || tierKey || 'Basic';
+        return tier?.name || tierKey || tCommon('basic');
     };
 
     // Calculate hours until daily refresh
@@ -916,19 +928,19 @@ function BillingTab({ returnUrl, onOpenPlanModal, isActive }: { returnUrl: strin
     }, [isActive, session, authLoading]);
 
     const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('en-US', {
+        return new Intl.DateTimeFormat(locale, {
             year: 'numeric',
             month: 'long',
             day: 'numeric',
-        });
+        }).format(new Date(dateString));
     };
 
     const formatDateFromTimestamp = (timestamp: number) => {
-        return new Date(timestamp * 1000).toLocaleDateString('en-US', {
+        return new Intl.DateTimeFormat(locale, {
             year: 'numeric',
             month: 'long',
             day: 'numeric',
-        });
+        }).format(new Date(timestamp * 1000));
     };
 
     const formatDateFlexible = (dateValue: string | number) => {
@@ -942,11 +954,11 @@ function BillingTab({ returnUrl, onOpenPlanModal, isActive }: { returnUrl: strin
 
     const formatEndDate = (dateString: string) => {
         try {
-            return new Date(dateString).toLocaleDateString('en-US', {
+            return new Intl.DateTimeFormat(locale, {
                 year: 'numeric',
                 month: 'long',
-                day: 'numeric'
-            });
+                day: 'numeric',
+            }).format(new Date(dateString));
         } catch {
             return dateString;
         }
@@ -959,7 +971,7 @@ function BillingTab({ returnUrl, onOpenPlanModal, isActive }: { returnUrl: strin
         if (accountState?.subscription.current_period_end) {
             return formatDateFlexible(accountState.subscription.current_period_end);
         }
-        return 'N/A';
+        return t('notAvailable');
     };
 
     const handleManageSubscription = () => {
@@ -977,7 +989,11 @@ function BillingTab({ returnUrl, onOpenPlanModal, isActive }: { returnUrl: strin
     };
 
     const isLoading = isLoadingSubscription || authLoading;
-    const error = subscriptionError ? (subscriptionError instanceof Error ? subscriptionError.message : 'Failed to load subscription data') : null;
+    const error = subscriptionError
+        ? subscriptionError instanceof Error
+            ? subscriptionError.message
+            : t('loadSubscriptionFailed')
+        : null;
 
     if (isLoading) {
         return (
@@ -997,9 +1013,9 @@ function BillingTab({ returnUrl, onOpenPlanModal, isActive }: { returnUrl: strin
                 <Alert className="border-blue-500/50 bg-blue-500/10">
                     <Shield className="h-4 w-4 text-blue-500" />
                     <AlertDescription>
-                        <div className="font-medium mb-1">Local Mode Active</div>
+                        <div className="font-medium mb-1">{t('localMode')}</div>
                         <div className="text-sm text-muted-foreground">
-                            All premium features are available in this environment
+                            {t('localModeDescription')}
                         </div>
                     </AlertDescription>
                 </Alert>
@@ -1030,8 +1046,8 @@ function BillingTab({ returnUrl, onOpenPlanModal, isActive }: { returnUrl: strin
             {/* Header with Plan Badge on Right */}
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 min-w-0">
                 <div className="space-y-1 min-w-0 flex-1">
-                    <h1 className="text-xl sm:text-2xl font-medium tracking-tight">Billing Status</h1>
-                    <p className="text-xs sm:text-sm text-muted-foreground">Manage your credits and subscription</p>
+                    <h1 className="text-xl sm:text-2xl font-medium tracking-tight">{t('statusTitle')}</h1>
+                    <p className="text-xs sm:text-sm text-muted-foreground">{t('description')}</p>
                 </div>
 
                 {/* Plan Badge with Renewal Info - Right aligned */}
@@ -1050,7 +1066,9 @@ function BillingTab({ returnUrl, onOpenPlanModal, isActive }: { returnUrl: strin
                             )}
                             {accountState?.subscription.current_period_end && !hasScheduledChange && (
                                 <span className="text-xs text-muted-foreground">
-                                    Renews {formatDateFlexible(accountState.subscription.current_period_end)}
+                                    {t('renews', {
+                                        date: formatDateFlexible(accountState.subscription.current_period_end),
+                                    })}
                                 </span>
                             )}
                         </div>
@@ -1059,8 +1077,13 @@ function BillingTab({ returnUrl, onOpenPlanModal, isActive }: { returnUrl: strin
                             <div className="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400">
                                 <CalendarClock className="h-3 w-3" />
                                 <span>
-                                    Changing to {getFrontendTierName(scheduledChange.target_tier.name)} on{' '}
-                                    {new Date(scheduledChange.effective_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                    {t('scheduledTierChange', {
+                                        tier: getFrontendTierName(scheduledChange.target_tier.name),
+                                        date: new Intl.DateTimeFormat(locale, {
+                                            month: 'short',
+                                            day: 'numeric',
+                                        }).format(new Date(scheduledChange.effective_date)),
+                                    })}
                                 </span>
                             </div>
                         )}
@@ -1080,7 +1103,7 @@ function BillingTab({ returnUrl, onOpenPlanModal, isActive }: { returnUrl: strin
                     <div className="flex flex-col gap-1.5 sm:gap-2">
                         <div className="flex items-center gap-1.5 sm:gap-2">
                             <Zap className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary flex-shrink-0" />
-                            <span className="text-[10px] sm:text-xs text-muted-foreground truncate">Total</span>
+                            <span className="text-[10px] sm:text-xs text-muted-foreground truncate">{t('creditsLabelTotal')}</span>
                         </div>
                         <div>
                             <div className="text-base sm:text-xl leading-none font-semibold">{formatCredits(totalCredits)}</div>
@@ -1094,15 +1117,14 @@ function BillingTab({ returnUrl, onOpenPlanModal, isActive }: { returnUrl: strin
                         <div className="flex flex-col gap-1.5 sm:gap-2">
                             <div className="flex items-center gap-1.5 sm:gap-2">
                                 <RotateCcw className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-blue-500 flex-shrink-0" />
-                                <span className="text-[10px] sm:text-xs text-muted-foreground truncate">Daily</span>
+                                <span className="text-[10px] sm:text-xs text-muted-foreground truncate">{t('creditsLabelDaily')}</span>
                             </div>
                             <div>
                                 <div className="text-base sm:text-xl leading-none font-semibold">{formatCredits(dailyCredits)}</div>
                                 <p className="text-[10px] sm:text-[11px] text-blue-500/80 mt-1 sm:mt-1.5 truncate">
-                                    {hoursUntilDailyRefresh !== null 
-                                        ? `${hoursUntilDailyRefresh}h`
-                                        : 'Daily'
-                                    }
+                                    {hoursUntilDailyRefresh !== null
+                                        ? t('dailyRefreshHours', { hours: hoursUntilDailyRefresh })
+                                        : t('creditsLabelDaily')}
                                 </p>
                             </div>
                         </div>
@@ -1115,7 +1137,7 @@ function BillingTab({ returnUrl, onOpenPlanModal, isActive }: { returnUrl: strin
                         <div className="flex flex-col gap-1.5 sm:gap-2">
                             <div className="flex items-center gap-1.5 sm:gap-2">
                                 <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-orange-500 flex-shrink-0" />
-                                <span className="text-[10px] sm:text-xs text-muted-foreground truncate">Monthly</span>
+                                <span className="text-[10px] sm:text-xs text-muted-foreground truncate">{t('creditsLabelMonthly')}</span>
                             </div>
                             <div>
                                 <div className="text-base sm:text-xl leading-none font-semibold">
@@ -1136,7 +1158,7 @@ function BillingTab({ returnUrl, onOpenPlanModal, isActive }: { returnUrl: strin
                     <div className="flex flex-col gap-1.5 sm:gap-2">
                         <div className="flex items-center gap-1.5 sm:gap-2">
                             <Infinity className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
-                            <span className="text-[10px] sm:text-xs text-muted-foreground truncate">Extra</span>
+                            <span className="text-[10px] sm:text-xs text-muted-foreground truncate">{t('creditsLabelExtra')}</span>
                         </div>
                         <div>
                             <div className="text-base sm:text-xl leading-none font-semibold">{formatCredits(nonExpiringCredits)}</div>
@@ -1153,7 +1175,7 @@ function BillingTab({ returnUrl, onOpenPlanModal, isActive }: { returnUrl: strin
                     disabled={createPortalSessionMutation.isPending}
                     className="h-10 w-full sm:w-auto"
                 >
-                    {createPortalSessionMutation.isPending ? 'Loading...' : 'Manage Subscription'}
+                    {createPortalSessionMutation.isPending ? tCommon('loading') : t('manageSubscription')}
                 </Button>
                 {canPurchaseCredits && (
                     <Button
@@ -1162,7 +1184,7 @@ function BillingTab({ returnUrl, onOpenPlanModal, isActive }: { returnUrl: strin
                         className="h-10 w-full sm:w-auto"
                     >
                         <ShoppingCart className="h-4 w-4 mr-2" />
-                        Get Additional Credits
+                        {t('getAdditionalCredits')}
                     </Button>
                 )}
                 {planName && (
@@ -1173,7 +1195,7 @@ function BillingTab({ returnUrl, onOpenPlanModal, isActive }: { returnUrl: strin
                             disabled
                         >
                             <CalendarClock className="h-4 w-4 mr-2 flex-shrink-0" />
-                            <span className="truncate">Downgrade Scheduled</span>
+                            <span className="truncate">{t('downgradeScheduled')}</span>
                         </Button>
                     ) : (
                         <Button
@@ -1181,7 +1203,7 @@ function BillingTab({ returnUrl, onOpenPlanModal, isActive }: { returnUrl: strin
                             variant="outline"
                             className="h-10 w-full sm:w-auto"
                         >
-                            Change Plan
+                            {t('changePlan')}
                         </Button>
                     )
                 )}
@@ -1192,9 +1214,11 @@ function BillingTab({ returnUrl, onOpenPlanModal, isActive }: { returnUrl: strin
                 <Alert className="border-blue-500/20 bg-blue-500/5 rounded-[18px]">
                     <Shield className="h-4 w-4 text-blue-500" />
                     <AlertDescription>
-                        <strong className="text-sm">Annual Commitment</strong>
+                        <strong className="text-sm">{t('annualCommitment')}</strong>
                         <p className="text-sm text-muted-foreground mt-1">
-                            Active until {formatEndDate(commitmentInfo.commitment_end_date || '')}
+                            {t('activeUntil', {
+                                date: formatEndDate(commitmentInfo.commitment_end_date || ''),
+                            })}
                         </p>
                     </AlertDescription>
                 </Alert>
@@ -1213,7 +1237,7 @@ function BillingTab({ returnUrl, onOpenPlanModal, isActive }: { returnUrl: strin
                 <Alert variant="destructive" className="rounded-[18px]">
                     <AlertTriangle className="h-4 w-4" />
                     <AlertDescription>
-                        Your subscription will be cancelled on {getEffectiveCancellationDate()}
+                        {t('subscriptionCancelled', { date: getEffectiveCancellationDate() })}
                         {!isCancelled && (
                             <Button
                                 onClick={handleReactivate}
@@ -1221,7 +1245,7 @@ function BillingTab({ returnUrl, onOpenPlanModal, isActive }: { returnUrl: strin
                                 size="sm"
                                 className="ml-4"
                             >
-                                Reactivate
+                                {t('reactivate')}
                             </Button>
                         )}
                     </AlertDescription>
@@ -1236,7 +1260,7 @@ function BillingTab({ returnUrl, onOpenPlanModal, isActive }: { returnUrl: strin
                     className="text-muted-foreground hover:text-foreground h-auto p-0"
                 >
                     <Lightbulb className="h-3.5 w-3.5 mr-2" />
-                    <span className="text-sm">Credits explained</span>
+                    <span className="text-sm">{t('creditsExplained')}</span>
                 </Button>
             </div>
 
@@ -1249,7 +1273,7 @@ function BillingTab({ returnUrl, onOpenPlanModal, isActive }: { returnUrl: strin
                         size="sm"
                         className="text-muted-foreground hover:text-destructive h-auto p-2 text-xs"
                     >
-                        Cancel Plan
+                        {t('cancelPlan')}
                     </Button>
                 </div>
             )}
@@ -1263,23 +1287,29 @@ function BillingTab({ returnUrl, onOpenPlanModal, isActive }: { returnUrl: strin
                         size="sm"
                     >
                         <RotateCcw className="h-3.5 w-3.5 mr-2" />
-                        {reactivateSubscriptionMutation.isPending ? 'Reactivating...' : 'Reactivate Subscription'}
+                        {reactivateSubscriptionMutation.isPending
+                            ? t('reactivating')
+                            : t('reactivateSubscription')}
                     </Button>
                 </div>
             )}
             <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
                 <DialogContent className="max-w-md">
                     <DialogHeader>
-                        <DialogTitle>Cancel Subscription</DialogTitle>
+                        <DialogTitle>{t('cancelDialogTitle')}</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4">
                         <p className="text-sm text-muted-foreground">
-                            Are you sure you want to cancel your subscription? You'll continue to have access until{' '}
-                            {accountState?.subscription.current_period_end && formatDateFlexible(accountState.subscription.current_period_end)}.
+                            {t('cancelDialogDescription', {
+                                date:
+                                    accountState?.subscription.current_period_end
+                                        ? formatDateFlexible(accountState.subscription.current_period_end)
+                                        : '',
+                            })}
                         </p>
                         <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
                             <Button variant="outline" onClick={() => setShowCancelDialog(false)} className="w-full sm:w-auto">
-                                Keep Subscription
+                                {t('keepSubscription')}
                             </Button>
                             <Button 
                                 variant="destructive" 
@@ -1287,7 +1317,7 @@ function BillingTab({ returnUrl, onOpenPlanModal, isActive }: { returnUrl: strin
                                 disabled={cancelSubscriptionMutation.isPending}
                                 className="w-full sm:w-auto"
                             >
-                                {cancelSubscriptionMutation.isPending ? 'Cancelling...' : 'Cancel Plan'}
+                                {cancelSubscriptionMutation.isPending ? t('cancelling') : t('cancelPlan')}
                             </Button>
                         </div>
                     </div>

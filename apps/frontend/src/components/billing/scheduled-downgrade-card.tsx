@@ -11,6 +11,7 @@ import {
 import { useCancelScheduledChange } from '@/hooks/billing';
 import { TierBadge } from './tier-badge';
 import { siteConfig } from '@/lib/site-config';
+import { useLocale, useTranslations } from 'next-intl';
 
 interface ScheduledDowngradeCardProps {
   scheduledChange: {
@@ -36,23 +37,26 @@ export function ScheduledDowngradeCard({
   variant = 'default'
 }: ScheduledDowngradeCardProps) {
   const cancelScheduledChangeMutation = useCancelScheduledChange();
+  const t = useTranslations('settings.billing');
+  const tCommon = useTranslations('common');
+  const locale = useLocale();
 
   const effectiveDate = new Date(scheduledChange.effective_date);
 
   const getFrontendTierName = (tierKey: string) => {
     const tier = siteConfig.cloudPricingItems.find(p => p.tierKey === tierKey);
-    return tier?.name || tierKey || 'Basic';
+    return tier?.name || tierKey || tCommon('basic');
   };
 
   const currentTierName = getFrontendTierName(scheduledChange.current_tier.name);
   const targetTierName = getFrontendTierName(scheduledChange.target_tier.name);
 
   const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-US', {
+    return new Intl.DateTimeFormat(locale, {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
-    });
+    }).format(date);
   };
 
   const daysRemaining = Math.max(0, Math.ceil(
@@ -81,7 +85,7 @@ export function ScheduledDowngradeCard({
               <TierBadge planName={targetTierName} size="sm" variant="default" />
             </span>
             <span className="text-xs text-muted-foreground">
-              on {formatDate(effectiveDate)}
+              {t('scheduledChangeEffectiveOn', { date: formatDate(effectiveDate) })}
             </span>
           </div>
         </div>
@@ -93,7 +97,7 @@ export function ScheduledDowngradeCard({
           className="h-7 px-2 text-xs text-amber-600 dark:text-amber-400 hover:bg-amber-500/10"
         >
           <Undo2 className="h-3 w-3 mr-1" />
-          {cancelScheduledChangeMutation.isPending ? 'Cancelling...' : 'Undo'}
+          {cancelScheduledChangeMutation.isPending ? t('cancelling') : t('scheduledChangeUndo')}
         </Button>
       </div>
     );
@@ -107,11 +111,13 @@ export function ScheduledDowngradeCard({
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-2">
               <CalendarClock className="h-5 w-5 text-amber-500" />
-              <span className="font-medium text-sm">Scheduled Plan Change</span>
+              <span className="font-medium text-sm">{t('scheduledPlanChangeTitle')}</span>
             </div>
             <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400">
               <span className="text-xs font-medium">
-                {daysRemaining === 0 ? 'Today' : `${daysRemaining} day${daysRemaining === 1 ? '' : 's'}`}
+                {daysRemaining === 0
+                  ? t('scheduledChangeToday')
+                  : t('scheduledChangeDaysLeft', { days: daysRemaining })}
               </span>
             </div>
           </div>
@@ -141,7 +147,7 @@ export function ScheduledDowngradeCard({
               className="h-8 border-amber-500/30 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-300"
             >
               <Undo2 className="h-3.5 w-3.5 mr-1.5" />
-              {cancelScheduledChangeMutation.isPending ? 'Cancelling...' : 'Keep Current Plan'}
+              {cancelScheduledChangeMutation.isPending ? t('cancelling') : t('keepCurrentPlan')}
             </Button>
           </div>
         </div>

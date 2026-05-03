@@ -152,17 +152,17 @@ export const groupThreadsByDate = (
     let dateGroup: string;
     
     if (diffInDays === 0) {
-      dateGroup = 'Today';
+      dateGroup = 'today';
     } else if (diffInDays === 1) {
-      dateGroup = 'Yesterday';
+      dateGroup = 'yesterday';
     } else if (diffInDays <= 7) {
-      dateGroup = 'This Week';
+      dateGroup = 'thisWeek';
     } else if (diffInDays <= 30) {
-      dateGroup = 'This Month';
+      dateGroup = 'thisMonth';
     } else if (diffInDays <= 90) {
-      dateGroup = 'Last 3 Months';
+      dateGroup = 'last3Months';
     } else {
-      dateGroup = 'Older';
+      dateGroup = 'older';
     }
     
     if (!grouped[dateGroup]) {
@@ -202,17 +202,17 @@ export const groupThreadsByDateThenProject = (
     let dateGroup: string;
     
     if (diffInDays === 0) {
-      dateGroup = 'Today';
+      dateGroup = 'today';
     } else if (diffInDays === 1) {
-      dateGroup = 'Yesterday';
+      dateGroup = 'yesterday';
     } else if (diffInDays <= 7) {
-      dateGroup = 'This Week';
+      dateGroup = 'thisWeek';
     } else if (diffInDays <= 30) {
-      dateGroup = 'This Month';
+      dateGroup = 'thisMonth';
     } else if (diffInDays <= 90) {
-      dateGroup = 'Last 3 Months';
+      dateGroup = 'last3Months';
     } else {
-      dateGroup = 'Older';
+      dateGroup = 'older';
     }
     
     // Initialize date group if needed

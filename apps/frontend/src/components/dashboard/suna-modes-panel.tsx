@@ -113,7 +113,6 @@ interface SamplePrompt {
 
 interface Mode {
   id: ModeType;
-  label: string;
   icon: React.ReactNode;
   samplePrompts: SamplePrompt[];
   isVisual?: boolean; // If true, show prompts with thumbnail grid
@@ -141,7 +140,6 @@ interface Mode {
 const modes: Mode[] = [
   {
     id: 'slides',
-    label: 'Slides',
     icon: <Presentation className="w-4 h-4" strokeWidth={2} />,
     isVisual: true,
     samplePrompts: [
@@ -182,7 +180,6 @@ const modes: Mode[] = [
   },
   {
     id: 'data',
-    label: 'Data',
     icon: <BarChart3 className="w-4 h-4" strokeWidth={2} />,
     isVisual: true,
     samplePrompts: [
@@ -223,7 +220,6 @@ const modes: Mode[] = [
   },
   {
     id: 'docs',
-    label: 'Docs',
     icon: <FileText className="w-4 h-4" strokeWidth={2} />,
     isVisual: true,
     samplePrompts: [
@@ -254,7 +250,6 @@ const modes: Mode[] = [
   },
   {
     id: 'canvas',
-    label: 'Canvas',
     icon: <Palette className="w-4 h-4" strokeWidth={2} />,
     isVisual: true,
     samplePrompts: [
@@ -281,7 +276,6 @@ const modes: Mode[] = [
   },
   {
     id: 'video',
-    label: 'Video',
     icon: <Video className="w-4 h-4" strokeWidth={2} />,
     isVisual: true,
     samplePrompts: [
@@ -310,7 +304,6 @@ const modes: Mode[] = [
   },
   {
     id: 'research',
-    label: 'Research',
     icon: <Search className="w-4 h-4" strokeWidth={2} />,
     isVisual: true,
     samplePrompts: [
@@ -328,7 +321,6 @@ const modes: Mode[] = [
   },
   {
     id: 'image',
-    label: 'Image',
     icon: <ImageIcon className="w-4 h-4" strokeWidth={2} />,
     isVisual: true,
     samplePrompts: [
@@ -959,18 +951,20 @@ export function SunaModesPanel({
     for (let index = 0; index < maxPrompts; index++) {
       const originalPrompt = mode.samplePrompts[index];
       try {
-        const key = `prompts.${modeId}.${index}` as any;
+        const key = `prompts.${modeId}.${index}` as const;
         const translatedText = t(key);
-        // Check if translation exists (next-intl returns the key if missing)
-        if (!translatedText || translatedText === `suna.${key}` || translatedText.startsWith('suna.prompts.') || translatedText.includes(modeId)) {
-          // If translation is missing, use the hardcoded prompt
+        // Missing keys often resolve to the path; never use substring checks on modeId (e.g. "data" in "website traffic data").
+        const looksMissing =
+          !translatedText ||
+          translatedText === key ||
+          translatedText === `suna.${key}` ||
+          (typeof translatedText === 'string' && /^suna\.prompts\./.test(translatedText));
+        if (looksMissing) {
           prompts.push(originalPrompt);
         } else {
-          // Use translated text but keep the original thumbnail
           prompts.push({ text: translatedText, thumbnail: originalPrompt.thumbnail });
         }
       } catch {
-        // Fallback to hardcoded prompt on error
         prompts.push(originalPrompt);
       }
     }
@@ -1182,7 +1176,7 @@ export function SunaModesPanel({
                 
                 {/* Label */}
                 <span className="transition-colors duration-200">
-                  {mode.label}
+                  {t(`modes.${mode.id}`)}
                 </span>
               </motion.button>
             );
@@ -1975,7 +1969,7 @@ export function SunaModesPanel({
           <DialogHeader className="px-6 py-4 border-b flex-shrink-0">
             <DialogTitle className="flex items-center gap-2">
               {modalModeData?.icon}
-              <span>{modalModeData?.label}</span>
+              <span>{modalModeData ? t(`modes.${modalModeData.id}`) : null}</span>
             </DialogTitle>
           </DialogHeader>
           <ScrollArea className="flex-1 min-h-0 overflow-auto">
@@ -2325,13 +2319,13 @@ export function SunaModesPanel({
               )}
 
               {/* Sample Prompts - for modes that have options (not research) */}
-              {modalMode !== 'research' && modalModeData?.samplePrompts && modalModeData.samplePrompts.length > 0 && (
+              {modalMode !== 'research' && modalMode && modalModeData?.samplePrompts && modalModeData.samplePrompts.length > 0 && (
                 <div className="space-y-3">
                   <p className="text-sm text-muted-foreground">
                     {t('examplePrompts')}
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {modalModeData.samplePrompts.slice(0, 6).map((prompt, index) => (
+                    {getTranslatedPrompts(modalMode).slice(0, 6).map((prompt, index) => (
                       <Card
                         key={index}
                         className="p-3 cursor-pointer hover:bg-muted transition-colors border border-border rounded-xl group"
@@ -2359,7 +2353,7 @@ export function SunaModesPanel({
                     {t('examplePrompts')}
                   </p>
                   <div className="grid grid-cols-1 gap-2">
-                    {modalModeData.samplePrompts.slice(0, 8).map((prompt, index) => (
+                    {getTranslatedPrompts('research').slice(0, 8).map((prompt, index) => (
                       <Card
                         key={index}
                         className="p-3 cursor-pointer hover:bg-muted transition-colors border border-border rounded-xl group"

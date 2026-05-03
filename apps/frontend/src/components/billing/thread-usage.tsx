@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 import type { DateRange } from 'react-day-picker';
 import {
@@ -30,9 +29,26 @@ import {
 } from 'lucide-react';
 import { useThreadUsage } from '@/hooks/billing/use-thread-usage';
 import { formatCredits } from '@agentpress/shared';
+import { useTranslations, useLocale } from 'next-intl';
+import { enUS, zhCN, de, fr, it, ja, pt, es } from 'date-fns/locale';
+import type { Locale as DateFnsLocale } from 'date-fns';
+
+const DATE_FNS_LOCALES: Record<string, DateFnsLocale> = {
+  en: enUS,
+  zh: zhCN,
+  de,
+  fr,
+  it,
+  ja,
+  pt,
+  es,
+};
 
 export default function ThreadUsage() {
-  const router = useRouter();
+  const t = useTranslations('billing.threadUsageDetail');
+  const tBill = useTranslations('billing');
+  const tCommon = useTranslations('common');
+  const dateLocale = DATE_FNS_LOCALES[useLocale()] ?? enUS;
   const [offset, setOffset] = useState(0);
   const [dateRange, setDateRange] = useState<DateRange>({
     from: new Date(new Date().setDate(new Date().getDate() - 29)),
@@ -48,14 +64,11 @@ export default function ThreadUsage() {
   });
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+    return format(new Date(dateString), 'PPp', { locale: dateLocale });
   };
+
+  const formatRangeLabel = (from: Date, to: Date) =>
+    `${format(from, 'PP', { locale: dateLocale })} - ${format(to, 'PP', { locale: dateLocale })}`;
 
   const handlePrevPage = () => {
     setOffset(Math.max(0, offset - limit));
@@ -86,14 +99,14 @@ export default function ThreadUsage() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Thread Usage</CardTitle>
+          <CardTitle>{tBill('threadUsage')}</CardTitle>
         </CardHeader>
         <CardContent>
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Error</AlertTitle>
+            <AlertTitle>{tCommon('error')}</AlertTitle>
             <AlertDescription>
-              {error.message || 'Failed to load thread usage'}
+              {error.message || t('loadError')}
             </AlertDescription>
           </Alert>
         </CardContent>
@@ -111,11 +124,11 @@ export default function ThreadUsage() {
           <Card className='w-full'>
             <CardHeader className='flex items-center justify-between'>
               <div>
-                <CardTitle>Total Usage</CardTitle>
+                <CardTitle>{tBill('totalUsage')}</CardTitle>
                 <CardDescription className='mt-2'>
                   {dateRange.from && dateRange.to
-                    ? `${format(dateRange.from, "MMM dd, yyyy")} - ${format(dateRange.to, "MMM dd, yyyy")}`
-                    : 'Selected period'}
+                    ? formatRangeLabel(dateRange.from, dateRange.to)
+                    : t('selectedPeriod')}
                 </CardDescription>
               </div>
               <div className="flex items-center gap-2">
@@ -132,9 +145,9 @@ export default function ThreadUsage() {
           <CardHeader className='px-0'>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Usage</CardTitle>
+                <CardTitle>{t('usageTitle')}</CardTitle>
                 <CardDescription className='mt-2'>
-                  Credit consumption per conversation
+                  {t('perConversationSubtitle')}
                 </CardDescription>
               </div>
               <Skeleton className="h-10 w-[280px]" />
@@ -145,9 +158,9 @@ export default function ThreadUsage() {
               <Table>
                 <TableHeader className='bg-muted/50'>
                   <TableRow>
-                    <TableHead>Thread</TableHead>
-                    <TableHead className="w-[180px]">Last Used</TableHead>
-                    <TableHead className="text-right">Credits Used</TableHead>
+                    <TableHead>{tBill('thread')}</TableHead>
+                    <TableHead className="w-[180px]">{tBill('lastUsed')}</TableHead>
+                    <TableHead className="text-right">{tBill('creditsUsed')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -179,11 +192,11 @@ export default function ThreadUsage() {
           <Card className='w-full'>
             <CardHeader className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3'>
               <div>
-                <CardTitle className="text-base sm:text-lg">Total Usage</CardTitle>
+                <CardTitle className="text-base sm:text-lg">{tBill('totalUsage')}</CardTitle>
                 <CardDescription className='mt-1 sm:mt-2 text-xs sm:text-sm'>
                   {dateRange.from && dateRange.to
-                    ? `${format(dateRange.from, "MMM dd, yyyy")} - ${format(dateRange.to, "MMM dd, yyyy")}`
-                    : 'Selected period'}
+                    ? formatRangeLabel(dateRange.from, dateRange.to)
+                    : t('selectedPeriod')}
                 </CardDescription>
               </div>
               <div className="flex items-center gap-2">
@@ -193,7 +206,7 @@ export default function ThreadUsage() {
                     {formatCredits(summary.total_credits_used)}
                   </div>
                   <p className="text-xs sm:text-sm text-muted-foreground">
-                    Credits consumed
+                    {t('creditsConsumed')}
                   </p>
                 </div>
               </div>
@@ -204,9 +217,9 @@ export default function ThreadUsage() {
         <CardHeader className='px-0'>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
-              <CardTitle className="text-base sm:text-lg">Usage</CardTitle>
+              <CardTitle className="text-base sm:text-lg">{t('usageTitle')}</CardTitle>
               <CardDescription className='mt-1 sm:mt-2 text-xs sm:text-sm'>
-                Credit consumption per conversation
+                {t('perConversationSubtitle')}
               </CardDescription>
             </div>
             <DateRangePicker
@@ -222,8 +235,11 @@ export default function ThreadUsage() {
             <div className="text-center py-8">
               <p className="text-muted-foreground text-sm">
                 {dateRange.from && dateRange.to
-                  ? `No thread usage found between ${format(dateRange.from, "MMM dd, yyyy")} and ${format(dateRange.to, "MMM dd, yyyy")}.`
-                  : 'No thread usage found.'}
+                  ? t('noUsageInRange', {
+                      from: format(dateRange.from, 'PP', { locale: dateLocale }),
+                      to: format(dateRange.to, 'PP', { locale: dateLocale }),
+                    })
+                  : t('noUsage')}
               </p>
             </div>
           ) : (
@@ -232,9 +248,9 @@ export default function ThreadUsage() {
                 <Table className="min-w-[500px]">
                   <TableHeader className='bg-muted/50'>
                     <TableRow>
-                      <TableHead>Thread</TableHead>
-                      <TableHead className="w-[180px]">Last Used</TableHead>
-                      <TableHead className="text-right">Credits Used</TableHead>
+                      <TableHead>{tBill('thread')}</TableHead>
+                      <TableHead className="w-[180px]">{tBill('lastUsed')}</TableHead>
+                      <TableHead className="text-right">{tBill('creditsUsed')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -281,7 +297,11 @@ export default function ThreadUsage() {
               {data?.pagination && (
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4">
                   <p className="text-xs sm:text-sm text-muted-foreground">
-                    Showing {offset + 1}-{Math.min(offset + limit, data.pagination.total)} of {data.pagination.total}
+                    {t('pagination', {
+                      from: offset + 1,
+                      to: Math.min(offset + limit, data.pagination.total),
+                      total: data.pagination.total,
+                    })}
                   </p>
                   <div className="flex items-center gap-2">
                     <Button
@@ -291,7 +311,7 @@ export default function ThreadUsage() {
                       disabled={offset === 0 || isLoading}
                       className="flex-1 sm:flex-none"
                     >
-                      Previous
+                      {tCommon('previous')}
                     </Button>
                     <Button
                       variant="outline"
@@ -300,7 +320,7 @@ export default function ThreadUsage() {
                       disabled={!data.pagination.has_more || isLoading}
                       className="flex-1 sm:flex-none"
                     >
-                      Next
+                      {tCommon('next')}
                     </Button>
                   </div>
                 </div>

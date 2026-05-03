@@ -2,6 +2,7 @@ import { getRequestConfig } from 'next-intl/server';
 import { cookies, headers } from 'next/headers';
 import { createServerClient } from '@supabase/ssr';
 import { locales, defaultLocale, type Locale } from './config';
+import { loadMessages } from './load-messages';
 
 export default getRequestConfig(async ({ requestLocale }) => {
   let locale: Locale = defaultLocale;
@@ -15,7 +16,7 @@ export default getRequestConfig(async ({ requestLocale }) => {
     locale = localeCookie as Locale;
     return {
       locale,
-      messages: (await import(`../../translations/${locale}.json`)).default
+      messages: loadMessages(locale)
     };
   }
   
@@ -43,7 +44,7 @@ export default getRequestConfig(async ({ requestLocale }) => {
       locale = user.user_metadata.locale as Locale;
       return {
         locale,
-        messages: (await import(`../../translations/${locale}.json`)).default
+        messages: loadMessages(locale)
       };
     }
   } catch (error) {
@@ -58,7 +59,7 @@ export default getRequestConfig(async ({ requestLocale }) => {
     locale = urlLocale as Locale;
     return {
       locale,
-      messages: (await import(`../../translations/${locale}.json`)).default
+      messages: loadMessages(locale)
     };
   }
   
@@ -74,7 +75,7 @@ export default getRequestConfig(async ({ requestLocale }) => {
   // Priority 5: Default to English
   return {
     locale,
-    messages: (await import(`../../translations/${locale}.json`)).default
+    messages: loadMessages(locale),
   };
 });
 

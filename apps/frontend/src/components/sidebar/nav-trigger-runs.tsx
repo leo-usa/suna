@@ -11,13 +11,15 @@ import { processThreadsWithProjects, useProjects, useThreads, groupThreadsByDate
 import { cn } from '@/lib/utils';
 import { SpotlightCard } from '@/components/ui/spotlight-card';
 import { formatDateForList } from '@/lib/utils/date-formatting';
+import { useTranslations } from 'next-intl';
 
 // Component for date group headers
-const DateGroupHeader: React.FC<{ dateGroup: string; count: number }> = ({ dateGroup, count }) => {
+const DateGroupHeader: React.FC<{ dateGroup: string }> = ({ dateGroup }) => {
+    const t = useTranslations('sidebar');
     return (
         <div className="py-2 mt-4 first:mt-2">
             <div className="text-xs font-medium text-muted-foreground pl-2.5">
-                {dateGroup}
+                {t(`dateGroups.${dateGroup}` as any)}
             </div>
         </div>
     );
@@ -172,7 +174,7 @@ export function NavTriggerRuns() {
                             <>
                                 {Object.entries(groupedTriggerThreads).map(([dateGroup, threadsInGroup]) => (
                                     <div key={dateGroup}>
-                                        <DateGroupHeader dateGroup={dateGroup} count={threadsInGroup.length} />
+                                        <DateGroupHeader dateGroup={dateGroup} />
                                         {threadsInGroup.map((thread) => {
                                             const isActive = pathname?.includes(thread.threadId) || false;
                                             const isThreadLoading = loadingThreadId === thread.threadId;

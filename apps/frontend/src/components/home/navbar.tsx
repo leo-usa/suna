@@ -37,6 +37,9 @@ function PlayIcon({ className }: { className?: string }) {
 const SCROLL_THRESHOLD_DOWN = 50;
 const SCROLL_THRESHOLD_UP = 20;
 
+// Set true to show the top-nav "Mobile" (/app) link + QR popover and drawer item.
+const SHOW_MOBILE_NAV_LINK = false;
+
 const overlayVariants = {
   hidden: { opacity: 0 },
   visible: { opacity: 1 },
@@ -172,11 +175,11 @@ export function Navbar({ isAbsolute = false }: NavbarProps) {
                       : "text-muted-foreground hover:text-foreground"
                   )}
                 >
-                  {item.name}
+                  {t(`nav.${item.i18nKey}`)}
                 </Link>
               ))}
-              
-              {/* Mobile App Download with QR Popover */}
+
+              {SHOW_MOBILE_NAV_LINK && (
               <div className="relative group">
                 <Link
                   href="/app"
@@ -187,15 +190,14 @@ export function Navbar({ isAbsolute = false }: NavbarProps) {
                       : "text-muted-foreground hover:text-foreground"
                   )}
                 >
-                  Mobile
+                  {t('nav.mobile')}
                 </Link>
-                
-                {/* QR Code Popover - appears on hover */}
+
                 <div className="absolute top-full left-1/2 -translate-x-1/2 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
                   <div className="relative bg-[#E8E8E8] dark:bg-[#1a1a1a] rounded-2xl border border-border/60 dark:border-[#2a2a2a] p-4 min-w-[200px]">
                     <AppDownloadQR size={160} logoSize={24} className="rounded-xl p-3 shadow-md" />
                     <p className="text-xs text-muted-foreground text-center mt-3">
-                      Scan to download
+                      {t('nav.scanToDownload')}
                     </p>
                     <div className="flex items-center justify-center gap-1.5 mt-1.5">
                       <AppleLogo className="h-3 w-3 text-muted-foreground/60" />
@@ -204,6 +206,7 @@ export function Navbar({ isAbsolute = false }: NavbarProps) {
                   </div>
                 </div>
               </div>
+              )}
             </nav>
 
             {/* Right Section - Actions */}
@@ -213,7 +216,7 @@ export function Navbar({ isAbsolute = false }: NavbarProps) {
                   href="/dashboard"
                   className="h-8 px-4 text-sm font-medium rounded-lg bg-foreground text-background hover:bg-foreground/90 transition-colors inline-flex items-center justify-center"
                 >
-                  Dashboard
+                  {t('nav.dashboard')}
                 </Link>
               ) : (
                 <Link
@@ -230,7 +233,7 @@ export function Navbar({ isAbsolute = false }: NavbarProps) {
               <button
                 onClick={toggleDrawer}
                 className="md:hidden p-2 rounded-lg hover:bg-accent transition-colors"
-                aria-label="Open menu"
+                aria-label={t('nav.openMenu')}
               >
                 <Menu className="size-5" />
               </button>
@@ -257,7 +260,7 @@ export function Navbar({ isAbsolute = false }: NavbarProps) {
               <button
                 onClick={toggleDrawer}
                 className="border border-border rounded-lg p-2 cursor-pointer hover:bg-accent transition-colors"
-                aria-label="Close menu"
+                aria-label={t('nav.closeMenu')}
               >
                 <X className="size-5" />
               </button>
@@ -297,11 +300,11 @@ export function Navbar({ isAbsolute = false }: NavbarProps) {
                           : 'text-muted-foreground hover:text-foreground'
                       }`}
                     >
-                      {item.name}
+                      {t(`nav.${item.i18nKey}`)}
                     </a>
                   </motion.li>
                 ))}
-                {/* Mobile App Link */}
+                {SHOW_MOBILE_NAV_LINK && (
                 <motion.li variants={drawerMenuVariants}>
                   <Link
                     href="/app"
@@ -312,9 +315,10 @@ export function Navbar({ isAbsolute = false }: NavbarProps) {
                         : 'text-muted-foreground hover:text-foreground'
                     }`}
                   >
-                    Mobile
+                    {t('nav.mobile')}
                   </Link>
                 </motion.li>
+                )}
               </ul>
             </motion.nav>
 
@@ -332,7 +336,7 @@ export function Navbar({ isAbsolute = false }: NavbarProps) {
                     className="w-full h-14 text-lg font-medium rounded-xl bg-foreground text-background hover:bg-foreground/90 transition-colors inline-flex items-center justify-center"
                     onClick={() => setIsDrawerOpen(false)}
                   >
-                    Dashboard
+                    {t('nav.dashboard')}
                   </Link>
                 ) : (
                   <Link

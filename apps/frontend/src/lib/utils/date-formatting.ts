@@ -1,7 +1,7 @@
 /**
  * Format a date string for display in sidebar lists
  * Shows "how long ago" relative to now
- * Works with group headers that already show "Today", "Yesterday", "This Week", etc.
+ * Works with group headers that use locale keys: today, yesterday, thisWeek, etc.
  * 
  * @param dateString - ISO date string to format
  * @returns Formatted date string (e.g., "5m ago", "2h ago", "Mon", "Dec 25")

@@ -1,6 +1,6 @@
 'use client';
 
-import type { PricingTier } from '@/lib/pricing-config';
+import type { PricingTier, PricingFeatureItem, PricingDisabledItem } from '@/lib/pricing-config';
 import { siteConfig } from '@/lib/site-config';
 import { storeCheckoutData, trackSelectItem, trackViewItem, trackAddToCart, PlanItemData } from '@/lib/analytics/gtm';
 import { cn } from '@/lib/utils';
@@ -64,6 +64,164 @@ interface PriceDisplayProps {
 // All enabled features use CheckIcon for consistency
 const FeatureCheckIcon = () => <CheckIcon className="size-3.5 sm:size-4 text-primary" />;
 
+function PricingPlanFeatureRow({ feature }: { feature: PricingFeatureItem }) {
+  const t = useTranslations('billing');
+
+  const liShell = (key: string, body: React.ReactNode) => (
+    <li key={key} className="flex items-start gap-2 sm:gap-3">
+      <div className="size-4 sm:size-5 min-w-4 sm:min-w-5 flex items-center justify-center mt-0.5">
+        <FeatureCheckIcon />
+      </div>
+      <div className="flex-1">{body}</div>
+    </li>
+  );
+
+  switch (feature.kind) {
+    case 'credits_monthly':
+      return liShell(
+        `cm-${feature.credits}`,
+        <span className="text-xs sm:text-sm font-medium">
+          {t('pricingFeatureItems.creditsMonthly', { count: feature.credits })}
+        </span>,
+      );
+    case 'unlimited_chats':
+      return liShell(
+        'uc',
+        <span className="text-xs sm:text-sm font-medium">{t('pricingFeatureItems.unlimitedChats')}</span>,
+      );
+    case 'weekly_credits':
+      return liShell(
+        `wc-${feature.credits}`,
+        <span className="text-xs sm:text-sm font-medium">
+          {t('pricingFeatureItems.weeklyCredits', { count: feature.credits })}
+        </span>,
+      );
+    case 'concurrent_run_single':
+      return liShell(
+        'crs',
+        <span className="text-xs sm:text-sm font-medium">{t('pricingFeatureItems.concurrentRunSingle')}</span>,
+      );
+    case 'basic_mode':
+      return liShell(
+        'bm',
+        <span className="text-xs sm:text-sm font-medium">{t('pricingFeatureItems.basicMode')}</span>,
+      );
+    case 'concurrent_runs':
+      return liShell(
+        `cr-${feature.count}`,
+        <>
+          <span className="text-xs sm:text-sm font-medium">
+            {t('pricingFeatureItems.concurrentRuns', { count: feature.count })}
+          </span>
+          <span className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 hidden sm:block">
+            {t('pricingFeatureItems.concurrentRunsDesc')}
+          </span>
+        </>,
+      );
+    case 'custom_workers':
+      return liShell(
+        `cw-${feature.count}`,
+        <>
+          <div className="flex items-center gap-1 sm:gap-1.5">
+            <span className="text-xs sm:text-sm font-medium">
+              {t('pricingUi.customWorkersFragment', { count: feature.count })}
+            </span>
+            <DobbyLogo size={12} variant="symbol" className="hidden sm:block" />
+            <span className="text-xs sm:text-sm font-medium">{t('pricingUi.aiWorkersLabel')}</span>
+          </div>
+          <span className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 hidden sm:block">
+            {t('pricingFeatureItems.customWorkersDesc')}
+          </span>
+        </>,
+      );
+    case 'custom_workers_short':
+      return liShell(
+        `cws-${feature.count}`,
+        <span className="text-xs sm:text-sm font-medium">
+          {t('pricingFeatureItems.customWorkersShort', { count: feature.count })}
+        </span>,
+      );
+    case 'scheduled_triggers':
+      return liShell(
+        `st-${feature.count}`,
+        <>
+          <span className="text-xs sm:text-sm font-medium">
+            {t('pricingFeatureItems.scheduledTriggers', { count: feature.count })}
+          </span>
+          <span className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 hidden sm:block">
+            {t('pricingFeatureItems.scheduledTriggersDesc')}
+          </span>
+        </>,
+      );
+    case 'app_triggers':
+      return liShell(
+        `at-${feature.count}`,
+        <>
+          <span className="text-xs sm:text-sm font-medium">
+            {t('pricingFeatureItems.appTriggers', { count: feature.count })}
+          </span>
+          <span className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 hidden sm:block">
+            {t('pricingFeatureItems.appTriggersDesc')}
+          </span>
+        </>,
+      );
+    case 'integrations_100':
+      return liShell(
+        'i100',
+        <>
+          <span className="text-xs sm:text-sm font-medium">{t('pricingFeatureItems.integrations100')}</span>
+          <span className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 hidden sm:block">
+            {t('pricingFeatureItems.integrations100Desc')}
+          </span>
+        </>,
+      );
+    case 'advanced_mode':
+      return liShell(
+        'adv',
+        <>
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+            <span className="text-[10px] sm:text-xs text-muted-foreground/60 line-through">{t('pricingUi.basic')}</span>
+            <span className="text-muted-foreground/40 text-xs">→</span>
+            <span className="inline-flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2 py-0.5 bg-primary/10 dark:bg-primary/15 rounded-md">
+              <DobbyLogo size={10} variant="symbol" className="sm:hidden" />
+              <DobbyLogo size={12} variant="symbol" className="hidden sm:block" />
+              <span className="text-[10px] sm:text-xs font-semibold text-primary">{t('pricingUi.advanced')}</span>
+            </span>
+          </div>
+          <span className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 hidden sm:block">
+            {t('pricingFeatureItems.advancedModeDesc')}
+          </span>
+        </>,
+      );
+    case 'private_projects':
+      return liShell(
+        'pp',
+        <span className="text-xs sm:text-sm font-medium">{t('pricingFeatureItems.privateProjects')}</span>,
+      );
+    case 'premium_models':
+      return liShell(
+        'pmd',
+        <span className="text-xs sm:text-sm font-medium">{t('pricingFeatureItems.premiumModels')}</span>,
+      );
+    case 'priority_support':
+      return liShell(
+        'ps',
+        <span className="text-xs sm:text-sm font-medium">{t('pricingFeatureItems.prioritySupport')}</span>,
+      );
+    case 'account_manager':
+      return liShell(
+        'am',
+        <span className="text-xs sm:text-sm font-medium">{t('pricingFeatureItems.accountManager')}</span>,
+      );
+    case 'custom_deployment':
+      return liShell(
+        'cd',
+        <span className="text-xs sm:text-sm font-medium">{t('pricingFeatureItems.customDeployment')}</span>,
+      );
+    default:
+      return null;
+  }
+}
 // Components
 function PriceDisplay({ price, isCompact }: PriceDisplayProps) {
   return (
@@ -454,9 +612,9 @@ function PricingCard({
         if (targetAmount > currentAmount || isSameTierUpgradeToLongerTerm || isBillingPeriodChange) {
           if (isBillingPeriodChange && isSameTierCheck) {
             if (isSameTierUpgradeToLongerTerm) {
-              buttonText = effectiveBillingPeriod === 'yearly_commitment' ? tCommon('upgrade') : 'Switch to Yearly';
+              buttonText = effectiveBillingPeriod === 'yearly_commitment' ? tCommon('upgrade') : t('pricingUi.switchToYearly');
             } else {
-              buttonText = 'Switch to Monthly';
+              buttonText = t('pricingUi.switchToMonthly');
             }
             buttonVariant = 'default';
             buttonClassName = 'bg-primary hover:bg-primary/90 text-primary-foreground';
@@ -569,7 +727,7 @@ function PricingCard({
           <div className="flex items-center gap-2">
             {isPopularHighlight && (
               <span className="text-[10px] sm:text-xs font-medium text-primary-foreground bg-primary px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full">
-                Most Popular
+                {t('pricingUi.mostPopular')}
               </span>
             )}
             {isAuthenticated && statusBadge}
@@ -586,7 +744,7 @@ function PricingCard({
               </span>
               {annualSavings && annualSavings > 0 && (
                 <span className="text-xs sm:text-sm font-medium text-green-600 dark:text-green-400">
-                  Save {formatPrice(annualSavings, currency)}
+                  {t('pricingUi.saveAmount', { amount: formatPrice(annualSavings, currency) })}
                 </span>
               )}
             </>
@@ -598,7 +756,9 @@ function PricingCard({
           {!isFreeTier && (
             <span className="text-xs text-muted-foreground">
               {effectiveBillingPeriod === 'yearly' && tier.yearlyPrice
-                ? `${convertPriceString(tier.yearlyPrice, currency)} billed annually`
+                ? t('pricingUi.billedAnnually', {
+                    price: convertPriceString(tier.yearlyPrice, currency),
+                  })
                 : t('perMonth')}
             </span>
           )}
@@ -609,112 +769,27 @@ function PricingCard({
       <div className="flex-grow relative z-10 px-4 sm:px-5 pb-2 sm:pb-3">
         {tier.features && tier.features.length > 0 && (
           <ul className="space-y-2.5 sm:space-y-3">
-            {tier.features.map((feature) => {
-              // Handle bonus credits format
-              if (feature.startsWith('CREDITS_BONUS:')) {
-                const parts = feature.split(':');
-                const originalCredits = parseInt(parts[1]).toLocaleString();
-                const bonusCredits = parseInt(parts[2]).toLocaleString();
-                return (
-                  <li key={feature} className="flex items-start gap-2 sm:gap-3">
-                    <div className="size-4 sm:size-5 min-w-4 sm:min-w-5 flex items-center justify-center mt-0.5">
-                      <FeatureCheckIcon />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                        <span className="text-xs sm:text-sm text-muted-foreground line-through">{originalCredits}</span>
-                        <span className="text-xs sm:text-sm font-bold text-foreground">{bonusCredits}</span>
-                        <span className="text-xs sm:text-sm font-medium">Monthly Credits</span>
-                        <Badge className="text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-600 dark:text-amber-400 border-amber-500/30">
-                          2x BONUS
-                        </Badge>
-                      </div>
-                      <span className="text-[10px] sm:text-xs text-muted-foreground hidden sm:block">Refreshes each billing cycle</span>
-                    </div>
-                  </li>
-                );
-              }
-
-              // Handle custom AI Workers
-              if (feature.includes('custom AI Workers')) {
-                const match = feature.match(/(\d+)\s*custom AI Workers/);
-                const description = feature.split(' - ')[1];
-                if (match) {
-                  return (
-                    <li key={feature} className="flex items-start gap-2 sm:gap-3">
-                      <div className="size-4 sm:size-5 min-w-4 sm:min-w-5 flex items-center justify-center mt-0.5">
-                        <FeatureCheckIcon />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-1 sm:gap-1.5">
-                          <span className="text-xs sm:text-sm font-medium">{match[1]} custom</span>
-                          <DobbyLogo size={12} variant="symbol" className="hidden sm:block" />
-                          <span className="text-xs sm:text-sm font-medium">AI Workers</span>
-                        </div>
-                        {description && (
-                          <span className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 hidden sm:block">{description}</span>
-                        )}
-                      </div>
-                    </li>
-                  );
-                }
-              }
-
-              // Handle Dobby Advanced mode
-              if (feature.includes('Advanced mode') || feature.includes('ADVANCED Mode')) {
-                const description = feature.split(' - ')[1];
-                return (
-                  <li key={feature} className="flex items-start gap-2 sm:gap-3">
-                    <div className="size-4 sm:size-5 min-w-4 sm:min-w-5 flex items-center justify-center mt-0.5">
-                      <FeatureCheckIcon />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                        <span className="text-[10px] sm:text-xs text-muted-foreground/60 line-through">Basic</span>
-                        <span className="text-muted-foreground/40 text-xs">→</span>
-                        <span className="inline-flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2 py-0.5 bg-primary/10 dark:bg-primary/15 rounded-md">
-                          <DobbyLogo size={10} variant="symbol" className="sm:hidden" />
-                          <DobbyLogo size={12} variant="symbol" className="hidden sm:block" />
-                          <span className="text-[10px] sm:text-xs font-semibold text-primary">Advanced</span>
-                        </span>
-                      </div>
-                      {description && (
-                        <span className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 hidden sm:block">{description}</span>
-                      )}
-                    </div>
-                  </li>
-                );
-              }
-
-              // Default feature rendering
-              const featureParts = feature.split(' - ');
-              const mainFeature = featureParts[0];
-              const description = featureParts[1];
-
-              return (
-                <li key={feature} className="flex items-start gap-2 sm:gap-3">
-                  <div className="size-4 sm:size-5 min-w-4 sm:min-w-5 flex items-center justify-center mt-0.5">
-                    <FeatureCheckIcon />
-                  </div>
-                  <div className="flex-1">
-                    <span className="text-xs sm:text-sm font-medium">{mainFeature}</span>
-                    {description && (
-                      <span className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 hidden sm:block">{description}</span>
-                    )}
-                  </div>
-                </li>
-              );
-            })}
+            {tier.features.map((feature, fIdx) => (
+              <PricingPlanFeatureRow key={`${feature.kind}-${fIdx}`} feature={feature} />
+            ))}
           </ul>
         )}
 
         {/* Disabled features for free tier */}
         {tier.disabledFeatures && tier.disabledFeatures.length > 0 && (
           <ul className="space-y-1.5 sm:space-y-2 mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-border/50">
-            {tier.disabledFeatures.map((feature) => (
-              <li key={feature} className="flex items-center gap-2 sm:gap-3 opacity-50">
+            {tier.disabledFeatures.map((item, i) => (
+              <li key={i} className="flex items-center gap-2 sm:gap-3 opacity-50">
                 <X className="size-3.5 sm:size-4 text-muted-foreground" />
-                <span className="text-xs sm:text-sm text-muted-foreground line-through">{feature}</span>
+                <span className="text-xs sm:text-sm text-muted-foreground line-through">
+                  {item.kind === 'no_custom_workers'
+                    ? t('pricingDisabled.noCustomWorkers')
+                    : item.kind === 'no_scheduled_triggers'
+                      ? t('pricingDisabled.noScheduledTriggers')
+                      : item.kind === 'no_app_triggers'
+                        ? t('pricingDisabled.noAppTriggers')
+                        : t('pricingDisabled.noIntegrations')}
+                </span>
               </li>
             ))}
           </ul>
@@ -799,6 +874,7 @@ function BasicTierCard({
   returnUrl: string;
 }) {
   const t = useTranslations('billing');
+  const tCommon = useTranslations('common');
   const scheduleDowngradeMutation = useScheduleDowngrade();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [isSubscribing, setIsSubscribing] = useState(false);
@@ -888,7 +964,7 @@ function BasicTierCard({
     }
   };
 
-  let buttonText = 'Get started';
+  let buttonText = tCommon('tryFree');
   let buttonDisabled = false;
   let buttonVariant: 'outline' | 'default' = 'outline';
   let onClickHandler: () => void = handleSelectFreePlan;
@@ -912,21 +988,21 @@ function BasicTierCard({
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-3">
             <TierBadge planName={tier.name} size="lg" variant="default" />
-            <span className="text-sm text-muted-foreground font-medium">Free forever</span>
+            <span className="text-sm text-muted-foreground font-medium">{t('pricingUi.freeForever')}</span>
           </div>
           <p className="text-sm text-muted-foreground">{tier.description}</p>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
             <span className="flex items-center gap-1.5">
               <CheckIcon className="size-3.5 text-muted-foreground" />
-              300 weekly credits
+              {t('pricingFeatureItems.weeklyCreditsShort', { count: 300 })}
             </span>
             <span className="flex items-center gap-1.5">
               <CheckIcon className="size-3.5 text-muted-foreground" />
-              1 concurrent run
+              {t('pricingFeatureItems.concurrentRunSingle')}
             </span>
             <span className="flex items-center gap-1.5">
               <CheckIcon className="size-3.5 text-muted-foreground" />
-              Basic Mode
+              {t('pricingFeatureItems.basicModeShort')}
             </span>
           </div>
         </div>
@@ -1179,7 +1255,7 @@ export function PricingSection({
                     <span className={cn(
                       "text-sm font-medium transition-colors w-16 text-center",
                       !isYearly ? "text-foreground" : "text-muted-foreground"
-                    )}>Monthly</span>
+                    )}>{t('pricingUi.monthly')}</span>
                     <button
                       onClick={() => handleBillingPeriodChange(isYearly ? 'monthly' : 'yearly')}
                       className={cn(
@@ -1199,13 +1275,13 @@ export function PricingSection({
                     <span className={cn(
                       "text-sm font-medium transition-colors w-14 text-center",
                       isYearly ? "text-foreground" : "text-muted-foreground"
-                    )}>Annual</span>
+                    )}>{t('pricingUi.annual')}</span>
                     <div
                       className="overflow-hidden transition-all duration-200 ease-out"
                       style={{ width: isYearly ? '78px' : '0px', marginLeft: isYearly ? '8px' : '0px' }}
                     >
                       <Badge className="text-xs font-medium whitespace-nowrap bg-green-500/15 text-green-600 dark:text-green-400 border border-green-500/30">
-                        Save 15%
+                        {t('pricingUi.savePercent', { percent: 15 })}
                       </Badge>
                     </div>
                   </div>
@@ -1213,14 +1289,14 @@ export function PricingSection({
               ) : (
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <h2 className="text-2xl pb-2 sm:pb-0 sm:text-3xl font-semibold tracking-tight">
-                    {customTitle || 'Pick the plan that works for you.'}
+                    {customTitle || t('pickPlan')}
                   </h2>
                   {/* Monthly/Yearly Toggle */}
                   <div className="self-start sm:self-auto inline-flex items-center bg-muted/50 rounded-full pl-4 py-2" style={{ paddingRight: isYearly ? '8px' : '16px', transition: 'padding-right 200ms ease' }}>
                     <span className={cn(
                       "text-sm font-medium transition-colors w-16 text-center",
                       !isYearly ? "text-foreground" : "text-muted-foreground"
-                    )}>Monthly</span>
+                    )}>{t('pricingUi.monthly')}</span>
                     <button
                       onClick={() => handleBillingPeriodChange(isYearly ? 'monthly' : 'yearly')}
                       className={cn(
@@ -1240,13 +1316,13 @@ export function PricingSection({
                     <span className={cn(
                       "text-sm font-medium transition-colors w-14 text-center",
                       isYearly ? "text-foreground" : "text-muted-foreground"
-                    )}>Annual</span>
+                    )}>{t('pricingUi.annual')}</span>
                     <div
                       className="overflow-hidden transition-all duration-200 ease-out"
                       style={{ width: isYearly ? '78px' : '0px', marginLeft: isYearly ? '8px' : '0px' }}
                     >
                       <Badge className="text-xs font-medium whitespace-nowrap bg-green-500/15 text-green-600 dark:text-green-400 border border-green-500/30">
-                        Save 15%
+                        {t('pricingUi.savePercent', { percent: 15 })}
                       </Badge>
                     </div>
                   </div>
@@ -1262,7 +1338,7 @@ export function PricingSection({
                 <span className={cn(
                   "text-sm font-medium transition-colors w-16 text-center",
                   !isYearly ? "text-foreground" : "text-muted-foreground"
-                )}>Monthly</span>
+                )}>{t('pricingUi.monthly')}</span>
                 <button
                   onClick={() => handleBillingPeriodChange(isYearly ? 'monthly' : 'yearly')}
                   className={cn(
@@ -1282,13 +1358,13 @@ export function PricingSection({
                 <span className={cn(
                   "text-sm font-medium transition-colors w-14 text-center",
                   isYearly ? "text-foreground" : "text-muted-foreground"
-                )}>Annual</span>
+                )}>{t('pricingUi.annual')}</span>
                 <div
                   className="overflow-hidden transition-all duration-200 ease-out"
                   style={{ width: isYearly ? '78px' : '0px', marginLeft: isYearly ? '8px' : '0px' }}
                 >
                   <Badge className="text-xs font-medium whitespace-nowrap bg-green-500/15 text-green-600 dark:text-green-400 border border-green-500/30">
-                    Save 15%
+                    {t('pricingUi.savePercent', { percent: 15 })}
                   </Badge>
                 </div>
               </div>

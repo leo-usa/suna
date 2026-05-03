@@ -355,7 +355,7 @@ export function NavUserWithTeams({
 
               {/* General Section */}
               <DropdownMenuLabel className="text-muted-foreground text-xs px-2 py-1.5">
-                General
+                {t('generalSection')}
               </DropdownMenuLabel>
               <DropdownMenuGroup>
                 <DropdownMenuItem
@@ -366,18 +366,18 @@ export function NavUserWithTeams({
                   className="gap-2 p-2"
                 >
                   <Zap className="h-4 w-4" />
-                  <span>Plan</span>
+                  <span>{t('plan')}</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link href="/knowledge" className="gap-2 p-2">
                     <FileText className="h-4 w-4" />
-                    <span>Knowledge Base</span>
+                    <span>{t('knowledgeBase')}</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link href="/support" className="gap-2 p-2">
                     <LifeBuoy className="h-4 w-4" />
-                    <span>Support</span>
+                    <span>{t('support')}</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem
@@ -388,7 +388,7 @@ export function NavUserWithTeams({
                   className="gap-2 p-2"
                 >
                   <CreditCard className="h-4 w-4" />
-                  <span>Billing</span>
+                  <span>{t('billing')}</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
@@ -398,18 +398,18 @@ export function NavUserWithTeams({
                   className="gap-2 p-2"
                 >
                   <TrendingDown className="h-4 w-4" />
-                  <span>Usage</span>
+                  <span>{t('usage')}</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link href="/settings/credentials" className="gap-2 p-2">
                     <Plug className="h-4 w-4" />
-                    <span>Integrations</span>
+                    <span>{t('integrations')}</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link href="/settings/api-keys" className="gap-2 p-2">
                     <Key className="h-4 w-4" />
-                    <span>API Keys</span>
+                    <span>{t('apiKeys')}</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem
@@ -420,12 +420,12 @@ export function NavUserWithTeams({
                   className="gap-2 p-2"
                 >
                   <Settings className="h-4 w-4" />
-                  <span>Settings</span>
+                  <span>{t('settings')}</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link href="/tutorials" className="gap-2 p-2">
                     <BookOpen className="h-4 w-4" />
-                    <span>Tutorials</span>
+                    <span>{t('tutorials')}</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem
@@ -443,14 +443,14 @@ export function NavUserWithTeams({
                 <>
                   <DropdownMenuSeparator className="my-1" />
                   <DropdownMenuLabel className="text-muted-foreground text-xs px-2 py-1.5">
-                    Advanced
+                    {t('advanced')}
                   </DropdownMenuLabel>
                   <DropdownMenuGroup>
                     {user.isAdmin && (
                       <DropdownMenuItem asChild>
                         <Link href="/admin/feedback" className="gap-2 p-2">
                           <MessageSquare className="h-4 w-4" />
-                          <span>User Feedback</span>
+                          <span>{t('userFeedback')}</span>
                         </Link>
                       </DropdownMenuItem>
                     )}
@@ -458,7 +458,7 @@ export function NavUserWithTeams({
                       <DropdownMenuItem asChild>
                         <Link href="/admin/analytics" className="gap-2 p-2">
                           <BarChart3 className="h-4 w-4" />
-                          <span>Analytics</span>
+                          <span>{t('analytics')}</span>
                         </Link>
                       </DropdownMenuItem>
                     )}
@@ -466,7 +466,7 @@ export function NavUserWithTeams({
                       <DropdownMenuItem asChild>
                         <Link href="/admin/notifications" className="gap-2 p-2">
                           <Bell className="h-4 w-4" />
-                          <span>Notifications</span>
+                          <span>{t('notificationsMenu')}</span>
                         </Link>
                       </DropdownMenuItem>
                     )}
@@ -474,7 +474,7 @@ export function NavUserWithTeams({
                       <DropdownMenuItem asChild>
                         <Link href="/admin/utils" className="gap-2 p-2">
                           <AlertTriangle className="h-4 w-4" />
-                          <span>Admin Utils</span>
+                          <span>{t('adminUtils')}</span>
                         </Link>
                       </DropdownMenuItem>
                     )}
@@ -482,7 +482,7 @@ export function NavUserWithTeams({
                       <DropdownMenuItem asChild>
                         <Link href="/admin/sandbox-pool" className="gap-2 p-2">
                           <Bell className="h-4 w-4" />
-                          <span>Sandbox Pool</span>
+                          <span>{t('sandboxPool')}</span>
                         </Link>
                       </DropdownMenuItem>
                     )}
@@ -490,7 +490,7 @@ export function NavUserWithTeams({
                       <DropdownMenuItem asChild>
                         <Link href="/admin/stateless" className="gap-2 p-2">
                           <Bell className="h-4 w-4" />
-                          <span>Stateless</span>
+                          <span>{t('stateless')}</span>
                         </Link>
                       </DropdownMenuItem>
                     )}
@@ -498,7 +498,7 @@ export function NavUserWithTeams({
                       <DropdownMenuItem asChild>
                         <Link href="/admin/stress-test" className="gap-2 p-2">
                           <Zap className="h-4 w-4" />
-                          <span>Stress Test</span>
+                          <span>{t('stressTest')}</span>
                         </Link>
                       </DropdownMenuItem>
                     )}
@@ -511,7 +511,7 @@ export function NavUserWithTeams({
                         className="gap-2 p-2"
                       >
                         <KeyRound className="h-4 w-4" />
-                        <span>Local .Env Manager</span>
+                        <span>{t('localEnvManager')}</span>
                       </DropdownMenuItem>
                     )}
                   </DropdownMenuGroup>

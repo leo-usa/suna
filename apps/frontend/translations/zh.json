@@ -29,7 +29,44 @@
     "next": "下一步",
     "upgrade": "升级",
     "basic": "基础版",
-    "tryFree": "开始"
+    "tryFree": "开始",
+    "nav": {
+      "home": "首页",
+      "about": "关于",
+      "pricing": "定价",
+      "tutorials": "教程",
+      "mobile": "移动端",
+      "dashboard": "工作台",
+      "scanToDownload": "扫码下载",
+      "openMenu": "打开菜单",
+      "closeMenu": "关闭菜单"
+    },
+    "previous": "上一页"
+  },
+  "aboutPage": {
+    "visasLabel": "签证",
+    "stamps": {
+      "belgrade": "贝尔格莱德邮戳",
+      "lisbon": "里斯本邮戳",
+      "nyc": "纽约邮戳",
+      "sanFrancisco": "旧金山邮戳",
+      "london": "伦敦邮戳",
+      "malaga": "马拉加邮戳",
+      "bali": "巴厘岛邮戳",
+      "dobbyLogo": "Dobby"
+    },
+    "paragraphs": {
+      "p0": "很多 AI 停在「想」这一步，我们做的是会真正「干」的。",
+      "p1": "Dobby 是会干活的 AI：不只给答案，更能把事情做完——调研、写代码、撰稿、管项目、跑工作流，从头到尾。",
+      "p2": "我们从一件很朴素的事说起：大家把太多时间花在执行上，反而没留给真正能推动进展的工作。",
+      "p3": "所以我们做了一个负责「动手」的 AI：调研、草稿、代码、跟进——占满你日程却不定义你价值的那部分。",
+      "p4": "不是要取代人，而是把人解放出来。琐碎交给 AI，策略、创意和决策留给自己。",
+      "p5": "我们不追 hype，我们在做可靠到能托付正事的工具——能上线、在需要时真的顶用。",
+      "p6": "目标很简单：给每个人一个从不掉线、从不抱怨、只负责执行的 AI 队友，让能力放大十倍。",
+      "p7": "这就是我们在这的原因。",
+      "hiringLead": "想和我们一起打造它吗？ ",
+      "hiringLink": "我们在招聘。"
+    }
   },
   "settings": {
     "title": "设置",
@@ -38,9 +75,11 @@
       "plan": "计划",
       "billing": "账单",
       "usage": "使用情况",
+      "memory": "记忆",
       "referrals": "推荐",
       "knowledgeBase": "知识库",
       "integrations": "集成",
+      "apiKeys": "API 密钥",
       "envManager": "环境管理器"
     },
     "general": {
@@ -146,7 +185,23 @@
     },
     "billing": {
       "title": "账单和订阅",
+      "statusTitle": "账单状态",
       "description": "管理您的积分和订阅",
+      "creditsLabelTotal": "总计",
+      "creditsLabelDaily": "每日",
+      "creditsLabelMonthly": "每月",
+      "creditsLabelExtra": "额外",
+      "dailyRefreshHours": "{hours}小时",
+      "scheduledTierChange": "将于 {date} 切换至 {tier}",
+      "downgradeScheduled": "已安排降级",
+      "scheduledPlanChangeTitle": "已计划的套餐变更",
+      "scheduledChangeToday": "今天",
+      "scheduledChangeDaysLeft": "还有 {days} 天",
+      "scheduledChangeEffectiveOn": "{date} 起",
+      "scheduledChangeUndo": "撤销",
+      "keepCurrentPlan": "保留当前套餐",
+      "loadSubscriptionFailed": "无法加载订阅数据",
+      "notAvailable": "暂无",
       "totalCredits": "总可用积分",
       "allCredits": "所有积分",
       "monthlyCredits": "月度积分",
@@ -182,12 +237,55 @@
       "title": "使用情况"
     },
     "knowledgeBase": {
+      "title": "知识库",
+      "description": "上传并管理供智能体使用的文档",
+      "comingSoonTitle": "即将推出",
+      "comingSoonDescription": "知识库功能正在开发中。上线后，您可上传文档与文件，供智能体引用，以获得更准确、更符合上下文的回复。",
       "opening": "正在打开知识库",
       "redirecting": "正在重定向到知识库页面..."
     },
     "integrations": {
       "opening": "正在打开集成",
-      "redirecting": "正在重定向到集成页面..."
+      "redirecting": "正在重定向到集成页面...",
+      "credentialsPageTitle": "应用凭据",
+      "composioLoadError": "无法加载 Composio 连接，请重试。",
+      "noConnectionsTitle": "暂无连接",
+      "noConnectionsDescription": "为智能体连接集成后，可在此管理。",
+      "connectNewApp": "连接新应用",
+      "connectNewAppDialogTitle": "连接新应用",
+      "searchPlaceholder": "搜索应用与配置…",
+      "noResultsTitle": "未找到结果",
+      "noResultsDescription": "尝试调整搜索词或浏览全部应用",
+      "clearSearch": "清除搜索",
+      "statsLine": "{apps, plural, other {# 个应用}}，{profiles, plural, other {# 个配置}}（{connected} 已连接）",
+      "statsLineFiltered": "{apps, plural, other {# 个应用}}，{profiles, plural, other {# 个配置}}",
+      "columnProfileName": "配置名称",
+      "columnMcpUrl": "MCP URL",
+      "noUrlAvailable": "暂无 URL",
+      "defaultProfileTitle": "默认配置",
+      "close": "关闭",
+      "streamableHttp": "Streamable HTTP",
+      "chars": "{count} 字符",
+      "profilesCount": "{count, plural, other {# 个配置}}",
+      "viewMcpUrl": "查看 MCP URL",
+      "setAsDefault": "设为默认",
+      "removeDefault": "取消默认",
+      "deleteProfile": "删除配置",
+      "deleteProfiles": "删除 {count} 个配置",
+      "deleteProfileSingle": "删除配置",
+      "deleteProfileConfirmTitle": "删除配置",
+      "deleteProfilesConfirmTitle": "删除 {count} 个配置",
+      "deleteProfileConfirmBody": "确定要删除「{name}」吗？此操作无法撤销。",
+      "deleteProfilesConfirmBody": "确定要删除 {count} 个配置吗？此操作无法撤销。",
+      "deleteProfilesIntegrationWarningRich": "<warning>注意：</warning>这可能影响现有集成。",
+      "composioDeleting": "删除中…",
+      "mcpUrlCopied": "MCP URL 已复制到剪贴板",
+      "mcpUrlCopyFailed": "复制 URL 失败",
+      "mcpSecurityWarningRich": "<bold>安全提示：</bold>此 MCP URL 包含敏感的身份验证信息，切勿分享。任何获得该 URL 的人都可能代表您执行操作。",
+      "mcpConnectionUrlLabel": "MCP 连接 URL",
+      "toggleHide": "隐藏",
+      "toggleShow": "显示",
+      "mcpUrlLoadError": "无法加载 MCP URL，请重试。"
     },
     "memory": {
       "title": "AI记忆",
@@ -222,7 +320,68 @@
         "preference": "偏好",
         "context": "上下文",
         "conversation_summary": "对话"
-      }
+      },
+      "comingSoonTitle": "即将推出",
+      "comingSoonDescription": "记忆功能正在开发中。上线后，Dobby 将能记住对话中的重要信息，以提供更个性化、更符合上下文的回复。"
+    },
+    "apiKeysPage": {
+      "pageTitle": "API 密钥",
+      "pageSubtitle": "管理用于通过编程方式访问 Dobby 的 API 密钥",
+      "apiHeading": "Dobby API",
+      "betaBadge": "测试版",
+      "betaDescription": "我们的 API 目前处于测试阶段。使用这些 API 密钥接入编程接口，构建自定义应用与自动化。",
+      "viewDocs": "查看 API 文档",
+      "securityNote": "API 密钥使用公钥/密钥对进行安全认证",
+      "newKeyButton": "新建 API 密钥",
+      "createDialogTitle": "创建 API 密钥",
+      "createDialogDescription": "创建用于编程访问账户的新 API 密钥。",
+      "titleLabel": "标题 *",
+      "titlePlaceholder": "我的 API 密钥",
+      "descriptionLabel": "描述",
+      "descriptionPlaceholder": "此密钥的可选描述",
+      "expiresLabel": "过期时间",
+      "expiresNever": "永不过期",
+      "expires7": "7 天",
+      "expires30": "30 天",
+      "expires90": "90 天",
+      "expires365": "1 年",
+      "cancel": "取消",
+      "creating": "创建中…",
+      "createSubmit": "创建 API 密钥",
+      "loadError": "无法加载 API 密钥，请重试。",
+      "emptyTitle": "暂无 API 密钥",
+      "emptyDescription": "创建第一对 API 密钥以通过编程方式使用 Dobby API。每对密钥包含用于安全认证的公钥标识与密钥。",
+      "createdLabel": "创建于",
+      "expiresMeta": "过期时间",
+      "lastUsed": "上次使用",
+      "revoke": "撤销",
+      "delete": "删除",
+      "revokeDialogTitle": "撤销 API 密钥",
+      "revokeDialogDescription": "确定要撤销「{title}」吗？此操作无法撤销，使用此密钥的应用将停止工作。",
+      "revokeConfirm": "撤销密钥",
+      "deleteDialogTitle": "删除 API 密钥",
+      "deleteDialogDescription": "确定要永久删除「{title}」吗？此操作无法撤销。",
+      "deleteConfirm": "删除密钥",
+      "createdDialogTitle": "API 密钥已创建",
+      "createdDialogDescription": "您的 API 密钥已成功创建",
+      "apiKeyLabel": "API 密钥",
+      "importantStore": "重要：请妥善保存此 API 密钥。出于安全原因，我们无法再次显示。",
+      "close": "关闭",
+      "statusActive": "启用",
+      "statusRevoked": "已撤销",
+      "statusExpired": "已过期",
+      "toastCreated": "API 密钥创建成功",
+      "toastCreateFailed": "创建 API 密钥失败",
+      "toastRevoked": "API 密钥已撤销",
+      "toastRevokeFailed": "撤销 API 密钥失败",
+      "toastDeleted": "API 密钥已删除",
+      "toastDeleteFailed": "删除 API 密钥失败",
+      "toastCopied": "{type} 已复制到剪贴板",
+      "toastCopyFailed": "复制 {type} 失败",
+      "toastFullCopied": "完整 API 密钥已复制到剪贴板",
+      "toastFullCopyFailed": "复制完整 API 密钥失败",
+      "keyTypePublic": "公钥",
+      "keyTypeSecret": "密钥"
     }
   },
   "triggers": {
@@ -285,9 +444,19 @@
     "new": "新",
     "upgrade": "升级",
     "chats": "聊天",
-    "library": "Files",
+    "library": "文件",
     "triggers": "触发器",
     "newChat": "新聊天",
+    "files": "文件",
+    "workers": "工作助手",
+    "dateGroups": {
+      "today": "今天",
+      "yesterday": "昨天",
+      "thisWeek": "本周",
+      "thisMonth": "本月",
+      "last3Months": "近三个月",
+      "older": "更早"
+    },
     "newAgent": "新 Worker",
     "settings": "设置",
     "logout": "退出登录",
@@ -321,6 +490,17 @@
     "advanced": "高级",
     "plan": "计划",
     "knowledgeBase": "知识库",
+    "generalSection": "常规",
+    "support": "帮助与支持",
+    "tutorials": "教程",
+    "userFeedback": "用户反馈",
+    "analytics": "数据分析",
+    "notificationsMenu": "通知",
+    "adminUtils": "管理员工具",
+    "sandboxPool": "沙箱池",
+    "stateless": "无状态",
+    "stressTest": "压力测试",
+    "localEnvManager": "本地 .Env 管理",
     "conversation": "对话",
     "conversations": "对话",
     "startNewChat": "开始新聊天",
@@ -335,7 +515,30 @@
     "selectAllConversations": "全选对话",
     "deselectAllConversations": "取消全选对话",
     "loadMore": "加载更多",
-    "remaining": "剩余"
+    "remaining": "剩余",
+    "threadSearchSearching": "搜索中…",
+    "deleteConversationTitle": "删除对话",
+    "deleteConversationsTitle": "删除对话",
+    "deleteConversationDescriptionRich": "确定要删除对话 <bold>「{name}」</bold> 吗？",
+    "deleteConversationsBulkDescriptionRich": "确定要删除 <bold>{name}</bold> 吗？",
+    "deleteConversationCannotUndo": "此操作无法撤销。",
+    "deleteConversationDeleting": "正在删除…",
+    "threadMenuNewChat": "新对话",
+    "threadMenuRename": "重命名",
+    "threadMenuDelete": "删除",
+    "threadMenuOpenChat": "打开对话",
+    "renameProjectTooltip": "重命名",
+    "newChatTooltip": "新对话",
+    "creatingChatTooltip": "创建中…",
+    "projectChatCount": "{count} 个对话",
+    "bulkDeleteConversationSummary": "{count} 个对话",
+    "deleteConversationsTooltip": "删除 {count} 个对话",
+    "toastDeletingConversations": "正在删除 {count} 个对话…",
+    "toastConversationsDeletedSuccess": "已成功删除 {count} 个对话",
+    "toastConversationsDeleteFailed": "未能删除 {count} 个对话",
+    "toastDeleteConversationsError": "删除对话时出错",
+    "toastDeleteInitError": "无法开始删除",
+    "toastConversationDeletedSuccess": "对话已删除"
   },
   "dashboard": {
     "title": "仪表板",
@@ -368,7 +571,7 @@
       ],
       "random": [
         "欢迎回来！",
-        "嘿！Kortix能为你做什么？",
+        "嘿！Dobby 能为你做什么？",
         "你想完成什么？",
         "让我们创造点厉害的东西",
         "随时准备好！",
@@ -383,7 +586,21 @@
         "在想什么？",
         "出发吧！"
       ]
-    }
+    },
+    "usageLimitsDescription": "当前套餐的资源上限",
+    "usageUnlimited": "无限制",
+    "usageRowChats": "聊天",
+    "usageRowChatsTip": "与 AI Worker 的对话总数",
+    "usageRowConcurrentRuns": "并发运行",
+    "usageRowConcurrentRunsTip": "同时运行的 AI Worker 数量",
+    "usageRowCustomWorkers": "自定义 AI Worker",
+    "usageRowCustomWorkersTip": "使用自定义指令创建个性化 AI Worker",
+    "usageRowIntegrations": "集成",
+    "usageRowIntegrationsTip": "添加外部工具集成与 API",
+    "usageRowScheduledTriggers": "定时触发器",
+    "usageRowScheduledTriggersTip": "按时间自动化（每日、每周、每小时运行）",
+    "usageRowAppTriggers": "应用触发器",
+    "usageRowAppTriggersTip": "基于事件的自动化（新邮件、CRM 条目、Notion 页面等）"
   },
   "thread": {
     "integrations": "集成",
@@ -625,7 +842,47 @@
           "title": "积分优先级：",
           "description": "当你使用 Dobby 时，过期积分首先被消耗。只有在过期积分用完后，才会使用不过期积分。"
         }
-      }
+      },
+      "resourceUsage": {
+        "aiActivityLabel": "AI 活动：",
+        "aiActivityText": "处理请求、生成响应、做出决策，以及在任务执行期间运行 AI 模型。",
+        "dobbyComputerLabel": "Dobby 计算机：",
+        "dobbyComputerText": "为代码执行、浏览器自动化和交互式任务处理提供支持的运行环境。",
+        "fileStorageLabel": "文件存储与管理：",
+        "fileStorageText": "存储、整理和管理任务过程中创建的文件。",
+        "webSearchLabel": "网络搜索：",
+        "webSearchText": "在互联网上搜索完成任务所需的信息、数据和资源。",
+        "peopleSearchLabel": "人员搜索：",
+        "peopleSearchText": "查找和获取有关人员、联系人和专业数据的信息。",
+        "thirdPartyLabel": "第三方服务：",
+        "thirdPartyText": "访问扩展智能体能力的外部 API、数据库和集成服务。"
+      },
+      "afterTaskComplete": "任务完成后不会再消耗积分。您已完成的工作、已存储的文件和已部署的项目可持续访问，无需持续消耗积分。",
+      "refundPolicyAlert": "若任务因我方系统错误而失败，我们将自动退还该任务已使用的全部积分。我们会持续改进基础设施，使积分使用更高效。",
+      "typesOverviewIntro": "积分分为两类：过期与不过期。运行任务时，扣款顺序为：先扣过期积分（每日/每周，再月度），再扣不过期积分。",
+      "typeCards": {
+        "dailyWeeklyTitle": "每日 / 每周",
+        "dailyWeeklyBody": "免费档：每周 300 积分。付费档：每日 200 积分。用不完不结转——到期重置。",
+        "monthlyTitle": "每月",
+        "monthlyBody": "包含在订阅计划中。每个计费周期开始时刷新，不结转。",
+        "extraTitle": "额外",
+        "extraBody": "购买或赠送的永久有效积分。随时可用，需要时总在账上。"
+      },
+      "expiringDetailsTitle": "过期积分（每日/每周 + 每月）",
+      "expiringDailyWeeklyLabel": "每日/每周积分：",
+      "expiringDailyWeeklyText": "免费档每周 300 积分，付费档每日 200 积分。请在账单页面查看下次刷新时间。未用完不结转。",
+      "expiringMonthlyLabel": "每月积分：",
+      "expiringMonthlyText": "订阅的主要积分额度。每个计费周期开始时刷新，不累积——请在周期内使用。",
+      "expiringPromotionalLabel": "促销积分：",
+      "expiringPromotionalText": "活动或推荐获得的奖励积分，带有过期时间，请在到期前使用。",
+      "nonExpiringDetailsTitle": "不过期积分（额外）",
+      "nonExpiringTopUpLabel": "充值积分：",
+      "nonExpiringTopUpText": "按需购买的额外积分，永不过期，高级会员可用。",
+      "nonExpiringPromoGrantsLabel": "促销赠送：",
+      "nonExpiringPromoGrantsText": "部分促销发放的积分不设过期时间，将一直保留在账户中。",
+      "nonExpiringFreeLabel": "免费积分：",
+      "nonExpiringFreeText": "欢迎礼与赠送积分永不过期。",
+      "usagePriorityAlertRich": "<strong>积分使用顺序：</strong>运行任务时，我们始终优先使用过期积分（每日/每周 → 每月），再使用额外积分，帮助您最大化利用各类积分。"
     },
     "close": "关闭",
     "cancelScheduledChange": "取消计划更改",
@@ -663,6 +920,57 @@
     "selectPlan": "选择套餐",
     "changeScheduled": "更改已计划",
     "notAvailable": "不可用",
+    "pricingUi": {
+      "monthly": "月付",
+      "annual": "年付",
+      "savePercent": "省 {percent}%",
+      "mostPopular": "最受欢迎",
+      "saveAmount": "省 {amount}",
+      "billedAnnually": "{price} 按年计费",
+      "switchToYearly": "切换到年付",
+      "switchToMonthly": "切换到月付",
+      "freeForever": "永久免费",
+      "creditsBonusBadge": "双倍奖励",
+      "monthlyCreditsLabel": "月度积分",
+      "refreshesEachCycle": "每个计费周期刷新",
+      "customWorkersFragment": "{count, number} 个自定义",
+      "aiWorkersLabel": "AI Worker",
+      "basic": "基础",
+      "advanced": "高级"
+    },
+    "pricingFeatureItems": {
+      "creditsMonthly": "每月 {count, number} 积分",
+      "unlimitedChats": "无限聊天",
+      "weeklyCredits": "每周 {count, number} 积分 — 每 7 天刷新",
+      "weeklyCreditsShort": "每周 {count, number} 积分",
+      "basicModeShort": "基础模式",
+      "concurrentRunSingle": "1 个并发运行",
+      "basicMode": "基础模式 — 核心 Dobby 体验与基础自主能力",
+      "concurrentRuns": "{count, number} 个并发运行",
+      "concurrentRunsDesc": "同时运行多个聊天",
+      "customWorkers": "{count, number} 个自定义 AI Worker",
+      "customWorkersDesc": "创建具备自定义知识、工具与集成的 Dobby Worker",
+      "customWorkersShort": "{count, number} 个自定义 Worker",
+      "scheduledTriggers": "{count, number} 个定时触发器",
+      "scheduledTriggersDesc": "如每日 9 点、每周一、每月首日…",
+      "appTriggers": "{count, number} 个应用触发器",
+      "appTriggersDesc": "自动响应新邮件、Slack 消息、表单提交等",
+      "integrations100": "100+ 集成",
+      "integrations100Desc": "Google Drive、Slack、Notion、Gmail、日历、GitHub 等",
+      "advancedMode": "Dobby 高级模式",
+      "advancedModeDesc": "最强的自主决策能力",
+      "privateProjects": "私有项目",
+      "premiumModels": "高级 AI 模型",
+      "prioritySupport": "优先支持",
+      "accountManager": "专属客户经理",
+      "customDeployment": "自定义部署"
+    },
+    "pricingDisabled": {
+      "noCustomWorkers": "无自定义 AI Worker",
+      "noScheduledTriggers": "无定时触发器",
+      "noAppTriggers": "无应用触发器",
+      "noIntegrations": "无集成"
+    },
     "features": {
       "creditsPerMonth": "{count} 积分/月",
       "customWorker": "{count} 个自定义 Worker",
@@ -696,6 +1004,38 @@
         "resultsNotGood": "结果没有达到我的期望",
         "other": "其他原因"
       }
+    },
+    "threadUsageDetail": {
+      "loadError": "无法加载线程使用情况",
+      "usageTitle": "使用情况",
+      "selectedPeriod": "所选时间段",
+      "creditsConsumed": "已消耗积分",
+      "perConversationSubtitle": "各对话的积分消耗",
+      "noUsage": "暂无线程使用记录。",
+      "noUsageInRange": "在 {from} 至 {to} 期间未找到线程使用记录。",
+      "pagination": "显示第 {from}-{to} 条，共 {total} 条"
+    },
+    "creditPurchase": {
+      "title": "购买额外积分",
+      "description": "充值预付费积分以继续使用 Dobby。积分不过期。",
+      "currentBalance": "当前余额：",
+      "creditsPackLabel": "积分",
+      "paymentMethod": "支付方式",
+      "payCard": "银行卡",
+      "payAlipay": "支付宝",
+      "payWeChatPay": "微信支付",
+      "continue": "继续",
+      "processing": "处理中…",
+      "notAvailableTitle": "暂无法购买积分",
+      "notAvailableDescription": "当前账户暂时无法购买预付费积分。",
+      "notAvailableAlert": "若认为有误，请刷新页面或联系客服。",
+      "minPurchase": "最低购买金额为 {amount}",
+      "maxPurchase": "最高购买金额为 {amount}",
+      "selectPackageOrAmount": "请选择套餐或输入有效金额",
+      "checkoutSessionFailed": "无法创建结账会话",
+      "noCheckoutUrl": "未收到结账链接",
+      "creditBalanceTitle": "积分余额",
+      "addCredits": "充值积分"
     }
   },
   "auth": {
@@ -1256,6 +1596,161 @@
       },
       "manageButton": "管理记忆",
       "dismissButton": "知道了"
+    }
+  },
+  "support": {
+    "loading": "加载中…",
+    "hero": {
+      "title": "我们随时为您提供帮助",
+      "subtitle": "联系我们的团队获取支持。工作日我们通常会在 24 小时内回复。",
+      "emailSupport": "邮件支持",
+      "browseFaqs": "浏览常见问题",
+      "directEmailRich": "或直接发送邮件至 <email>support@dobby.now</email>"
+    },
+    "contact": {
+      "title": "联系支持",
+      "subtitle": "多种方式与我们的团队取得联系",
+      "emailTitle": "邮件支持",
+      "emailBody": "发送详细说明，我们会尽快回复。",
+      "responseTitle": "响应时间",
+      "responseBody": "我们努力在工作日（周一至周五）24 小时内回复。",
+      "businessHours": "营业时间：美中时间（CST）上午 9 点 - 下午 6 点",
+      "priorityTitle": "优先支持",
+      "priorityBody": "Pro 与 Team 客户可获得优先支持与专属协助。",
+      "priorityLink": "联系我们"
+    },
+    "faq": {
+      "title": "常见问题",
+      "subtitle": "快速查找常见问题的答案",
+      "q1": {
+        "q": "什么是 Dobby？",
+        "a": "Dobby 是能够代您执行真实任务的通用型 AI 助手。与传统对话式助手不同，Dobby 可以在您的应用间采取实际行动、自动化工作流，并自主处理复杂的多步骤任务。"
+      },
+      "q2": {
+        "q": "Dobby 能如何帮助我？",
+        "a": "Dobby 可以自动化重复性任务、管理工作流、与网络服务交互、处理数据、创作内容，并在多个平台之间协调复杂操作。您只需说明需要完成的事项，Dobby 会从头到尾负责执行。"
+      },
+      "q3": {
+        "q": "Dobby 与其他 AI 平台有何不同？",
+        "a": "大多数 AI 平台只提供信息或建议，而 Dobby 会实际执行真实任务。它可以浏览网页、调用 API、管理文件、执行命令，并与您现有工具集成以自主完成任务——而不仅仅是告诉您该怎么做。"
+      },
+      "q4": {
+        "q": "Dobby 能连接我的应用吗？",
+        "a": "可以。Dobby 可通过集成连接数千款应用与服务，与您的工具、API、数据库和工作流交互，在整个技术栈中自动化任务。您可控制 Dobby 能够访问的应用与服务。"
+      },
+      "q5": {
+        "q": "如何提出新功能需求？",
+        "aRich": "我们很欢迎功能建议！请发送邮件至 <email>support@dobby.now</email>，说明您希望增加的功能以及它如何帮助您。我们会认真评估所有建议，并根据用户反馈规划产品路线。"
+      },
+      "q6": {
+        "q": "如何反馈 Bug？",
+        "aRich": "如遇到问题，请发送邮件至 <email>support@dobby.now</email>，附上问题描述、复现步骤以及错误信息；截图或录屏会非常有帮助。我们会尽快排查并修复。"
+      },
+      "q7": {
+        "q": "付款后没有收到积分怎么办？",
+        "aRich": "若付款后积分未到账，请立即联系 <email>support@dobby.now</email>。我们会优先处理账单与积分问题，不论套餐等级，通常可在工作日数小时内处理完毕。"
+      }
+    },
+    "accountDelete": {
+      "title": "注销账户",
+      "subtitle": "如何永久删除您的账户",
+      "sectionTitle": "删除您的账户",
+      "intro": "若要永久删除账户，您有两种方式：",
+      "option1Title": "方式一：联系客服",
+      "option1BodyRich": "您可联系支持团队申请注销。请发送邮件至 <email>support@dobby.now</email> 说明注销请求，我们会为您处理。",
+      "option2Title": "方式二：登录后自助注销",
+      "option2Intro": "若已登录，可在用户设置中自行删除账户：",
+      "step1": "点击屏幕右上角的用户头像",
+      "step2Rich": "在下拉菜单中选择 <strong>设置</strong>",
+      "step3Rich": "向下滚动至 <strong>删除账户</strong> 板块",
+      "step4Rich": "点击 <strong>删除账户</strong> 按钮",
+      "step5Intro": "选择删除方式：",
+      "step5aRich": "<strong>30 天宽限期：</strong>账户将在 30 天后删除，在此期间可随时取消。",
+      "step5bRich": "<strong>立即删除：</strong>账户与所有数据将立即永久删除，且无法撤销。",
+      "step6Rich": "在确认框中输入 <strong>delete</strong>",
+      "step7Rich": "点击最后的 <strong>删除账户</strong> 按钮确认",
+      "note": "注意：删除账户后，您的智能体、会话、凭据、订阅与账单数据将被永久清除。若选择 30 天宽限期，宽限期结束后不可恢复；若选择立即删除，将立刻无法恢复。"
+    },
+    "legal": {
+      "title": "法律信息",
+      "subtitle": "透明度和合规相关文档",
+      "termsTitle": "服务条款",
+      "termsBody": "使用 Dobby 服务的条款与条件，包括用户责任与服务限制。",
+      "termsLink": "阅读条款 →",
+      "privacyTitle": "隐私政策",
+      "privacyBody": "我们如何收集、使用和保护您的个人信息。我们重视数据隐私与安全。",
+      "privacyLink": "阅读政策 →",
+      "imprintTitle": "法律声明/公司信息",
+      "imprintBody": "Dobby AI Corp 的公司与注册信息等法律详情。",
+      "imprintLink": "查看法律信息 →"
+    },
+    "footer": {
+      "title": "还有疑问？",
+      "subtitle": "我们的支持团队随时准备为您解答问题。",
+      "contactSupport": "联系支持",
+      "generalInquiries": "一般咨询：",
+      "securityIssues": "安全问题："
+    }
+  },
+  "tutorialsPage": {
+    "eyebrow": "学习 Dobby",
+    "heading": "教程",
+    "description": "循序渐进的互动教程，帮助您充分利用 Dobby。从入门到进阶工作流，掌握每一项功能。",
+    "chaptersNav": "章节目录",
+    "chapterLabel": "第 {number} 章",
+    "comingSoon": "即将推出",
+    "placeholderTitle": "教程暂时不可用",
+    "placeholderSubtitle": "嵌入的演示链接已被删除或归档。",
+    "clickToInteract": "点击以交互",
+    "moreTitle": "更多教程即将上线",
+    "moreDescription": "我们会持续添加新教程，帮助您更好地使用 Dobby。欢迎常回来看看最新内容与技巧。",
+    "resources": "资源",
+    "supportLink": "支持",
+    "contactUs": "联系我们",
+    "chapters": {
+      "introduction-to-kortix": {
+        "title": "Dobby 简介",
+        "description": "全面了解 Dobby，并认识多种 AI 驱动的内容生成模式，助力提升工作流效率。"
+      },
+      "getting-started-first-task": {
+        "title": "入门：您的第一个任务",
+        "description": "学习如何创建并完成第一个任务。本教程带您走通核心流程，快速上手。"
+      },
+      "create-export-presentations": {
+        "title": "如何创建与导出演示文稿",
+        "description": "了解如何用 Dobby 制作精美演示文稿，并导出为多种格式以便分享与演示。"
+      },
+      "create-manage-files": {
+        "title": "如何用 Dobby 创建与管理文件",
+        "description": "学习创建、整理与管理文件，包括下载数据、导出为 Excel 等格式。"
+      },
+      "create-videos-images": {
+        "title": "创建视频与图像",
+        "description": "探索 Dobby 的媒体创作能力，学习如何利用 AI 生成视频与图像以丰富项目。"
+      },
+      "canvas-feature": {
+        "title": "使用画布（Canvas）功能",
+        "description": "掌握画布功能，可视化设计与整理内容，用于创意工作流。"
+      },
+      "custom-workers-manual": {
+        "title": "创建自定义 Worker——手动配置",
+        "description": "学习如何通过手动配置设置自定义 AI Worker，探索集成选项并按需定制。"
+      }
+    }
+  },
+  "dobbyComputer": {
+    "sandbox": {
+      "noProjectTitle": "无项目",
+      "noProjectDescription": "需要项目才能访问此计算机",
+      "checkingStatus": "正在检查状态…",
+      "titleStarting": "正在启动计算机…",
+      "titleFailed": "启动失败",
+      "titleNotRunning": "计算机未运行",
+      "descStarting": "可能需要最多约一分钟。",
+      "descFailed": "出现问题，请重试。",
+      "descOffline": "启动计算机后即可浏览与管理文件。",
+      "startComputer": "启动计算机",
+      "startingUp": "正在启动…"
     }
   }
 }

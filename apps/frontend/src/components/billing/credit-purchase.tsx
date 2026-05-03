@@ -20,7 +20,7 @@ import { toast } from '@/lib/toast';
 import { formatCredits } from '@agentpress/shared';
 import { useUserCurrency } from '@/hooks/use-user-currency';
 import { formatPrice } from '@/lib/utils/currency';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 
 interface CreditPurchaseProps {
     open: boolean;
@@ -56,6 +56,8 @@ export function CreditPurchaseModal({
 }: CreditPurchaseProps) {
     const { currency } = useUserCurrency();
     const locale = useLocale();
+    const t = useTranslations('billing');
+    const tClose = useTranslations('common');
     const [selectedPackage, setSelectedPackage] = useState<CreditPackage | null>(null);
     const [customAmount, setCustomAmount] = useState<string>('');
     const [paymentMethod, setPaymentMethod] = useState<CreditPaymentMethod>(
@@ -66,11 +68,11 @@ export function CreditPurchaseModal({
 
     const handlePurchase = async (amount: number) => {
         if (amount < 10) {
-            setError(`Minimum purchase amount is ${formatPrice(10, currency)}`);
+            setError(t('creditPurchase.minPurchase', { amount: formatPrice(10, currency) }));
             return;
         }
         if (amount > 5000) {
-            setError(`Maximum purchase amount is ${formatPrice(5000, currency)}`);
+            setError(t('creditPurchase.maxPurchase', { amount: formatPrice(5000, currency) }));
             return;
         }
         setIsProcessing(true);
@@ -86,11 +88,11 @@ export function CreditPurchaseModal({
             if (response.checkout_url) {
                 window.location.href = response.checkout_url;
             } else {
-                throw new Error('No checkout URL received');
+                throw new Error(t('creditPurchase.noCheckoutUrl'));
             }
         } catch (err: any) {
             console.error('Credit purchase error:', err);
-            const errorMessage = err.details?.detail || err.message || 'Failed to create checkout session';
+            const errorMessage = err.details?.detail || err.message || t('creditPurchase.checkoutSessionFailed');
             setError(errorMessage);
             toast.error(errorMessage);
         } finally {
@@ -115,7 +117,7 @@ export function CreditPurchaseModal({
         if (!isNaN(amount)) {
             handlePurchase(amount);
         } else {
-            setError('Please select a package or enter a valid amount');
+            setError(t('creditPurchase.selectPackageOrAmount'));
         }
     };
 
@@ -124,20 +126,20 @@ export function CreditPurchaseModal({
             <Dialog open={open} onOpenChange={onOpenChange}>
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
-                        <DialogTitle>Credits Not Available</DialogTitle>
+                        <DialogTitle>{t('creditPurchase.notAvailableTitle')}</DialogTitle>
                         <DialogDescription>
-                            Prepaid credits are not available for this account right now.
+                            {t('creditPurchase.notAvailableDescription')}
                         </DialogDescription>
                     </DialogHeader>
                     <Alert>
                         <AlertCircle className="h-4 w-4" />
                         <AlertDescription>
-                            Please refresh the page or contact support if you believe this is a mistake.
+                            {t('creditPurchase.notAvailableAlert')}
                         </AlertDescription>
                     </Alert>
                     <div className="flex justify-end">
                         <Button variant="outline" onClick={() => onOpenChange(false)}>
-                            Close
+                            {tClose('close')}
                         </Button>
                     </div>
                 </DialogContent>
@@ -149,15 +151,16 @@ export function CreditPurchaseModal({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-2xl">
                 <DialogHeader>
-                    <DialogTitle>Get additional credits</DialogTitle>
+                    <DialogTitle>{t('creditPurchase.title')}</DialogTitle>
                     <DialogDescription>
-                        Add prepaid credits to continue using Suna. Credits do not expire.
+                        {t('creditPurchase.description')}
                     </DialogDescription>
                 </DialogHeader>
 
                 {currentBalance > 0 && (
                     <div className="text-sm text-muted-foreground">
-                        Current balance: {formatCredits(currentBalance, { showDecimals: true })}
+                        {t('creditPurchase.currentBalance')}{' '}
+                        {formatCredits(currentBalance, { showDecimals: true })}
                     </div>
                 )}
 
@@ -175,14 +178,14 @@ export function CreditPurchaseModal({
                                 >
                                     <CardContent className="p-4 text-center">
                                         <div className="text-xl font-medium">{formatPrice(pkg.amount, currency)}</div>
-                                        <div className="text-xs text-muted-foreground mt-1">Credits</div>
+                                        <div className="text-xs text-muted-foreground mt-1">{t('creditPurchase.creditsPackLabel')}</div>
                                     </CardContent>
                                 </Card>
                             ))}
                         </div>
                     </div>
                     <div className="space-y-2">
-                        <Label className="text-sm font-medium">Payment method</Label>
+                        <Label className="text-sm font-medium">{t('creditPurchase.paymentMethod')}</Label>
                         <RadioGroup
                             value={paymentMethod}
                             onValueChange={(value) => setPaymentMethod(value as CreditPaymentMethod)}
@@ -194,7 +197,7 @@ export function CreditPurchaseModal({
                             >
                                 <RadioGroupItem value="card" id="credit-payment-card" />
                                 <CreditCard className="h-4 w-4" />
-                                <span>Card</span>
+                                <span>{t('creditPurchase.payCard')}</span>
                             </Label>
                             <Label
                                 htmlFor="credit-payment-alipay"
@@ -204,7 +207,7 @@ export function CreditPurchaseModal({
                                 <span className="flex h-4 w-4 items-center justify-center rounded-sm bg-blue-600 text-[9px] font-semibold text-white">
                                     A
                                 </span>
-                                <span>Alipay</span>
+                                <span>{t('creditPurchase.payAlipay')}</span>
                             </Label>
                             <Label
                                 htmlFor="credit-payment-wechat"
@@ -214,7 +217,7 @@ export function CreditPurchaseModal({
                                 <span className="flex h-4 w-4 items-center justify-center rounded-sm bg-green-600 text-[9px] font-semibold text-white">
                                     W
                                 </span>
-                                <span>WeChat Pay</span>
+                                <span>{t('creditPurchase.payWeChatPay')}</span>
                             </Label>
                         </RadioGroup>
                     </div>
@@ -234,10 +237,10 @@ export function CreditPurchaseModal({
                         {isProcessing ? (
                             <>
                                 <DobbyLoader size="small" className="mr-2" />
-                                Processing...
+                                {t('creditPurchase.processing')}
                             </>
                         ) : (
-                            'Continue'
+                            t('creditPurchase.continue')
                         )}
                     </Button>
                 </div>
@@ -251,18 +254,19 @@ export function CreditBalanceDisplay({ balance, canPurchase, onPurchaseClick }: 
     canPurchase: boolean;
     onPurchaseClick?: () => void;
 }) {
+    const t = useTranslations('billing');
     return (
         <Card>
             <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium flex items-center justify-between">
-                    <span>Credit Balance</span>
+                    <span>{t('creditPurchase.creditBalanceTitle')}</span>
                     {canPurchase && onPurchaseClick && (
                         <Button
                             size="sm"
                             variant="outline"
                             onClick={onPurchaseClick}
                         >
-                            Add Credits
+                            {t('creditPurchase.addCredits')}
                         </Button>
                     )}
                 </CardTitle>

@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Key, Plus, Trash2, Copy, Shield, ExternalLink } from 'lucide-react';
+import { useLocale, useTranslations } from 'next-intl';
 import { DobbyLogo } from '@/components/sidebar/dobby-logo';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from '@/lib/toast';
@@ -68,7 +69,8 @@ export default function APIKeysPage() {
     useState<APIKeyCreateResponse | null>(null);
   const [showCreatedKey, setShowCreatedKey] = useState(false);
   const queryClient = useQueryClient();
-
+  const t = useTranslations('settings.apiKeysPage');
+  const locale = useLocale();
 
   // Fetch API keys
   const {
@@ -91,15 +93,15 @@ export default function APIKeysPage() {
         setShowCreatedKey(true);
         setIsCreateDialogOpen(false);
         queryClient.invalidateQueries({ queryKey: ['api-keys'] });
-        toast.success('API key created successfully');
+        toast.success(t('toastCreated'));
         // Reset form
         setNewKeyData({ title: '', description: '', expiresInDays: 'never' });
       } else {
-        toast.error(response.error?.message || 'Failed to create API key');
+        toast.error(response.error?.message || t('toastCreateFailed'));
       }
     },
     onError: (error) => {
-      toast.error('Failed to create API key');
+      toast.error(t('toastCreateFailed'));
       console.error('Error creating API key:', error);
     },
   });
@@ -109,10 +111,10 @@ export default function APIKeysPage() {
     mutationFn: (keyId: string) => apiKeysApi.revoke(keyId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['api-keys'] });
-      toast.success('API key revoked successfully');
+      toast.success(t('toastRevoked'));
     },
     onError: (error) => {
-      toast.error('Failed to revoke API key');
+      toast.error(t('toastRevokeFailed'));
       console.error('Error revoking API key:', error);
     },
   });
@@ -146,9 +148,9 @@ export default function APIKeysPage() {
   const handleCopyKey = async (key: string, keyType: string = 'key') => {
     try {
       await navigator.clipboard.writeText(key);
-      toast.success(`${keyType} copied to clipboard`);
+      toast.success(t('toastCopied', { type: keyType }));
     } catch (error) {
-      toast.error(`Failed to copy ${keyType}`);
+      toast.error(t('toastCopyFailed', { type: keyType }));
     }
   };
 
@@ -156,20 +158,20 @@ export default function APIKeysPage() {
     try {
       const fullKey = `${publicKey}:${secretKey}`;
       await navigator.clipboard.writeText(fullKey);
-      toast.success('Full API key copied to clipboard');
+      toast.success(t('toastFullCopied'));
     } catch (error) {
-      toast.error('Failed to copy full API key');
+      toast.error(t('toastFullCopyFailed'));
     }
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+    return new Intl.DateTimeFormat(locale, {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
-    });
+    }).format(new Date(dateString));
   };
 
   const getStatusBadge = (status: string) => {
@@ -177,19 +179,19 @@ export default function APIKeysPage() {
       case 'active':
         return (
           <Badge className="bg-green-100 text-green-800 border-green-200">
-            Active
+            {t('statusActive')}
           </Badge>
         );
       case 'revoked':
         return (
           <Badge className="bg-red-100 text-red-800 border-red-200">
-            Revoked
+            {t('statusRevoked')}
           </Badge>
         );
       case 'expired':
         return (
           <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
-            Expired
+            {t('statusExpired')}
           </Badge>
         );
       default:
@@ -208,10 +210,10 @@ export default function APIKeysPage() {
       <div className="space-y-4 sm:space-y-6">
         <div className="space-y-1 sm:space-y-2">
           <div className="flex items-center gap-3">
-            <h1 className="text-xl sm:text-2xl font-medium">API Keys</h1>
+            <h1 className="text-xl sm:text-2xl font-medium">{t('pageTitle')}</h1>
           </div>
           <p className="text-sm sm:text-base text-muted-foreground">
-            Manage your API keys for programmatic access to Dobby
+            {t('pageSubtitle')}
           </p>
         </div>
 
@@ -225,14 +227,13 @@ export default function APIKeysPage() {
               <div className="flex-1 space-y-2 sm:space-y-3">
                 <div>
                   <h3 className="text-sm sm:text-base font-semibold text-blue-900 dark:text-blue-100 mb-1 flex items-center gap-2">
-                    Dobby API
+                    {t('apiHeading')}
                     <Badge variant="secondary" className="h-5 px-1.5 text-xs bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700">
-                      Beta
+                      {t('betaBadge')}
                     </Badge>
                   </h3>
                   <p className="text-xs sm:text-sm text-blue-700 dark:text-blue-300 leading-relaxed">
-                    Our API is currently in beta. Use these API keys to integrate with our
-                    programmatic interface for building custom applications and automations.
+                    {t('betaDescription')}
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
@@ -242,7 +243,7 @@ export default function APIKeysPage() {
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 text-xs sm:text-sm font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
                   >
-                    <span>View API Documentation</span>
+                    <span>{t('viewDocs')}</span>
                     <ExternalLink className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   </a>
                 </div>
@@ -256,7 +257,7 @@ export default function APIKeysPage() {
           <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
             <Shield className="w-4 h-4 flex-shrink-0" />
             <span className="leading-relaxed">
-              API keys use a public/secret key pair for secure authentication
+              {t('securityNote')}
             </span>
           </div>
 
@@ -267,25 +268,25 @@ export default function APIKeysPage() {
             <DialogTrigger asChild>
               <Button>
                 <Plus className="w-4 h-4 mr-2" />
-                New API Key
+                {t('newKeyButton')}
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-md">
               <DialogHeader>
-                <DialogTitle>Create API Key</DialogTitle>
+                <DialogTitle>{t('createDialogTitle')}</DialogTitle>
                 <DialogDescription>
-                  Create a new API key for programmatic access to your account.
+                  {t('createDialogDescription')}
                 </DialogDescription>
               </DialogHeader>
 
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="title" className="m-1">
-                    Title *
+                    {t('titleLabel')}
                   </Label>
                   <Input
                     id="title"
-                    placeholder="My API Key"
+                    placeholder={t('titlePlaceholder')}
                     value={newKeyData.title}
                     onChange={(e) =>
                       setNewKeyData((prev) => ({
@@ -298,11 +299,11 @@ export default function APIKeysPage() {
 
                 <div>
                   <Label htmlFor="description" className="m-1">
-                    Description
+                    {t('descriptionLabel')}
                   </Label>
                   <Textarea
                     id="description"
-                    placeholder="Optional description for this API key"
+                    placeholder={t('descriptionPlaceholder')}
                     value={newKeyData.description}
                     onChange={(e) =>
                       setNewKeyData((prev) => ({
@@ -315,7 +316,7 @@ export default function APIKeysPage() {
 
                 <div>
                   <Label htmlFor="expires" className="m-1">
-                    Expires In
+                    {t('expiresLabel')}
                   </Label>
                   <Select
                     value={newKeyData.expiresInDays}
@@ -327,14 +328,14 @@ export default function APIKeysPage() {
                     }
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Never expires" />
+                      <SelectValue placeholder={t('expiresNever')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="never">Never expires</SelectItem>
-                      <SelectItem value="7">7 days</SelectItem>
-                      <SelectItem value="30">30 days</SelectItem>
-                      <SelectItem value="90">90 days</SelectItem>
-                      <SelectItem value="365">1 year</SelectItem>
+                      <SelectItem value="never">{t('expiresNever')}</SelectItem>
+                      <SelectItem value="7">{t('expires7')}</SelectItem>
+                      <SelectItem value="30">{t('expires30')}</SelectItem>
+                      <SelectItem value="90">{t('expires90')}</SelectItem>
+                      <SelectItem value="365">{t('expires365')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -345,7 +346,7 @@ export default function APIKeysPage() {
                   variant="outline"
                   onClick={() => setIsCreateDialogOpen(false)}
                 >
-                  Cancel
+                  {t('cancel')}
                 </Button>
                 <Button
                   onClick={handleCreateAPIKey}
@@ -353,7 +354,7 @@ export default function APIKeysPage() {
                     !newKeyData.title.trim() || createMutation.isPending
                   }
                 >
-                  {createMutation.isPending ? 'Creating...' : 'Create API Key'}
+                  {createMutation.isPending ? t('creating') : t('createSubmit')}
                 </Button>
               </div>
             </DialogContent>
@@ -379,7 +380,7 @@ export default function APIKeysPage() {
           <Card>
             <CardContent className="p-6 text-center">
               <p className="text-muted-foreground">
-                Failed to load API keys. Please try again.
+                {t('loadError')}
               </p>
             </CardContent>
           </Card>
@@ -387,15 +388,13 @@ export default function APIKeysPage() {
           <Card>
             <CardContent className="p-6 text-center">
               <Key className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium mb-2">No API keys yet</h3>
+              <h3 className="text-lg font-medium mb-2">{t('emptyTitle')}</h3>
               <p className="text-muted-foreground mb-4">
-                Create your first API key pair to start using the Dobby API
-                programmatically. Each key includes a public identifier and
-                secret for secure authentication.
+                {t('emptyDescription')}
               </p>
               <Button onClick={() => setIsCreateDialogOpen(true)}>
                 <Plus className="w-4 h-4 mr-2" />
-                Create API Key
+                {t('createSubmit')}
               </Button>
             </CardContent>
           </Card>
@@ -427,14 +426,14 @@ export default function APIKeysPage() {
                   <div className="space-y-3 sm:space-y-4">
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 text-xs sm:text-sm">
                       <div>
-                        <p className="text-muted-foreground mb-0.5 sm:mb-1">Created</p>
+                        <p className="text-muted-foreground mb-0.5 sm:mb-1">{t('createdLabel')}</p>
                         <p className="font-medium truncate">
                           {formatDate(apiKey.created_at)}
                         </p>
                       </div>
                       {apiKey.expires_at && (
                         <div>
-                          <p className="text-muted-foreground mb-0.5 sm:mb-1">Expires</p>
+                          <p className="text-muted-foreground mb-0.5 sm:mb-1">{t('expiresMeta')}</p>
                           <p
                             className={`font-medium truncate ${isKeyExpired(apiKey.expires_at) ? 'text-yellow-600' : ''}`}
                           >
@@ -445,7 +444,7 @@ export default function APIKeysPage() {
                       {apiKey.last_used_at && (
                         <div className="col-span-2 sm:col-span-1">
                           <p className="text-muted-foreground mb-0.5 sm:mb-1">
-                            Last Used
+                            {t('lastUsed')}
                           </p>
                           <p className="font-medium truncate">
                             {formatDate(apiKey.last_used_at)}
@@ -461,27 +460,27 @@ export default function APIKeysPage() {
                         <AlertDialogTrigger asChild>
                           <Button variant="outline" size="sm">
                             <Trash2 className="w-4 h-4 mr-2" />
-                            Revoke
+                            {t('revoke')}
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
-                            <AlertDialogTitle>Revoke API Key</AlertDialogTitle>
+                            <AlertDialogTitle>{t('revokeDialogTitle')}</AlertDialogTitle>
                             <AlertDialogDescription>
-                              Are you sure you want to revoke "{apiKey.title}"?
-                              This action cannot be undone and any applications
-                              using this key will stop working.
+                              {t('revokeDialogDescription', {
+                                title: apiKey.title,
+                              })}
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
                             <AlertDialogAction
                               onClick={() =>
                                 revokeMutation.mutate(apiKey.key_id)
                               }
                               className="bg-destructive hover:bg-destructive/90 text-white"
                             >
-                              Revoke Key
+                              {t('revokeConfirm')}
                             </AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
@@ -496,26 +495,27 @@ export default function APIKeysPage() {
                           <AlertDialogTrigger asChild>
                             <Button variant="outline" size="sm">
                               <Trash2 className="w-4 h-4 mr-2" />
-                              Delete
+                              {t('delete')}
                             </Button>
                           </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>
-                              <AlertDialogTitle>Delete API Key</AlertDialogTitle>
+                              <AlertDialogTitle>{t('deleteDialogTitle')}</AlertDialogTitle>
                               <AlertDialogDescription>
-                                Are you sure you want to permanently delete "
-                                {apiKey.title}"? This action cannot be undone.
+                                {t('deleteDialogDescription', {
+                                  title: apiKey.title,
+                                })}
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
                               <AlertDialogAction
                                 onClick={() =>
                                   deleteMutation.mutate(apiKey.key_id)
                                 }
                                 className="bg-destructive hover:bg-destructive/90 text-white"
                               >
-                                Delete Key
+                                {t('deleteConfirm')}
                               </AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>
@@ -534,17 +534,17 @@ export default function APIKeysPage() {
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Shield className="w-5 h-5 text-green-600" />
-                API Key Created
+                {t('createdDialogTitle')}
               </DialogTitle>
               <DialogDescription>
-                Your API key has been created successfully
+                {t('createdDialogDescription')}
               </DialogDescription>
             </DialogHeader>
 
             {createdApiKey && (
               <div className="space-y-4">
                 <div>
-                  <Label className="m-1">API Key</Label>
+                  <Label className="m-1">{t('apiKeyLabel')}</Label>
                   <div className="flex gap-2">
                     <Input
                       value={`${createdApiKey.public_key}:${createdApiKey.secret_key}`}
@@ -569,8 +569,7 @@ export default function APIKeysPage() {
                 <div className="space-y-3">
                   <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
                     <p className="text-sm text-yellow-800">
-                      <strong>Important:</strong> Store this API key securely.
-                      For security reasons, we cannot show it again.
+                      {t('importantStore')}
                     </p>
                   </div>
                 </div>
@@ -578,7 +577,7 @@ export default function APIKeysPage() {
             )}
 
             <div className="flex justify-end">
-              <Button onClick={() => setShowCreatedKey(false)}>Close</Button>
+              <Button onClick={() => setShowCreatedKey(false)}>{t('close')}</Button>
             </div>
           </DialogContent>
         </Dialog>

@@ -3,6 +3,7 @@
 import { NextIntlClientProvider } from 'next-intl';
 import { ReactNode, useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { locales, defaultLocale, type Locale } from '@/i18n/config';
+import { loadMessages } from '@/i18n/load-messages';
 import { detectBestLocale } from '@/lib/utils/geo-detection';
 import { useAuth } from '@/components/AuthProvider';
 import type { User } from '@supabase/supabase-js';
@@ -13,15 +14,10 @@ import defaultTranslations from '../../translations/en.json';
 
 async function getTranslations(locale: Locale) {
   try {
-    // Return cached default translations immediately for English
-    if (locale === 'en') {
-      return defaultTranslations;
-    }
-    return (await import(`../../translations/${locale}.json`)).default;
+    return loadMessages(locale);
   } catch (error) {
     console.error(`Failed to load translations for locale ${locale}:`, error);
-    // Fallback to English if locale file doesn't exist
-    return defaultTranslations;
+    return loadMessages(defaultLocale);
   }
 }
 

@@ -56,6 +56,7 @@ import type { ComposioProfileSummary, ComposioToolkitGroup } from '@/hooks/compo
 import { useAccountState } from '@/hooks/billing';
 import { usePricingModalStore } from '@/stores/pricing-modal-store';
 import { isLocalMode } from '@/lib/config';
+import { useTranslations } from 'next-intl';
 
 interface ComposioConnectionsSectionProps {
   className?: string;
@@ -88,6 +89,8 @@ const DeleteConfirmationDialog: React.FC<DeleteConfirmationDialogProps> = ({
   onConfirm,
   isDeleting,
 }) => {
+  const t = useTranslations('settings.integrations');
+  const tCommon = useTranslations('common');
   const isSingle = selectedProfiles.length === 1;
   
   return (
@@ -95,26 +98,33 @@ const DeleteConfirmationDialog: React.FC<DeleteConfirmationDialogProps> = ({
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>
-            {isSingle ? 'Delete Profile' : `Delete ${selectedProfiles.length} Profiles`}
+            {isSingle
+              ? t('deleteProfileConfirmTitle')
+              : t('deleteProfilesConfirmTitle', { count: selectedProfiles.length })}
           </AlertDialogTitle>
           <AlertDialogDescription>
-            {isSingle 
-              ? `Are you sure you want to delete "${selectedProfiles[0]?.profile_name}"? This action cannot be undone.`
-              : `Are you sure you want to delete ${selectedProfiles.length} profiles? This action cannot be undone.`
-            }
+            {isSingle
+              ? t('deleteProfileConfirmBody', {
+                  name: selectedProfiles[0]?.profile_name ?? '',
+                })
+              : t('deleteProfilesConfirmBody', {
+                  count: selectedProfiles.length,
+                })}
             <div className="mt-2 text-amber-600 dark:text-amber-400">
-              <strong>Warning:</strong> This may affect existing integrations.
+              {t.rich('deleteProfilesIntegrationWarningRich', {
+                warning: (chunks) => <strong>{chunks}</strong>,
+              })}
             </div>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={isDeleting}>{tCommon('cancel')}</AlertDialogCancel>
           <AlertDialogAction 
             onClick={onConfirm}
             disabled={isDeleting}
             className="bg-destructive text-white hover:bg-destructive/90"
           >
-            {isDeleting ? 'Deleting...' : 'Delete'}
+            {isDeleting ? t('composioDeleting') : tCommon('delete')}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -129,6 +139,7 @@ const McpUrlDialog: React.FC<McpUrlDialogProps> = ({
   profileName,
   toolkitName,
 }) => {
+  const t = useTranslations('settings.integrations');
   const [showUrl, setShowUrl] = useState(false);
   const { data: urlData, isLoading, error } = useComposioMcpUrl(profileId, open);
 
@@ -144,9 +155,9 @@ const McpUrlDialog: React.FC<McpUrlDialogProps> = ({
     if (urlData?.mcp_url) {
       try {
         await navigator.clipboard.writeText(urlData.mcp_url);
-        toast.success('MCP URL copied to clipboard');
+        toast.success(t('mcpUrlCopied'));
       } catch (err) {
-        toast.error('Failed to copy URL');
+        toast.error(t('mcpUrlCopyFailed'));
       }
     }
   };
@@ -193,13 +204,14 @@ const McpUrlDialog: React.FC<McpUrlDialogProps> = ({
         <div className="space-y-6">
           <Alert className="border-amber-400/50 dark:border-amber-600/30 bg-amber-400/10 dark:bg-amber-900/10">
             <AlertDescription className="text-amber-800 dark:text-amber-600">
-              <strong>Security Warning:</strong> This MCP URL contains sensitive authentication 
-              information and must not be shared. Anyone with access to this URL can perform actions on your behalf.
+              {t.rich('mcpSecurityWarningRich', {
+                bold: (chunks) => <strong>{chunks}</strong>,
+              })}
             </AlertDescription>
           </Alert>
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium">MCP Connection URL</label>
+              <label className="text-sm font-medium">{t('mcpConnectionUrlLabel')}</label>
               <Button
                 variant="ghost"
                 size="sm"
@@ -209,12 +221,12 @@ const McpUrlDialog: React.FC<McpUrlDialogProps> = ({
                 {showUrl ? (
                   <>
                     <EyeOff className="h-4 w-4" />
-                    Hide
+                    {t('toggleHide')}
                   </>
                 ) : (
                   <>
                     <Eye className="h-4 w-4" />
-                    Show
+                    {t('toggleShow')}
                   </>
                 )}
               </Button>
@@ -225,7 +237,7 @@ const McpUrlDialog: React.FC<McpUrlDialogProps> = ({
               <Alert className="border-red-200 bg-red-50">
                 <XCircle className="h-4 w-4 text-red-600" />
                 <AlertDescription className="text-red-800">
-                  Failed to load MCP URL. Please try again.
+                  {t('mcpUrlLoadError')}
                 </AlertDescription>
               </Alert>
             ) : urlData ? (
@@ -249,11 +261,11 @@ const McpUrlDialog: React.FC<McpUrlDialogProps> = ({
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-1">
                       <div className="h-2 w-2 rounded-full bg-blue-500" />
-                      <span>Streamable HTTP</span>
+                      <span>{t('streamableHttp')}</span>
                     </div>
                   </div>
                   {showUrl && (
-                    <span className="font-mono">{urlData.mcp_url.length} chars</span>
+                    <span className="font-mono">{t('chars', { count: urlData.mcp_url.length })}</span>
                   )}
                 </div>
               </div>
@@ -262,7 +274,7 @@ const McpUrlDialog: React.FC<McpUrlDialogProps> = ({
 
           <div className="flex justify-end gap-3">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Close
+              {t('close')}
             </Button>
           </div>
         </div>
@@ -272,6 +284,7 @@ const McpUrlDialog: React.FC<McpUrlDialogProps> = ({
 };
 
 const ToolkitTable: React.FC<ToolkitTableProps> = ({ toolkit }) => {
+  const t = useTranslations('settings.integrations');
   const [selectedProfile, setSelectedProfile] = useState<{
     profileId: string;
     profileName: string;
@@ -311,13 +324,13 @@ const ToolkitTable: React.FC<ToolkitTableProps> = ({ toolkit }) => {
   const columns: DataTableColumn<ComposioProfileSummary>[] = [
     {
       id: 'name',
-      header: 'Profile Name',
+      header: t('columnProfileName'),
       width: 'w-1/3',
       cell: (profile) => (
         <div className="flex items-center gap-2">
           <span className="font-medium">{profile.profile_name}</span>
           {profile.is_default && (
-            <span title="Default profile">
+            <span title={t('defaultProfileTitle')}>
               <Crown className="h-4 w-4 text-amber-500" />
             </span>
           )}
@@ -326,7 +339,7 @@ const ToolkitTable: React.FC<ToolkitTableProps> = ({ toolkit }) => {
     },
     {
       id: 'mcp_url',
-      header: 'MCP URL',
+      header: t('columnMcpUrl'),
       width: 'w-1/3',
       cell: (profile) => (
         <div className="flex items-center gap-2">
@@ -345,7 +358,7 @@ const ToolkitTable: React.FC<ToolkitTableProps> = ({ toolkit }) => {
               </code>
             </div>
           ) : (
-            <span className="text-xs text-muted-foreground">No URL available</span>
+            <span className="text-xs text-muted-foreground">{t('noUrlAvailable')}</span>
           )}
         </div>
       ),
@@ -393,13 +406,13 @@ const ToolkitTable: React.FC<ToolkitTableProps> = ({ toolkit }) => {
                 <>
                   <DropdownMenuItem className="rounded-lg" onClick={() => handleViewUrl(profile.profile_id, profile.profile_name, toolkit.toolkit_name)}>
                     <Eye className="h-4 w-4" />
-                    View MCP URL
+                    {t('viewMcpUrl')}
                   </DropdownMenuItem>
                 </>
               )}
               <DropdownMenuItem className="rounded-lg" onClick={() => handleSetDefault(profile.profile_id)} disabled={setDefaultProfile.isPending}>
                 <CheckCircle2 className="h-4 w-4" />
-                {profile.is_default ? 'Remove Default' : 'Set as Default'}
+                {profile.is_default ? t('removeDefault') : t('setAsDefault')}
               </DropdownMenuItem>
               <DropdownMenuItem 
                 onClick={() => {
@@ -410,7 +423,7 @@ const ToolkitTable: React.FC<ToolkitTableProps> = ({ toolkit }) => {
                 disabled={isDeleting}
               >
                 <Trash2 className="h-4 w-4 text-destructive" />
-                Delete Profile
+                {t('deleteProfile')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -440,7 +453,7 @@ const ToolkitTable: React.FC<ToolkitTableProps> = ({ toolkit }) => {
           <div>
             <h3 className="font-semibold text-foreground">{toolkit.toolkit_name}</h3>
             <p className="text-xs text-muted-foreground">
-              {toolkit.profiles.length} profile{toolkit.profiles.length !== 1 ? 's' : ''}
+              {t('profilesCount', { count: toolkit.profiles.length })}
             </p>
           </div>
         </div>
@@ -463,7 +476,9 @@ const ToolkitTable: React.FC<ToolkitTableProps> = ({ toolkit }) => {
               disabled={isDeleting}
             >
               <Trash2 className="h-4 w-4" />
-              Delete {selectedProfiles.length > 1 ? `${selectedProfiles.length} Profiles` : 'Profile'}
+              {selectedProfiles.length > 1
+                ? t('deleteProfiles', { count: selectedProfiles.length })
+                : t('deleteProfileSingle')}
             </Button>
           ) : null
         }
@@ -493,6 +508,7 @@ const ToolkitTable: React.FC<ToolkitTableProps> = ({ toolkit }) => {
 export const ComposioConnectionsSection: React.FC<ComposioConnectionsSectionProps> = ({
   className,
 }) => {
+  const t = useTranslations('settings.integrations');
   const { data: toolkits, isLoading, error } = useComposioCredentialsProfiles();
   const [searchQuery, setSearchQuery] = useState('');
   const [showRegistry, setShowRegistry] = useState(false);
@@ -577,7 +593,7 @@ export const ComposioConnectionsSection: React.FC<ComposioConnectionsSectionProp
         <Alert className="border-red-200 bg-red-50">
           <XCircle className="h-4 w-4 text-red-600" />
           <AlertDescription className="text-red-800">
-            Failed to load Composio connections. Please try again.
+            {t('composioLoadError')}
           </AlertDescription>
         </Alert>
       </div>
@@ -591,9 +607,9 @@ export const ComposioConnectionsSection: React.FC<ComposioConnectionsSectionProp
           <CardContent className="py-12">
             <div className="text-center">
               <Settings className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium mb-2">No Connections</h3>
+              <h3 className="text-lg font-medium mb-2">{t('noConnectionsTitle')}</h3>
               <p className="text-muted-foreground">
-                Connect integrations to your agents and you will be able to manage them here.
+                {t('noConnectionsDescription')}
               </p>
             </div>
           </CardContent>
@@ -608,8 +624,15 @@ export const ComposioConnectionsSection: React.FC<ComposioConnectionsSectionProp
         <div>
           <p className="text-sm text-muted-foreground">
             {searchQuery 
-              ? `${filteredStats.filteredToolkitsCount} ${filteredStats.filteredToolkitsCount === 1 ? 'app' : 'apps'} with ${filteredStats.filteredProfilesCount} ${filteredStats.filteredProfilesCount === 1 ? 'profile' : 'profiles'} found`
-              : `${stats.uniqueToolkits} ${stats.uniqueToolkits === 1 ? 'app' : 'apps'} with ${stats.totalProfiles} ${stats.totalProfiles === 1 ? 'profile' : 'profiles'} (${stats.connectedProfiles} connected)`
+              ? t('statsLineFiltered', { 
+                  apps: filteredStats.filteredToolkitsCount, 
+                  profiles: filteredStats.filteredProfilesCount,
+                })
+              : t('statsLine', { 
+                  apps: stats.uniqueToolkits, 
+                  profiles: stats.totalProfiles, 
+                  connected: stats.connectedProfiles,
+                })
             }
           </p>
         </div>
@@ -620,13 +643,13 @@ export const ComposioConnectionsSection: React.FC<ComposioConnectionsSectionProp
           className={isFreeTier ? "border-primary text-primary hover:bg-primary hover:text-primary-foreground" : ""}
         >
           {isFreeTier ? <Lock className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-          Connect New App
+          {t('connectNewApp')}
         </Button>
       </div>
       <div className="relative max-w-sm">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Search apps and profiles..."
+          placeholder={t('searchPlaceholder')}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="pl-12 h-12 rounded-xl bg-muted/50 border-0 focus:bg-background focus:ring-2 focus:ring-primary/20 transition-all"
@@ -650,9 +673,9 @@ export const ComposioConnectionsSection: React.FC<ComposioConnectionsSectionProp
                 <Search className="h-6 w-6 text-muted-foreground" />
               </div>
               <div className="space-y-1">
-                <h3 className="font-semibold text-foreground">No results found</h3>
+                <h3 className="font-semibold text-foreground">{t('noResultsTitle')}</h3>
                 <p className="text-sm text-muted-foreground">
-                  Try adjusting your search terms or browse all apps
+                  {t('noResultsDescription')}
                 </p>
               </div>
               <Button 
@@ -660,7 +683,7 @@ export const ComposioConnectionsSection: React.FC<ComposioConnectionsSectionProp
                 variant="outline"
                 size="sm"
               >
-                Clear search
+                {t('clearSearch')}
               </Button>
             </div>
           </CardContent>
@@ -683,7 +706,7 @@ export const ComposioConnectionsSection: React.FC<ComposioConnectionsSectionProp
       <Dialog open={showRegistry} onOpenChange={setShowRegistry}>
         <DialogContent className="p-0 max-w-6xl h-[90vh] overflow-hidden">
           <DialogHeader className="sr-only">
-            <DialogTitle>Connect New App</DialogTitle>
+            <DialogTitle>{t('connectNewAppDialogTitle')}</DialogTitle>
           </DialogHeader>
           <ComposioRegistry
             mode="profile-only"

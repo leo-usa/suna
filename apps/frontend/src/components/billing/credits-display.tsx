@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils';
 import { useQueryClient } from '@tanstack/react-query';
 import { trackCtaUpgrade } from '@/lib/analytics/gtm';
 import { formatCredits } from '@agentpress/shared';
+import { useTranslations } from 'next-intl';
 
 export function CreditsDisplay() {
   const { user } = useAuth();
@@ -19,6 +20,7 @@ export function CreditsDisplay() {
   const [showPlanModal, setShowPlanModal] = useState(false);
   const queryClient = useQueryClient();
   const isLocal = isLocalMode();
+  const tb = useTranslations('billing');
   
   const planName = accountStateSelectors.planName(accountState);
 
@@ -73,7 +75,7 @@ export function CreditsDisplay() {
             {formattedCredits}
           </span>
           <span className="hidden sm:inline text-[13px] font-medium text-muted-foreground dark:text-muted-foreground/60 leading-none whitespace-nowrap">
-            Credits
+            {tb('credits')}
           </span>
         </div>
         <div className="flex items-center justify-center h-5 w-5 sm:h-6 sm:w-6 rounded-full bg-black dark:bg-white group-hover:bg-black/90 dark:group-hover:bg-white/90 transition-colors flex-shrink-0">

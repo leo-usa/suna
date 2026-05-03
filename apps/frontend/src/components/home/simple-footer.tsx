@@ -7,7 +7,10 @@ import { LocaleSwitcher } from '@/components/home/locale-switcher';
 import { ThemeToggle } from '@/components/home/theme-toggle';
 import { useGitHubStars } from '@/hooks/utils';
 
-export function SimpleFooter() {
+/** Flip to `true` when the footer is customized and ready to ship again. */
+const SHOW_SIMPLE_FOOTER = false;
+
+function SimpleFooterInner() {
   const currentYear = new Date().getFullYear();
   const { formattedStars, loading: starsLoading } = useGitHubStars('kortix-ai', 'suna');
 
@@ -165,3 +168,9 @@ export function SimpleFooter() {
   );
 }
 
+export function SimpleFooter() {
+  if (!SHOW_SIMPLE_FOOTER) {
+    return null;
+  }
+  return <SimpleFooterInner />;
+}

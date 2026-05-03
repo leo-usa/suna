@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { useSandboxStatus, useStartSandbox } from '@/hooks/files/use-sandbox-details';
 import { Button } from '@/components/ui/button';
 import { Loader2, Power, AlertTriangle, Monitor } from 'lucide-react';
@@ -16,6 +17,7 @@ interface SandboxStatusViewProps {
  * Shows a simple "Start Computer" button for any non-running state
  */
 export function SandboxStatusView({ projectId, className }: SandboxStatusViewProps) {
+  const t = useTranslations('dobbyComputer.sandbox');
   const { data: sandboxState, isLoading } = useSandboxStatus(projectId, {
     enabled: !!projectId,
   });
@@ -37,9 +39,9 @@ export function SandboxStatusView({ projectId, className }: SandboxStatusViewPro
         <div className="text-center space-y-4">
           <Monitor className="h-12 w-12 mx-auto text-muted-foreground" />
           <div>
-            <h3 className="text-lg font-semibold">No Project</h3>
+            <h3 className="text-lg font-semibold">{t('noProjectTitle')}</h3>
             <p className="text-sm text-muted-foreground mt-1">
-              A project is required to access the computer
+              {t('noProjectDescription')}
             </p>
           </div>
         </div>
@@ -51,7 +53,7 @@ export function SandboxStatusView({ projectId, className }: SandboxStatusViewPro
     return (
       <div className={cn('flex flex-col items-center justify-center h-full p-8', className)}>
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        <p className="text-sm text-muted-foreground mt-4">Checking status...</p>
+        <p className="text-sm text-muted-foreground mt-4">{t('checkingStatus')}</p>
       </div>
     );
   }
@@ -130,7 +132,7 @@ export function SandboxStatusView({ projectId, className }: SandboxStatusViewPro
           <div className="pt-2">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-chart-3/10 text-chart-3 border border-chart-3/20 text-sm font-medium">
               <Loader2 className="h-4 w-4 animate-spin" />
-              <span>Starting up...</span>
+              <span>{t('startingUp')}</span>
             </div>
           </div>
         )}

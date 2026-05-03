@@ -29,7 +29,43 @@
     "next": "Avanti",
     "upgrade": "Aggiorna",
     "basic": "Base",
-    "tryFree": "Inizia"
+    "tryFree": "Inizia",
+    "nav": {
+      "home": "Home",
+      "about": "Chi siamo",
+      "pricing": "Prezzi",
+      "tutorials": "Tutorial",
+      "mobile": "Mobile",
+      "dashboard": "Dashboard",
+      "scanToDownload": "Scansiona per scaricare",
+      "openMenu": "Apri menu",
+      "closeMenu": "Chiudi menu"
+    }
+  },
+  "aboutPage": {
+    "visasLabel": "Visas",
+    "stamps": {
+      "belgrade": "Belgrade stamp",
+      "lisbon": "Lisbon stamp",
+      "nyc": "New York City stamp",
+      "sanFrancisco": "San Francisco stamp",
+      "london": "London stamp",
+      "malaga": "Malaga stamp",
+      "bali": "Bali stamp",
+      "dobbyLogo": "Dobby"
+    },
+    "paragraphs": {
+      "p0": "Most AI tools stop at thinking. We built one that acts.",
+      "p1": "Dobby is an AI agent that doesn't just give you answers—it gets things done. Research, code, write, manage projects, execute workflows. The whole job.",
+      "p2": "We started with a simple problem: people spend too much time on execution and not enough on the work that actually moves things forward.",
+      "p3": "So we built an AI that handles the doing. The research. The drafts. The code. The follow-through. All the stuff that fills your day but doesn't define your value.",
+      "p4": "This isn't about replacing people. It's about freeing them. Give the grunt work to AI. Keep the strategy, creativity, and decisions for yourself.",
+      "p5": "We're not chasing hype. We're building something reliable enough to trust with real work. Something that ships. Something that works when you need it to.",
+      "p6": "The goal is simple: make everyone 10x more capable by giving them an AI teammate that never sleeps, never complains, and always executes.",
+      "p7": "That's what we're here for.",
+      "hiringLead": "Want to build it with us? ",
+      "hiringLink": "We're hiring."
+    }
   },
   "settings": {
     "title": "Impostazioni",
@@ -38,9 +74,11 @@
       "plan": "Piano",
       "billing": "Fatturazione",
       "usage": "Utilizzo",
+      "memory": "Memoria",
       "referrals": "Referral",
       "knowledgeBase": "Base di conoscenza",
       "integrations": "Integrazioni",
+      "apiKeys": "Chiavi API",
       "envManager": "Gestore ambiente"
     },
     "general": {
@@ -146,7 +184,23 @@
     },
     "billing": {
       "title": "Fatturazione & Abbonamento",
+      "statusTitle": "Stato di fatturazione",
       "description": "Gestisci i tuoi crediti e abbonamento",
+      "creditsLabelTotal": "Totale",
+      "creditsLabelDaily": "Giornaliero",
+      "creditsLabelMonthly": "Mensile",
+      "creditsLabelExtra": "Extra",
+      "dailyRefreshHours": "{hours} h",
+      "scheduledTierChange": "Passaggio a {tier} il {date}",
+      "downgradeScheduled": "Downgrade programmato",
+      "scheduledPlanChangeTitle": "Cambio piano programmato",
+      "scheduledChangeToday": "Oggi",
+      "scheduledChangeDaysLeft": "{days, plural, one {# giorno} other {# giorni}}",
+      "scheduledChangeEffectiveOn": "il {date}",
+      "scheduledChangeUndo": "Annulla",
+      "keepCurrentPlan": "Mantieni piano attuale",
+      "loadSubscriptionFailed": "Impossibile caricare i dati dell'abbonamento",
+      "notAvailable": "N/D",
       "totalCredits": "Crediti totali disponibili",
       "allCredits": "Tutti i crediti",
       "monthlyCredits": "Crediti mensili",
@@ -182,12 +236,29 @@
       "title": "Utilizzo"
     },
     "knowledgeBase": {
+      "title": "Base di conoscenza",
+      "description": "Carica e gestisci documenti per i tuoi agenti",
+      "comingSoonTitle": "Prossimamente",
+      "comingSoonDescription": "La base di conoscenza è in sviluppo. Potrai caricare documenti e file che i tuoi agenti potranno usare per risposte più accurate e contestuali.",
       "opening": "Apertura base di conoscenza",
       "redirecting": "Reindirizzamento alla pagina della base di conoscenza..."
     },
     "integrations": {
       "opening": "Apertura integrazioni",
-      "redirecting": "Reindirizzamento alla pagina delle integrazioni..."
+      "redirecting": "Reindirizzamento alla pagina delle integrazioni...",
+      "deleteProfileConfirmTitle": "Delete Profile",
+      "deleteProfilesConfirmTitle": "Delete {count} Profiles",
+      "deleteProfileConfirmBody": "Are you sure you want to delete \"{name}\"? This action cannot be undone.",
+      "deleteProfilesConfirmBody": "Are you sure you want to delete {count} profiles? This action cannot be undone.",
+      "deleteProfilesIntegrationWarningRich": "<warning>Warning:</warning> This may affect existing integrations.",
+      "composioDeleting": "Deleting...",
+      "mcpUrlCopied": "MCP URL copied to clipboard",
+      "mcpUrlCopyFailed": "Failed to copy URL",
+      "mcpSecurityWarningRich": "<bold>Security Warning:</bold> This MCP URL contains sensitive authentication information and must not be shared. Anyone with access to this URL can perform actions on your behalf.",
+      "mcpConnectionUrlLabel": "MCP Connection URL",
+      "toggleHide": "Hide",
+      "toggleShow": "Show",
+      "mcpUrlLoadError": "Failed to load MCP URL. Please try again."
     },
     "memory": {
       "title": "Memoria IA",
@@ -223,6 +294,9 @@
         "context": "Contesto",
         "conversation_summary": "Conversazione"
       }
+    },
+    "apiKeysPage": {
+      "toastFullCopyFailed": "Failed to copy full API key"
     }
   },
   "triggers": {
@@ -288,6 +362,16 @@
     "library": "Files",
     "triggers": "Trigger",
     "newChat": "Nuova chat",
+    "files": "File",
+    "workers": "Workers",
+    "dateGroups": {
+      "today": "Oggi",
+      "yesterday": "Ieri",
+      "thisWeek": "Questa settimana",
+      "thisMonth": "Questo mese",
+      "last3Months": "Ultimi 3 mesi",
+      "older": "Più vecchi"
+    },
     "newAgent": "Nuovo worker",
     "settings": "Impostazioni",
     "logout": "Esci",
@@ -321,6 +405,16 @@
     "advanced": "Avanzato",
     "plan": "Piano",
     "knowledgeBase": "Base di conoscenza",
+    "generalSection": "Generale",
+    "support": "Supporto",
+    "tutorials": "Tutorial",
+    "userFeedback": "Feedback utenti",
+    "analytics": "Analisi",
+    "notificationsMenu": "Notifiche",
+    "adminUtils": "Utilità admin",
+    "sandboxPool": "Pool sandbox",
+    "stateless": "Stateless",
+    "stressTest": "Test di carico",
     "conversation": "conversazione",
     "conversations": "conversazioni",
     "noConversations": "Ancora nessun chat",
@@ -336,7 +430,30 @@
     "selectAllConversations": "Seleziona tutte le conversazioni",
     "deselectAllConversations": "Deseleziona tutte le conversazioni",
     "loadMore": "Carica altro",
-    "remaining": "rimanenti"
+    "remaining": "rimanenti",
+    "threadSearchSearching": "Searching...",
+    "deleteConversationTitle": "Delete conversation",
+    "deleteConversationsTitle": "Delete conversations",
+    "deleteConversationDescriptionRich": "Are you sure you want to delete the conversation <bold>\"{name}\"</bold>?",
+    "deleteConversationsBulkDescriptionRich": "Are you sure you want to delete <bold>{name}</bold>?",
+    "deleteConversationCannotUndo": "This action cannot be undone.",
+    "deleteConversationDeleting": "Deleting...",
+    "threadMenuNewChat": "New chat",
+    "threadMenuRename": "Rename",
+    "threadMenuDelete": "Delete",
+    "threadMenuOpenChat": "Open chat",
+    "renameProjectTooltip": "Rename",
+    "newChatTooltip": "New chat",
+    "creatingChatTooltip": "Creating...",
+    "projectChatCount": "{count, plural, one {# chat} other {# chats}}",
+    "bulkDeleteConversationSummary": "{count, plural, one {# conversation} other {# conversations}}",
+    "deleteConversationsTooltip": "Delete {count, plural, one {# conversation} other {# conversations}}",
+    "toastDeletingConversations": "Deleting {count, plural, one {# conversation} other {# conversations}}...",
+    "toastConversationsDeletedSuccess": "Successfully deleted {count, plural, one {# conversation} other {# conversations}}",
+    "toastConversationsDeleteFailed": "Failed to delete {count, plural, one {# conversation} other {# conversations}}",
+    "toastDeleteConversationsError": "Error deleting conversations",
+    "toastDeleteInitError": "Error initiating deletion process",
+    "toastConversationDeletedSuccess": "Conversation deleted successfully"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -628,7 +745,47 @@
           "title": "Priorità crediti:",
           "description": "Quando usi Dobby, i crediti in scadenza vengono consumati per primi. Solo dopo che i tuoi crediti in scadenza sono esauriti, verranno utilizzati i crediti non in scadenza."
         }
-      }
+      },
+      "resourceUsage": {
+        "aiActivityLabel": "AI activity:",
+        "aiActivityText": "Processing requests, generating responses, making decisions, and running AI models during task execution.",
+        "dobbyComputerLabel": "Dobby computer:",
+        "dobbyComputerText": "The execution environment that powers code execution, browser automation, and interactive task processing.",
+        "fileStorageLabel": "File storage and management:",
+        "fileStorageText": "Storing, organizing, and managing files created during your tasks.",
+        "webSearchLabel": "Web search:",
+        "webSearchText": "Searching the internet for information, data, and resources needed to complete tasks.",
+        "peopleSearchLabel": "People search:",
+        "peopleSearchText": "Finding and retrieving information about people, contacts, and professional data.",
+        "thirdPartyLabel": "Third-party services:",
+        "thirdPartyText": "Accessing external APIs, databases, and integrated services that extend your agent's capabilities."
+      },
+      "afterTaskComplete": "Once a task completes, no further credits are consumed. Your completed work, stored files, and deployed projects remain accessible without any ongoing credit costs.",
+      "refundPolicyAlert": "If a task fails due to a system error on our side, we'll automatically refund all credits used for that task. We're constantly improving our infrastructure to make credit usage more efficient.",
+      "typesOverviewIntro": "Credits fall into two categories: expiring and non-expiring. When you run a task, credits are deducted in this priority order: expiring credits first (daily/weekly, then monthly), followed by non-expiring credits.",
+      "typeCards": {
+        "dailyWeeklyTitle": "Daily / Weekly",
+        "dailyWeeklyBody": "Free tier: 300 credits weekly. Paid tiers: 200 credits daily. Use it or lose it—these credits reset and don't roll over.",
+        "monthlyTitle": "Monthly",
+        "monthlyBody": "Included with your subscription plan. Refresh at the start of each billing cycle and don't roll over.",
+        "extraTitle": "Extra",
+        "extraBody": "Purchased or promotional credits that never expire. Use them anytime—they're always there when you need them."
+      },
+      "expiringDetailsTitle": "Expiring credits (Daily/Weekly + Monthly)",
+      "expiringDailyWeeklyLabel": "Daily/Weekly credits:",
+      "expiringDailyWeeklyText": "Free tier gets 300 credits weekly. Paid tiers get 200 credits daily. Check your billing page to see when your next refresh happens. Unused credits don't roll over.",
+      "expiringMonthlyLabel": "Monthly credits:",
+      "expiringMonthlyText": "Your subscription's main credit allocation. These refresh at the start of each billing cycle and don't accumulate—use them within the month.",
+      "expiringPromotionalLabel": "Promotional credits:",
+      "expiringPromotionalText": "Bonus credits from events or referrals with expiration dates. Use them before they expire.",
+      "nonExpiringDetailsTitle": "Non-expiring credits (Extra)",
+      "nonExpiringTopUpLabel": "Top-up credits:",
+      "nonExpiringTopUpText": "Additional credits you purchase when needed. These never expire and are available to premium members.",
+      "nonExpiringPromoGrantsLabel": "Promotional grants:",
+      "nonExpiringPromoGrantsText": "Some promotions give credits without expiration dates. These stay in your account forever.",
+      "nonExpiringFreeLabel": "Free credits:",
+      "nonExpiringFreeText": "Welcome bonuses and complimentary credits never expire.",
+      "usagePriorityAlertRich": "<strong>Credit usage priority:</strong> When running tasks, we always use your expiring credits first (daily/weekly → monthly) before touching your extra credits. This ensures you get the most value from all your credits."
     },
     "close": "Chiudi",
     "cancelScheduledChange": "Annulla modifica pianificata",
@@ -666,6 +823,57 @@
     "selectPlan": "Seleziona piano",
     "changeScheduled": "Modifica pianificata",
     "notAvailable": "Non disponibile",
+    "pricingUi": {
+      "monthly": "Monthly",
+      "annual": "Annual",
+      "savePercent": "Save {percent}%",
+      "mostPopular": "Most Popular",
+      "saveAmount": "Save {amount}",
+      "billedAnnually": "{price} billed annually",
+      "switchToYearly": "Switch to Yearly",
+      "switchToMonthly": "Switch to Monthly",
+      "freeForever": "Free forever",
+      "creditsBonusBadge": "2x BONUS",
+      "monthlyCreditsLabel": "Monthly Credits",
+      "refreshesEachCycle": "Refreshes each billing cycle",
+      "customWorkersFragment": "{count, number} custom",
+      "aiWorkersLabel": "AI Workers",
+      "basic": "Basic",
+      "advanced": "Advanced"
+    },
+    "pricingFeatureItems": {
+      "creditsMonthly": "{count, number} credits/month",
+      "unlimitedChats": "Unlimited Chats",
+      "weeklyCredits": "{count, number} weekly credits — Refreshes every 7 days",
+      "weeklyCreditsShort": "{count, number} weekly credits",
+      "basicModeShort": "Basic Mode",
+      "concurrentRunSingle": "1 concurrent run",
+      "basicMode": "Basic Mode — Core Dobby experience with basic autonomy",
+      "concurrentRuns": "{count, number} concurrent runs",
+      "concurrentRunsDesc": "Run multiple Chats simultaneously",
+      "customWorkers": "{count, number} custom AI Workers",
+      "customWorkersDesc": "Create Dobby Workers with custom Knowledge, Tools & Integrations",
+      "customWorkersShort": "{count, number} custom workers",
+      "scheduledTriggers": "{count, number} scheduled triggers",
+      "scheduledTriggersDesc": "Run at 9am daily, every Monday, first of month...",
+      "appTriggers": "{count, number} app triggers",
+      "appTriggersDesc": "Auto-respond to new emails, Slack messages, form submissions...",
+      "integrations100": "100+ Integrations",
+      "integrations100Desc": "Google Drive, Slack, Notion, Gmail, Calendar, GitHub & more",
+      "advancedMode": "Dobby Advanced mode",
+      "advancedModeDesc": "Strongest autonomy & decision-making capabilities",
+      "privateProjects": "Private projects",
+      "premiumModels": "Premium AI Models",
+      "prioritySupport": "Priority support",
+      "accountManager": "Dedicated account manager",
+      "customDeployment": "Custom deployment"
+    },
+    "pricingDisabled": {
+      "noCustomWorkers": "No custom AI Workers",
+      "noScheduledTriggers": "No scheduled triggers",
+      "noAppTriggers": "No app-based triggers",
+      "noIntegrations": "No integrations"
+    },
     "features": {
       "creditsPerMonth": "{count} crediti/mese",
       "customWorker": "{count} Worker personalizzato",
@@ -699,6 +907,28 @@
         "resultsNotGood": "I risultati non hanno soddisfatto le mie aspettative",
         "other": "Altro motivo"
       }
+    },
+    "creditPurchase": {
+      "title": "Get additional credits",
+      "description": "Add prepaid credits to continue using Dobby. Credits do not expire.",
+      "currentBalance": "Current balance:",
+      "creditsPackLabel": "Credits",
+      "paymentMethod": "Payment method",
+      "payCard": "Card",
+      "payAlipay": "Alipay",
+      "payWeChatPay": "WeChat Pay",
+      "continue": "Continue",
+      "processing": "Processing...",
+      "notAvailableTitle": "Credits Not Available",
+      "notAvailableDescription": "Prepaid credits are not available for this account right now.",
+      "notAvailableAlert": "Please refresh the page or contact support if you believe this is a mistake.",
+      "minPurchase": "Minimum purchase amount is {amount}",
+      "maxPurchase": "Maximum purchase amount is {amount}",
+      "selectPackageOrAmount": "Please select a package or enter a valid amount",
+      "checkoutSessionFailed": "Failed to create checkout session",
+      "noCheckoutUrl": "No checkout URL received",
+      "creditBalanceTitle": "Credit Balance",
+      "addCredits": "Add Credits"
     }
   },
   "auth": {
@@ -995,38 +1225,128 @@
       "adventure": "Avventura"
     },
     "templates": {
-      "minimalist": { "name": "Minimalista", "description": "Design pulito e semplice" },
-      "minimalist_2": { "name": "Minimalista 2", "description": "Stile minimalista alternativo" },
-      "black_and_white_clean": { "name": "Bianco e nero", "description": "Monocromatico classico" },
-      "colorful": { "name": "Colorato", "description": "Vibrante ed energico" },
-      "startup": { "name": "Startup", "description": "Dinamico e innovativo" },
-      "elevator_pitch": { "name": "Elevator Pitch", "description": "Rapido e impattante" },
-      "portfolio": { "name": "Portfolio", "description": "Mostra il tuo lavoro" },
-      "textbook": { "name": "Manuale", "description": "Educativo e strutturato" },
-      "architect": { "name": "Architetto", "description": "Professionale e preciso" },
-      "hipster": { "name": "Hipster", "description": "Moderno e trendy" },
-      "green": { "name": "Verde", "description": "Design ispirato alla natura" },
-      "premium_black": { "name": "Premium Nero", "description": "Tema scuro di lusso" },
-      "premium_green": { "name": "Premium Verde", "description": "Verde sofisticato" },
-      "professor_gray": { "name": "Professore Grigio", "description": "Accademico e erudito" },
-      "gamer_gray": { "name": "Gamer Grigio", "description": "Design ispirato ai giochi" },
-      "competitor_analysis_blue": { "name": "Analisi Blu", "description": "Focalizzato sull'analisi aziendale" },
-      "numbers_clean": { "name": "Numeri Puliti", "description": "Visualizzazione dati pulita" },
-      "numbers_colorful": { "name": "Numeri Colorati", "description": "Presentazione dati vibrante" },
-      "prd": { "name": "PRD", "description": "Documento dei requisiti del prodotto" },
-      "technical": { "name": "Tecnico", "description": "Documentazione tecnica" },
-      "proposal": { "name": "Proposta", "description": "Proposta commerciale" },
-      "report": { "name": "Report", "description": "Formato report dettagliato" },
-      "guide": { "name": "Guida", "description": "Guida passo-passo" },
-      "wiki": { "name": "Wiki", "description": "Articolo della knowledge base" },
-      "policy": { "name": "Politica", "description": "Documento politico" },
-      "meeting-notes": { "name": "Note di riunione", "description": "Verbale di riunione" }
+      "minimalist": {
+        "name": "Minimalista",
+        "description": "Design pulito e semplice"
+      },
+      "minimalist_2": {
+        "name": "Minimalista 2",
+        "description": "Stile minimalista alternativo"
+      },
+      "black_and_white_clean": {
+        "name": "Bianco e nero",
+        "description": "Monocromatico classico"
+      },
+      "colorful": {
+        "name": "Colorato",
+        "description": "Vibrante ed energico"
+      },
+      "startup": {
+        "name": "Startup",
+        "description": "Dinamico e innovativo"
+      },
+      "elevator_pitch": {
+        "name": "Elevator Pitch",
+        "description": "Rapido e impattante"
+      },
+      "portfolio": {
+        "name": "Portfolio",
+        "description": "Mostra il tuo lavoro"
+      },
+      "textbook": {
+        "name": "Manuale",
+        "description": "Educativo e strutturato"
+      },
+      "architect": {
+        "name": "Architetto",
+        "description": "Professionale e preciso"
+      },
+      "hipster": {
+        "name": "Hipster",
+        "description": "Moderno e trendy"
+      },
+      "green": {
+        "name": "Verde",
+        "description": "Design ispirato alla natura"
+      },
+      "premium_black": {
+        "name": "Premium Nero",
+        "description": "Tema scuro di lusso"
+      },
+      "premium_green": {
+        "name": "Premium Verde",
+        "description": "Verde sofisticato"
+      },
+      "professor_gray": {
+        "name": "Professore Grigio",
+        "description": "Accademico e erudito"
+      },
+      "gamer_gray": {
+        "name": "Gamer Grigio",
+        "description": "Design ispirato ai giochi"
+      },
+      "competitor_analysis_blue": {
+        "name": "Analisi Blu",
+        "description": "Focalizzato sull'analisi aziendale"
+      },
+      "numbers_clean": {
+        "name": "Numeri Puliti",
+        "description": "Visualizzazione dati pulita"
+      },
+      "numbers_colorful": {
+        "name": "Numeri Colorati",
+        "description": "Presentazione dati vibrante"
+      },
+      "prd": {
+        "name": "PRD",
+        "description": "Documento dei requisiti del prodotto"
+      },
+      "technical": {
+        "name": "Tecnico",
+        "description": "Documentazione tecnica"
+      },
+      "proposal": {
+        "name": "Proposta",
+        "description": "Proposta commerciale"
+      },
+      "report": {
+        "name": "Report",
+        "description": "Formato report dettagliato"
+      },
+      "guide": {
+        "name": "Guida",
+        "description": "Guida passo-passo"
+      },
+      "wiki": {
+        "name": "Wiki",
+        "description": "Articolo della knowledge base"
+      },
+      "policy": {
+        "name": "Politica",
+        "description": "Documento politico"
+      },
+      "meeting-notes": {
+        "name": "Note di riunione",
+        "description": "Verbale di riunione"
+      }
     },
     "outputFormats": {
-      "spreadsheet": { "name": "Foglio di calcolo", "description": "Tabella con formule" },
-      "dashboard": { "name": "Dashboard", "description": "Grafici interattivi" },
-      "report": { "name": "Report", "description": "Analisi con visualizzazioni" },
-      "slides": { "name": "Presentazioni", "description": "Formato presentazione" }
+      "spreadsheet": {
+        "name": "Foglio di calcolo",
+        "description": "Tabella con formule"
+      },
+      "dashboard": {
+        "name": "Dashboard",
+        "description": "Grafici interattivi"
+      },
+      "report": {
+        "name": "Report",
+        "description": "Analisi con visualizzazioni"
+      },
+      "slides": {
+        "name": "Presentazioni",
+        "description": "Formato presentazione"
+      }
     },
     "charts": {
       "bar": "Barra",
@@ -1170,6 +1490,160 @@
       "manageButton": "Gestisci Memorie",
       "dismissButton": "Capito"
     }
+  },
+  "support": {
+    "loading": "Loading...",
+    "hero": {
+      "title": "We're Here to Help",
+      "subtitle": "Get the support you need from our team. We typically respond within 24 hours on business days.",
+      "emailSupport": "Email Support",
+      "browseFaqs": "Browse FAQs",
+      "directEmailRich": "Or email us directly at <email>support@dobby.now</email>"
+    },
+    "contact": {
+      "title": "Contact Support",
+      "subtitle": "Multiple ways to get in touch with our team",
+      "emailTitle": "Email Support",
+      "emailBody": "Send us a detailed message and we'll get back to you as soon as possible.",
+      "responseTitle": "Response Time",
+      "responseBody": "We aim to respond within 24 hours during business days (Monday-Friday).",
+      "businessHours": "Business Hours: 9 AM - 6 PM CST",
+      "priorityTitle": "Priority Support",
+      "priorityBody": "Pro and Team customers receive priority support with dedicated assistance.",
+      "priorityLink": "Contact us"
+    },
+    "faq": {
+      "title": "Frequently Asked Questions",
+      "subtitle": "Find quick answers to common questions",
+      "q1": {
+        "q": "What is Dobby?",
+        "a": "Dobby is a generalist AI worker that can perform real-world tasks on your behalf. Unlike traditional AI assistants, Dobby can actually take action across your apps, automate workflows, and handle complex multi-step tasks autonomously."
+      },
+      "q2": {
+        "q": "How can Dobby help me?",
+        "a": "Dobby can automate repetitive tasks, manage your workflows, interact with web services, process data, create content, and coordinate complex operations across multiple platforms. Simply tell Dobby what you need done, and it handles the execution from start to finish."
+      },
+      "q3": {
+        "q": "How is Dobby different from other AI platforms?",
+        "a": "While most AI platforms only provide information or suggestions, Dobby actually performs real-world tasks. It can browse the web, interact with APIs, manage files, execute commands, and integrate with your existing tools to complete tasks autonomously—not just tell you how to do them."
+      },
+      "q4": {
+        "q": "Can Dobby connect to my apps?",
+        "a": "Yes! Dobby can connect to thousands of apps and services through integrations. It can interact with your tools, APIs, databases, and workflows to automate tasks across your entire tech stack. You control which apps and services Dobby can access."
+      },
+      "q5": {
+        "q": "How do I request a new feature?",
+        "aRich": "We love feature requests! Email us at <email>support@dobby.now</email> with details about what you'd like to see and how it would help you. We carefully review all suggestions and prioritize features based on user feedback for our product roadmap."
+      },
+      "q6": {
+        "q": "How do I report a bug?",
+        "aRich": "If you encounter a bug, please email <email>support@dobby.now</email> with a detailed description of the issue, steps to reproduce it, and any error messages you're seeing. Screenshots or screen recordings are extremely helpful. We'll investigate and work on a fix promptly."
+      },
+      "q7": {
+        "q": "What if I don't get credits after paying?",
+        "aRich": "If your credits don't appear after payment, contact <email>support@dobby.now</email> immediately. We prioritize billing and credit issues for all users regardless of tier and will resolve this as quickly as possible, typically within a few hours during business days."
+      }
+    },
+    "accountDelete": {
+      "title": "Account Deletion",
+      "subtitle": "How to permanently delete your account",
+      "sectionTitle": "Delete Your Account",
+      "intro": "If you'd like to permanently delete your account, you have two options:",
+      "option1Title": "Option 1: Contact Support",
+      "option1BodyRich": "You can request account deletion by contacting our support team. Simply email us at <email>support@dobby.now</email> with your account deletion request, and we'll process it for you.",
+      "option2Title": "Option 2: Self-Delete (When Logged In)",
+      "option2Intro": "If you're logged into your account, you can delete it yourself through your user settings:",
+      "step1": "Click on your user avatar/profile picture in the top-right corner of the screen",
+      "step2Rich": "Select <strong>Settings</strong> from the dropdown menu",
+      "step3Rich": "Scroll down to the <strong>Delete Account</strong> section",
+      "step4Rich": "Click the <strong>Delete Account</strong> button",
+      "step5Intro": "Choose your deletion type:",
+      "step5aRich": "<strong>30-Day Grace Period:</strong> Your account will be scheduled for deletion in 30 days. You can cancel this request anytime within the grace period.",
+      "step5bRich": "<strong>Immediate Deletion:</strong> Your account and all data will be permanently deleted immediately. This action cannot be undone.",
+      "step6Rich": "Type <strong>delete</strong> in the confirmation field",
+      "step7Rich": "Click the final <strong>Delete Account</strong> button to confirm",
+      "note": "Note: When you delete your account, all your agents, threads, credentials, subscriptions, and billing data will be permanently removed. This action cannot be undone after the grace period expires (if you chose the 30-day option) or immediately (if you chose immediate deletion)."
+    },
+    "legal": {
+      "title": "Legal Information",
+      "subtitle": "Transparency and compliance documentation",
+      "termsTitle": "Terms of Service",
+      "termsBody": "Our terms and conditions for using Dobby services, including user responsibilities and service limitations.",
+      "termsLink": "Read Terms →",
+      "privacyTitle": "Privacy Policy",
+      "privacyBody": "How we collect, use, and protect your personal information. We're committed to data privacy and security.",
+      "privacyLink": "Read Policy →",
+      "imprintTitle": "Imprint",
+      "imprintBody": "Company information and legal details about Dobby AI Corp, including contact information and registration.",
+      "imprintLink": "View Imprint →"
+    },
+    "footer": {
+      "title": "Still Have Questions?",
+      "subtitle": "Our support team is ready to help you with any questions or issues you may have.",
+      "contactSupport": "Contact Support",
+      "generalInquiries": "General Inquiries:",
+      "securityIssues": "Security Issues:"
+    }
+  },
+  "tutorialsPage": {
+    "eyebrow": "Learn Dobby",
+    "heading": "Tutorials",
+    "description": "Step-by-step interactive tutorials to help you get the most out of Dobby. From getting started to advanced workflows, master every feature.",
+    "chaptersNav": "Chapters",
+    "chapterLabel": "Chapter {number}",
+    "comingSoon": "Coming Soon",
+    "placeholderTitle": "Tutorial temporarily unavailable",
+    "placeholderSubtitle": "The embedded demo link was deleted or archived.",
+    "clickToInteract": "Click to interact",
+    "moreTitle": "More tutorials coming soon",
+    "moreDescription": "We're always adding new tutorials to help you get the most out of Dobby. Check back regularly for fresh content and tips.",
+    "resources": "Resources",
+    "supportLink": "Support",
+    "contactUs": "Contact us",
+    "chapters": {
+      "introduction-to-kortix": {
+        "title": "Introduction to Dobby",
+        "description": "Get a comprehensive overview of Dobby and discover the different AI-powered content generation modes available to supercharge your workflow."
+      },
+      "getting-started-first-task": {
+        "title": "Getting Started: Your First Task",
+        "description": "Learn the basics of creating and completing your first task with Dobby. This tutorial walks you through the essential workflow to get you productive right away."
+      },
+      "create-export-presentations": {
+        "title": "How to Create and Export Presentations",
+        "description": "Discover how to create stunning presentations with Dobby and export them in various formats for sharing and presenting."
+      },
+      "create-manage-files": {
+        "title": "How to Create and Manage Files with Dobby",
+        "description": "Learn how to create, organize, and manage files with Dobby. This tutorial covers downloading data, exporting to different formats like Excel, and more."
+      },
+      "create-videos-images": {
+        "title": "Create Videos and Images",
+        "description": "Explore the powerful media creation capabilities of Dobby. Learn how to generate videos and images using AI to enhance your projects."
+      },
+      "canvas-feature": {
+        "title": "Use Our Canvas Feature",
+        "description": "Master the Canvas feature to visually design and organize your content. This tutorial shows you how to leverage the canvas for creative workflows."
+      },
+      "custom-workers-manual": {
+        "title": "Creating Custom Workers - Manual Configuration",
+        "description": "Learn how to set up custom AI assistant workers with manual configuration. Explore integration options and tailor workers to your specific needs."
+      }
+    }
+  },
+  "dobbyComputer": {
+    "sandbox": {
+      "noProjectTitle": "No Project",
+      "noProjectDescription": "A project is required to access the computer",
+      "checkingStatus": "Checking status...",
+      "titleStarting": "Starting Computer...",
+      "titleFailed": "Failed to Start",
+      "titleNotRunning": "Computer Not Running",
+      "descStarting": "This may take up to a minute.",
+      "descFailed": "Something went wrong. Please try again.",
+      "descOffline": "Start the computer to browse and manage files.",
+      "startComputer": "Start Computer",
+      "startingUp": "Starting up..."
+    }
   }
 }
-

@@ -4,9 +4,11 @@ import { Mail, Clock, Shield, ChevronDown, UserX } from 'lucide-react';
 import { useState, useEffect, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { AnimatedBg } from '@/components/ui/animated-bg';
 import { useIsMobile } from '@/hooks/utils';
 import { Button } from '@/components/ui/button';
+import { SUPPORT_EMAIL, SUPPORT_MAILTO } from '@/lib/site-config';
 
 const SectionHeader = ({ children }: { children: React.ReactNode }) => {
   return (
@@ -42,6 +44,7 @@ const FAQItem = ({ question, answer }: { question: string; answer: React.ReactNo
 };
 
 function SupportPageContent() {
+  const t = useTranslations('support');
   const isMobile = useIsMobile();
   const searchParams = useSearchParams();
   const accountDeleteRef = useRef<HTMLElement>(null);
@@ -101,29 +104,38 @@ function SupportPageContent() {
                 </div>
                 
                 <h1 className="text-3xl md:text-4xl lg:text-5xl font-medium tracking-tighter text-balance text-center">
-                  <span className="text-primary">We're Here to Help</span>
+                  <span className="text-primary">{t('hero.title')}</span>
                 </h1>
                 
                 <p className="text-base md:text-lg text-center text-muted-foreground font-medium text-balance leading-relaxed tracking-tight max-w-2xl">
-                  Get the support you need from our team. We typically respond within 24 hours on business days.
+                  {t('hero.subtitle')}
                 </p>
 
                 <div className="flex flex-col sm:flex-row items-center gap-4 pt-4">
                   <Button asChild size="lg" className="text-base h-14 w-48 rounded-full px-8">
-                    <a href="mailto:support@dobby.com">
+                    <a href={SUPPORT_MAILTO}>
                       <Mail className="w-5 h-5"/>
-                      Email Support
+                      {t('hero.emailSupport')}
                     </a>
                   </Button>
                   <Button asChild variant="outline" size="lg" className="text-base h-14 w-48 rounded-full px-8">
                     <a href="#faq">
-                      Browse FAQs
+                      {t('hero.browseFaqs')}
                     </a>
                   </Button>
                 </div>
 
                 <p className="text-sm text-muted-foreground">
-                  Or email us directly at <a href="mailto:support@dobby.com" className="text-primary hover:underline font-medium">support@dobby.com</a>
+                  {t.rich('hero.directEmailRich', {
+                    email: (chunks) => (
+                      <a
+                        href={SUPPORT_MAILTO}
+                        className="text-primary hover:underline font-medium"
+                      >
+                        {chunks}
+                      </a>
+                    ),
+                  })}
                 </p>
               </div>
             </div>
@@ -135,10 +147,10 @@ function SupportPageContent() {
             <div className="max-w-6xl mx-auto border-l border-r border-border">
               <SectionHeader>
                 <h2 className="text-2xl md:text-3xl font-medium tracking-tighter text-center text-balance pb-1">
-                  Contact Support
+                  {t('contact.title')}
                 </h2>
                 <p className="text-sm text-muted-foreground text-center text-balance font-medium">
-                  Multiple ways to get in touch with our team
+                  {t('contact.subtitle')}
                 </p>
               </SectionHeader>
 
@@ -148,15 +160,15 @@ function SupportPageContent() {
                     <Mail className="w-6 h-6 text-primary" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold mb-2">Email Support</h3>
+                    <h3 className="text-lg font-semibold mb-2">{t('contact.emailTitle')}</h3>
                     <p className="text-muted-foreground text-sm mb-4">
-                      Send us a detailed message and we'll get back to you as soon as possible.
+                      {t('contact.emailBody')}
                     </p>
                     <a 
-                      href="mailto:support@dobby.com" 
+                      href={SUPPORT_MAILTO} 
                       className="text-primary hover:underline font-medium inline-flex items-center gap-2"
                     >
-                      support@dobby.com
+                      {SUPPORT_EMAIL}
                     </a>
                   </div>
                 </div>
@@ -166,12 +178,12 @@ function SupportPageContent() {
                     <Clock className="w-6 h-6 text-primary" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold mb-2">Response Time</h3>
+                    <h3 className="text-lg font-semibold mb-2">{t('contact.responseTitle')}</h3>
                     <p className="text-muted-foreground text-sm mb-4">
-                      We aim to respond within 24 hours during business days (Monday-Friday).
+                      {t('contact.responseBody')}
                     </p>
                     <p className="text-sm font-medium text-muted-foreground">
-                      Business Hours: 9 AM - 6 PM CST
+                      {t('contact.businessHours')}
                     </p>
                   </div>
                 </div>
@@ -181,12 +193,12 @@ function SupportPageContent() {
                     <Shield className="w-6 h-6 text-primary" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold mb-2">Priority Support</h3>
+                    <h3 className="text-lg font-semibold mb-2">{t('contact.priorityTitle')}</h3>
                     <p className="text-muted-foreground text-sm mb-4">
-                      Pro and Team customers receive priority support with dedicated assistance.
+                      {t('contact.priorityBody')}
                     </p>
-                    <a href="mailto:support@dobby.com" className="text-primary hover:underline font-medium">
-                      Contact us
+                    <a href={SUPPORT_MAILTO} className="text-primary hover:underline font-medium">
+                      {t('contact.priorityLink')}
                     </a>
                   </div>
                 </div>
@@ -200,53 +212,59 @@ function SupportPageContent() {
             <div className="max-w-6xl mx-auto border-l border-r border-border">
               <SectionHeader>
                 <h2 className="text-2xl md:text-3xl font-medium tracking-tighter text-center text-balance pb-1">
-                  Frequently Asked Questions
+                  {t('faq.title')}
                 </h2>
                 <p className="text-sm text-muted-foreground text-center text-balance font-medium">
-                  Find quick answers to common questions
+                  {t('faq.subtitle')}
                 </p>
               </SectionHeader>
 
               <div className="border-t border-border">
                 <FAQItem
-                  question="What is Dobby?"
-                  answer="Dobby is a generalist AI worker that can perform real-world tasks on your behalf. Unlike traditional AI assistants, Dobby can actually take action across your apps, automate workflows, and handle complex multi-step tasks autonomously."
+                  question={t('faq.q1.q')}
+                  answer={t('faq.q1.a')}
                 />
                 <FAQItem
-                  question="How can Dobby help me?"
-                  answer="Dobby can automate repetitive tasks, manage your workflows, interact with web services, process data, create content, and coordinate complex operations across multiple platforms. Simply tell Dobby what you need done, and it handles the execution from start to finish."
+                  question={t('faq.q2.q')}
+                  answer={t('faq.q2.a')}
                 />
                 <FAQItem
-                  question="How is Dobby different from other AI platforms?"
-                  answer="While most AI platforms only provide information or suggestions, Dobby actually performs real-world tasks. It can browse the web, interact with APIs, manage files, execute commands, and integrate with your existing tools to complete tasks autonomously—not just tell you how to do them."
+                  question={t('faq.q3.q')}
+                  answer={t('faq.q3.a')}
                 />
                 <FAQItem
-                  question="Can Dobby connect to my apps?"
-                  answer="Yes! Dobby can connect to thousands of apps and services through integrations. It can interact with your tools, APIs, databases, and workflows to automate tasks across your entire tech stack. You control which apps and services Dobby can access."
+                  question={t('faq.q4.q')}
+                  answer={t('faq.q4.a')}
                 />
                 <FAQItem
-                  question="How do I request a new feature?"
-                  answer={
-                    <>
-                      We love feature requests! Email us at <a href="mailto:support@dobby.com" className="text-primary hover:underline font-medium">support@dobby.com</a> with details about what you'd like to see and how it would help you. We carefully review all suggestions and prioritize features based on user feedback for our product roadmap.
-                    </>
-                  }
+                  question={t('faq.q5.q')}
+                  answer={t.rich('faq.q5.aRich', {
+                    email: (chunks) => (
+                      <a href={SUPPORT_MAILTO} className="text-primary hover:underline font-medium">
+                        {chunks}
+                      </a>
+                    ),
+                  })}
                 />
                 <FAQItem
-                  question="How do I report a bug?"
-                  answer={
-                    <>
-                      If you encounter a bug, please email <a href="mailto:support@dobby.com" className="text-primary hover:underline font-medium">support@dobby.com</a> with a detailed description of the issue, steps to reproduce it, and any error messages you're seeing. Screenshots or screen recordings are extremely helpful. We'll investigate and work on a fix promptly.
-                    </>
-                  }
+                  question={t('faq.q6.q')}
+                  answer={t.rich('faq.q6.aRich', {
+                    email: (chunks) => (
+                      <a href={SUPPORT_MAILTO} className="text-primary hover:underline font-medium">
+                        {chunks}
+                      </a>
+                    ),
+                  })}
                 />
                 <FAQItem
-                  question="What if I don't get credits after paying?"
-                  answer={
-                    <>
-                      If your credits don't appear after payment, contact <a href="mailto:support@dobby.com" className="text-primary hover:underline font-medium">support@dobby.com</a> immediately. We prioritize billing and credit issues for all users regardless of tier and will resolve this as quickly as possible, typically within a few hours during business days.
-                    </>
-                  }
+                  question={t('faq.q7.q')}
+                  answer={t.rich('faq.q7.aRich', {
+                    email: (chunks) => (
+                      <a href={SUPPORT_MAILTO} className="text-primary hover:underline font-medium">
+                        {chunks}
+                      </a>
+                    ),
+                  })}
                 />
               </div>
             </div>
@@ -258,10 +276,10 @@ function SupportPageContent() {
             <div className="max-w-6xl mx-auto border-l border-r border-border">
               <SectionHeader>
                 <h2 className="text-2xl md:text-3xl font-medium tracking-tighter text-center text-balance pb-1">
-                  Account Deletion
+                  {t('accountDelete.title')}
                 </h2>
                 <p className="text-sm text-muted-foreground text-center text-balance font-medium">
-                  How to permanently delete your account
+                  {t('accountDelete.subtitle')}
                 </p>
               </SectionHeader>
 
@@ -273,45 +291,48 @@ function SupportPageContent() {
                     </div>
                     <div className="space-y-4 flex-1">
                       <div>
-                        <h3 className="text-lg font-semibold mb-2">Delete Your Account</h3>
+                        <h3 className="text-lg font-semibold mb-2">{t('accountDelete.sectionTitle')}</h3>
                         <p className="text-muted-foreground text-sm leading-relaxed">
-                          If you'd like to permanently delete your account, you have two options:
+                          {t('accountDelete.intro')}
                         </p>
                       </div>
 
                       <div className="space-y-4">
                         <div className="p-4 rounded-lg border bg-accent/5">
-                          <h4 className="font-medium mb-2 text-sm">Option 1: Contact Support</h4>
+                          <h4 className="font-medium mb-2 text-sm">{t('accountDelete.option1Title')}</h4>
                           <p className="text-muted-foreground text-sm mb-3">
-                            You can request account deletion by contacting our support team. Simply email us at{' '}
-                            <a href="mailto:support@dobby.com" className="text-primary hover:underline font-medium">
-                              support@dobby.com
-                            </a>
-                            {' '}with your account deletion request, and we'll process it for you.
+                            {t.rich('accountDelete.option1BodyRich', {
+                              email: (chunks) => (
+                                <a href={SUPPORT_MAILTO} className="text-primary hover:underline font-medium">
+                                  {chunks}
+                                </a>
+                              ),
+                            })}
                           </p>
                         </div>
 
                         <div className="p-4 rounded-lg border bg-accent/5">
-                          <h4 className="font-medium mb-2 text-sm">Option 2: Self-Delete (When Logged In)</h4>
+                          <h4 className="font-medium mb-2 text-sm">{t('accountDelete.option2Title')}</h4>
                           <p className="text-muted-foreground text-sm mb-3">
-                            If you're logged into your account, you can delete it yourself through your user settings:
+                            {t('accountDelete.option2Intro')}
                           </p>
                           <ol className="text-muted-foreground text-sm space-y-2 ml-4 list-decimal">
-                            <li>Click on your user avatar/profile picture in the top-right corner of the screen</li>
-                            <li>Select <strong className="text-foreground">Settings</strong> from the dropdown menu</li>
-                            <li>Scroll down to the <strong className="text-foreground">Delete Account</strong> section</li>
-                            <li>Click the <strong className="text-foreground">Delete Account</strong> button</li>
-                            <li>Choose your deletion type:
+                            <li>{t('accountDelete.step1')}</li>
+                            <li>{t.rich('accountDelete.step2Rich', { strong: (c) => <strong className="text-foreground">{c}</strong> })}</li>
+                            <li>{t.rich('accountDelete.step3Rich', { strong: (c) => <strong className="text-foreground">{c}</strong> })}</li>
+                            <li>{t.rich('accountDelete.step4Rich', { strong: (c) => <strong className="text-foreground">{c}</strong> })}</li>
+                            <li>
+                              {t('accountDelete.step5Intro')}
                               <ul className="ml-4 mt-1 space-y-1 list-disc">
-                                <li><strong className="text-foreground">30-Day Grace Period:</strong> Your account will be scheduled for deletion in 30 days. You can cancel this request anytime within the grace period.</li>
-                                <li><strong className="text-foreground">Immediate Deletion:</strong> Your account and all data will be permanently deleted immediately. This action cannot be undone.</li>
+                                <li>{t.rich('accountDelete.step5aRich', { strong: (c) => <strong className="text-foreground">{c}</strong> })}</li>
+                                <li>{t.rich('accountDelete.step5bRich', { strong: (c) => <strong className="text-foreground">{c}</strong> })}</li>
                               </ul>
                             </li>
-                            <li>Type <strong className="text-foreground">delete</strong> in the confirmation field</li>
-                            <li>Click the final <strong className="text-foreground">Delete Account</strong> button to confirm</li>
+                            <li>{t.rich('accountDelete.step6Rich', { strong: (c) => <strong className="text-foreground">{c}</strong> })}</li>
+                            <li>{t.rich('accountDelete.step7Rich', { strong: (c) => <strong className="text-foreground">{c}</strong> })}</li>
                           </ol>
                           <p className="text-muted-foreground text-xs mt-3 italic">
-                            Note: When you delete your account, all your agents, threads, credentials, subscriptions, and billing data will be permanently removed. This action cannot be undone after the grace period expires (if you chose the 30-day option) or immediately (if you chose immediate deletion).
+                            {t('accountDelete.note')}
                           </p>
                         </div>
                       </div>
@@ -328,10 +349,10 @@ function SupportPageContent() {
             <div className="max-w-6xl mx-auto border-l border-r border-border">
               <SectionHeader>
                 <h2 className="text-2xl md:text-3xl font-medium tracking-tighter text-center text-balance pb-1">
-                  Legal Information
+                  {t('legal.title')}
                 </h2>
                 <p className="text-sm text-muted-foreground text-center text-balance font-medium">
-                  Transparency and compliance documentation
+                  {t('legal.subtitle')}
                 </p>
               </SectionHeader>
 
@@ -341,12 +362,12 @@ function SupportPageContent() {
                     <Shield className="w-6 h-6 text-primary" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold mb-2">Terms of Service</h3>
+                    <h3 className="text-lg font-semibold mb-2">{t('legal.termsTitle')}</h3>
                     <p className="text-muted-foreground text-sm mb-4">
-                      Our terms and conditions for using Dobby services, including user responsibilities and service limitations.
+                      {t('legal.termsBody')}
                     </p>
                     <Link href="/legal?tab=terms" className="text-primary hover:underline font-medium text-sm">
-                      Read Terms →
+                      {t('legal.termsLink')}
                     </Link>
                   </div>
                 </div>
@@ -356,12 +377,12 @@ function SupportPageContent() {
                     <Shield className="w-6 h-6 text-primary" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold mb-2">Privacy Policy</h3>
+                    <h3 className="text-lg font-semibold mb-2">{t('legal.privacyTitle')}</h3>
                     <p className="text-muted-foreground text-sm mb-4">
-                      How we collect, use, and protect your personal information. We're committed to data privacy and security.
+                      {t('legal.privacyBody')}
                     </p>
                     <Link href="/legal?tab=privacy" className="text-primary hover:underline font-medium text-sm">
-                      Read Policy →
+                      {t('legal.privacyLink')}
                     </Link>
                   </div>
                 </div>
@@ -371,12 +392,12 @@ function SupportPageContent() {
                     <Shield className="w-6 h-6 text-primary" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold mb-2">Imprint</h3>
+                    <h3 className="text-lg font-semibold mb-2">{t('legal.imprintTitle')}</h3>
                     <p className="text-muted-foreground text-sm mb-4">
-                      Company information and legal details about Dobby AI Corp, including contact information and registration.
+                      {t('legal.imprintBody')}
                     </p>
                     <Link href="/legal?tab=imprint" className="text-primary hover:underline font-medium text-sm">
-                      View Imprint →
+                      {t('legal.imprintLink')}
                     </Link>
                   </div>
                 </div>
@@ -389,25 +410,27 @@ function SupportPageContent() {
           <div className="relative w-full px-6 py-16">
             <div className="max-w-4xl mx-auto text-center space-y-6">
               <h2 className="text-2xl md:text-3xl font-medium tracking-tighter text-balance">
-                Still Have Questions?
+                {t('footer.title')}
               </h2>
               <p className="text-sm text-muted-foreground text-balance font-medium">
-                Our support team is ready to help you with any questions or issues you may have.
+                {t('footer.subtitle')}
               </p>
               <div className="pt-4">
                 <Button asChild size="lg" className="text-base h-14 w-48 rounded-full px-8">
-                  <a href="mailto:support@dobby.com">
+                  <a href={SUPPORT_MAILTO}>
                     <Mail className="w-5 h-5" />
-                    Contact Support
+                    {t('footer.contactSupport')}
                   </a>
                 </Button>
               </div>
               <div className="pt-6 space-y-2">
                 <p className="text-sm text-muted-foreground">
-                  General Inquiries: <a href="mailto:info@dobby.com" className="text-primary hover:underline">info@dobby.com</a>
+                  {t('footer.generalInquiries')}{' '}
+                  <a href="mailto:info@dobby.com" className="text-primary hover:underline">info@dobby.com</a>
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  Security Issues: <a href="mailto:security@dobby.com" className="text-primary hover:underline">security@dobby.com</a>
+                  {t('footer.securityIssues')}{' '}
+                  <a href="mailto:security@dobby.com" className="text-primary hover:underline">security@dobby.com</a>
                 </p>
               </div>
             </div>
@@ -418,17 +441,22 @@ function SupportPageContent() {
   );
 }
 
+function SupportLoadingFallback() {
+  const t = useTranslations('common');
+  return (
+    <main className="flex flex-col items-center justify-center min-h-screen w-full">
+      <div className="w-full">
+        <div className="flex flex-col items-center justify-center min-h-screen">
+          <div className="text-muted-foreground">{t('loading')}</div>
+        </div>
+      </div>
+    </main>
+  );
+}
+
 export default function SupportPage() {
   return (
-    <Suspense fallback={
-      <main className="flex flex-col items-center justify-center min-h-screen w-full">
-        <div className="w-full">
-          <div className="flex flex-col items-center justify-center min-h-screen">
-            <div className="text-muted-foreground">Loading...</div>
-          </div>
-        </div>
-      </main>
-    }>
+    <Suspense fallback={<SupportLoadingFallback />}>
       <SupportPageContent />
     </Suspense>
   );

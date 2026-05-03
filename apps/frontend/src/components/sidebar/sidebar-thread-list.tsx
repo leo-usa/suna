@@ -63,10 +63,11 @@ import { RenameProjectDialog } from '@/components/sidebar/rename-project-dialog'
 
 // Date group header component - shared across tabs
 const DateGroupHeader: React.FC<{ dateGroup: string }> = ({ dateGroup }) => {
+  const t = useTranslations('sidebar');
   return (
     <div className="py-2 mt-4 first:mt-2">
       <div className="text-xs font-medium text-muted-foreground px-2.5">
-        {dateGroup}
+        {t(`dateGroups.${dateGroup}` as any)}
       </div>
     </div>
   );
@@ -101,6 +102,7 @@ const ThreadItemCard: React.FC<ThreadItemCardProps> = ({
   isCreatingChat = false,
   mode,
 }) => {
+  const tMenu = useTranslations('sidebar');
   const [isHoveringCard, setIsHoveringCard] = useState(false);
 
   const handleCardClick = (e: React.MouseEvent<HTMLAnchorElement | HTMLDivElement>) => {
@@ -185,7 +187,7 @@ const ThreadItemCard: React.FC<ThreadItemCardProps> = ({
                       }}
                     >
                       <ExternalLink className="mr-2 h-4 w-4" />
-                      Open chat
+                      {tMenu('threadMenuOpenChat')}
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                   </>
@@ -204,7 +206,7 @@ const ThreadItemCard: React.FC<ThreadItemCardProps> = ({
                     ) : (
                       <Plus className="mr-2 h-4 w-4" />
                     )}
-                    New chat
+                    {tMenu('threadMenuNewChat')}
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuItem
@@ -215,7 +217,7 @@ const ThreadItemCard: React.FC<ThreadItemCardProps> = ({
                   }}
                 >
                   <Pencil className="mr-2 h-4 w-4" />
-                  Rename
+                  {tMenu('threadMenuRename')}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
@@ -226,7 +228,7 @@ const ThreadItemCard: React.FC<ThreadItemCardProps> = ({
                   }}
                 >
                   <Trash2 className="mr-2 h-4 w-4" />
-                  Delete
+                  {tMenu('threadMenuDelete')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -581,7 +583,7 @@ export function SidebarThreadList({ mode }: SidebarThreadListProps) {
       id: 'multiple',
       name:
         selectedThreads.size > 3
-          ? `${selectedThreads.size} conversations`
+          ? t('bulkDeleteConversationSummary', { count: selectedThreads.size })
           : threadNames,
     });
 
@@ -612,7 +614,7 @@ export function SidebarThreadList({ mode }: SidebarThreadListProps) {
             {
               onSuccess: () => {
                 queryClient.invalidateQueries({ queryKey: threadKeys.lists() });
-                toast.success('Conversation deleted successfully');
+                toast.success(t('toastConversationDeletedSuccess'));
               },
               onSettled: () => {
                 setThreadToDelete(null);
@@ -632,7 +634,7 @@ export function SidebarThreadList({ mode }: SidebarThreadListProps) {
         pathname?.includes(id)
       );
 
-      toast.info(`Deleting ${threadIdsToDelete.length} conversations...`);
+      toast.info(t('toastDeletingConversations', { count: threadIdsToDelete.length }));
 
       try {
         if (isActiveThreadIncluded) {
@@ -662,10 +664,12 @@ export function SidebarThreadList({ mode }: SidebarThreadListProps) {
             onSuccess: (data) => {
               queryClient.invalidateQueries({ queryKey: threadKeys.lists() });
               toast.success(
-                `Successfully deleted ${data.successful.length} conversations`
+                t('toastConversationsDeletedSuccess', { count: data.successful.length })
               );
               if (data.failed.length > 0) {
-                toast.warning(`Failed to delete ${data.failed.length} conversations`);
+                toast.warning(
+                  t('toastConversationsDeleteFailed', { count: data.failed.length })
+                );
               }
               setSelectedThreads(new Set());
               setDeleteProgress(0);
@@ -673,7 +677,7 @@ export function SidebarThreadList({ mode }: SidebarThreadListProps) {
             },
             onError: (error) => {
               console.error('Error in bulk deletion:', error);
-              toast.error('Error deleting conversations');
+              toast.error(t('toastDeleteConversationsError'));
             },
             onSettled: () => {
               setThreadToDelete(null);
@@ -685,7 +689,7 @@ export function SidebarThreadList({ mode }: SidebarThreadListProps) {
         );
       } catch (err) {
         console.error('Error initiating bulk deletion:', err);
-        toast.error('Error initiating deletion process');
+        toast.error(t('toastDeleteInitError'));
         setSelectedThreads(new Set());
         setThreadToDelete(null);
         isPerformingActionRef.current = false;
@@ -724,14 +728,14 @@ export function SidebarThreadList({ mode }: SidebarThreadListProps) {
                 }
               >
                 {selectedThreads.size === combinedThreads.length
-                  ? 'Deselect All'
-                  : 'Select All'}
+                  ? t('deselectAll')
+                  : t('selectAll')}
               </Button>
             </TooltipTrigger>
             <TooltipContent>
               {selectedThreads.size === combinedThreads.length
-                ? 'Deselect all conversations'
-                : 'Select all conversations'}
+                ? t('deselectAllConversations')
+                : t('selectAllConversations')}
             </TooltipContent>
           </Tooltip>
 
@@ -751,8 +755,7 @@ export function SidebarThreadList({ mode }: SidebarThreadListProps) {
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                Delete {selectedThreads.size} conversation
-                {selectedThreads.size > 1 ? 's' : ''}
+                {t('deleteConversationsTooltip', { count: selectedThreads.size })}
               </TooltipContent>
             </Tooltip>
           )}
@@ -852,7 +855,7 @@ export function SidebarThreadList({ mode }: SidebarThreadListProps) {
                                         {projectGroup.projectName}
                                       </span>
                                       <span className="text-[11px] text-muted-foreground">
-                                        {projectThreads.length} chats
+                                        {t('projectChatCount', { count: projectThreads.length })}
                                       </span>
                                     </div>
 
@@ -873,7 +876,7 @@ export function SidebarThreadList({ mode }: SidebarThreadListProps) {
                                               </button>
                                             </TooltipTrigger>
                                             <TooltipContent side="right">
-                                              Rename
+                                              {t('renameProjectTooltip')}
                                             </TooltipContent>
                                           </Tooltip>
                                           <Tooltip>
@@ -894,7 +897,9 @@ export function SidebarThreadList({ mode }: SidebarThreadListProps) {
                                               </button>
                                             </TooltipTrigger>
                                             <TooltipContent side="right">
-                                              {isCreatingChat ? 'Creating...' : 'New chat'}
+                                              {isCreatingChat
+                                                ? t('creatingChatTooltip')
+                                                : t('newChatTooltip')}
                                             </TooltipContent>
                                           </Tooltip>
                                         </>
@@ -982,7 +987,7 @@ export function SidebarThreadList({ mode }: SidebarThreadListProps) {
                                                     }}
                                                   >
                                                     <ExternalLink className="mr-2 h-3.5 w-3.5" />
-                                                    Open chat
+                                                    {t('threadMenuOpenChat')}
                                                   </DropdownMenuItem>
                                                   <DropdownMenuSeparator />
                                                 </>
@@ -998,7 +1003,7 @@ export function SidebarThreadList({ mode }: SidebarThreadListProps) {
                                                 }}
                                               >
                                                 <Trash2 className="mr-2 h-3.5 w-3.5" />
-                                                Delete
+                                                {t('threadMenuDelete')}
                                               </DropdownMenuItem>
                                             </DropdownMenuContent>
                                           </DropdownMenu>
@@ -1081,7 +1086,7 @@ export function SidebarThreadList({ mode }: SidebarThreadListProps) {
           <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
             <span className="flex items-center gap-2">
               <DobbyLoader size="small" />
-              Deleting...
+              {t('deleteConversationDeleting')}
             </span>
             <span className="tabular-nums font-medium">
               {Math.floor(deleteProgress)}%
@@ -1103,6 +1108,7 @@ export function SidebarThreadList({ mode }: SidebarThreadListProps) {
           onConfirm={confirmDelete}
           threadName={threadToDelete.name}
           isDeleting={isDeletingSingle || isDeletingMultiple}
+          isBulk={threadToDelete.id === 'multiple'}
         />
       )}
 

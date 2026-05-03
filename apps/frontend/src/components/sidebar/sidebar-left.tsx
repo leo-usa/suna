@@ -449,7 +449,7 @@ export function SidebarLeft({
                 >
                   <div className="flex items-center gap-2">
                     <FolderOpen className="h-4 w-4" />
-                    Files
+                    {t('files')}
                   </div>
                 </Link>
               </Button>
@@ -460,7 +460,7 @@ export function SidebarLeft({
               {[
                 { view: 'chats' as const, icon: MessageCircle, label: t('chats') },
                 // { view: 'library' as const, icon: Library, label: t('library') },
-                { view: 'workers' as const, icon: Users, label: 'Workers' },
+                { view: 'workers' as const, icon: Users, label: t('workers') },
                 { view: 'starred' as const, icon: Zap, label: t('triggers') }
               ].map(({ view, icon: Icon, label }) => (
                 <button
