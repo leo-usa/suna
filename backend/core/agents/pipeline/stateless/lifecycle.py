@@ -14,6 +14,8 @@ class WorkerLifecycle:
         self._shutdown_hooks: List[Callable[[], Awaitable[None]]] = []
         self._initialized: bool = False
         self._shutting_down: bool = False
+        self._shutdown_complete: bool = False
+        self._prev_signal_handlers: Dict[int, Any] = {}
 
     @property
     def is_initialized(self) -> bool:
@@ -44,6 +46,15 @@ class WorkerLifecycle:
         if self._shutdown_event:
             self._shutdown_event.set()
 
+        prev = self._prev_signal_handlers.get(signum)
+        if prev is not None and callable(prev):
+            try:
+                prev(signum, frame)
+            except KeyboardInterrupt:
+                raise
+            except Exception as e:
+                logger.debug(f"[Lifecycle] Previous {sig_name} handler raised: {e}")
+
     async def initialize(self) -> Dict[str, Any]:
         if self._initialized:
             return {"status": "already_initialized"}
@@ -53,8 +64,13 @@ class WorkerLifecycle:
         try:
             self._shutdown_event = asyncio.Event()
 
-            signal.signal(signal.SIGTERM, self._handle_signal)
-            signal.signal(signal.SIGINT, self._handle_signal)
+            # Chain previous handlers (usually uvicorn) so Ctrl+C still stops the server.
+            self._prev_signal_handlers[signal.SIGTERM] = signal.signal(
+                signal.SIGTERM, self._handle_signal
+            )
+            self._prev_signal_handlers[signal.SIGINT] = signal.signal(
+                signal.SIGINT, self._handle_signal
+            )
             result["steps"].append("signals")
 
             from core.agents.pipeline.stateless.flusher import write_buffer
@@ -93,8 +109,9 @@ class WorkerLifecycle:
         return result
 
     async def shutdown(self) -> Dict[str, Any]:
-        if self._shutting_down:
-            return {"status": "already_shutting_down"}
+        # Ctrl+C may set _shutting_down before FastAPI lifespan runs; still run full teardown once.
+        if self._shutdown_complete:
+            return {"status": "already_shutdown"}
 
         self._shutting_down = True
         result = {"status": "shutting_down", "steps": []}
@@ -112,6 +129,8 @@ class WorkerLifecycle:
             logger.error(f"[Lifecycle] Shutdown failed: {e}")
             result["status"] = "shutdown_failed"
             result["error"] = str(e)
+        finally:
+            self._shutdown_complete = True
 
         return result
 

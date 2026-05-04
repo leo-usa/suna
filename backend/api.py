@@ -266,17 +266,29 @@ async def lifespan(app: FastAPI):
         
         try:
             logger.debug("Closing Redis connection")
-            await redis.close()
+            await asyncio.wait_for(redis.close(), timeout=15.0)
             logger.debug("Redis connection closed successfully")
+        except asyncio.TimeoutError:
+            logger.warning("Redis close timed out after 15s; continuing shutdown")
         except Exception as e:
             logger.error(f"Error closing Redis connection: {e}")
 
-        logger.debug("Disconnecting from database")
-        await db.disconnect()
+        try:
+            logger.debug("Disconnecting from database")
+            await asyncio.wait_for(db.disconnect(), timeout=15.0)
+        except asyncio.TimeoutError:
+            logger.warning("Database disconnect timed out after 15s; continuing shutdown")
+        except Exception as e:
+            logger.error(f"Error disconnecting from database: {e}")
         
         # Close direct Postgres connection pool
         from core.services.db import close_db
-        await close_db()
+        try:
+            await asyncio.wait_for(close_db(), timeout=15.0)
+        except asyncio.TimeoutError:
+            logger.warning("close_db timed out after 15s; continuing shutdown")
+        except Exception as e:
+            logger.error(f"Error closing DB pool: {e}")
     except Exception as e:
         logger.error(f"Error during application startup: {e}")
         raise
