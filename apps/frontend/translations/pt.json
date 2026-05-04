@@ -648,7 +648,16 @@
     "title": "Threads",
     "newThread": "Nova Thread",
     "sendMessage": "Enviar mensagem",
-    "placeholder": "Digite tua mensagem..."
+    "placeholder": "Digite tua mensagem...",
+    "share": "Compartilhar",
+    "shared": "Compartilhado",
+    "copyLink": "Copiar link",
+    "copied": "Copiado!",
+    "copyShareLinkTooltip": "Copiar link de compartilhamento",
+    "shareLinkCopied": "Link copiado para a área de transferência!",
+    "failedCopyLink": "Falha ao copiar o link",
+    "openDobbyComputerTooltip": "Abrir Dobby Computer",
+    "closeDobbyComputerTooltip": "Fechar Dobby Computer"
   },
   "billing": {
     "title": "Faturação & Assinatura",
@@ -1109,6 +1118,20 @@
     "failedToCopyFileContent": "Falha ao copiar conteúdo do arquivo",
     "noContentAvailable": "Nenhum conteúdo disponível",
     "noContentDescription": "Esta execução de ferramenta não produziu nenhum conteúdo de entrada ou saída para exibir.",
+    "fileOperationView": {
+      "preview": "Pré-visualização",
+      "source": "Código-fonte",
+      "edit": "Editar",
+      "editTooltip": "Editar no gerenciador de arquivos",
+      "changes": "Alterações",
+      "toolTitle": {
+        "create-file": "Criar arquivo",
+        "delete-file": "Excluir arquivo",
+        "full-file-rewrite": "Reescrever arquivo",
+        "str-replace": "Substituição de texto",
+        "edit-file": "Editar arquivo"
+      }
+    },
     "tool": "Ferramenta"
   },
   "agentRunLimit": {
@@ -1642,6 +1665,28 @@
       "descOffline": "Start the computer to browse and manage files.",
       "startComputer": "Start Computer",
       "startingUp": "Starting up..."
+    },
+    "panel": {
+      "actions": "Ações",
+      "files": "Arquivos",
+      "browser": "Navegador"
+    },
+    "history": {
+      "label": "Histórico",
+      "loading": "Carregando histórico...",
+      "empty": "Sem histórico disponível",
+      "loadFailed": "Falha ao carregar o histórico"
+    },
+    "html": {
+      "preview": "Pré-visualização",
+      "code": "Código",
+      "open": "Abrir",
+      "iframeTitle": "Pré-visualização HTML",
+      "unableToLoad": "Não foi possível carregar a pré-visualização HTML"
+    },
+    "fileBrowser": {
+      "filesTitle": "Arquivos",
+      "home": "Início"
     }
   }
 }

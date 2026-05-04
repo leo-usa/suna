@@ -650,7 +650,16 @@
     "title": "Thread",
     "newThread": "Nuovo thread",
     "sendMessage": "Invia messaggio",
-    "placeholder": "Digita il tuo messaggio..."
+    "placeholder": "Digita il tuo messaggio...",
+    "share": "Condividi",
+    "shared": "Condiviso",
+    "copyLink": "Copia link",
+    "copied": "Copiato!",
+    "copyShareLinkTooltip": "Copia link di condivisione",
+    "shareLinkCopied": "Link di condivisione copiato negli appunti!",
+    "failedCopyLink": "Impossibile copiare il link",
+    "openDobbyComputerTooltip": "Apri Dobby Computer",
+    "closeDobbyComputerTooltip": "Chiudi Dobby Computer"
   },
   "billing": {
     "title": "Fatturazione & Abbonamento",
@@ -1111,6 +1120,20 @@
     "failedToCopyFileContent": "Impossibile copiare il contenuto del file",
     "noContentAvailable": "Nessun contenuto disponibile",
     "noContentDescription": "Questa esecuzione dello strumento non ha prodotto alcun contenuto di input o output da visualizzare.",
+    "fileOperationView": {
+      "preview": "Anteprima",
+      "source": "Sorgente",
+      "edit": "Modifica",
+      "editTooltip": "Modifica nel gestore file",
+      "changes": "Modifiche",
+      "toolTitle": {
+        "create-file": "Crea file",
+        "delete-file": "Elimina file",
+        "full-file-rewrite": "Riscrivi file",
+        "str-replace": "Sostituzione testo",
+        "edit-file": "Modifica file"
+      }
+    },
     "tool": "Strumento"
   },
   "agentRunLimit": {
@@ -1644,6 +1667,28 @@
       "descOffline": "Start the computer to browse and manage files.",
       "startComputer": "Start Computer",
       "startingUp": "Starting up..."
+    },
+    "panel": {
+      "actions": "Azioni",
+      "files": "File",
+      "browser": "Browser"
+    },
+    "history": {
+      "label": "Cronologia",
+      "loading": "Caricamento cronologia...",
+      "empty": "Nessuna cronologia",
+      "loadFailed": "Impossibile caricare la cronologia"
+    },
+    "html": {
+      "preview": "Anteprima",
+      "code": "Codice",
+      "open": "Apri",
+      "iframeTitle": "Anteprima HTML",
+      "unableToLoad": "Impossibile caricare l’anteprima HTML"
+    },
+    "fileBrowser": {
+      "filesTitle": "File",
+      "home": "Home"
     }
   }
 }

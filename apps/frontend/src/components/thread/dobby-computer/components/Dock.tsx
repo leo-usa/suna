@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { memo, ReactNode, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Folder, Globe, TerminalSquare, Info, Table } from 'lucide-react';
@@ -226,6 +227,7 @@ export const AppDock = memo(function AppDock({
   isInfoWindowOpen = false,
   isSpreadsheetWindowOpen = false,
 }: AppDockProps) {
+  const tFiles = useTranslations('dobbyComputer.fileBrowser');
   const [scrollOffset, setScrollOffset] = useState(0);
   const maxVisibleIcons = 12;
   
@@ -297,7 +299,7 @@ export const AppDock = memo(function AppDock({
               {showFilesTab && (
                 <SystemDockCard
                   icon={Folder}
-                  label="Files"
+                  label={tFiles('filesTitle')}
                   bgClass="bg-gradient-to-br from-[#60a5fa] to-[#2563eb]"
                   iconColor="text-white"
                   isActive={isFilesWindowOpen}

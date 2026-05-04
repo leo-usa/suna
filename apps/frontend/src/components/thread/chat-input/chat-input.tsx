@@ -68,6 +68,10 @@ interface IsolatedTextareaProps {
   isUploading: boolean;
   valueRef: React.MutableRefObject<string>;
   onHasContentChange: (hasContent: boolean) => void;
+  /** When set, suppresses controlled sync side-effects while true (CJK IME). */
+  imeComposingRef?: React.MutableRefObject<boolean>;
+  /** After IME commits, so controlled parents can sync full text from the DOM. */
+  onImeCompositionEnd?: () => void;
 }
 
 const IsolatedTextarea = memo(forwardRef<HTMLTextAreaElement, IsolatedTextareaProps>(function IsolatedTextarea({
@@ -83,6 +87,8 @@ const IsolatedTextarea = memo(forwardRef<HTMLTextAreaElement, IsolatedTextareaPr
   isUploading,
   valueRef,
   onHasContentChange,
+  imeComposingRef,
+  onImeCompositionEnd,
 }, ref) {
   const [value, setValue] = useState(initialValue);
   const internalRef = useRef<HTMLTextAreaElement>(null);
@@ -102,14 +108,18 @@ const IsolatedTextarea = memo(forwardRef<HTMLTextAreaElement, IsolatedTextareaPr
     valueRef.current = value;
   }, [value, valueRef]);
   
-  // Notify parent when hasContent changes (but not on every keystroke)
+  // Notify parent when hasContent changes (but not on every keystroke).
+  // Skip during IME composition: interim updates + controlled clear/re-apply causes loops with CJK.
   useEffect(() => {
+    if (imeComposingRef?.current) {
+      return;
+    }
     const hasContent = value.trim().length > 0;
     if (hasContent !== prevHasContent.current) {
       prevHasContent.current = hasContent;
       onHasContentChange(hasContent);
     }
-  }, [value, onHasContentChange]);
+  }, [value, onHasContentChange, imeComposingRef]);
 
   // Auto-resize textarea
   const adjustHeight = useCallback(() => {
@@ -135,6 +145,25 @@ const IsolatedTextarea = memo(forwardRef<HTMLTextAreaElement, IsolatedTextareaPr
   const handleChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setValue(e.target.value);
   }, []);
+
+  const handleCompositionStart = useCallback(() => {
+    if (imeComposingRef) imeComposingRef.current = true;
+  }, [imeComposingRef]);
+
+  const handleCompositionEnd = useCallback(() => {
+    if (imeComposingRef) imeComposingRef.current = false;
+    window.setTimeout(() => {
+      const el = internalRef.current;
+      if (!el) {
+        onImeCompositionEnd?.();
+        return;
+      }
+      const v = el.value;
+      valueRef.current = v;
+      prevHasContent.current = v.trim().length > 0;
+      onImeCompositionEnd?.();
+    }, 0);
+  }, [imeComposingRef, valueRef, onImeCompositionEnd]);
 
   // Detect if we're on a mobile device - only after mount to prevent hydration mismatch
   // Used only for keyboard behavior, not for styling (styling uses CSS media queries)
@@ -182,6 +211,8 @@ const IsolatedTextarea = memo(forwardRef<HTMLTextAreaElement, IsolatedTextareaPr
         ref={internalRef}
         value={value}
         onChange={handleChange}
+        onCompositionStart={handleCompositionStart}
+        onCompositionEnd={handleCompositionEnd}
         onKeyDown={handleKeyDown}
         onPaste={onPaste}
         placeholder={placeholder}
@@ -833,6 +864,7 @@ export const ChatInput = memo(forwardRef<ChatInputHandles, ChatInputProps>(
     
     // Ref to access current value - textarea manages its own state
     const valueRef = useRef('');
+    const imeComposingRef = useRef(false);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     
     // hasContent state - only changes when empty/non-empty state changes (not every keystroke)
@@ -1081,6 +1113,9 @@ export const ChatInput = memo(forwardRef<ChatInputHandles, ChatInputProps>(
     }, []);
 
     useEffect(() => {
+      if (imeComposingRef.current) {
+        return;
+      }
       if (controlledValue !== undefined && controlledValue !== valueRef.current) {
         const textarea = textareaRef.current as any;
         if (textarea?.clearValue) {
@@ -1345,6 +1380,14 @@ export const ChatInput = memo(forwardRef<ChatInputHandles, ChatInputProps>(
       }
     }, [isControlled, controlledOnChange]);
 
+    const handleImeCompositionEnd = useCallback(() => {
+      const v = valueRef.current;
+      setHasContent(v.trim().length > 0);
+      if (isControlled && controlledOnChange) {
+        controlledOnChange(v);
+      }
+    }, [isControlled, controlledOnChange]);
+
     // Isolated textarea that manages its own state - prevents parent re-renders on typing
     const renderTextArea = useMemo(() => (
       <IsolatedTextarea
@@ -1360,8 +1403,10 @@ export const ChatInput = memo(forwardRef<ChatInputHandles, ChatInputProps>(
         isUploading={isUploading}
         valueRef={valueRef}
         onHasContentChange={handleHasContentChange}
+        imeComposingRef={imeComposingRef}
+        onImeCompositionEnd={handleImeCompositionEnd}
       />
-    ), [animatedPlaceholder, disabled, isDraggingOver, handleTextareaSubmit, handlePaste, hasFiles, loading, isAgentRunning, isUploading, handleHasContentChange]);
+    ), [animatedPlaceholder, disabled, isDraggingOver, handleTextareaSubmit, handlePaste, hasFiles, loading, isAgentRunning, isUploading, handleHasContentChange, handleImeCompositionEnd]);
 
     // Stable callbacks for opening dialogs - don't need to be in deps
     const handleOpenRegistry = useCallback((slug: string | null) => {

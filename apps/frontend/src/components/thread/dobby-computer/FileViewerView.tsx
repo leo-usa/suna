@@ -1,5 +1,6 @@
 'use client';
 
+import { useLocale, useTranslations } from 'next-intl';
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -146,6 +147,8 @@ export function FileViewerView({
   project,
   projectId,
 }: FileViewerViewProps) {
+  const t = useTranslations('dobbyComputer');
+  const locale = useLocale();
   const { session } = useAuth();
 
   // Get unified sandbox status with auto-start
@@ -384,11 +387,11 @@ export function FileViewerView({
       console.log('[FileViewerView] Loaded file history', { count: (data.versions || []).length });
     } catch (error) {
       console.error('[FileViewerView] Failed to load history', error);
-      toast.error('Failed to load history');
+      toast.error(t('history.loadFailed'));
     } finally {
       setIsLoadingVersions(false);
     }
-  }, [sandboxId, filePath, session?.access_token, fileVersions.length, selectedVersion, selectedVersionDate, setGlobalSelectedVersion]);
+  }, [sandboxId, filePath, session?.access_token, fileVersions.length, selectedVersion, selectedVersionDate, setGlobalSelectedVersion, t]);
 
   // Auto-load version history if we have a selected version but no date
   useEffect(() => {
@@ -1100,12 +1103,12 @@ export function FileViewerView({
                 )}
                 <span>
                   {selectedVersion && selectedVersionDate ? (
-                    new Date(selectedVersionDate).toLocaleDateString('en-US', {
+                    new Date(selectedVersionDate).toLocaleDateString(locale, {
                       month: 'short',
                       day: 'numeric'
                     })
                   ) : (
-                    'History'
+                    t('history.label')
                   )}
                 </span>
                 <ChevronDown className="h-3 w-3" />
@@ -1115,11 +1118,11 @@ export function FileViewerView({
               {isLoadingVersions ? (
                 <div className="flex items-center justify-center py-8">
                   <DobbyLoader size="small" />
-                  <span className="ml-2 text-sm text-muted-foreground">Loading history...</span>
+                  <span className="ml-2 text-sm text-muted-foreground">{t('history.loading')}</span>
                 </div>
               ) : fileVersions.length === 0 ? (
                 <div className="flex items-center justify-center py-8">
-                  <span className="text-sm text-muted-foreground">No history available</span>
+                  <span className="text-sm text-muted-foreground">{t('history.empty')}</span>
                 </div>
               ) : (
                 fileVersions.map((version, index) => {
@@ -1421,7 +1424,7 @@ export function FileViewerView({
             <div className="mt-2">
               <div className="text-sm font-medium mb-1">{revertCommitInfo.message}</div>
               <div className="text-xs text-muted-foreground mb-3">
-                {revertCommitInfo.date && new Date(revertCommitInfo.date).toLocaleDateString('en-US', {
+                {revertCommitInfo.date && new Date(revertCommitInfo.date).toLocaleDateString(locale, {
                   month: 'short',
                   day: 'numeric',
                   year: 'numeric'

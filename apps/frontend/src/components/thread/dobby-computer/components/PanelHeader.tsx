@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { memo, useState, useEffect } from 'react';
 import { Minimize2, Wifi, BatteryLow, BatteryMedium, BatteryFull, BatteryCharging, FolderOpen, Activity, Loader2, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -147,6 +148,7 @@ interface ActionFilesSwitcherProps {
 }
 
 function ActionFilesSwitcher({ currentView, onViewChange, size = 'md' }: ActionFilesSwitcherProps) {
+  const t = useTranslations('dobbyComputer.panel');
   const isAction = currentView === 'tools';
   const isFiles = currentView === 'files';
 
@@ -185,7 +187,7 @@ function ActionFilesSwitcher({ currentView, onViewChange, size = 'md' }: ActionF
         style={{ width: config.btnWidth, height: config.height - config.padding * 2, fontSize: config.fontSize }}
       >
         <Activity style={{ width: config.iconSize, height: config.iconSize }} strokeWidth={2.5} />
-        <span>Actions</span>
+        <span>{t('actions')}</span>
       </button>
 
       {/* Files button */}
@@ -198,7 +200,7 @@ function ActionFilesSwitcher({ currentView, onViewChange, size = 'md' }: ActionF
         style={{ width: config.btnWidth, height: config.height - config.padding * 2, fontSize: config.fontSize }}
       >
         <FolderOpen style={{ width: config.iconSize, height: config.iconSize }} strokeWidth={2.5} />
-        <span>Files</span>
+        <span>{t('files')}</span>
       </button>
     </div>
   );

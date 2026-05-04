@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { memo, useState, useCallback, useEffect, useRef, ReactNode } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { Folder, Globe, TerminalSquare, Info, Table } from 'lucide-react';
@@ -80,7 +81,8 @@ const FolderWindow = memo(function FolderWindow({
   onClose,
   onMinimize,
 }: FolderWindowProps) {
-  const folderName = (window.filePath || '/workspace').split('/').pop() || 'Files';
+  const t = useTranslations('dobbyComputer.fileBrowser');
+  const folderName = (window.filePath || '/workspace').split('/').pop() || t('filesTitle');
 
   return (
     <AppWindow
@@ -155,6 +157,7 @@ export const SandboxDesktop = memo(function SandboxDesktop({
   project_id,
   isStreaming = false,
 }: SandboxDesktopProps) {
+  const tFiles = useTranslations('dobbyComputer.fileBrowser');
   const [openWindows, setOpenWindows] = useState<OpenWindow[]>([]);
   const [maxZIndex, setMaxZIndex] = useState(1);
   const [activeWindowId, setActiveWindowId] = useState<string | null>(null);
@@ -745,7 +748,7 @@ export const SandboxDesktop = memo(function SandboxDesktop({
                   <AppWindow
                     key={window.id}
                     id={window.id}
-                    title="Files"
+                    title={tFiles('filesTitle')}
                     icon={
                       <div className="w-4 h-4 rounded flex items-center justify-center bg-gradient-to-br from-[#89A8C8] to-[#6B8DB5]">
                         <Folder className="w-2.5 h-2.5 text-white" />

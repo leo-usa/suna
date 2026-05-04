@@ -8,6 +8,8 @@ import { Monitor, Code, ExternalLink } from 'lucide-react';
 import { constructHtmlPreviewUrl } from '@/lib/utils/url';
 import { IframePreview } from '@/components/thread/iframe-preview';
 
+import { useTranslations } from 'next-intl';
+
 interface FileRendererProject {
   id?: string;
   name?: string;
@@ -34,6 +36,7 @@ export function HtmlRenderer({
   className,
   project,
 }: HtmlRendererProps) {
+  const t = useTranslations('dobbyComputer.html');
   // Always default to 'preview' mode
   const [viewMode, setViewMode] = useState<'preview' | 'code'>('preview');
 
@@ -158,7 +161,7 @@ export function HtmlRenderer({
             onClick={() => setViewMode('preview')}
           >
             <Monitor className="h-4 w-4" />
-            Preview
+            {t('preview')}
           </Button>
           <Button
             variant="ghost"
@@ -170,7 +173,7 @@ export function HtmlRenderer({
             onClick={() => setViewMode('code')}
           >
             <Code className="h-4 w-4" />
-            Code
+            {t('code')}
           </Button>
           <Button
             variant="ghost"
@@ -180,7 +183,7 @@ export function HtmlRenderer({
             disabled={!htmlPreviewUrl && !previewUrl}
           >
             <ExternalLink className="h-4 w-4" />
-            Open
+            {t('open')}
           </Button>
         </div>
 
@@ -189,12 +192,12 @@ export function HtmlRenderer({
             {htmlPreviewUrl ? (
               <IframePreview
                 url={htmlPreviewUrl}
-                title="HTML Preview"
+                title={t('iframeTitle')}
                 className="w-full h-full"
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                Unable to load HTML preview
+                {t('unableToLoad')}
               </div>
             )}
           </div>

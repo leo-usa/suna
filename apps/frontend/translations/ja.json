@@ -648,7 +648,16 @@
     "title": "スレッド",
     "newThread": "新しいスレッド",
     "sendMessage": "メッセージを送信",
-    "placeholder": "メッセージを入力..."
+    "placeholder": "メッセージを入力...",
+    "share": "共有",
+    "shared": "共有中",
+    "copyLink": "リンクをコピー",
+    "copied": "コピーしました！",
+    "copyShareLinkTooltip": "共有リンクをコピー",
+    "shareLinkCopied": "共有リンクをクリップボードにコピーしました！",
+    "failedCopyLink": "コピーに失敗しました",
+    "openDobbyComputerTooltip": "Dobby Computer を開く",
+    "closeDobbyComputerTooltip": "Dobby Computer を閉じる"
   },
   "billing": {
     "title": "請求とサブスクリプション",
@@ -1109,6 +1118,20 @@
     "failedToCopyFileContent": "ファイル内容のコピーに失敗しました",
     "noContentAvailable": "コンテンツがありません",
     "noContentDescription": "このツール実行では、表示する入力または出力コンテンツが生成されませんでした。",
+    "fileOperationView": {
+      "preview": "プレビュー",
+      "source": "ソース",
+      "edit": "編集",
+      "editTooltip": "ファイルマネージャーで編集",
+      "changes": "変更",
+      "toolTitle": {
+        "create-file": "ファイルを作成",
+        "delete-file": "ファイルを削除",
+        "full-file-rewrite": "ファイルを書き換え",
+        "str-replace": "文字列の置換",
+        "edit-file": "ファイルを編集"
+      }
+    },
     "tool": "ツール"
   },
   "agentRunLimit": {
@@ -1642,6 +1665,28 @@
       "descOffline": "Start the computer to browse and manage files.",
       "startComputer": "Start Computer",
       "startingUp": "Starting up..."
+    },
+    "panel": {
+      "actions": "アクション",
+      "files": "ファイル",
+      "browser": "ブラウザ"
+    },
+    "history": {
+      "label": "履歴",
+      "loading": "履歴を読み込み中…",
+      "empty": "履歴がありません",
+      "loadFailed": "履歴を読み込めませんでした"
+    },
+    "html": {
+      "preview": "プレビュー",
+      "code": "コード",
+      "open": "開く",
+      "iframeTitle": "HTML プレビュー",
+      "unableToLoad": "HTML プレビューを読み込めません"
+    },
+    "fileBrowser": {
+      "filesTitle": "ファイル",
+      "home": "ホーム"
     }
   }
 }

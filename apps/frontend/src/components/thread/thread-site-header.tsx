@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { Button } from "@/components/ui/button"
 import { Upload, PanelRightOpen, PanelRightClose, Copy, Check, Menu } from "lucide-react"
 import { toast } from "@/lib/toast"
@@ -38,6 +39,7 @@ export function SiteHeader({
   isMobileView,
   variant = 'default',
 }: ThreadSiteHeaderProps) {
+  const t = useTranslations('threads');
   const [copied, setCopied] = useState(false);
   const isMobile = useIsMobile() || isMobileView;
   const sidebarContext = useContext(SidebarContext);
@@ -48,10 +50,10 @@ export function SiteHeader({
     try {
       await navigator.clipboard.writeText(window.location.href);
       setCopied(true);
-      toast.success("Share link copied to clipboard!");
+      toast.success(t('shareLinkCopied'));
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      toast.error("Failed to copy link");
+      toast.error(t('failedCopyLink'));
     }
   };
 
@@ -79,7 +81,7 @@ export function SiteHeader({
             <div className="text-sm font-medium text-muted-foreground flex items-center gap-2 min-w-0">
               <span className="truncate max-w-[140px] sm:max-w-none">{projectName}</span>
               <span className="text-[11px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-md shrink-0 font-medium">
-                Shared
+                {t('shared')}
               </span>
             </div>
           ) : (
@@ -100,11 +102,11 @@ export function SiteHeader({
                     className="h-9 px-2.5 cursor-pointer gap-1.5"
                   >
                     {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                    <span className="hidden sm:inline text-sm">{copied ? 'Copied!' : 'Copy Link'}</span>
+                    <span className="hidden sm:inline text-sm">{copied ? t('copied') : t('copyLink')}</span>
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="bottom" sideOffset={4}>
-                  <p>Copy share link</p>
+                  <p>{t('copyShareLinkTooltip')}</p>
                 </TooltipContent>
               </Tooltip>
             ) : threadId && projectId ? (
@@ -115,7 +117,7 @@ export function SiteHeader({
                   className="h-9 px-2.5 cursor-pointer gap-1.5"
                 >
                   <Upload className="h-4 w-4" />
-                  <span className="hidden sm:inline text-sm">Share</span>
+                  <span className="hidden sm:inline text-sm">{t('share')}</span>
                 </Button>
               </SharePopover>
             ) : null}
@@ -136,7 +138,7 @@ export function SiteHeader({
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="bottom" sideOffset={4}>
-                <p>{isSidePanelOpen ? 'Close' : 'Open'} Dobby Computer</p>
+                <p>{isSidePanelOpen ? t('closeDobbyComputerTooltip') : t('openDobbyComputerTooltip')}</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>

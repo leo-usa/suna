@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import {
   Folder,
@@ -657,6 +658,7 @@ export function FileBrowserView({
   onNavigateToThread,
   headerExtra,
 }: FileBrowserViewProps) {
+  const t = useTranslations('dobbyComputer');
   const isLibraryView = variant === 'library';
   const isInlineLibrary = variant === 'inline-library';
   const shouldFilterFiles = isLibraryView || isInlineLibrary;
@@ -1507,11 +1509,11 @@ export function FileBrowserView({
           {isLoadingVersions ? (
             <div className="flex items-center justify-center py-8">
               <DobbyLoader size="small" />
-              <span className="ml-2 text-sm text-muted-foreground">Loading history...</span>
+              <span className="ml-2 text-sm text-muted-foreground">{t('history.loading')}</span>
             </div>
           ) : workspaceVersions.length === 0 ? (
             <div className="flex items-center justify-center py-8">
-              <span className="text-sm text-muted-foreground">No history available</span>
+              <span className="text-sm text-muted-foreground">{t('history.empty')}</span>
             </div>
           ) : (
             workspaceVersions.map((version, index) => {
@@ -1622,8 +1624,8 @@ export function FileBrowserView({
                   day: 'numeric'
                 })
               ) : (
-                'History'
-              )}
+                    t('history.label')
+                  )}
             </span>
             <ChevronDown className="h-3 w-3" />
           </Button>
@@ -1632,11 +1634,11 @@ export function FileBrowserView({
           {isLoadingVersions ? (
             <div className="flex items-center justify-center py-8">
               <DobbyLoader size="small" />
-              <span className="ml-2 text-sm text-muted-foreground">Loading history...</span>
+              <span className="ml-2 text-sm text-muted-foreground">{t('history.loading')}</span>
             </div>
           ) : workspaceVersions.length === 0 ? (
             <div className="flex items-center justify-center py-8">
-              <span className="text-sm text-muted-foreground">No history available</span>
+              <span className="text-sm text-muted-foreground">{t('history.empty')}</span>
             </div>
           ) : (
             workspaceVersions.map((version, index) => {
@@ -1740,7 +1742,7 @@ export function FileBrowserView({
             
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-semibold">
-                {currentPath === '/workspace' ? 'Files' : currentPath.split('/').pop()}
+                {currentPath === '/workspace' ? t('fileBrowser.filesTitle') : currentPath.split('/').pop()}
               </h1>
               {currentPath !== '/workspace' && (
                 <Button
@@ -1750,7 +1752,7 @@ export function FileBrowserView({
                   className="text-xs text-muted-foreground"
                 >
                   <Home className="h-3 w-3 mr-1" />
-                  Home
+                  {t('fileBrowser.home')}
                 </Button>
               )}
             </div>
@@ -1767,7 +1769,7 @@ export function FileBrowserView({
           {currentPath !== '/workspace' && (
             <div className="flex items-center gap-1 text-sm text-muted-foreground">
               <button onClick={navigateHome} className="hover:text-foreground">
-                Files
+                {t('fileBrowser.filesTitle')}
               </button>
               {getBreadcrumbSegments(currentPath).map((segment) => (
                 <span key={segment.path} className="flex items-center gap-1">
@@ -1981,8 +1983,8 @@ export function FileBrowserView({
       <DobbyComputerHeader
         icon={Home}
         onIconClick={navigateHome}
-        iconTitle="Home"
-        title={currentPath === '/workspace' ? 'Files' : undefined}
+        iconTitle={t('fileBrowser.home')}
+        title={currentPath === '/workspace' ? t('fileBrowser.filesTitle') : undefined}
         breadcrumbs={currentPath !== '/workspace' ? getBreadcrumbSegments(currentPath) : undefined}
         onBreadcrumbClick={navigateToBreadcrumb}
         actions={defaultHeaderActions}

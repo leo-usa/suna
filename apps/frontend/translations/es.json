@@ -648,7 +648,16 @@
     "title": "Hilos",
     "newThread": "Nuevo Hilo",
     "sendMessage": "Enviar mensaje",
-    "placeholder": "Escribe tu mensaje..."
+    "placeholder": "Escribe tu mensaje...",
+    "share": "Compartir",
+    "shared": "Compartido",
+    "copyLink": "Copiar enlace",
+    "copied": "¡Copiado!",
+    "copyShareLinkTooltip": "Copiar enlace para compartir",
+    "shareLinkCopied": "¡Enlace copiado al portapapeles!",
+    "failedCopyLink": "No se pudo copiar el enlace",
+    "openDobbyComputerTooltip": "Abrir Dobby Computer",
+    "closeDobbyComputerTooltip": "Cerrar Dobby Computer"
   },
   "billing": {
     "title": "Facturación & Suscripción",
@@ -1109,6 +1118,20 @@
     "failedToCopyFileContent": "Error al copiar contenido del archivo",
     "noContentAvailable": "No hay contenido disponible",
     "noContentDescription": "Esta ejecución de herramienta no produjo ningún contenido de entrada o salida para mostrar.",
+    "fileOperationView": {
+      "preview": "Vista previa",
+      "source": "Código fuente",
+      "edit": "Editar",
+      "editTooltip": "Editar en el administrador de archivos",
+      "changes": "Cambios",
+      "toolTitle": {
+        "create-file": "Crear archivo",
+        "delete-file": "Eliminar archivo",
+        "full-file-rewrite": "Reescribir archivo",
+        "str-replace": "Reemplazo de texto",
+        "edit-file": "Editar archivo"
+      }
+    },
     "tool": "Herramienta"
   },
   "agentRunLimit": {
@@ -1642,6 +1665,28 @@
       "descOffline": "Start the computer to browse and manage files.",
       "startComputer": "Start Computer",
       "startingUp": "Starting up..."
+    },
+    "panel": {
+      "actions": "Acciones",
+      "files": "Archivos",
+      "browser": "Navegador"
+    },
+    "history": {
+      "label": "Historial",
+      "loading": "Cargando historial...",
+      "empty": "No hay historial",
+      "loadFailed": "No se pudo cargar el historial"
+    },
+    "html": {
+      "preview": "Vista previa",
+      "code": "Código",
+      "open": "Abrir",
+      "iframeTitle": "Vista previa HTML",
+      "unableToLoad": "No se puede cargar la vista previa HTML"
+    },
+    "fileBrowser": {
+      "filesTitle": "Archivos",
+      "home": "Inicio"
     }
   }
 }

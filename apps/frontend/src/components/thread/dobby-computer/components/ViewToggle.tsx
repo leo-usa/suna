@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { memo } from 'react';
 import { Globe, Zap, FolderOpen } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -23,6 +24,7 @@ export const ViewToggle = memo(function ViewToggle({
   onViewChange, 
   showFilesTab = true 
 }: ViewToggleProps) {
+  const t = useTranslations('dobbyComputer.panel');
   // Hide browser tab if flag is enabled
   const viewOptions = HIDE_BROWSER_TAB
     ? (showFilesTab ? ['tools', 'files'] as const : ['tools'] as const)
@@ -66,7 +68,7 @@ export const ViewToggle = memo(function ViewToggle({
           </Button>
         </TooltipTrigger>
         <TooltipContent side="bottom">
-          <span>Actions</span>
+          <span>{t('actions')}</span>
         </TooltipContent>
       </Tooltip>
 
@@ -86,7 +88,7 @@ export const ViewToggle = memo(function ViewToggle({
             </Button>
           </TooltipTrigger>
           <TooltipContent side="bottom">
-            <p>Files</p>
+            <p>{t('files')}</p>
           </TooltipContent>
         </Tooltip>
       )}
@@ -107,7 +109,7 @@ export const ViewToggle = memo(function ViewToggle({
             </Button>
           </TooltipTrigger>
           <TooltipContent side="bottom">
-            <p>Browser</p>
+            <p>{t('browser')}</p>
           </TooltipContent>
         </Tooltip>
       )}

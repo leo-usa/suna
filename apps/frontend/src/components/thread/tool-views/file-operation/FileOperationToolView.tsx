@@ -1,4 +1,7 @@
+'use client';
+
 import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   ExternalLink,
   Code,
@@ -203,6 +206,18 @@ function extractSlideNumber(filepath: string): number | null {
   return null;
 }
 
+const FILE_OP_TITLE_NAMES = [
+  'create-file',
+  'delete-file',
+  'full-file-rewrite',
+  'str-replace',
+  'edit-file',
+] as const;
+
+function isFileOpTitleName(name: string): name is (typeof FILE_OP_TITLE_NAMES)[number] {
+  return (FILE_OP_TITLE_NAMES as readonly string[]).includes(name);
+}
+
 export function FileOperationToolView({
   toolCall,
   toolResult,
@@ -215,6 +230,7 @@ export function FileOperationToolView({
   messages,
   streamingText,
 }: ToolViewProps) {
+  const tFileView = useTranslations('tools.fileOperationView');
   const { resolvedTheme } = useTheme();
   const isDarkTheme = resolvedTheme === 'dark';
 
@@ -680,7 +696,14 @@ export function FileOperationToolView({
     return calculateDiffStats(lineDiff);
   }, [lineDiff]);
 
-  const toolTitle = getToolTitle(name || `file-${operation}`);
+  const toolTitle = useMemo(() => {
+    const fallback = getToolTitle(name || `file-${operation}`);
+    if (isFileOpTitleName(name)) {
+      return tFileView(`toolTitle.${name}` as 'toolTitle.create-file');
+    }
+    return fallback;
+  }, [name, operation, tFileView]);
+
   const processedFilePath = processFilePath(filePath);
   const fileName = getFileName(processedFilePath);
   const fileExtension = getFileExtension(fileName);
@@ -1031,7 +1054,7 @@ export function FileOperationToolView({
                     className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-all [&[data-state=active]]:bg-white [&[data-state=active]]:dark:bg-primary/10 [&[data-state=active]]:text-foreground hover:bg-background/50 text-muted-foreground shadow-none"
                   >
                     <FileDiff className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">Changes</span>
+                    <span className="hidden sm:inline">{tFileView('changes')}</span>
                   </TabsTrigger>
                 )}
                 <TabsTrigger
@@ -1039,14 +1062,14 @@ export function FileOperationToolView({
                   className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-all [&[data-state=active]]:bg-white [&[data-state=active]]:dark:bg-primary/10 [&[data-state=active]]:text-foreground hover:bg-background/50 text-muted-foreground shadow-none"
                 >
                   <Eye className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">Preview</span>
+                  <span className="hidden sm:inline">{tFileView('preview')}</span>
                 </TabsTrigger>
                 <TabsTrigger
                   value="code"
                   className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-all [&[data-state=active]]:bg-white [&[data-state=active]]:dark:bg-primary/10 [&[data-state=active]]:text-foreground hover:bg-background/50 text-muted-foreground shadow-none"
                 >
                   <Code className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">Source</span>
+                  <span className="hidden sm:inline">{tFileView('source')}</span>
                 </TabsTrigger>
               </TabsList>
             </div>
@@ -1102,11 +1125,11 @@ export function FileOperationToolView({
                         className="h-8 gap-1.5 px-2"
                       >
                         <Pencil className="h-3.5 w-3.5" />
-                        <span className="text-xs hidden sm:inline">Edit</span>
+                        <span className="text-xs hidden sm:inline">{tFileView('edit')}</span>
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent side="bottom">
-                      {isStreaming ? 'Available when complete' : 'Edit in Files Manager'}
+                      {isStreaming ? 'Available when complete' : tFileView('editTooltip')}
                     </TooltipContent>
                   </Tooltip>
                 )}

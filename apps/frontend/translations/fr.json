@@ -648,7 +648,16 @@
     "title": "Fils",
     "newThread": "Nouveau Fil",
     "sendMessage": "Envoyer un message",
-    "placeholder": "Tape ton message..."
+    "placeholder": "Tape ton message...",
+    "share": "Partager",
+    "shared": "Partagé",
+    "copyLink": "Copier le lien",
+    "copied": "Copié !",
+    "copyShareLinkTooltip": "Copier le lien de partage",
+    "shareLinkCopied": "Lien de partage copié dans le presse-papiers !",
+    "failedCopyLink": "Échec de la copie du lien",
+    "openDobbyComputerTooltip": "Ouvrir l’ordinateur Dobby",
+    "closeDobbyComputerTooltip": "Fermer l’ordinateur Dobby"
   },
   "billing": {
     "title": "Facturation & Abonnement",
@@ -1109,6 +1118,20 @@
     "failedToCopyFileContent": "Échec de la copie du contenu du fichier",
     "noContentAvailable": "Aucun contenu disponible",
     "noContentDescription": "Cette exécution d'outil n'a produit aucun contenu d'entrée ou de sortie à afficher.",
+    "fileOperationView": {
+      "preview": "Aperçu",
+      "source": "Source",
+      "edit": "Modifier",
+      "editTooltip": "Modifier dans le gestionnaire de fichiers",
+      "changes": "Modifications",
+      "toolTitle": {
+        "create-file": "Créer un fichier",
+        "delete-file": "Supprimer le fichier",
+        "full-file-rewrite": "Réécrire le fichier",
+        "str-replace": "Remplacement de texte",
+        "edit-file": "Modifier le fichier"
+      }
+    },
     "tool": "Outil"
   },
   "agentRunLimit": {
@@ -1642,6 +1665,28 @@
       "descOffline": "Start the computer to browse and manage files.",
       "startComputer": "Start Computer",
       "startingUp": "Starting up..."
+    },
+    "panel": {
+      "actions": "Actions",
+      "files": "Fichiers",
+      "browser": "Navigateur"
+    },
+    "history": {
+      "label": "Historique",
+      "loading": "Chargement de l’historique...",
+      "empty": "Aucun historique",
+      "loadFailed": "Échec du chargement de l’historique"
+    },
+    "html": {
+      "preview": "Aperçu",
+      "code": "Code",
+      "open": "Ouvrir",
+      "iframeTitle": "Aperçu HTML",
+      "unableToLoad": "Impossible de charger l’aperçu HTML"
+    },
+    "fileBrowser": {
+      "filesTitle": "Fichiers",
+      "home": "Accueil"
     }
   }
 }

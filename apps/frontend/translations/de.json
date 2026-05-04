@@ -566,7 +566,16 @@
     "title": "Threads",
     "newThread": "Neuer Thread",
     "sendMessage": "Nachricht senden",
-    "placeholder": "Gib deine Nachricht ein..."
+    "placeholder": "Gib deine Nachricht ein...",
+    "share": "Teilen",
+    "shared": "Geteilt",
+    "copyLink": "Link kopieren",
+    "copied": "Kopiert!",
+    "copyShareLinkTooltip": "Freigabelink kopieren",
+    "shareLinkCopied": "Freigabelink in die Zwischenablage kopiert!",
+    "failedCopyLink": "Link konnte nicht kopiert werden",
+    "openDobbyComputerTooltip": "Dobby Computer öffnen",
+    "closeDobbyComputerTooltip": "Dobby Computer schließen"
   },
   "billing": {
     "title": "Abrechnung & Abonnement",
@@ -1027,6 +1036,20 @@
     "failedToCopyFileContent": "Dateiinhalt konnte nicht kopiert werden",
     "noContentAvailable": "Kein Inhalt verfügbar",
     "noContentDescription": "Diese Tool-Ausführung hat keinen Eingabe- oder Ausgabeinhalt zum Anzeigen erzeugt.",
+    "fileOperationView": {
+      "preview": "Vorschau",
+      "source": "Quellcode",
+      "edit": "Bearbeiten",
+      "editTooltip": "Im Dateimanager bearbeiten",
+      "changes": "Änderungen",
+      "toolTitle": {
+        "create-file": "Datei erstellen",
+        "delete-file": "Datei löschen",
+        "full-file-rewrite": "Datei neu schreiben",
+        "str-replace": "Textersetzung",
+        "edit-file": "Datei bearbeiten"
+      }
+    },
     "tool": "Tool"
   },
   "agentRunLimit": {
@@ -1642,6 +1665,28 @@
       "descOffline": "Start the computer to browse and manage files.",
       "startComputer": "Start Computer",
       "startingUp": "Starting up..."
+    },
+    "panel": {
+      "actions": "Aktionen",
+      "files": "Dateien",
+      "browser": "Browser"
+    },
+    "history": {
+      "label": "Verlauf",
+      "loading": "Verlauf wird geladen...",
+      "empty": "Kein Verlauf verfügbar",
+      "loadFailed": "Verlauf konnte nicht geladen werden"
+    },
+    "html": {
+      "preview": "Vorschau",
+      "code": "Code",
+      "open": "Öffnen",
+      "iframeTitle": "HTML-Vorschau",
+      "unableToLoad": "HTML-Vorschau kann nicht geladen werden"
+    },
+    "fileBrowser": {
+      "filesTitle": "Dateien",
+      "home": "Start"
     }
   }
 }

@@ -755,7 +755,16 @@
     "title": "Threads",
     "newThread": "New Thread",
     "sendMessage": "Send message",
-    "placeholder": "Type your message..."
+    "placeholder": "Type your message...",
+    "share": "Share",
+    "shared": "Shared",
+    "copyLink": "Copy Link",
+    "copied": "Copied!",
+    "copyShareLinkTooltip": "Copy share link",
+    "shareLinkCopied": "Share link copied to clipboard!",
+    "failedCopyLink": "Failed to copy link",
+    "openDobbyComputerTooltip": "Open Dobby Computer",
+    "closeDobbyComputerTooltip": "Close Dobby Computer"
   },
   "dobbyComputer": {
     "sandbox": {
@@ -770,6 +779,28 @@
       "descOffline": "Start the computer to browse and manage files.",
       "startComputer": "Start Computer",
       "startingUp": "Starting up..."
+    },
+    "panel": {
+      "actions": "Actions",
+      "files": "Files",
+      "browser": "Browser"
+    },
+    "history": {
+      "label": "History",
+      "loading": "Loading history...",
+      "empty": "No history available",
+      "loadFailed": "Failed to load history"
+    },
+    "html": {
+      "preview": "Preview",
+      "code": "Code",
+      "open": "Open",
+      "iframeTitle": "HTML Preview",
+      "unableToLoad": "Unable to load HTML preview"
+    },
+    "fileBrowser": {
+      "filesTitle": "Files",
+      "home": "Home"
     }
   },
   "billing": {
@@ -1241,6 +1272,20 @@
     "failedToCopyFileContent": "Failed to copy file content",
     "noContentAvailable": "No Content Available",
     "noContentDescription": "This tool execution did not produce any input or output content to display.",
+    "fileOperationView": {
+      "preview": "Preview",
+      "source": "Source",
+      "edit": "Edit",
+      "editTooltip": "Edit in Files Manager",
+      "changes": "Changes",
+      "toolTitle": {
+        "create-file": "Create File",
+        "delete-file": "Delete File",
+        "full-file-rewrite": "Rewrite File",
+        "str-replace": "String Replace",
+        "edit-file": "Edit File"
+      }
+    },
     "tool": "Tool"
   },
   "agentRunLimit": {
