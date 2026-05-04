@@ -13,8 +13,9 @@ from fastapi import FastAPI, UploadFile, File, HTTPException, APIRouter, Form, D
 from fastapi.responses import Response
 from pydantic import BaseModel
 from daytona_sdk import AsyncSandbox, SessionExecuteRequest
+from daytona_sdk.common.errors import DaytonaNotFoundError
 
-from core.sandbox.sandbox import get_or_start_sandbox, delete_sandbox, create_sandbox, daytona
+from core.sandbox.sandbox import get_or_start_sandbox, delete_sandbox, create_sandbox, daytona, sync_db_after_evicted_sandbox
 from core.utils.logger import logger
 from core.utils.auth_utils import get_optional_user_id, verify_and_get_user_id_from_jwt, verify_sandbox_access, verify_sandbox_access_optional
 from core.services.supabase import DBConnection
@@ -921,7 +922,21 @@ async def get_project_sandbox_status(
         config = sandbox_resource.get('config', {})
 
         # Get Daytona state
-        sandbox = await daytona.get(sandbox_id)
+        try:
+            sandbox = await daytona.get(sandbox_id)
+        except DaytonaNotFoundError:
+            logger.warning(
+                f"Sandbox {sandbox_id} not found in Daytona; clearing stale resource for project {project_id}"
+            )
+            await sync_db_after_evicted_sandbox(sandbox_id)
+            return SandboxStatusResponse(
+                status=UnifiedSandboxStatus.UNKNOWN.value,
+                sandbox_id="",
+                project_id=project_id,
+                daytona_state="none",
+                last_checked=datetime.now(timezone.utc).isoformat(),
+                error="Sandbox was removed; a new one will be created when you start the computer.",
+            )
         daytona_state = sandbox.state.value if hasattr(sandbox.state, 'value') else str(sandbox.state)
 
         # Only fetch health if Daytona reports started
@@ -1042,7 +1057,42 @@ async def start_project_sandbox(
         sandbox_id = sandbox_resource.get('external_id')
 
         # Check current state
-        sandbox = await daytona.get(sandbox_id)
+        try:
+            sandbox = await daytona.get(sandbox_id)
+        except DaytonaNotFoundError:
+            logger.warning(
+                f"Sandbox {sandbox_id} missing in Daytona for project {project_id}; clearing stale DB link"
+            )
+            await sync_db_after_evicted_sandbox(sandbox_id)
+            sandbox_resource = await resource_service.get_project_sandbox_resource(project_id)
+            if not sandbox_resource:
+                logger.info(f"No sandbox found for project {project_id} after stale cleanup, creating one...")
+
+                async def create_sandbox_background():
+                    try:
+                        sandbox_info = await resolve_sandbox(
+                            project_id=project_id,
+                            account_id=account_id,
+                            db_client=client,
+                            require_started=True
+                        )
+                        if sandbox_info:
+                            logger.info(f"Successfully created sandbox {sandbox_info.sandbox_id} for project {project_id}")
+                        else:
+                            logger.error(f"Failed to create sandbox for project {project_id}")
+                    except Exception as e:
+                        logger.error(f"Error creating sandbox for project {project_id}: {str(e)}")
+
+                asyncio.create_task(create_sandbox_background())
+
+                return {
+                    "status": "creating",
+                    "sandbox_id": None,
+                    "message": "Sandbox creation initiated. Poll /status for updates."
+                }
+            sandbox_id = sandbox_resource.get('external_id')
+            sandbox = await daytona.get(sandbox_id)
+
         current_state = sandbox.state.value.lower() if hasattr(sandbox.state, 'value') else str(sandbox.state).lower()
 
         if current_state == 'started':

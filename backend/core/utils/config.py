@@ -333,6 +333,8 @@ class Configuration:
     DAYTONA_API_KEY: Optional[str] = None
     DAYTONA_SERVER_URL: Optional[str] = None
     DAYTONA_TARGET: Optional[str] = None
+    # Global Daytona seat cap: when >0, create_sandbox evicts oldest STOPPED/ARCHIVED VMs before create (see core.sandbox.sandbox). 0 = disabled.
+    DAYTONA_MAX_SANDBOXES: int = 0
     
     # Search and other API keys (all optional tools)
     TAVILY_API_KEY: Optional[str] = None
