@@ -1,6 +1,7 @@
 {
   "name": "agentpress",
   "private": true,
+  "packageManager": "pnpm@9.15.9",
   "scripts": {
     "dev:frontend": "pnpm --filter Dobby dev",
     "dev:mobile": "pnpm --filter dobby dev",
