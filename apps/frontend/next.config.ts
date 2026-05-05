@@ -1,4 +1,10 @@
 import type { NextConfig } from 'next';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+/** Monorepo root (repo root when building from apps/frontend). Fixes tracing + lockfile root inference on Render/CI. */
+const monorepoRoot = path.resolve(__dirname, '../..');
 
 // Dynamically determine backend URL based on Vercel environment
 const getBackendUrl = (): string => {
@@ -34,7 +40,9 @@ const getBackendUrl = (): string => {
 
 const nextConfig = (): NextConfig => ({
   output: (process.env.NEXT_OUTPUT as 'standalone') || undefined,
-  
+
+  outputFileTracingRoot: monorepoRoot,
+
   // Transpile shared package
   transpilePackages: ['@agentpress/shared'],
   
