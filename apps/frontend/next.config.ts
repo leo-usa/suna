@@ -52,8 +52,12 @@ const nextConfig = (): NextConfig => ({
   },
   
   // Webpack configuration to make Konva work with Next.js
-  webpack: (config) => {
+  webpack: (config, { dev }) => {
     config.externals = [...config.externals, { canvas: 'canvas' }]; // required to make Konva & react-konva work
+    // Render (and other small CI runners) often OOM during parallel compilation (exit 134).
+    if (!dev && (process.env.RENDER === 'true' || process.env.CI === 'true')) {
+      config.parallelism = 1;
+    }
     return config;
   },
   
