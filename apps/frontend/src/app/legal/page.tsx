@@ -90,30 +90,6 @@ function LegalContent() {
                       </p>
 
                       <h3 className="text-lg font-medium tracking-tight">
-                        Company Information
-                      </h3>
-                      <div className="text-muted-foreground mb-6 space-y-2">
-                        <p>
-                          <strong>Dobby AI Corp</strong>
-                        </p>
-                        <p>Incorporated in Delaware, United States</p>
-                        <p className="mt-4">
-                          <strong>Principal Place of Business:</strong>
-                        </p>
-                        <p>701 Tillery Street</p>
-                        <p>Unit 12-2521</p>
-                        <p>Austin, TX 78702</p>
-                        <p>United States</p>
-                        <p className="mt-4">
-                          <strong>Registered Agent:</strong>
-                        </p>
-                        <p>Firstbase Agent LLC</p>
-                        <p>1007 N Orange St. 4th Floor Suite #1382</p>
-                        <p>Wilmington, DE 19801</p>
-                        <p>United States</p>
-                      </div>
-
-                      <h3 className="text-lg font-medium tracking-tight">
                         Contact
                       </h3>
                       <div className="text-muted-foreground mb-6">
@@ -127,14 +103,6 @@ function LegalContent() {
                           </a>
                         </p>
                       </div>
-
-                      <h3 className="text-lg font-medium tracking-tight">
-                        Responsible for Content
-                      </h3>
-                      <p className="text-muted-foreground mb-6">
-                        Dobby AI Corp is responsible for the content of this
-                        website in accordance with applicable laws.
-                      </p>
 
                       <h3 className="text-lg font-medium tracking-tight">
                         Disclaimer
@@ -168,9 +136,7 @@ function LegalContent() {
                       <p className="text-muted-foreground text-balance mb-6">
                         PLEASE READ THESE TERMS OF USE ("AGREEMENT" OR "TERMS OF
                         USE" or "TERMS OF SERVICE" or "TERMS AND CONDITIONS")
-                        CAREFULLY BEFORE USING THE SERVICES OFFERED BY Dobby AI
-                        Corp, a Delaware corporation with its principal place of business
-                        at 701 Tillery Street Unit 12-2521, Austin, Texas 78702, United States
+                        CAREFULLY BEFORE USING THE SERVICES OFFERED BY Dobby
                         ("Company"). THIS AGREEMENT SETS FORTH THE LEGALLY
                         BINDING TERMS AND CONDITIONS FOR YOUR USE OF THE Dobby
                         WEBSITE AND ALL RELATED SERVICES.
@@ -181,9 +147,8 @@ function LegalContent() {
                       </h3>
                       <ul className="text-muted-foreground space-y-1 mb-6">
                         <li>
-                          "Company" refers to Dobby AI Corp, a Delaware corporation
-                          with its principal place of business at 701 Tillery Street
-                          Unit 12-2521, Austin, Texas 78702, United States.
+                          "Company" refers to the operator of the Dobby website and
+                          related services.
                         </li>
                         <li>
                           "Site" refers to the Dobby website, including any related
@@ -1515,10 +1480,6 @@ function LegalContent() {
                         </a>
                         {' '}with the subject line "Privacy Request" and include details
                         of your request.
-                      </p>
-                      <p className="text-muted-foreground text-balance mb-6">
-                        <strong>Mailing Address:</strong> Dobby AI Corp, 701 Tillery
-                        Street Unit 12-2521, Austin, Texas 78702, United States.
                       </p>
                     </div>
                   ) : (

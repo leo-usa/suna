@@ -280,7 +280,7 @@ You received this email because you signed up for a Dobby account."""
         </div>
         <div style="text-align: center; margin-top: 32px;">
           <p style="font-size: 12px; color: #999; margin: 0;">
-            &copy; Dobby AI Corp. All rights reserved.
+            &copy; Dobby. All rights reserved.
           </p>
         </div>
       </td>
@@ -302,7 +302,7 @@ What You Both Get:
 Claim your invite: {referral_url}
 
 ---
-© Dobby AI Corp. All rights reserved."""
+© Dobby. All rights reserved."""
 
     def send_otp_email(self, user_email: str, otp_code: str) -> bool:
         """Send an OTP-only email (no magic link button) for users with expired links."""
@@ -365,7 +365,7 @@ Claim your invite: {referral_url}
         </div>
         <div style="text-align: center; margin-top: 32px;">
           <p style="font-size: 12px; color: #999; margin: 0;">
-            &copy; Dobby AI Corp. All rights reserved.
+            &copy; Dobby. All rights reserved.
           </p>
         </div>
       </td>
@@ -384,7 +384,7 @@ Enter this code to sign in to your account:
 This code expires in 1 hour. If you didn't request this, you can safely ignore this email.
 
 ---
-© Dobby AI Corp. All rights reserved."""
+© Dobby. All rights reserved."""
 
 
 email_service = EmailService() 
