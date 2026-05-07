@@ -347,8 +347,10 @@ allowed_origins = [
     "https://staging.dobby.com",
     "https://prod-test.dobby.com",
 ]
-# Allow all *.dobby.com subdomains and Vercel preview deployments
-allow_origin_regex = r"https://([a-z0-9-]+\.)?kortix\.com|https://.*-kortixai\.vercel\.app"
+# Allow all *.dobby.com subdomains, Vercel preview deployments, and Render Web Services (*.onrender.com)
+allow_origin_regex = (
+    r"https://([a-z0-9-]+\.)?kortix\.com|https://.*-kortixai\.vercel\.app|https://[a-z0-9.-]+\.onrender\.com"
+)
 
 # Add local origins for development
 if config.ENV_MODE == EnvMode.LOCAL:

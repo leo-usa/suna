@@ -28,8 +28,10 @@ RUN --mount=type=cache,target=/root/.cache/uv uv sync --locked --quiet
 COPY . .
 
 ENV PYTHONPATH=/app
+# Default listen port; Render/Fly/Heroku set PORT at runtime — see CMD below.
 EXPOSE 8000
 
 # WORKERS and TIMEOUT are set via env variables at runtime (ECS task definition)
 # Defaults: WORKERS=4 (2 per vCPU), TIMEOUT=75 (worker heartbeat - async workers stay alive during active streams)
-CMD ["sh", "-c", "uv run gunicorn api:app -w ${WORKERS:-4} -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --timeout ${TIMEOUT:-75} --graceful-timeout 30 --keep-alive 65"]
+# Bind to PORT when set (Render.com), else 8000 for local/docker-compose.
+CMD ["sh", "-c", "uv run gunicorn api:app -w ${WORKERS:-4} -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:${PORT:-8000} --timeout ${TIMEOUT:-75} --graceful-timeout 30 --keep-alive 65"]
