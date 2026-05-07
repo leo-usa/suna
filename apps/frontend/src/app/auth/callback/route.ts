@@ -3,6 +3,32 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 /**
+ * Browser-facing origin for post-login redirects.
+ * On Render (and similar), `request.nextUrl` is often https://localhost:${PORT};
+ * using that as baseUrl sends users to localhost in the browser.
+ * Prefer NEXT_PUBLIC_URL, then proxy forwarded host/proto.
+ */
+function getPublicSiteOrigin(request: NextRequest): string {
+  const fromEnv = process.env.NEXT_PUBLIC_URL?.trim()
+  if (fromEnv) return fromEnv.replace(/\/+$/, '')
+
+  const forwardedHost = request.headers.get('x-forwarded-host')?.split(',')[0]?.trim()
+  const forwardedProto =
+    request.headers.get('x-forwarded-proto')?.split(',')[0]?.trim() || 'https'
+  const hostHeader = request.headers.get('host')?.split(',')[0]?.trim()
+
+  const publicHost =
+    forwardedHost ??
+    (hostHeader && !hostHeader.startsWith('localhost') ? hostHeader : null)
+
+  if (publicHost) {
+    return `${forwardedProto}://${publicHost}`
+  }
+
+  return request.nextUrl.origin
+}
+
+/**
  * Auth Callback Route - Web Handler
  * 
  * Handles authentication callbacks for web browsers.
@@ -21,10 +47,7 @@ export async function GET(request: NextRequest) {
   const termsAccepted = searchParams.get('terms_accepted') === 'true'
   const email = searchParams.get('email') || '' // Email passed from magic link redirect URL
 
-  // Use request origin for redirects (most reliable for local dev)
-  // This ensures localhost:3000 redirects stay on localhost, not staging
-  const requestOrigin = request.nextUrl.origin
-  const baseUrl = requestOrigin || process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'
+  const baseUrl = getPublicSiteOrigin(request)
   const error = searchParams.get('error')
   const errorCode = searchParams.get('error_code')
   const errorDescription = searchParams.get('error_description')
