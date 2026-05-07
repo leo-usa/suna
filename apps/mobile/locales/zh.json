@@ -491,7 +491,7 @@
     "subscriptionCancelled": "订阅已取消",
     "subscriptionCancelledOn": "你的订阅将在{{date}}取消",
     "changePlan": "更改套餐",
-    "getAdditionalCredits": "获取额外积分",
+    "getAdditionalCredits": "微信支付宝预付",
     "customerInfo": "客户信息",
     "creditsExplained": "积分说明",
     "upgrade": "升级",
