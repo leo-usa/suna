@@ -7,6 +7,8 @@ import os
 import asyncio
 import time
 from typing import Optional, Dict, List, Any
+from urllib.parse import urlparse, unquote
+
 from dotenv import load_dotenv
 from core.utils.logger import logger
 
@@ -192,28 +194,72 @@ class RedisClient:
         self._init_time: Optional[float] = None
     
     def _get_config(self) -> Dict[str, Any]:
+        """Build redis connection URL. Supports REDIS_URL, or REDIS_HOST+REDIS_PORT+password.
+
+        Render/users often paste `redis://host:6379` into REDIS_HOST while leaving REDIS_PORT=6379;
+        that produced `redis://...:6379:6379` and broken parsing (e.g. connecting to hostname `redis`).
+        """
         load_dotenv()
-        
-        redis_host = os.getenv("REDIS_HOST", "localhost")
-        redis_port = int(os.getenv("REDIS_PORT", 6379))
-        redis_password = os.getenv("REDIS_PASSWORD", "")
-        redis_username = os.getenv("REDIS_USERNAME", None)
-        redis_ssl = os.getenv("REDIS_SSL", "false").lower() == "true"
-        
-        scheme = "rediss" if redis_ssl else "redis"
+
+        redis_url_override = os.getenv("REDIS_URL", "").strip()
+        redis_host = os.getenv("REDIS_HOST", "localhost").strip()
+        redis_port = int(os.getenv("REDIS_PORT", "6379"))
+        redis_password = os.getenv("REDIS_PASSWORD", "") or ""
+        redis_username_raw = os.getenv("REDIS_USERNAME", "").strip()
+        redis_username = redis_username_raw or None
+        redis_ssl_env = os.getenv("REDIS_SSL", "false").lower() == "true"
+
+        def config_from_any_url(url: str) -> Dict[str, Any]:
+            p = urlparse(url)
+            scheme = (p.scheme or "redis").lower()
+            ssl_flag = scheme == "rediss"
+            host = p.hostname or "localhost"
+            port = p.port if p.port is not None else 6379
+            pwd = unquote(p.password) if p.password else ""
+            usr = unquote(p.username) if p.username else None
+            return {
+                "host": host,
+                "port": port,
+                "password": pwd,
+                "username": usr,
+                "ssl": ssl_flag,
+                "url": url,
+            }
+
+        def merge_env_password(cfg: Dict[str, Any]) -> Dict[str, Any]:
+            if not redis_password or cfg.get("password"):
+                return cfg
+            scheme = "rediss" if cfg["ssl"] else "redis"
+            h, pt = cfg["host"], cfg["port"]
+            usr = redis_username or cfg.get("username")
+            if usr:
+                cfg["url"] = f"{scheme}://{usr}:{redis_password}@{h}:{pt}"
+            else:
+                cfg["url"] = f"{scheme}://:{redis_password}@{h}:{pt}"
+            cfg["password"] = redis_password
+            cfg["username"] = usr
+            return cfg
+
+        if redis_url_override:
+            return merge_env_password(config_from_any_url(redis_url_override))
+
+        if redis_host.startswith(("redis://", "rediss://")):
+            return merge_env_password(config_from_any_url(redis_host))
+
+        scheme = "rediss" if redis_ssl_env else "redis"
         if redis_username and redis_password:
             redis_url = f"{scheme}://{redis_username}:{redis_password}@{redis_host}:{redis_port}"
         elif redis_password:
             redis_url = f"{scheme}://:{redis_password}@{redis_host}:{redis_port}"
         else:
             redis_url = f"{scheme}://{redis_host}:{redis_port}"
-        
+
         return {
             "host": redis_host,
             "port": redis_port,
             "password": redis_password,
             "username": redis_username,
-            "ssl": redis_ssl,
+            "ssl": redis_ssl_env,
             "url": redis_url,
         }
     
