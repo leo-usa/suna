@@ -19,6 +19,7 @@ import { cn } from '@/lib/utils';
 import { useQueryClient } from '@tanstack/react-query';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { CustomMCPDialog } from '../mcp/custom-mcp-dialog';
+import { useTranslations } from 'next-intl';
 
 const CATEGORY_EMOJIS: Record<string, string> = {
   'popular': '🔥',
@@ -146,8 +147,9 @@ const ConnectedAppCard = ({
   onManageTools: (connectedApp: ConnectedApp) => void;
   isUpdating: boolean;
 }) => {
+  const t = useTranslations('agentConfig.integrationsRegistry');
   const { toolkit, profile, mcpConfig } = connectedApp;
-  const hasEnabledTools = mcpConfig.enabledTools && mcpConfig.enabledTools.length > 0;
+  const nTools = mcpConfig.enabledTools?.length ?? 0;
 
   return (
     <div
@@ -164,7 +166,7 @@ const ConnectedAppCard = ({
         <div className="flex-1 min-w-0">
           <h3 className="font-medium text-sm leading-tight truncate mb-1">{toolkit.name}</h3>
           <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-            Connected as "{profile.profile_name}"
+            {t('connectedAs', { name: profile.profile_name })}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -184,7 +186,7 @@ const ConnectedAppCard = ({
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
             <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-            {hasEnabledTools ? `${mcpConfig.enabledTools.length} tools enabled` : 'Connected (no tools)'}
+            {t('nToolsEnabled', { count: nTools })}
           </div>
         </div>
       </div>
@@ -203,25 +205,26 @@ const AppCard = ({ app, profiles, onConnect, onConfigure, isConnectedToAgent, cu
   isBlocked?: boolean;
   onBlockedClick?: () => void;
 }) => {
+  const t = useTranslations('agentConfig.integrationsRegistry');
   const connectedProfiles = profiles.filter(p => p.is_connected);
   const canConnect = mode === 'profile-only' ? true : (!isConnectedToAgent && currentAgentId);
 
   const getStatusInfo = () => {
     if (isBlocked) {
-      return { text: 'Upgrade to connect', color: 'text-primary' };
+      return { text: t('upgradeToConnect'), color: 'text-primary' };
     }
     if (mode === 'profile-only') {
       return connectedProfiles.length > 0
-        ? { text: `${connectedProfiles.length} profile${connectedProfiles.length !== 1 ? 's' : ''}`, color: 'text-green-600 dark:text-green-400' }
-        : { text: 'Not connected', color: 'text-muted-foreground' };
+        ? { text: t('profilesCount', { count: connectedProfiles.length }), color: 'text-green-600 dark:text-green-400' }
+        : { text: t('notConnected'), color: 'text-muted-foreground' };
     }
     if (isConnectedToAgent) {
-      return { text: 'Connected', color: 'text-blue-600 dark:text-blue-400' };
+      return { text: t('connectedBadge'), color: 'text-blue-600 dark:text-blue-400' };
     }
     if (connectedProfiles.length > 0) {
-      return { text: `${connectedProfiles.length} profile${connectedProfiles.length !== 1 ? 's' : ''}`, color: 'text-green-600 dark:text-green-400' };
+      return { text: t('profilesCount', { count: connectedProfiles.length }), color: 'text-green-600 dark:text-green-400' };
     }
-    return { text: 'Not connected', color: 'text-muted-foreground' };
+    return { text: t('notConnected'), color: 'text-muted-foreground' };
   };
 
   const status = getStatusInfo();
@@ -267,7 +270,7 @@ const AppCard = ({ app, profiles, onConnect, onConfigure, isConnectedToAgent, cu
       <h3 className="font-medium text-lg leading-tight">{app.name}</h3>
 
       <p className="text-sm text-muted-foreground flex-1 line-clamp-2 leading-snug mb-4 mt-1">
-        {app.description || `Builds user interfaces and interactive web pages.`}
+        {app.description || t('integrationFallbackDesc')}
       </p>
 
       <Button
@@ -278,11 +281,11 @@ const AppCard = ({ app, profiles, onConnect, onConfigure, isConnectedToAgent, cu
         {isBlocked ? (
           <>
             <Lock className="h-3.5 w-3.5 mr-2" />
-            Upgrade
+            {t('upgradeButton')}
           </>
         ) : (
           <>
-            <span className="text-lg font-light mr-2">+</span> Add
+            <span className="text-lg font-light mr-2">+</span> {t('addButton')}
           </>
         )}
       </Button>
@@ -302,6 +305,7 @@ export const ComposioRegistry: React.FC<ComposioRegistryProps> = ({
   isBlocked = false,
   onBlockedClick,
 }) => {
+  const t = useTranslations('agentConfig.integrationsRegistry');
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedApp, setSelectedApp] = useState<ComposioToolkit | null>(null);
@@ -383,7 +387,7 @@ export const ComposioRegistry: React.FC<ComposioRegistryProps> = ({
 
   const handleConnect = (app: ComposioToolkit) => {
     if (mode !== 'profile-only' && !currentAgentId && showAgentSelector) {
-      toast.error('Please select an agent first');
+      toast.error(t('toastSelectAgentFirst'));
       return;
     }
     setSelectedApp(app);
@@ -392,7 +396,7 @@ export const ComposioRegistry: React.FC<ComposioRegistryProps> = ({
 
   const handleConfigure = (app: ComposioToolkit, profile: ComposioProfile) => {
     if (mode !== 'profile-only' && !currentAgentId) {
-      toast.error('Please select an agent first');
+      toast.error(t('toastSelectAgentFirst'));
       return;
     }
     setSelectedApp(app);
@@ -417,10 +421,10 @@ export const ComposioRegistry: React.FC<ComposioRegistryProps> = ({
       custom_mcps: updatedCustomMcps
     }, {
       onSuccess: () => {
-        toast.success(enabled ? 'Tools enabled' : 'Tools disabled');
+        toast.success(enabled ? t('toolsEnabled') : t('toolsDisabled'));
       },
       onError: (error: any) => {
-        toast.error(error.message || 'Failed to update tools');
+        toast.error(error.message || t('updateToolsFailed'));
       }
     });
   };
@@ -445,7 +449,7 @@ export const ComposioRegistry: React.FC<ComposioRegistryProps> = ({
 
   const handleCustomMCPSave = async (customConfig: any): Promise<void> => {
     if (!currentAgentId) {
-      throw new Error('Please select an agent first');
+      throw new Error(t('toastSelectAgentFirst'));
     }
 
     // Create MCP configuration for agent
@@ -468,12 +472,12 @@ export const ComposioRegistry: React.FC<ComposioRegistryProps> = ({
         replace_mcps: true  // Use replace mode to ensure proper updates
       }, {
         onSuccess: () => {
-          toast.success(`Custom MCP "${customConfig.name}" added successfully`);
+          toast.success(t('customMcpAdded', { name: customConfig.name }));
           queryClient.invalidateQueries({ queryKey: ['agents', 'detail', currentAgentId] });
           resolve();
         },
         onError: (error: any) => {
-          reject(new Error(error.message || 'Failed to add custom MCP'));
+          reject(new Error(error.message || t('addCustomMcpFailed')));
         }
       });
     });
@@ -542,12 +546,12 @@ export const ComposioRegistry: React.FC<ComposioRegistryProps> = ({
             <div className="flex items-start justify-between mb-4">
               <div className="flex-1 min-w-0 pr-4">
                 <h2 className="text-xl font-semibold">
-                  {mode === 'profile-only' ? 'Connect New App' : 'App Integrations'}
+                  {mode === 'profile-only' ? t('titleProfileOnly') : t('titleFull')}
                 </h2>
                 <p className="text-sm text-muted-foreground">
                   {mode === 'profile-only'
-                    ? 'Create a connection profile for your favorite apps'
-                    : `Connect your favorite apps with ${currentAgentId ? 'this Worker' : 'your Worker'}`
+                    ? t('subtitleProfileOnly')
+                    : (currentAgentId ? t('subtitleFull') : t('subtitleFullNoWorker'))
                   }
                 </p>
               </div>
@@ -569,7 +573,7 @@ export const ComposioRegistry: React.FC<ComposioRegistryProps> = ({
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="Search apps..."
+                    placeholder={t('searchAppsPlaceholder')}
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     className="pl-10 h-10"
@@ -582,14 +586,14 @@ export const ComposioRegistry: React.FC<ComposioRegistryProps> = ({
                     className="flex items-center gap-2 whitespace-nowrap h-10"
                   >
                     <Server className="h-4 w-4" />
-                    Add Custom MCP
+                    {t('addCustomMcp')}
                   </Button>
                 )}
               </div>
 
               {selectedCategory && (
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">Filtered by:</span>
+                  <span className="text-xs text-muted-foreground">{t('filteredBy')}</span>
                   <Badge variant="outline" className="gap-1 bg-muted-foreground/20 text-muted-foreground">
                     <span>{CATEGORY_EMOJIS[selectedCategory] || '📁'}</span>
                     <span>{categories.find(c => c.id === selectedCategory)?.name}</span>
@@ -613,7 +617,7 @@ export const ComposioRegistry: React.FC<ComposioRegistryProps> = ({
                     <CollapsibleTrigger asChild>
                       <div className="w-full hover:underline flex items-center justify-between p-0 h-auto">
                         <div className="flex items-center gap-2">
-                          <h3 className="text-lg font-medium">Connected to this Worker</h3>
+                          <h3 className="text-lg font-medium">{t('connectedSection')}</h3>
                           {isLoadingConnectedApps ? (
                             <Skeleton className="w-6 h-5 rounded ml-2" />
                           ) : connectedApps.length > 0 && (
@@ -641,8 +645,8 @@ export const ComposioRegistry: React.FC<ComposioRegistryProps> = ({
                           <div className="w-16 h-16 rounded-2xl bg-muted/50 flex items-center justify-center mb-4 mx-auto">
                             <Zap className="h-8 w-8 text-muted-foreground" />
                           </div>
-                          <h4 className="text-sm font-medium mb-2">No connected apps</h4>
-                          <p className="text-xs">Connect apps below to manage tools for this Worker.</p>
+                          <h4 className="text-sm font-medium mb-2">{t('emptyConnectedTitle')}</h4>
+                          <p className="text-xs">{t('emptyConnectedDescription')}</p>
                         </div>
                       ) : (
                         <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-4 gap-4">
@@ -663,7 +667,7 @@ export const ComposioRegistry: React.FC<ComposioRegistryProps> = ({
                 )}
                 <div>
                   <h3 className="text-lg font-medium mb-4">
-                    {currentAgentId ? 'Available Apps' : 'Browse Apps'}
+                    {currentAgentId ? t('availableApps') : t('browseApps')}
                   </h3>
 
                   {isLoading ? (
@@ -677,9 +681,9 @@ export const ComposioRegistry: React.FC<ComposioRegistryProps> = ({
                       <div className="w-16 h-16 rounded-2xl bg-muted/50 flex items-center justify-center mb-4">
                         <Search className="h-8 w-8 text-muted-foreground" />
                       </div>
-                      <h3 className="text-lg font-medium mb-2">No apps found</h3>
+                      <h3 className="text-lg font-medium mb-2">{t('noAppsFound')}</h3>
                       <p className="text-muted-foreground">
-                        {search ? `No apps match "${search}"` : 'No apps available in this category'}
+                        {search ? t('noAppsMatchSearch', { search }) : t('noAppsInCategory')}
                       </p>
                     </div>
                   ) : (
@@ -711,10 +715,10 @@ export const ComposioRegistry: React.FC<ComposioRegistryProps> = ({
                             {isFetchingNextPage ? (
                               <>
                                 <DobbyLoader customSize={16} className="mr-1" />
-                                Loading more...
+                                {t('loadingMore')}
                               </>
                             ) : (
-                              'Load More Apps'
+                              t('loadMoreApps')
                             )}
                           </Button>
                         </div>

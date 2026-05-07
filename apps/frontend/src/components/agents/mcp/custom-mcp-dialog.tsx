@@ -10,6 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/client';
 import { Input } from '@/components/ui/input';
+import { useTranslations } from 'next-intl';
 
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || '';
 
@@ -38,6 +39,8 @@ export const CustomMCPDialog: React.FC<CustomMCPDialogProps> = ({
   onOpenChange,
   onSave
 }) => {
+  const t = useTranslations('agentConfig.mcpWizard');
+  const tErr = useTranslations('agentConfig.mcpWizard.errors');
   const [step, setStep] = useState<'setup' | 'tools'>('setup');
   const [serverType, setServerType] = useState<'http'>('http');
   const [configText, setConfigText] = useState('');
@@ -61,10 +64,10 @@ export const CustomMCPDialog: React.FC<CustomMCPDialogProps> = ({
       if (serverType === 'http') {
         const url = configText.trim();
         if (!url) {
-          throw new Error('Please enter the MCP server URL.');
+          throw new Error(tErr('urlRequired'));
         }
         if (!manualServerName.trim()) {
-          throw new Error('Please enter a name for this MCP server.');
+          throw new Error(tErr('nameRequired'));
         }
         
         parsedConfig = { url };
@@ -75,7 +78,7 @@ export const CustomMCPDialog: React.FC<CustomMCPDialogProps> = ({
       const { data: { session } } = await supabase.auth.getSession();
 
       if (!session) {
-        throw new Error('You must be logged in to discover tools');
+        throw new Error(tErr('loginRequired'));
       }
 
       const response = await fetch(`${API_URL}/mcp/discover-custom-tools`, {
@@ -92,13 +95,13 @@ export const CustomMCPDialog: React.FC<CustomMCPDialogProps> = ({
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.message || 'Failed to connect to the MCP server. Please check your configuration.');
+        throw new Error(error.message || tErr('connectFailed'));
       }
 
       const data = await response.json();
       
       if (!data.tools || data.tools.length === 0) {
-        throw new Error('No tools found. Please check your configuration.');
+        throw new Error(tErr('noTools'));
       }
 
       if (data.serverName) {
@@ -122,7 +125,7 @@ export const CustomMCPDialog: React.FC<CustomMCPDialogProps> = ({
 
   const handleToolsNext = async () => {
     if (selectedTools.size === 0) {
-      setValidationError('Please select at least one tool to continue.');
+      setValidationError(tErr('selectTools'));
       return;
     }
     setValidationError(null);
@@ -131,12 +134,12 @@ export const CustomMCPDialog: React.FC<CustomMCPDialogProps> = ({
 
   const handleSave = async () => {
     if (discoveredTools.length === 0 || selectedTools.size === 0) {
-      setValidationError('Please select at least one tool to continue.');
+      setValidationError(tErr('selectTools'));
       return;
     }
 
     if (!serverName.trim()) {
-      setValidationError('Please provide a name for this MCP server.');
+      setValidationError(tErr('saveNameMissing'));
       return;
     }
 
@@ -164,7 +167,7 @@ export const CustomMCPDialog: React.FC<CustomMCPDialogProps> = ({
       setStep('setup');
       onOpenChange(false);
     } catch (error: any) {
-      setValidationError(error.message || 'Failed to save MCP configuration. Please try again.');
+      setValidationError(error.message || tErr('saveFailed'));
     } finally {
       setIsSaving(false);
     }
@@ -215,12 +218,12 @@ export const CustomMCPDialog: React.FC<CustomMCPDialogProps> = ({
             <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
               <Zap className="h-4 w-4 text-primary" />
             </div>
-            <DialogTitle>Add MCP Server</DialogTitle>
+            <DialogTitle>{t('title')}</DialogTitle>
           </div>
           <DialogDescription>
             {step === 'setup' 
-              ? 'Connect to a Model Context Protocol (MCP) server to expand your agent\'s capabilities with new tools and integrations.'
-              : 'Choose which tools you\'d like to enable from this MCP server.'
+              ? t('descriptionSetup')
+              : t('descriptionTools')
             }
           </DialogDescription>
           <div className="flex items-center gap-2 pt-2">
@@ -234,7 +237,7 @@ export const CustomMCPDialog: React.FC<CustomMCPDialogProps> = ({
               )}>
                 1
               </div>
-              Setup MCP Server
+              {t('stepSetup')}
             </div>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
             <div className={cn(
@@ -247,7 +250,7 @@ export const CustomMCPDialog: React.FC<CustomMCPDialogProps> = ({
               )}>
                 2
               </div>
-              Select Tools
+              {t('stepTools')}
             </div>
           </div>
         </DialogHeader>
@@ -256,7 +259,7 @@ export const CustomMCPDialog: React.FC<CustomMCPDialogProps> = ({
             <div className="space-y-6 p-1 flex-1">
               <div className="space-y-4">
                 <div className="space-y-3">
-                  <Label className="text-base font-medium">Connection Type</Label>
+                  <Label className="text-base font-medium">{t('connectionType')}</Label>
                   <div className={cn(
                     "flex items-start space-x-3 p-4 rounded-lg border bg-primary/5",
                     "border-primary"
@@ -265,11 +268,11 @@ export const CustomMCPDialog: React.FC<CustomMCPDialogProps> = ({
                       <div className="flex items-center gap-2">
                         <Server className="h-4 w-4 text-primary" />
                         <Label className="text-base font-medium">
-                          Streamable HTTP MCP Server
+                          {t('streamableHttpTitle')}
                         </Label>
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        Connect to any Model Context Protocol server via HTTP. MCP provides a standardized way for AI applications to securely connect to external tools and data sources.
+                        {t('streamableHttpBody')}
                       </p>
                     </div>
                   </div>
@@ -278,24 +281,24 @@ export const CustomMCPDialog: React.FC<CustomMCPDialogProps> = ({
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="serverName" className="text-base font-medium">
-                    MCP Server Name
+                    {t('serverNameLabel')}
                   </Label>
                   <input
                     id="serverName"
                     type="text"
-                    placeholder="e.g., Gmail MCP Server, Slack Integration, File System Tools"
+                    placeholder={t('serverNamePlaceholder')}
                     value={manualServerName}
                     onChange={(e) => setManualServerName(e.target.value)}
                     className="w-full px-4 py-3 border border-input bg-background rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
                   />
                   <p className="text-sm text-muted-foreground">
-                    Give this MCP server a memorable name
+                    {t('serverNameHint')}
                   </p>
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="config" className="text-base font-medium">
-                    MCP Server URL
+                    {t('serverUrlLabel')}
                   </Label>
                   <Input
                       id="config"
@@ -306,7 +309,7 @@ export const CustomMCPDialog: React.FC<CustomMCPDialogProps> = ({
                       className="w-full px-4 py-3 border border-input bg-muted rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent font-mono"
                     />
                   <p className="text-sm text-muted-foreground">
-                    Enter the complete URL to your MCP server endpoint
+                    {t('serverUrlHint')}
                   </p>
                 </div>
               </div>
@@ -324,10 +327,10 @@ export const CustomMCPDialog: React.FC<CustomMCPDialogProps> = ({
                 <CheckCircle2 className="h-5 w-5 text-green-600" />
                 <div className="ml-2">
                   <h3 className="font-medium text-green-900 mb-1">
-                    MCP Server Connected!
+                    {t('connectedHeading')}
                   </h3>
                   <p className="text-sm text-green-700">
-                    Found {discoveredTools.length} available tools from <strong>{serverName}</strong> MCP server
+                    {t('foundTools', { count: discoveredTools.length, serverName })}
                   </p>
                 </div>
               </Alert>
@@ -335,9 +338,9 @@ export const CustomMCPDialog: React.FC<CustomMCPDialogProps> = ({
               <div className="space-y-4 flex-1 flex flex-col">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-base font-medium">Available Tools</h3>
+                    <h3 className="text-base font-medium">{t('availableTools')}</h3>
                     <p className="text-sm text-muted-foreground">
-                      Select the tools you want to enable
+                      {t('selectToolsHint')}
                     </p>
                   </div>
                   <Button
@@ -347,11 +350,11 @@ export const CustomMCPDialog: React.FC<CustomMCPDialogProps> = ({
                       if (selectedTools.size === discoveredTools.length) {
                         setSelectedTools(new Set());
                       } else {
-                        setSelectedTools(new Set(discoveredTools.map(t => t.name)));
+                        setSelectedTools(new Set(discoveredTools.map((tool) => tool.name)));
                       }
                     }}
                   >
-                    {selectedTools.size === discoveredTools.length ? 'Deselect All' : 'Select All'}
+                    {selectedTools.size === discoveredTools.length ? t('deselectAll') : t('selectAll')}
                   </Button>
                 </div>
 
@@ -409,10 +412,10 @@ export const CustomMCPDialog: React.FC<CustomMCPDialogProps> = ({
           {step === 'tools' ? (
             <>
               <Button variant="outline" onClick={handleBack} disabled={isSaving} type="button">
-                Back
+                {t('back')}
               </Button>
               <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving} type="button">
-                Cancel
+                {t('cancel')}
               </Button>
               <Button 
                 onClick={handleToolsNext}
@@ -422,17 +425,17 @@ export const CustomMCPDialog: React.FC<CustomMCPDialogProps> = ({
                 {isSaving ? (
                   <>
                     <DobbyLoader customSize={16} className="mr-1" />
-                    Adding MCP Server...
+                    {t('adding')}
                   </>
                 ) : (
-                  `Add MCP Server (${selectedTools.size} tools)`
+                  t('addWithCount', { count: selectedTools.size })
                 )}
               </Button>
             </>
           ) : (
             <>
               <Button variant="outline" onClick={() => onOpenChange(false)} type="button">
-                Cancel
+                {t('cancel')}
               </Button>
               <Button
                 onClick={validateAndDiscoverTools}
@@ -442,12 +445,12 @@ export const CustomMCPDialog: React.FC<CustomMCPDialogProps> = ({
                 {isValidating ? (
                   <>
                     <DobbyLoader customSize={20} className="mr-1" />
-                    Connecting to MCP server...
+                    {t('connecting')}
                   </>
                 ) : (
                   <>
                     <Sparkles className="h-5 w-5" />
-                    Connect to MCP Server
+                    {t('connectCta')}
                   </>
                 )}
               </Button>

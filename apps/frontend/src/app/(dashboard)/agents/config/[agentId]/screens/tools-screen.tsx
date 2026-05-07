@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { useAgent, useUpdateAgent } from '@/hooks/agents/use-agents';
 import { GranularToolConfiguration } from '@/components/agents/tools/granular-tool-configuration';
 import { toast } from '@/lib/toast';
@@ -11,6 +12,7 @@ interface ToolsScreenProps {
 }
 
 export function ToolsScreen({ agentId }: ToolsScreenProps) {
+    const tConfig = useTranslations('agentConfig');
     const { data: agent, isLoading } = useAgent(agentId);
     const updateAgentMutation = useUpdateAgent();
     const [tools, setTools] = useState<Record<string, any>>({});
@@ -28,8 +30,8 @@ export function ToolsScreen({ agentId }: ToolsScreenProps) {
     const handleToolsChange = async (newTools: Record<string, boolean | { enabled: boolean; description: string }>) => {
         if (!areToolsEditable) {
             if (isSunaAgent) {
-                toast.error("Tools cannot be edited", {
-                    description: "Dobby's tools are managed centrally.",
+                toast.error(tConfig('toolsLocked'), {
+                    description: tConfig('toolsLockedDesc'),
                 });
             }
             return;
@@ -41,10 +43,10 @@ export function ToolsScreen({ agentId }: ToolsScreenProps) {
                 agentpress_tools: newTools,
             });
             setTools(newTools);
-            toast.success('Tools updated successfully');
+            toast.success(tConfig('toolsUpdated'));
         } catch (error) {
             console.error('Failed to update tools:', error);
-            toast.error('Failed to update tools');
+            toast.error(tConfig('toolsUpdateFailed'));
         }
     };
 

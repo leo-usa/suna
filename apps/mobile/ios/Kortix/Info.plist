@@ -9,7 +9,7 @@
     <key>CFBundleDevelopmentRegion</key>
     <string>$(DEVELOPMENT_LANGUAGE)</string>
     <key>CFBundleDisplayName</key>
-    <string>Kortix</string>
+    <string>Dobby</string>
     <key>CFBundleExecutable</key>
     <string>$(EXECUTABLE_NAME)</string>
     <key>CFBundleIdentifier</key>
@@ -54,17 +54,17 @@
       <true/>
     </dict>
     <key>NSCameraUsageDescription</key>
-    <string>Kortix needs camera access to let you capture photos and attach them to your saved conversations with the AI Worker. For example, you can photograph a document, whiteboard, or product for analysis and receive insights that are stored in your conversation history.</string>
+    <string>Dobby needs camera access to let you capture photos and attach them to your saved conversations with the AI Worker. For example, you can photograph a document, whiteboard, or product for analysis and receive insights that are stored in your conversation history.</string>
     <key>NSMicrophoneUsageDescription</key>
-    <string>Kortix needs microphone access to record videos with audio. For example, you can record a video to share with the AI Worker for analysis and save it to your conversation history.</string>
+    <string>Dobby needs microphone access to record videos with audio. For example, you can record a video to share with the AI Worker for analysis and save it to your conversation history.</string>
     <key>NSPhotoLibraryUsageDescription</key>
-    <string>Kortix needs access to your photo library so you can select and share images in your saved conversations with the AI Worker. For example, you can attach screenshots, documents, or images for review—all stored in your personalized conversation history.</string>
+    <string>Dobby needs access to your photo library so you can select and share images in your saved conversations with the AI Worker. For example, you can attach screenshots, documents, or images for review—all stored in your personalized conversation history.</string>
     <key>NSUserActivityTypes</key>
     <array>
       <string>$(PRODUCT_BUNDLE_IDENTIFIER).expo.index_route</string>
     </array>
     <key>NSUserTrackingUsageDescription</key>
-    <string>Kortix uses analytics to improve your experience and understand how features are used. For example, we track which AI features are most helpful so we can make the app better for everyone.</string>
+    <string>Dobby uses analytics to improve your experience and understand how features are used. For example, we track which AI features are most helpful so we can make the app better for everyone.</string>
     <key>RCTNewArchEnabled</key>
     <true/>
     <key>UILaunchStoryboardName</key>

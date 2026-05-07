@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { Plus, Search, Frown, ChevronRight } from 'lucide-react';
 import { useAgents } from '@/hooks/agents/use-agents';
@@ -17,6 +18,9 @@ import { isLocalMode } from '@/lib/config';
 import { Sparkles } from 'lucide-react';
 
 export function NavWorkers() {
+  const tThread = useTranslations('thread');
+  const tAgents = useTranslations('agents');
+  const tConfig = useTranslations('agentConfig');
   const router = useRouter();
   const { setOpenMobile } = useSidebar();
   const isMobile = useIsMobile();
@@ -73,7 +77,7 @@ export function NavWorkers() {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
         <input
           type="text"
-          placeholder="Search workers..."
+          placeholder={tThread('searchWorkers')}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="w-full h-10 pl-9 pr-3 rounded-xl text-sm bg-muted/50 border border-border focus:outline-none focus:ring-2 focus:ring-primary/50"
@@ -91,7 +95,7 @@ export function NavWorkers() {
               <Frown className="h-6 w-6 text-muted-foreground" />
             </div>
             <p className="text-sm text-muted-foreground">
-              {searchQuery ? 'No workers found' : 'No workers yet'}
+              {searchQuery ? tConfig('noWorkersFound') : tConfig('noWorkersYet')}
             </p>
           </div>
         ) : (
@@ -112,7 +116,7 @@ export function NavWorkers() {
                 />
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-medium truncate">{sunaAgent.name}</div>
-                  <div className="text-xs text-muted-foreground truncate">Default agent</div>
+                  <div className="text-xs text-muted-foreground truncate">{tConfig('defaultAgent')}</div>
                 </div>
                 <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
               </div>
@@ -122,7 +126,7 @@ export function NavWorkers() {
               <div className="pt-2">
                 {!searchQuery && (
                   <div className="text-xs font-medium text-muted-foreground px-2.5 pb-2">
-                    My Workers
+                    {tThread('myWorkers')}
                   </div>
                 )}
                 {customAgents.map((agent) => (
@@ -162,12 +166,12 @@ export function NavWorkers() {
           {isFreeTier ? (
             <>
               <Sparkles className="h-4 w-4 text-primary" />
-              <span className="text-primary">Create Worker</span>
+              <span className="text-primary">{tAgents('create')}</span>
             </>
           ) : (
             <>
               <Plus className="h-4 w-4" />
-              <span>Create Worker</span>
+              <span>{tAgents('create')}</span>
             </>
           )}
         </Button>

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { useAgent, useUpdateAgent } from '@/hooks/agents/use-agents';
 import { ExpandableMarkdownEditor } from '@/components/ui/expandable-markdown-editor';
 import { Label } from '@/components/ui/label';
@@ -12,6 +13,8 @@ interface InstructionsScreenProps {
 }
 
 export function InstructionsScreen({ agentId }: InstructionsScreenProps) {
+    const tAgents = useTranslations('agents');
+    const tConfig = useTranslations('agentConfig');
     const { data: agent, isLoading } = useAgent(agentId);
     const updateAgentMutation = useUpdateAgent();
     const [systemPrompt, setSystemPrompt] = useState('');
@@ -29,8 +32,8 @@ export function InstructionsScreen({ agentId }: InstructionsScreenProps) {
     const handleSave = async (value: string) => {
         if (!isEditable) {
             if (isSunaAgent) {
-                toast.error("System prompt cannot be edited", {
-                    description: "Dobby's system prompt is managed centrally.",
+                toast.error(tConfig('systemPromptLocked'), {
+                    description: tConfig('systemPromptLockedDesc'),
                 });
             }
             return;
@@ -42,10 +45,10 @@ export function InstructionsScreen({ agentId }: InstructionsScreenProps) {
                 system_prompt: value,
             });
             setSystemPrompt(value);
-            toast.success('System prompt updated successfully');
+            toast.success(tConfig('systemPromptUpdated'));
         } catch (error) {
             console.error('Failed to update system prompt:', error);
-            toast.error('Failed to update system prompt');
+            toast.error(tConfig('systemPromptUpdateFailed'));
         }
     };
 
@@ -64,14 +67,14 @@ export function InstructionsScreen({ agentId }: InstructionsScreenProps) {
         <div className="flex-1 overflow-auto pb-6">
             <div className="px-1 pt-1 flex flex-col h-full">
                 <Label className="text-base font-semibold mb-3 block flex-shrink-0">
-                    System Prompt
+                    {tAgents('systemPrompt')}
                 </Label>
                 <div className="flex-1 min-h-[500px]">
                     <ExpandableMarkdownEditor
                         value={systemPrompt}
                         onSave={handleSave}
                         disabled={!isEditable}
-                        placeholder="Define how your Worker should behave..."
+                        placeholder={tAgents('systemPromptPlaceholder')}
                         className="h-full"
                     />
                 </div>

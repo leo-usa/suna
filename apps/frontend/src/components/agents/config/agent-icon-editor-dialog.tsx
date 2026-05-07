@@ -23,6 +23,7 @@ import { cn } from '@/lib/utils';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { HexColorPicker } from 'react-colorful';
 import { useGenerateAgentIcon } from '@/hooks/agents/use-agent-icon-generation';
+import { useTranslations } from 'next-intl';
 
 interface AgentIconEditorDialogProps {
   isOpen: boolean;
@@ -45,22 +46,10 @@ export function AgentIconEditorDialog({
   currentBackgroundColor = '#F3F4F6',
   onIconUpdate,
 }: AgentIconEditorDialogProps) {
+  const t = useTranslations('agentConfig.workerAppearance');
   const [selectedIcon, setSelectedIcon] = useState(currentIconName || 'bot');
   const [iconColor, setIconColor] = useState(currentIconColor || '#000000');
   const [backgroundColor, setBackgroundColor] = useState(currentBackgroundColor || '#e5e5e5');
-  
-  // Debug props when dialog opens
-  useEffect(() => {
-    if (isOpen) {
-      console.log('🔧 AgentIconEditorDialog opened with props:', {
-        agentName,
-        currentIconName,
-        currentIconColor,
-        currentBackgroundColor,
-        onIconUpdate: !!onIconUpdate
-      });
-    }
-  }, [isOpen, agentName, currentIconName, currentIconColor, currentBackgroundColor, onIconUpdate]);
   
   const generateIconMutation = useGenerateAgentIcon();
 
@@ -82,7 +71,7 @@ export function AgentIconEditorDialog({
 
   const handleAutoGenerate = useCallback(() => {
     if (!agentName) {
-      toast.error('Worker name is required for auto-generation');
+      toast.error(t('workerNameRequiredAutoGen'));
       return;
     }
 
@@ -96,15 +85,15 @@ export function AgentIconEditorDialog({
           setSelectedIcon(result.icon_name);
           setIconColor(result.icon_color);
           setBackgroundColor(result.icon_background);
-          toast.success('Worker icon auto-generated!');
+          toast.success(t('iconGenerated'));
         },
         onError: (error) => {
           console.error('Auto-generation failed:', error);
-          toast.error('Failed to auto-generate icon. Please try again.');
+          toast.error(t('autoGenFailedRetry'));
         },
       }
     );
-  }, [agentName, agentDescription, generateIconMutation]);
+  }, [agentName, agentDescription, generateIconMutation, t]);
 
   const presetColors = [
     '#000000', '#FFFFFF', '#6366F1', '#10B981', '#F59E0B', 
@@ -116,10 +105,14 @@ export function AgentIconEditorDialog({
     label, 
     color, 
     onChange,
+    presetsLegend,
+    doneLabel,
   }: { 
     label: string;
     color: string;
     onChange: (color: string) => void;
+    presetsLegend: string;
+    doneLabel: string;
   }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [isInteracting, setIsInteracting] = useState(false);
@@ -200,7 +193,7 @@ export function AgentIconEditorDialog({
                       setIsOpen(false);
                     }}
                   >
-                    Done
+                    {doneLabel}
                   </Button>
                 </div>
               </div>
@@ -221,7 +214,7 @@ export function AgentIconEditorDialog({
           />
         </div>
         <div className="space-y-2">
-          <Label className="text-xs text-muted-foreground">Presets</Label>
+          <Label className="text-xs text-muted-foreground">{presetsLegend}</Label>
           <div className="grid grid-cols-8 gap-1">
             {presetColors.map((presetColor) => (
               <button
@@ -242,11 +235,11 @@ export function AgentIconEditorDialog({
   };
 
   const presetThemes = [
-    { bg: '#6366F1', icon: '#FFFFFF', name: 'Indigo' },
-    { bg: '#10B981', icon: '#FFFFFF', name: 'Emerald' },
-    { bg: '#F59E0B', icon: '#1F2937', name: 'Amber' },
-    { bg: '#EF4444', icon: '#FFFFFF', name: 'Red' },
-    { bg: '#8B5CF6', icon: '#FFFFFF', name: 'Purple' },
+    { bg: '#6366F1', icon: '#FFFFFF', themeKey: 'indigo' as const },
+    { bg: '#10B981', icon: '#FFFFFF', themeKey: 'emerald' as const },
+    { bg: '#F59E0B', icon: '#1F2937', themeKey: 'amber' as const },
+    { bg: '#EF4444', icon: '#FFFFFF', themeKey: 'red' as const },
+    { bg: '#8B5CF6', icon: '#FFFFFF', themeKey: 'purple' as const },
   ];
   
   const ColorControls = () => (
@@ -261,30 +254,34 @@ export function AgentIconEditorDialog({
           className="border shadow-lg"
         />
         <div className="text-center">
-          <p className="font-medium">{agentName || 'Worker'}</p>
+          <p className="font-medium">{agentName || t('fallbackAgentName')}</p>
         </div>
       </div>
 
       <div className="space-y-3">
         <ColorPickerField
-          label="Icon Color"
+          label={t('iconColorLabel')}
           color={iconColor}
           onChange={setIconColor}
+          presetsLegend={t('presetsLabel')}
+          doneLabel={t('colorDone')}
         />
 
         <ColorPickerField
-          label="Background Color"
+          label={t('backgroundColorLabel')}
           color={backgroundColor}
           onChange={setBackgroundColor}
+          presetsLegend={t('presetsLabel')}
+          doneLabel={t('colorDone')}
         />
       </div>
 
       <div className="space-y-2">
-        <Label className="text-sm font-medium">Quick Themes</Label>
+        <Label className="text-sm font-medium">{t('quickThemesLabel')}</Label>
         <div className="grid grid-cols-5 gap-1.5">
           {presetThemes.map((preset) => (
             <button
-              key={preset.name}
+              key={preset.themeKey}
               onClick={() => {
                 setIconColor(preset.icon);
                 setBackgroundColor(preset.bg);
@@ -296,7 +293,7 @@ export function AgentIconEditorDialog({
                   : "border-border hover:border-primary/60"
               )}
               style={{ backgroundColor: preset.bg }}
-              title={preset.name}
+              title={t(`themes.${preset.themeKey}`)}
             >
               <span className="absolute inset-0 flex items-center justify-center">
                 <Sparkles 
@@ -304,7 +301,7 @@ export function AgentIconEditorDialog({
                   style={{ color: preset.icon }}
                 />
               </span>
-              <span className="sr-only">{preset.name}</span>
+              <span className="sr-only">{t(`themes.${preset.themeKey}`)}</span>
             </button>
           ))}
         </div>
@@ -318,7 +315,7 @@ export function AgentIconEditorDialog({
         <DialogHeader className="px-4 pt-4 pb-3 shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="h-5 w-5" />
-Customize Worker Icon
+            {t('customizeIconTitle')}
           </DialogTitle>
         </DialogHeader>
         <div className="hidden md:flex flex-1 min-h-0 px-4">
@@ -343,8 +340,8 @@ Customize Worker Icon
         <div className="md:hidden flex-1 min-h-0 px-4">
           <Tabs defaultValue="customize" className="h-full flex flex-col">
             <TabsList className="grid w-full grid-cols-2 shrink-0">
-              <TabsTrigger value="customize">Customize</TabsTrigger>
-              <TabsTrigger value="icons">Icons</TabsTrigger>
+              <TabsTrigger value="customize">{t('tabCustomize')}</TabsTrigger>
+              <TabsTrigger value="icons">{t('tabIcons')}</TabsTrigger>
             </TabsList>
             
             <TabsContent value="customize" className="flex-1 min-h-0 mt-4">
@@ -376,19 +373,19 @@ Customize Worker Icon
               ) : (
                 <Wand2 className="h-4 w-4" />
               )}
-              Auto-generate
+              {t('autoGenerate')}
             </Button>
           </div>
           <Button
             variant="outline"
             onClick={onClose}
           >
-            Cancel
+            {t('cancel')}
           </Button>
           <Button 
             onClick={handleIconSave}
           >
-            Save Icon
+            {t('saveIcon')}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -1,4 +1,7 @@
+'use client';
+
 import { useEffect, useState, useRef } from "react";
+import { useTranslations } from 'next-intl';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -20,10 +23,13 @@ export const ExpandableMarkdownEditor: React.FC<ExpandableMarkdownEditorProps> =
   value,
   onSave,
   className = '',
-  placeholder = 'Click to edit...',
-  title = 'Edit Instructions',
+  placeholder,
+  title,
   disabled = false
 }) => {
+  const t = useTranslations('agentConfig.instructionsEditor');
+  const resolvedPlaceholder = placeholder ?? t('textareaPlaceholder');
+  const resolvedTitle = title ?? t('editTitle');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(value);
@@ -85,7 +91,7 @@ export const ExpandableMarkdownEditor: React.FC<ExpandableMarkdownEditorProps> =
               </div>
             ) : (
               <div className="text-muted-foreground italic text-sm">
-                {placeholder}
+                {resolvedPlaceholder}
               </div>
             )}
           </div>
@@ -115,7 +121,7 @@ export const ExpandableMarkdownEditor: React.FC<ExpandableMarkdownEditorProps> =
         <DialogContent className="max-w-6xl max-h-[90vh] w-[98vw] md:w-full flex flex-col">
           <DialogHeader>
             <DialogTitle className="flex items-center justify-between">
-              <span className="text-lg font-semibold">{title}</span>
+              <span className="text-lg font-semibold">{resolvedTitle}</span>
               {!isEditing && !disabled && (
                 <Button
                   size="sm"
@@ -124,7 +130,7 @@ export const ExpandableMarkdownEditor: React.FC<ExpandableMarkdownEditorProps> =
                   className="h-8 px-3"
                 >
                   <Edit2 className="h-3 w-3 mr-1" />
-                  Edit
+                  {t('editButton')}
                 </Button>
               )}
             </DialogTitle>
@@ -141,11 +147,11 @@ export const ExpandableMarkdownEditor: React.FC<ExpandableMarkdownEditorProps> =
                     className="w-full h-[70vh] rounded-2xl bg-muted/30 p-6 resize-none text-sm leading-relaxed font-mono"
                     style={{ minHeight: '60vh' }}
                     disabled={disabled}
-                    placeholder="Write your markdown content here..."
+                    placeholder={resolvedPlaceholder}
                   />
                 </ScrollArea>
                 <div className="text-xs text-muted-foreground/60 flex-shrink-0 px-2">
-                  Markdown supported • <kbd className="bg-muted px-1 py-0.5 rounded text-xs">⌘+Enter</kbd> to save • <kbd className="bg-muted px-1 py-0.5 rounded text-xs">Esc</kbd> to cancel
+                  {t('shortcutsHint', { cmdEnter: '⌘+Enter', esc: 'Esc' })}
                 </div>
               </div>
             ) : (
@@ -157,7 +163,7 @@ export const ExpandableMarkdownEditor: React.FC<ExpandableMarkdownEditorProps> =
                     </div>
                   ) : (
                     <div className="text-muted-foreground italic text-center py-12 text-base">
-                      {placeholder}
+                      {resolvedPlaceholder}
                     </div>
                   )}
                 </div>
@@ -174,7 +180,7 @@ export const ExpandableMarkdownEditor: React.FC<ExpandableMarkdownEditorProps> =
                 className="h-9 px-4"
               >
                 <X className="h-3 w-3 mr-1" />
-                Cancel
+                {t('cancel')}
               </Button>
               <Button
                 size="default"
@@ -183,7 +189,7 @@ export const ExpandableMarkdownEditor: React.FC<ExpandableMarkdownEditorProps> =
                 className="h-9 px-4"
               >
                 <Save className="h-3 w-3 mr-1" />
-                Save Changes
+                {t('saveChanges')}
               </Button>
             </DialogFooter>
           )}

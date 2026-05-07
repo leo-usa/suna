@@ -52,6 +52,7 @@ export function TriggerCreationDialog({
   const updateTriggerMutation = useUpdateTrigger();
   const pricingModalStore = usePricingModalStore();
   const tBilling = useTranslations('billing');
+  const tTrigger = useTranslations('agentConfig.triggerWizard');
 
   // Initialize form for edit mode or pre-selected agent
   React.useEffect(() => {
@@ -84,7 +85,7 @@ export function TriggerCreationDialog({
 
   const handleScheduleSave = async (data: { name: string; description: string; config: any; is_active: boolean }) => {
     if (!selectedAgent) {
-      toast.error('Please select an agent');
+      toast.error(tTrigger('selectAgentToast'));
       return;
     }
 
@@ -92,12 +93,12 @@ export function TriggerCreationDialog({
       if (isEditMode && existingTrigger) {
         await updateTriggerMutation.mutateAsync({
           triggerId: existingTrigger.trigger_id,
-          name: data.name || 'Scheduled Trigger',
-          description: data.description || 'Automatically scheduled trigger',
+          name: data.name || tTrigger('defaultTriggerName'),
+          description: data.description || tTrigger('defaultTriggerDescription'),
           config: data.config,
           is_active: data.is_active,
         });
-        toast.success('Schedule trigger updated successfully');
+        toast.success(tTrigger('scheduleUpdated'));
 
         if (onTriggerUpdated && existingTrigger.trigger_id) {
           onTriggerUpdated(existingTrigger.trigger_id);
@@ -107,11 +108,11 @@ export function TriggerCreationDialog({
         const newTrigger = await createTriggerMutation.mutateAsync({
           agentId: selectedAgent,
           provider_id: 'schedule',
-          name: data.name || 'Scheduled Trigger',
-          description: data.description || 'Automatically scheduled trigger',
+          name: data.name || tTrigger('defaultTriggerName'),
+          description: data.description || tTrigger('defaultTriggerDescription'),
           config: data.config,
         });
-        toast.success('Schedule trigger created successfully');
+        toast.success(tTrigger('scheduleCreated'));
 
         if (onTriggerCreated && newTrigger?.trigger_id) {
           onTriggerCreated(newTrigger.trigger_id);
@@ -128,7 +129,7 @@ export function TriggerCreationDialog({
         handleClose();
         return;
       }
-      toast.error(error.message || `Failed to ${isEditMode ? 'update' : 'create'} schedule trigger`);
+      toast.error(error.message || (isEditMode ? tTrigger('scheduleUpdateFailed') : tTrigger('scheduleCreateFailed')));
       console.error(`Error ${isEditMode ? 'updating' : 'creating'} schedule trigger:`, error);
     }
   };
@@ -161,17 +162,17 @@ export function TriggerCreationDialog({
               {type === 'schedule' ? (
                 <>
                   <Clock className="h-5 w-5" />
-                  {isEditMode ? 'Edit Scheduled Task' : 'Create Scheduled Task'}
+                  {isEditMode ? tTrigger('editScheduled') : tTrigger('createScheduled')}
                 </>
               ) : (
                 <>
                   <PlugZap className="h-5 w-5" />
-                  {isEditMode ? 'Edit App-based Task' : 'Create App-based Task'}
+                  {isEditMode ? tTrigger('editEvent') : tTrigger('createEvent')}
                 </>
               )}
             </DialogTitle>
             <DialogDescription>
-              {isEditMode ? 'Update the agent for this task' : 'First, select which agent should handle this task'}
+              {isEditMode ? tTrigger('descEditAgent') : tTrigger('descPickAgent')}
             </DialogDescription>
           </DialogHeader>
 
@@ -179,16 +180,16 @@ export function TriggerCreationDialog({
             <AgentSelector
               selectedAgentId={selectedAgent}
               onAgentSelect={setSelectedAgent}
-              placeholder="Choose an agent"
+              placeholder={tTrigger('chooseAgentPlaceholder')}
             />
           </div>
 
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={handleClose}>
-              Cancel
+              {tTrigger('cancel')}
             </Button>
             <Button onClick={handleAgentSelect} disabled={!selectedAgent}>
-              Next
+              {tTrigger('next')}
               <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
           </div>

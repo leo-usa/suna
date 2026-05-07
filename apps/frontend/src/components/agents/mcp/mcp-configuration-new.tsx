@@ -1,4 +1,7 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Zap, Server, Store, Settings, Lock } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -23,6 +26,7 @@ export const MCPConfigurationNew: React.FC<MCPConfigurationProps> = ({
   versionId,
   isLoading = false
 }) => {
+  const t = useTranslations('agentConfig.integrations');
   const [showCustomDialog, setShowCustomDialog] = useState(false);
   const [showRegistryDialog, setShowRegistryDialog] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
@@ -122,11 +126,11 @@ export const MCPConfigurationNew: React.FC<MCPConfigurationProps> = ({
             type="button"
           >
             {isFreeTier ? <Lock className="h-4 w-4" /> : <Store className="h-4 w-4" />}
-            Browse Apps
+            {t('browseApps')}
           </Button>
           <Button onClick={() => setShowCustomDialog(true)} size="sm" variant="outline" className="gap-2" type="button">
             <Server className="h-4 w-4" />
-            Custom MCP
+            {t('customMcp')}
           </Button>
         </div>
       </div>
@@ -137,10 +141,10 @@ export const MCPConfigurationNew: React.FC<MCPConfigurationProps> = ({
             <Server className="h-6 w-6 text-muted-foreground" />
           </div>
           <h4 className="text-sm font-semibold text-foreground mb-2">
-            No integrations configured
+            {t('emptyTitle')}
           </h4>
           <p className="text-sm text-muted-foreground mb-6 max-w-sm mx-auto">
-            Browse the app registry to connect your apps or add custom MCP servers
+            {t('emptyDescription')}
           </p>
         </div>
       )}
@@ -159,7 +163,7 @@ export const MCPConfigurationNew: React.FC<MCPConfigurationProps> = ({
       <Dialog open={showRegistryDialog} onOpenChange={setShowRegistryDialog}>
         <DialogContent className="p-0 max-w-6xl h-[90vh] overflow-hidden">
           <DialogHeader className="sr-only">
-            <DialogTitle>Select Integration</DialogTitle>
+            <DialogTitle>{t('selectIntegrationTitle')}</DialogTitle>
           </DialogHeader>
           <ComposioRegistry
             showAgentSelector={false}

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -38,6 +39,8 @@ export const GranularToolConfiguration = ({
   isSunaAgent = false,
   isLoading = false
 }: GranularToolConfigurationProps) => {
+  const t = useTranslations('agentConfig.tools');
+  const tConfig = useTranslations('agentConfig');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
 
@@ -107,8 +110,8 @@ export const GranularToolConfiguration = ({
     const toolGroup = getToolGroup(toolName, toolsData);
 
     if (disabled && isSunaAgent) {
-      toast.error("Tools cannot be modified", {
-        description: "Dobby's default tools are managed centrally and cannot be changed.",
+      toast.error(tConfig('toolsCannotModify'), {
+        description: tConfig('toolsCannotModifyDesc'),
       });
       return;
     }
@@ -260,7 +263,7 @@ export const GranularToolConfiguration = ({
     return (
       <div className="flex items-center justify-center h-full">
         <DobbyLoader size="large" />
-        <span className="ml-2 text-muted-foreground">Loading tools...</span>
+        <span className="ml-2 text-muted-foreground">{t('loading')}</span>
       </div>
     );
   }
@@ -269,20 +272,23 @@ export const GranularToolConfiguration = ({
     <div className="flex flex-col h-full w-full min-w-0">
       <div className="flex items-center justify-between flex-shrink-0 mb-4 w-full">
         <div>
-          <h3 className="text-lg font-semibold">Tool Configuration</h3>
+          <h3 className="text-lg font-semibold">{t('title')}</h3>
           <p className="text-sm text-muted-foreground">
-            Configure tools and their individual capabilities for your agent
+            {t('subtitle')}
           </p>
         </div>
         <Badge variant="default" className="text-xs">
-          {getEnabledToolsCount()} / {getTotalVisibleToolsCount()} tools enabled
+          {t('toolsEnabled', {
+            enabled: getEnabledToolsCount(),
+            total: getTotalVisibleToolsCount(),
+          })}
         </Badge>
       </div>
 
       <div className="relative flex-shrink-0 mb-4">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
         <Input
-          placeholder="Search tools and capabilities..."
+          placeholder={t('searchPlaceholder')}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="pl-10"
@@ -314,7 +320,7 @@ export const GranularToolConfiguration = ({
                             {toolGroup.displayName}
                           </h4>
                           {toolGroup.isCore && (
-                            <Badge variant="outline" className="text-xs">Core</Badge>
+                            <Badge variant="outline" className="text-xs">{t('coreBadge')}</Badge>
                           )}
                         </div>
                         <p className="text-sm text-muted-foreground truncate">
@@ -326,7 +332,10 @@ export const GranularToolConfiguration = ({
                             className="flex items-center gap-1 mt-1 hover:opacity-80 transition-opacity"
                           >
                             <p className="text-xs text-muted-foreground">
-                              {enabledMethodsCount} / {totalMethodsCount} capabilities enabled
+                              {t('capabilitiesEnabled', {
+                                enabled: enabledMethodsCount,
+                                total: totalMethodsCount,
+                              })}
                             </p>
                             {isExpanded ? (
                               <ChevronDown className="h-3 w-3 text-muted-foreground flex-shrink-0" />
@@ -365,7 +374,7 @@ export const GranularToolConfiguration = ({
                                           {method.displayName}
                                         </h5>
                                         {method.isCore && (
-                                          <Badge variant="outline" className="text-xs flex-shrink-0">Core</Badge>
+                                          <Badge variant="outline" className="text-xs flex-shrink-0">{t('coreBadge')}</Badge>
                                         )}
                                       </div>
                                       <p className="text-xs text-muted-foreground truncate w-full">

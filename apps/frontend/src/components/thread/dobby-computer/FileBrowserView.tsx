@@ -2225,7 +2225,10 @@ export function FileBrowserView({
         <div className="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
           <Badge variant="outline" className="py-0.5 h-6">
             <Folder className="h-3 w-3 mr-1" />
-            {mainPanelFiles.length + otherPanelFiles.length} {(mainPanelFiles.length + otherPanelFiles.length) === 1 ? 'item' : 'items'}
+            {mainPanelFiles.length + otherPanelFiles.length}{' '}
+            {(mainPanelFiles.length + otherPanelFiles.length) === 1
+              ? t('fileBrowser.item')
+              : t('fileBrowser.items')}
           </Badge>
         </div>
         <div className="text-xs text-zinc-500 dark:text-zinc-400 truncate max-w-[200px]">

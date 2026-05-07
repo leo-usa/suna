@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { DobbyLoader } from '@/components/ui/dobby-loader';
 import { useThreads } from '@/hooks/threads/use-threads';
@@ -20,6 +21,7 @@ import {
 import { HardDrive, MessageSquare } from 'lucide-react';
 
 export default function FilesPage() {
+  const t = useTranslations('agentConfig.filesPage');
   const router = useRouter();
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   
@@ -105,11 +107,11 @@ export default function FilesPage() {
       <div className="flex items-center justify-center h-[100dvh] bg-background">
         <div className="text-center space-y-4">
           <HardDrive className="h-12 w-12 mx-auto text-muted-foreground" />
-          <h2 className="text-lg font-semibold">No Computers Yet</h2>
+          <h2 className="text-lg font-semibold">{t('noComputersTitle')}</h2>
           <p className="text-sm text-muted-foreground max-w-xs">
-            Start a conversation to create your first computer.
+            {t('noComputersDescription')}
           </p>
-          <Button onClick={() => router.push('/dashboard')}>Start a Chat</Button>
+          <Button onClick={() => router.push('/dashboard')}>{t('startAChat')}</Button>
         </div>
       </div>
     );
@@ -121,7 +123,7 @@ export default function FilesPage() {
       <Select value={projectId} onValueChange={setSelectedProjectId}>
         <SelectTrigger className="w-[200px] h-9">
           <HardDrive className="h-4 w-4 mr-2 text-muted-foreground" />
-          <SelectValue placeholder="Select computer" />
+          <SelectValue placeholder={t('selectComputer')} />
         </SelectTrigger>
         <SelectContent>
           {projectsWithSandboxes.map((p) => (
@@ -173,7 +175,7 @@ export default function FilesPage() {
     <div className="h-[100dvh] bg-background flex flex-col">
       {/* Project selector header - only difference from DobbyComputer */}
       <div className="px-4 py-3 border-b flex items-center justify-between flex-shrink-0">
-        <h1 className="text-lg font-semibold">Files</h1>
+        <h1 className="text-lg font-semibold">{t('title')}</h1>
         {projectSelector}
       </div>
       {/* Content - IDENTICAL to DobbyComputer */}

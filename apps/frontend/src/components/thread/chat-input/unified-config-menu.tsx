@@ -51,6 +51,8 @@ const LoggedInMenu: React.FC<UnifiedConfigMenuProps> = memo(function LoggedInMen
     onAgentSelect,
 }) {
     const t = useTranslations('thread');
+    const tConfig = useTranslations('agentConfig');
+    const tCommon = useTranslations('common');
     const [isOpen, setIsOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
@@ -204,7 +206,7 @@ const LoggedInMenu: React.FC<UnifiedConfigMenuProps> = memo(function LoggedInMen
                 </div>
             ) : orderedAgents.length === 0 ? (
                 <div className="p-6 text-center text-sm text-muted-foreground">
-                    {debouncedSearchQuery ? 'No agents found' : 'No agents yet'}
+                    {debouncedSearchQuery ? tConfig('noWorkersFound') : tConfig('noWorkersYet')}
                 </div>
             ) : (
                 <>
@@ -260,10 +262,10 @@ const LoggedInMenu: React.FC<UnifiedConfigMenuProps> = memo(function LoggedInMen
                                 {isFetching ? (
                                     <>
                                         <DobbyLoader size="small" className="mr-2" />
-                                        Loading...
+                                        {tConfig('listLoading')}
                                     </>
                                 ) : (
-                                    `Load more`
+                                    tConfig('loadMore')
                                 )}
                             </Button>
                         </div>
@@ -271,7 +273,7 @@ const LoggedInMenu: React.FC<UnifiedConfigMenuProps> = memo(function LoggedInMen
                 </>
             )}
         </>
-    ), [orderedAgents, isLoading, debouncedSearchQuery, selectedAgentId, handleAgentClick, renderAgentIcon, canLoadMore, handleLoadMore, isFetching, isMobile]);
+    ), [orderedAgents, isLoading, debouncedSearchQuery, selectedAgentId, handleAgentClick, renderAgentIcon, canLoadMore, handleLoadMore, isFetching, isMobile, tConfig]);
 
     const CreateWorkerButton = useCallback(({ compact = false }: { compact?: boolean }) => (
         <div className={cn(
@@ -318,33 +320,33 @@ const LoggedInMenu: React.FC<UnifiedConfigMenuProps> = memo(function LoggedInMen
                         compact ? "text-sm" : "text-base sm:text-sm",
                         isFreeTier ? "text-primary" : "text-foreground"
                     )}>
-                        Create AI Worker
+                        {tConfig('createAiWorker')}
                     </span>
                     {isFreeTier && (
                         <p className={cn(
                             "text-muted-foreground leading-tight mt-0.5",
                             compact ? "text-[10px]" : "text-xs sm:text-[10px]"
                         )}>
-                            Upgrade to create custom workers
+                            {tConfig('upgradeCustomWorkers')}
                         </p>
                     )}
                 </div>
             </div>
         </div>
-    ), [isFreeTier, openPricingModal]);
+    ), [isFreeTier, openPricingModal, tConfig]);
 
     const WorkerSettingsButtons = useCallback(({ compact = false }: { compact?: boolean }) => (
         onAgentSelect && (selectedAgentId || displayAgent?.agent_id) ? (
             <div className={compact ? "px-3" : "px-4 sm:px-3"}>
                 <div className="mb-2 sm:mb-3">
-                    <span className="text-xs font-medium text-muted-foreground">Worker Settings</span>
+                    <span className="text-xs font-medium text-muted-foreground">{tConfig('workerSettings')}</span>
                 </div>
                 <div className="flex items-center gap-2">
                     {[
-                        { action: 'instructions' as const, icon: Plug, label: 'Instructions' },
-                        { action: 'knowledge' as const, icon: Brain, label: 'Knowledge' },
-                        { action: 'integrations' as const, icon: LibraryBig, label: 'Integrations' },
-                        { action: 'triggers' as const, icon: Zap, label: 'Triggers' },
+                        { action: 'instructions' as const, icon: Plug, label: t('instructions') },
+                        { action: 'knowledge' as const, icon: Brain, label: t('knowledge') },
+                        { action: 'integrations' as const, icon: LibraryBig, label: t('integrations') },
+                        { action: 'triggers' as const, icon: Zap, label: t('triggers') },
                     ].map(({ action, icon: Icon, label }) => (
                         <Tooltip key={action}>
                             <TooltipTrigger asChild>
@@ -377,7 +379,7 @@ const LoggedInMenu: React.FC<UnifiedConfigMenuProps> = memo(function LoggedInMen
                 </div>
             </div>
         ) : null
-    ), [onAgentSelect, selectedAgentId, displayAgent?.agent_id, handleQuickAction]);
+    ), [onAgentSelect, selectedAgentId, displayAgent?.agent_id, handleQuickAction, t, tConfig]);
 
     // Check if current agent is Dobby (used in multiple places)
     const isKortixAgent = !displayAgent?.name || displayAgent?.name === 'Dobby';
@@ -395,7 +397,7 @@ const LoggedInMenu: React.FC<UnifiedConfigMenuProps> = memo(function LoggedInMen
                         >
                             <ChevronLeft className="h-5 w-5 text-muted-foreground" />
                         </button>
-                        <span className="text-base font-semibold">Select Worker</span>
+                        <span className="text-base font-semibold">{tConfig('selectWorker')}</span>
                     </div>
 
                     {/* Search */}
@@ -404,7 +406,7 @@ const LoggedInMenu: React.FC<UnifiedConfigMenuProps> = memo(function LoggedInMen
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
                             <input
                                 type="text"
-                                placeholder="Search workers..."
+                                placeholder={t('searchWorkers')}
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 className="w-full h-12 pl-11 pr-4 rounded-xl text-base font-medium bg-muted/50 border border-border focus:outline-none focus:ring-2 focus:ring-primary/50"
@@ -416,7 +418,7 @@ const LoggedInMenu: React.FC<UnifiedConfigMenuProps> = memo(function LoggedInMen
                     {/* List */}
                     <div className="flex-1 overflow-hidden">
                         <div className="px-4 pb-2">
-                            <span className="text-xs font-medium text-muted-foreground">My Workers</span>
+                            <span className="text-xs font-medium text-muted-foreground">{t('myWorkers')}</span>
                         </div>
                         <AgentsList compact={false} />
                         <CreateWorkerButton compact={false} />
@@ -437,8 +439,8 @@ const LoggedInMenu: React.FC<UnifiedConfigMenuProps> = memo(function LoggedInMen
                 {onAgentSelect && (
                     <>
                         <div className="px-4 pt-1 pb-1">
-                            <span className="text-xs font-medium text-muted-foreground">Worker</span>
-                        </div>
+                    <span className="text-xs font-medium text-muted-foreground">{tConfig('workerLabel')}</span>
+                </div>
                         <div className="px-4 pb-2">
                             <button
                                 onClick={() => setMobileSection('agents')}
@@ -470,7 +472,7 @@ const LoggedInMenu: React.FC<UnifiedConfigMenuProps> = memo(function LoggedInMen
                 )}
             </div>
         );
-    }, [mobileSection, searchQuery, onAgentSelect, displayAgent, isLoading, placeholderSunaAgent, renderAgentIcon, selectedAgentId, AgentsList, CreateWorkerButton, WorkerSettingsButtons, isKortixAgent]);
+    }, [mobileSection, searchQuery, onAgentSelect, displayAgent, isLoading, placeholderSunaAgent, renderAgentIcon, selectedAgentId, AgentsList, CreateWorkerButton, WorkerSettingsButtons, isKortixAgent, t, tConfig]);
 
     // Trigger button
     const TriggerButton = (
@@ -508,7 +510,7 @@ const LoggedInMenu: React.FC<UnifiedConfigMenuProps> = memo(function LoggedInMen
                             {TriggerButton}
                         </TooltipTrigger>
                         <TooltipContent side="top">
-                            <p>Worker settings</p>
+                            <p>{tConfig('workerSettingsTooltip')}</p>
                         </TooltipContent>
                     </Tooltip>
                     <Sheet open={isOpen} onOpenChange={setIsOpen}>
@@ -521,7 +523,7 @@ const LoggedInMenu: React.FC<UnifiedConfigMenuProps> = memo(function LoggedInMen
                         >
                             <VisuallyHidden>
                                 <SheetHeader>
-                                    <SheetTitle>Configuration</SheetTitle>
+                                    <SheetTitle>{tConfig('configurationSheetTitle')}</SheetTitle>
                                 </SheetHeader>
                             </VisuallyHidden>
                             <MobileSheetContent />
@@ -538,7 +540,7 @@ const LoggedInMenu: React.FC<UnifiedConfigMenuProps> = memo(function LoggedInMen
                             </DropdownMenuTrigger>
                         </TooltipTrigger>
                         <TooltipContent side="top">
-                            <p>Worker settings</p>
+                            <p>{tConfig('workerSettingsTooltip')}</p>
                         </TooltipContent>
                     </Tooltip>
 
@@ -548,7 +550,7 @@ const LoggedInMenu: React.FC<UnifiedConfigMenuProps> = memo(function LoggedInMen
                             {onAgentSelect && (
                                 <>
                                     <div className="px-3 pb-1">
-                                        <span className="text-xs font-medium text-muted-foreground">Worker</span>
+                                        <span className="text-xs font-medium text-muted-foreground">{tConfig('workerLabel')}</span>
                                     </div>
                                     <div className="px-2 pb-2">
                                         <SpotlightCard className={cn("transition-colors cursor-pointer bg-transparent", isKortixAgent ? "p-2" : "")}>
@@ -569,7 +571,7 @@ const LoggedInMenu: React.FC<UnifiedConfigMenuProps> = memo(function LoggedInMen
                                                                 <input
                                                                     ref={searchInputRef}
                                                                     type="text"
-                                                                    placeholder="Search workers..."
+                                                                    placeholder={t('searchWorkers')}
                                                                     value={searchQuery}
                                                                     onChange={(e) => setSearchQuery(e.target.value)}
                                                                     onKeyDown={handleSearchInputKeyDown}
@@ -578,7 +580,7 @@ const LoggedInMenu: React.FC<UnifiedConfigMenuProps> = memo(function LoggedInMen
                                                             </div>
                                                         </div>
                                                         <div className="flex items-center justify-between mb-3 px-3">
-                                                            <span className="text-xs font-medium text-muted-foreground">My Workers</span>
+                                                            <span className="text-xs font-medium text-muted-foreground">{t('myWorkers')}</span>
                                                         </div>
                                                         <AgentsList compact={true} />
                                                         <CreateWorkerButton compact={true} />
@@ -600,7 +602,7 @@ const LoggedInMenu: React.FC<UnifiedConfigMenuProps> = memo(function LoggedInMen
             <Dialog open={integrationsOpen} onOpenChange={setIntegrationsOpen}>
                 <DialogContent className="p-0 max-w-6xl h-[90vh] sm:h-[90vh] max-h-[100vh] sm:max-h-[90vh] overflow-hidden">
                     <DialogHeader className="sr-only">
-                        <DialogTitle>Integrations</DialogTitle>
+                        <DialogTitle>{tConfig('integrationsDialogTitle')}</DialogTitle>
                     </DialogHeader>
                     <IntegrationsRegistry
                         showAgentSelector={true}

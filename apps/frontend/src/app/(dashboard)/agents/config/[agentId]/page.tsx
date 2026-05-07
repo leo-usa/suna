@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useAgent } from '@/hooks/agents/use-agents';
 import { ChevronLeft, Brain, BookOpen, Zap, Wrench, Server, Pencil, MessageCircle } from 'lucide-react';
 import { DobbyLoader } from '@/components/ui/dobby-loader';
@@ -25,6 +26,9 @@ export default function AgentConfigPage() {
   const params = useParams();
   const router = useRouter();
   const queryClient = useQueryClient();
+  const tThread = useTranslations('thread');
+  const tCommon = useTranslations('common');
+  const tConfig = useTranslations('agentConfig');
   const agentId = params.agentId as string;
   const [activeView, setActiveView] = useState<ConfigView>('triggers');
   const [isEditorOpen, setIsEditorOpen] = useState(false);
@@ -43,7 +47,7 @@ export default function AgentConfigPage() {
   if (!agent) {
     return (
       <div className="flex items-center justify-center h-[100dvh]">
-        <p className="text-muted-foreground">Worker not found</p>
+        <p className="text-muted-foreground">{tConfig('workerNotFound')}</p>
       </div>
     );
   }
@@ -64,19 +68,19 @@ export default function AgentConfigPage() {
       });
 
       queryClient.invalidateQueries({ queryKey: ['agents', 'detail', agentId] });
-      toast.success('Worker updated successfully!');
+      toast.success(tConfig('workerUpdatedSuccess'));
     } catch (error) {
       console.error('Failed to update agent:', error);
-      toast.error('Failed to update Worker');
+      toast.error(tConfig('workerUpdateFailed'));
     }
   };
 
   const menuItems = [
-    { id: 'instructions' as const, label: 'Instructions', icon: Brain },
-    { id: 'tools' as const, label: 'Tools', icon: Wrench },
-    { id: 'integrations' as const, label: 'Integrations', icon: Server },
-    { id: 'knowledge' as const, label: 'Knowledge', icon: BookOpen },
-    { id: 'triggers' as const, label: 'Triggers', icon: Zap },
+    { id: 'instructions' as const, label: tThread('instructions'), icon: Brain },
+    { id: 'tools' as const, label: tThread('tools'), icon: Wrench },
+    { id: 'integrations' as const, label: tThread('integrations'), icon: Server },
+    { id: 'knowledge' as const, label: tThread('knowledge'), icon: BookOpen },
+    { id: 'triggers' as const, label: tThread('triggers'), icon: Zap },
   ];
 
   return (
@@ -91,7 +95,7 @@ export default function AgentConfigPage() {
           className="justify-start -ml-2 mb-6 text-foreground hover:bg-transparent hidden md:flex"
         >
           <ChevronLeft className="h-4 w-4 mr-1" />
-          Back
+          {tCommon('back')}
         </Button>
 
         {/* Back button - mobile (icon only) */}
@@ -175,7 +179,9 @@ export default function AgentConfigPage() {
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <h1 className="text-base sm:text-lg md:text-xl font-semibold text-foreground truncate">{agent?.name}</h1>
+                <h1 className="text-base sm:text-lg md:text-xl font-semibold text-foreground truncate">
+                  {agent?.name === 'New Worker' ? tConfig('newWorker') : agent?.name}
+                </h1>
                 <Pencil className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground opacity-0 group-hover/header:opacity-100 transition-opacity flex-shrink-0" />
               </div>
             </div>
@@ -185,8 +191,8 @@ export default function AgentConfigPage() {
             className="gap-1.5 sm:gap-2 text-sm h-9 sm:h-10 px-3 sm:px-4 flex-shrink-0"
           >
             <MessageCircle className="h-4 w-4" />
-            <span className="hidden sm:inline">Start Chat</span>
-            <span className="sm:hidden">Chat</span>
+            <span className="hidden sm:inline">{tConfig('startChat')}</span>
+            <span className="sm:hidden">{tConfig('chat')}</span>
           </Button>
         </div>
 

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -9,9 +10,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, ArrowLeft, Info, Zap, ChevronRight, Plus, Sparkles, CheckCircle2, Link2, Activity } from 'lucide-react';
+import { Search, ArrowLeft, Info, Zap, ChevronRight, Plus, Sparkles, CheckCircle2, Link2 } from 'lucide-react';
 import { DobbyLoader } from '@/components/ui/dobby-loader';
 import { useComposioAppsWithTriggers, useComposioAppTriggers, useCreateComposioEventTrigger, ComposioTriggerType } from '@/hooks/composio/use-composio-triggers';
 import { useUpdateTrigger } from '@/hooks/triggers';
@@ -40,11 +40,12 @@ type JSONSchema = {
     required?: string[];
 };
 
-const ProgressStepper = ({ currentStep }: { currentStep: 'apps' | 'triggers' | 'config' }) => {
+function ProgressStepper({ currentStep }: { currentStep: 'apps' | 'triggers' | 'config' }) {
+    const t = useTranslations('agentConfig.eventTriggerWizard');
     const steps = [
-        { id: 'apps', name: 'Select App', icon: <Link2 className="h-4 w-4" /> },
-        { id: 'triggers', name: 'Choose Trigger', icon: <Zap className="h-4 w-4" /> },
-        { id: 'config', name: 'Configure', icon: <Sparkles className="h-4 w-4" /> }
+        { id: 'apps' as const, name: t('stepApps'), icon: <Link2 className="h-4 w-4" /> },
+        { id: 'triggers' as const, name: t('stepTriggers'), icon: <Zap className="h-4 w-4" /> },
+        { id: 'config' as const, name: t('stepConfig'), icon: <Sparkles className="h-4 w-4" /> },
     ];
 
     const currentIndex = steps.findIndex(s => s.id === currentStep);
@@ -52,8 +53,8 @@ const ProgressStepper = ({ currentStep }: { currentStep: 'apps' | 'triggers' | '
     return (
         <div className="px-6 py-3 border-b bg-muted/30">
             <div className="flex items-center space-x-1">
-                {steps.map((step, index) => (
-                    <React.Fragment key={step.id}>
+                {steps.map((wizardStep, index) => (
+                    <React.Fragment key={wizardStep.id}>
                         <div className="flex items-center space-x-2">
                             <div className={cn(
                                 "flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium",
@@ -73,7 +74,7 @@ const ProgressStepper = ({ currentStep }: { currentStep: 'apps' | 'triggers' | '
                                     ? "text-foreground"
                                     : "text-muted-foreground"
                             )}>
-                                {step.name}
+                                {wizardStep.name}
                             </span>
                         </div>
                         {index < steps.length - 1 && (
@@ -84,69 +85,65 @@ const ProgressStepper = ({ currentStep }: { currentStep: 'apps' | 'triggers' | '
             </div>
         </div>
     );
-};
+}
 
-const AppCard = ({ app, onClick, connectionStatus }: { app: any; onClick: () => void; connectionStatus: { isConnected: boolean; hasProfiles: boolean } }) => (
-    <button
-        onClick={onClick}
-        className="group relative bg-card border border-border rounded-lg p-4 hover:bg-accent text-left w-full"
-    >
-        <div className="flex items-start gap-3">
-            {app.logo ? (
-                <div className="border flex-shrink-0 w-10 h-10 rounded-lg bg-muted flex items-center justify-center overflow-hidden">
-                    <img src={app.logo} alt={app.name} className="w-6 h-6 object-contain" />
+function AppCard({ app, onClick, connectionStatus }: { app: any; onClick: () => void; connectionStatus: { isConnected: boolean; hasProfiles: boolean } }) {
+    const t = useTranslations('agentConfig.eventTriggerWizard');
+    const subtitle = connectionStatus.isConnected
+        ? t('appSubtitleConnected', { app: app.name })
+        : connectionStatus.hasProfiles
+            ? t('appSubtitleHasProfiles', { app: app.name })
+            : t('appSubtitleNeedsSetup', { app: app.name });
+
+    return (
+        <button
+            onClick={onClick}
+            className="group relative bg-card border border-border rounded-lg p-4 hover:bg-accent text-left w-full"
+        >
+            <div className="flex items-start gap-3">
+                {app.logo ? (
+                    <div className="border flex-shrink-0 w-10 h-10 rounded-lg bg-muted flex items-center justify-center overflow-hidden">
+                        <img src={app.logo} alt={app.name} className="w-6 h-6 object-contain" />
+                    </div>
+                ) : (
+                    <div className="flex-shrink-0 w-10 h-10 rounded-md bg-muted flex items-center justify-center">
+                        <span className="text-muted-foreground font-medium">{app.name.charAt(0)}</span>
+                    </div>
+                )}
+                <div className="flex-1 min-w-0">
+                    <h3 className="font-medium text-sm mb-1 text-foreground group-hover:text-accent-foreground">
+                        {app.name}
+                    </h3>
+                    <p className="text-xs text-muted-foreground line-clamp-2">{subtitle}</p>
                 </div>
-            ) : (
-                <div className="flex-shrink-0 w-10 h-10 rounded-md bg-muted flex items-center justify-center">
-                    <span className="text-muted-foreground font-medium">{app.name.charAt(0)}</span>
-                </div>
-            )}
-            <div className="flex-1 min-w-0">
-                <h3 className="font-medium text-sm mb-1 text-foreground group-hover:text-accent-foreground">
-                    {app.name}
-                </h3>
-                <p className="text-xs text-muted-foreground line-clamp-2">
-                    {connectionStatus.isConnected
-                        ? `Create automated triggers from ${app.name} events`
-                        : connectionStatus.hasProfiles
-                            ? `Connect your ${app.name} account to create triggers`
-                            : `Set up ${app.name} connection to get started`
-                    }
-                </p>
+                <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
             </div>
-            <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-        </div>
 
-        <div className="mt-3 pt-3 border-t border-border">
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1">
-                    {connectionStatus.isConnected ? (
-                        <>
-                            <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                            <span className="text-xs text-green-600 dark:text-green-400">
-                                Connected
-                            </span>
-                        </>
-                    ) : connectionStatus.hasProfiles ? (
-                        <>
-                            <div className="w-1.5 h-1.5 rounded-full bg-yellow-500" />
-                            <span className="text-xs text-yellow-600 dark:text-yellow-400">
-                                Not Connected
-                            </span>
-                        </>
-                    ) : (
-                        <>
-                            <div className="w-1.5 h-1.5 rounded-full bg-gray-400" />
-                            <span className="text-xs text-gray-600 dark:text-gray-400">
-                                Setup Required
-                            </span>
-                        </>
-                    )}
+            <div className="mt-3 pt-3 border-t border-border">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1">
+                        {connectionStatus.isConnected ? (
+                            <>
+                                <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                                <span className="text-xs text-green-600 dark:text-green-400">{t('statusConnected')}</span>
+                            </>
+                        ) : connectionStatus.hasProfiles ? (
+                            <>
+                                <div className="w-1.5 h-1.5 rounded-full bg-yellow-500" />
+                                <span className="text-xs text-yellow-600 dark:text-yellow-400">{t('statusNotConnected')}</span>
+                            </>
+                        ) : (
+                            <>
+                                <div className="w-1.5 h-1.5 rounded-full bg-gray-400" />
+                                <span className="text-xs text-gray-600 dark:text-gray-400">{t('statusSetupRequired')}</span>
+                            </>
+                        )}
+                    </div>
                 </div>
             </div>
-        </div>
-    </button>
-);
+        </button>
+    );
+}
 
 const TriggerCard = ({ app, trigger, onClick }: { app: any; trigger: any; onClick: () => void }) => (
     <button
@@ -236,14 +233,15 @@ const DynamicConfigForm: React.FC<{
     value: Record<string, any>;
     onChange: (v: Record<string, any>) => void;
 }> = ({ schema, value, onChange }) => {
+    const t = useTranslations('agentConfig.eventTriggerWizard');
     if (!schema || !schema.properties || Object.keys(schema.properties).length === 0) {
         return (
             <div className="text-center py-4 text-muted-foreground">
                 <div className="w-8 h-8 rounded-md bg-muted flex items-center justify-center mb-2 mx-auto">
                     <Info className="h-4 w-4" />
                 </div>
-                <p className="text-sm font-medium text-foreground">Ready to go!</p>
-                <p className="text-xs">This trigger doesn't require configuration</p>
+                <p className="text-sm font-medium text-foreground">{t('dynamicFormReadyTitle')}</p>
+                <p className="text-xs">{t('dynamicFormNoConfig')}</p>
             </div>
         );
     }
@@ -278,7 +276,7 @@ const DynamicConfigForm: React.FC<{
                             <Input
                                 value={Array.isArray(current) ? current.join(',') : current}
                                 onChange={(e) => handle(e.target.value.split(',').map((x) => x.trim()).filter(Boolean))}
-                                placeholder={examples[0] ?? 'comma,separated,values'}
+                                placeholder={examples[0] ?? t('arrayValuePlaceholder')}
                             />
                         ) : type === 'boolean' ? (
                             <div className="flex items-center space-x-2">
@@ -310,6 +308,7 @@ export const EventBasedTriggerDialog: React.FC<EventBasedTriggerDialogProps> = (
     existingTrigger,
     onTriggerUpdated 
 }) => {
+    const t = useTranslations('agentConfig.eventTriggerWizard');
     const [step, setStep] = useState<'apps' | 'triggers' | 'config'>(isEditMode ? 'config' : 'apps');
     const [search, setSearch] = useState('');
     const [selectedApp, setSelectedApp] = useState<{ slug: string; name: string; logo?: string } | null>(null);
@@ -327,16 +326,6 @@ export const EventBasedTriggerDialog: React.FC<EventBasedTriggerDialogProps> = (
     const { data: profiles, isLoading: loadingProfiles, refetch: refetchProfiles } = useComposioProfiles(selectedApp?.slug ? { toolkit_slug: selectedApp.slug } : undefined);
     const { data: allProfiles } = useComposioProfiles(); // Get all profiles for connection status
     const { data: toolkitDetails } = useComposioToolkitDetails(selectedApp?.slug || '', { enabled: !!selectedApp });
-
-    // Debug logging for trigger data
-    useEffect(() => {
-        if (isEditMode) {
-            console.log('Edit mode - selectedApp changed:', selectedApp);
-            console.log('Edit mode - loadingTriggers:', loadingTriggers);
-            console.log('Edit mode - triggersData:', triggersData);
-            console.log('Edit mode - triggersError:', triggersError);
-        }
-    }, [isEditMode, selectedApp, loadingTriggers, triggersData, triggersError]);
 
     const apps = useMemo(() => (appsData?.items || []).filter((a) => a.name.toLowerCase().includes(search.toLowerCase()) || a.slug.toLowerCase().includes(search.toLowerCase())), [appsData, search]);
 
@@ -371,10 +360,14 @@ export const EventBasedTriggerDialog: React.FC<EventBasedTriggerDialogProps> = (
     }, [open, isEditMode]);
 
     useEffect(() => {
-        if (selectedTrigger) {
-            setName(`${selectedApp?.name || selectedTrigger.toolkit.name} → Worker`);
+        if (!isEditMode && selectedTrigger) {
+            setName(
+                t('defaultNameTemplate', {
+                    toolkit: selectedApp?.name || selectedTrigger.toolkit.name,
+                })
+            );
         }
-    }, [selectedTrigger, selectedApp]);
+    }, [selectedTrigger, selectedApp, isEditMode, t]);
 
     useEffect(() => {
         setProfileId('');
@@ -405,7 +398,6 @@ export const EventBasedTriggerDialog: React.FC<EventBasedTriggerDialogProps> = (
                 let toolkitSlug = '';
                 if (triggerConfig.qualified_name) {
                     toolkitSlug = triggerConfig.qualified_name.replace(/^composio\./, '').toLowerCase();
-                    console.log('Edit mode - extracted from qualified_name:', toolkitSlug);
                 }
                 
                 if (!toolkitSlug && triggerConfig.trigger_slug) {
@@ -423,15 +415,15 @@ export const EventBasedTriggerDialog: React.FC<EventBasedTriggerDialogProps> = (
                     };
                     setSelectedApp(app);
                 } else {
-                    toast.error('Could not determine the app for this trigger');
+                    toast.error(t('toastCouldNotDetermineApp'));
                     onOpenChange(false);
                 }
             } else if (isComposioTrigger && !triggerConfig.trigger_slug) {
-                toast.error('Invalid trigger configuration: missing trigger information');
+                toast.error(t('toastInvalidMissingTrigger'));
                 onOpenChange(false);
             }
         }
-    }, [isEditMode, existingTrigger, open, onOpenChange]);
+    }, [isEditMode, existingTrigger, open, onOpenChange, t]);
 
     useEffect(() => {
         if (isEditMode && existingTrigger && selectedApp) {
@@ -444,20 +436,20 @@ export const EventBasedTriggerDialog: React.FC<EventBasedTriggerDialogProps> = (
                         if (matchingTrigger) {
                             setSelectedTrigger(matchingTrigger);
                         } else {
-                            toast.error('Could not find the trigger type. It may have been removed or renamed.');
+                            toast.error(t('toastTriggerTypeNotFound'));
                             setTimeout(() => onOpenChange(false), 2000);
                         }
                     } else {
-                        toast.error('Invalid trigger configuration: missing trigger_slug');
+                        toast.error(t('toastMissingTriggerSlug'));
                         setTimeout(() => onOpenChange(false), 2000);
                     }
                 } else {
-                    toast.error('No triggers available for this app');
+                    toast.error(t('toastNoTriggersForApp'));
                     setTimeout(() => onOpenChange(false), 2000);
                 }
             }
         }
-    }, [isEditMode, existingTrigger, selectedApp, triggersData, onOpenChange]);
+    }, [isEditMode, existingTrigger, selectedApp, triggersData, onOpenChange, t]);
 
 
     const isConfigValid = useMemo(() => {
@@ -479,18 +471,18 @@ export const EventBasedTriggerDialog: React.FC<EventBasedTriggerDialogProps> = (
                     trigger_slug: selectedTrigger.slug,
                     qualified_name: `composio.${selectedApp?.slug}`,
                     provider_id: 'composio',
-                    agent_prompt: prompt || 'Read this',
+                    agent_prompt: prompt || t('defaultAgentPrompt'),
                     model: model
                 };
 
                 await updateTrigger.mutateAsync({
                     triggerId: existingTrigger.trigger_id,
-                    name: name || `${selectedTrigger.toolkit.name} → Worker`,
-                    description: existingTrigger.description || `Event trigger for ${selectedTrigger.toolkit.name}`,
+                    name: name || t('defaultNameTemplate', { toolkit: selectedTrigger.toolkit.name }),
+                    description: existingTrigger.description || t('defaultDescriptionTemplate', { toolkit: selectedTrigger.toolkit.name }),
                     config: updatedConfig,
                     is_active: true,
                 });
-                toast.success('Task updated');
+                toast.success(t('toastTaskUpdated'));
 
                 if (onTriggerUpdated && existingTrigger.trigger_id) {
                     onTriggerUpdated(existingTrigger.trigger_id);
@@ -502,17 +494,17 @@ export const EventBasedTriggerDialog: React.FC<EventBasedTriggerDialogProps> = (
                     profile_id: profileId,
                     slug: selectedTrigger.slug,
                     trigger_config: config,
-                    name: name || `${selectedTrigger.toolkit.name} → Worker`,
+                    name: name || t('defaultNameTemplate', { toolkit: selectedTrigger.toolkit.name }),
                     connected_account_id: selectedProfile?.connected_account_id,
                     toolkit_slug: selectedApp?.slug,
                     model: model,
                 };
                 const payload = executionType === 'agent'
-                    ? { ...base, route: 'agent' as const, agent_prompt: (prompt || 'Read this') }
+                    ? { ...base, route: 'agent' as const, agent_prompt: (prompt || t('defaultAgentPrompt')) }
                     : { ...base, route: 'agent' as const };
                 
                 const result = await createTrigger.mutateAsync(payload);
-                toast.success('Task created');
+                toast.success(t('toastTaskCreated'));
 
                 if (onTriggerCreated && result?.trigger_id) {
                     onTriggerCreated(result.trigger_id);
@@ -526,7 +518,7 @@ export const EventBasedTriggerDialog: React.FC<EventBasedTriggerDialogProps> = (
                 e?.detail?.message ||
                 (typeof detail === 'string' ? detail : detail?.message) ||
                 e?.message ||
-                'Failed to create trigger';
+                t('toastMutateFailed');
 
             toast.error(message);
             console.error('Error creating event trigger:', e);
@@ -560,7 +552,7 @@ export const EventBasedTriggerDialog: React.FC<EventBasedTriggerDialogProps> = (
                                     </Button>
                                 )}
                                 <DialogTitle className="text-lg font-semibold">
-                                    {isEditMode ? 'Edit Event Trigger' : 'Create Event Trigger'}
+                                    {isEditMode ? t('titleEdit') : t('titleCreate')}
                                 </DialogTitle>
                             </div>
                         </DialogHeader>
@@ -570,15 +562,15 @@ export const EventBasedTriggerDialog: React.FC<EventBasedTriggerDialogProps> = (
                                 <div className="h-full flex flex-col">
                                     <div className="p-6 border-b flex items-center justify-between">
                                         <div>
-                                            <h2 className="text-xl font-semibold">Select an Application</h2>
+                                            <h2 className="text-xl font-semibold">{t('selectAppHeading')}</h2>
                                             <p className="text-sm text-muted-foreground">
-                                                Choose an app to monitor for events and trigger your agent
+                                                {t('selectAppSubtitle')}
                                             </p>
                                         </div>
                                         <div className="relative max-w-md">
                                             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                             <Input
-                                                placeholder="Search apps..."
+                                                placeholder={t('searchAppsPlaceholder')}
                                                 value={search}
                                                 onChange={(e) => setSearch(e.target.value)}
                                                 className="pl-10"
@@ -600,9 +592,9 @@ export const EventBasedTriggerDialog: React.FC<EventBasedTriggerDialogProps> = (
                                                 <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center mb-3">
                                                     <Search className="h-6 w-6 text-muted-foreground" />
                                                 </div>
-                                                <h3 className="font-medium mb-1">No apps found</h3>
+                                                <h3 className="font-medium mb-1">{t('noAppsTitle')}</h3>
                                                 <p className="text-sm text-muted-foreground">
-                                                    {search ? `No apps match "${search}"` : 'No apps with triggers available'}
+                                                    {search ? t('noAppsMatchSearch', { search }) : t('noAppsWithTriggers')}
                                                 </p>
                                             </div>
                                         ) : (
@@ -642,8 +634,8 @@ export const EventBasedTriggerDialog: React.FC<EventBasedTriggerDialogProps> = (
                                                 </div>
                                             )}
                                             <div>
-                                                <h2 className="font-semibold">{selectedApp.name} Triggers</h2>
-                                                <p className="text-sm text-muted-foreground">Choose an event to monitor</p>
+                                                <h2 className="font-semibold">{t('triggersListTitle', { app: selectedApp.name })}</h2>
+                                                <p className="text-sm text-muted-foreground">{t('chooseEventSubtitle')}</p>
                                             </div>
                                         </div>
                                     </div>
@@ -662,9 +654,9 @@ export const EventBasedTriggerDialog: React.FC<EventBasedTriggerDialogProps> = (
                                                 <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center mb-3">
                                                     <Zap className="h-6 w-6 text-muted-foreground" />
                                                 </div>
-                                                <h3 className="font-medium mb-1">No triggers available</h3>
+                                                <h3 className="font-medium mb-1">{t('noTriggersTitle')}</h3>
                                                 <p className="text-sm text-muted-foreground">
-                                                    This app doesn't have any triggers yet.
+                                                    {t('noTriggersBody')}
                                                 </p>
                                             </div>
                                         ) : (
@@ -694,9 +686,9 @@ export const EventBasedTriggerDialog: React.FC<EventBasedTriggerDialogProps> = (
                                         <div className="flex-1 flex items-center justify-center p-6">
                                             <div className="text-center space-y-3">
                                                 <DobbyLoader size="large" className="mx-auto" />
-                                                <p className="text-sm text-muted-foreground">Loading trigger configuration...</p>
+                                                <p className="text-sm text-muted-foreground">{t('loadingConfig')}</p>
                                                 {triggersError && (
-                                                    <p className="text-xs text-destructive">Error: {String(triggersError)}</p>
+                                                    <p className="text-xs text-destructive">{t('errorPrefix')} {String(triggersError)}</p>
                                                 )}
                                             </div>
                                         </div>
@@ -706,15 +698,15 @@ export const EventBasedTriggerDialog: React.FC<EventBasedTriggerDialogProps> = (
                                                 <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center mb-3 mx-auto">
                                                     <Info className="h-6 w-6 text-muted-foreground" />
                                                 </div>
-                                                <h3 className="font-medium">Unable to load trigger</h3>
+                                                <h3 className="font-medium">{t('unableToLoadTitle')}</h3>
                                                 <p className="text-sm text-muted-foreground max-w-sm">
-                                                    The trigger configuration could not be loaded. It may have been removed or is no longer available.
+                                                    {t('unableToLoadBody')}
                                                 </p>
                                                 {triggersError && (
-                                                    <p className="text-xs text-destructive mt-2">Error: {String(triggersError)}</p>
+                                                    <p className="text-xs text-destructive mt-2">{t('errorPrefix')} {String(triggersError)}</p>
                                                 )}
                                                 <Button variant="outline" onClick={() => onOpenChange(false)}>
-                                                    Close
+                                                    {t('close')}
                                                 </Button>
                                             </div>
                                         </div>
@@ -737,12 +729,12 @@ export const EventBasedTriggerDialog: React.FC<EventBasedTriggerDialogProps> = (
                                                     <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center mb-3 mx-auto">
                                                         <Info className="h-6 w-6 text-muted-foreground" />
                                                     </div>
-                                                    <h3 className="font-medium mb-2">No Connected Profile</h3>
+                                                    <h3 className="font-medium mb-2">{t('noConnectedProfileTitle')}</h3>
                                                     <p className="text-sm text-muted-foreground mb-4">
-                                                        Connect {selectedApp?.name} first to create triggers.
+                                                        {t('noConnectedProfileBody', { app: selectedApp?.name ?? '' })}
                                                     </p>
                                                     <Button variant="outline" onClick={() => setStep('apps')}>
-                                                        Back to Apps
+                                                        {t('backToApps')}
                                                     </Button>
                                                 </div>
                                             ) : (
@@ -750,20 +742,20 @@ export const EventBasedTriggerDialog: React.FC<EventBasedTriggerDialogProps> = (
                                                     <div className="border rounded-lg p-4 space-y-4">
                                                         <div>
                                                             <h3 className="font-medium mb-1">{selectedTrigger.name}</h3>
-                                                            <p className="text-sm text-muted-foreground">Configure this trigger</p>
+                                                            <p className="text-sm text-muted-foreground">{t('configureTriggerSubtitle')}</p>
                                                         </div>
                                                         <DynamicConfigForm schema={selectedTrigger.config as any} value={config} onChange={setConfig} />
                                                     </div>
 
                                                     <div className="border rounded-lg p-4 space-y-4">
                                                         <div>
-                                                            <h3 className="font-medium mb-1">Execution Settings</h3>
-                                                            <p className="text-sm text-muted-foreground">Choose how to handle this event</p>
+                                                            <h3 className="font-medium mb-1">{t('executionSettingsTitle')}</h3>
+                                                            <p className="text-sm text-muted-foreground">{t('executionSettingsSubtitle')}</p>
                                                         </div>
 
                                                         <div className="space-y-4">
                                                             <div className="space-y-2">
-                                                                <Label className="text-sm">Connection Profile</Label>
+                                                                <Label className="text-sm">{t('connectionProfile')}</Label>
                                                                 <Select
                                                                     value={profileId}
                                                                     onValueChange={(value) => {
@@ -775,14 +767,14 @@ export const EventBasedTriggerDialog: React.FC<EventBasedTriggerDialogProps> = (
                                                                     }}
                                                                 >
                                                                     <SelectTrigger>
-                                                                        <SelectValue placeholder="Select a profile..." />
+                                                                        <SelectValue placeholder={t('selectProfilePlaceholder')} />
                                                                     </SelectTrigger>
                                                                     <SelectContent>
                                                                         {loadingProfiles ? (
                                                                             <SelectItem value="__loading__" disabled>
                                                                                 <div className="flex items-center gap-2">
                                                                                     <DobbyLoader customSize={12} />
-                                                                                    <span>Loading...</span>
+                                                                                    <span>{t('loadingEllipsis')}</span>
                                                                                 </div>
                                                                             </SelectItem>
                                                                         ) : (
@@ -799,7 +791,7 @@ export const EventBasedTriggerDialog: React.FC<EventBasedTriggerDialogProps> = (
                                                                                 <SelectItem value="__create_new__">
                                                                                     <div className="flex items-center gap-2 text-primary">
                                                                                         <Plus className="h-3 w-3" />
-                                                                                        <span>Create New Connection</span>
+                                                                                        <span>{t('createNewConnection')}</span>
                                                                                     </div>
                                                                                 </SelectItem>
                                                                             </>
@@ -809,31 +801,31 @@ export const EventBasedTriggerDialog: React.FC<EventBasedTriggerDialogProps> = (
                                                             </div>
 
                                                             <div className="space-y-2">
-                                                                <Label className="text-sm">Trigger Name</Label>
-                                                                <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Gmail → Worker" />
+                                                                <Label className="text-sm">{t('triggerNameLabel')}</Label>
+                                                                <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t('triggerNamePlaceholder')} />
                                                             </div>
 
                                                             <div className="space-y-2">
-                                                                <Label className="text-sm">Worker Instructions</Label>
+                                                                <Label className="text-sm">{t('workerInstructionsLabel')}</Label>
                                                                 <Textarea
                                                                     rows={3}
                                                                     value={prompt}
                                                                     onChange={(e) => setPrompt(e.target.value)}
-                                                                    placeholder="What should the agent do when this event occurs?"
+                                                                    placeholder={t('workerInstructionsPlaceholder')}
                                                                 />
                                                                 <p className="text-xs text-muted-foreground">
-                                                                    Use <code className="text-xs bg-muted px-1 rounded">{'{{variable_name}}'}</code> to add variables to the prompt
+                                                                    {t('promptVariablesHint', { syntax: '{{variable_name}}' })}
                                                                 </p>
                                                             </div>
 
                                                             <div className="space-y-2">
-                                                                <Label className="text-sm">Model</Label>
+                                                                <Label className="text-sm">{t('modelLabel')}</Label>
                                                                 <AgentModelSelector
                                                                     value={model}
                                                                     onChange={setModel}
                                                                 />
                                                                 <p className="text-xs text-muted-foreground">
-                                                                    Choose which model to use when this event triggers
+                                                                    {t('modelHelp')}
                                                                 </p>
                                                             </div>
                                                         </div>
@@ -855,10 +847,10 @@ export const EventBasedTriggerDialog: React.FC<EventBasedTriggerDialogProps> = (
                                                             {(isEditMode ? updateTrigger.isPending : createTrigger.isPending) ? (
                                                                 <>
                                                                     <DobbyLoader customSize={12} className="mr-2" />
-                                                                    {isEditMode ? 'Updating...' : 'Creating...'}
+                                                                    {isEditMode ? t('savingUpdating') : t('savingCreating')}
                                                                 </>
                                                             ) : (
-                                                                isEditMode ? 'Update Trigger' : 'Create Trigger'
+                                                                isEditMode ? t('ctaUpdateTrigger') : t('ctaCreateTrigger')
                                                             )}
                                                         </Button>
                                                     </div>
@@ -879,7 +871,7 @@ export const EventBasedTriggerDialog: React.FC<EventBasedTriggerDialogProps> = (
                         slug: selectedApp.slug,
                         name: selectedApp.name,
                         logo: selectedApp.logo,
-                        description: `Connect your ${selectedApp.name} account to create event triggers`,
+                        description: t('connectorDescription', { app: selectedApp.name }),
                         tags: [],
                         auth_schemes: toolkitDetails?.toolkit.auth_schemes || ['oauth'],
                         categories: []
@@ -891,7 +883,7 @@ export const EventBasedTriggerDialog: React.FC<EventBasedTriggerDialogProps> = (
                         setProfileId(createdProfileId);
                         setShowComposioConnector(false);
                         refetchProfiles();
-                        toast.success(`${selectedApp.name} profile created successfully`);
+                        toast.success(t('toastProfileCreated', { app: selectedApp.name }));
                         // Navigate to triggers step after successful profile creation
                         setStep('triggers');
                     }}

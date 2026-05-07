@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { useAgent } from '@/hooks/agents/use-agents';
 import { useUpdateAgentMCPs } from '@/hooks/agents/use-update-agent-mcps';
 import { AgentMCPConfiguration } from '@/components/agents/agent-mcp-configuration';
@@ -12,6 +13,7 @@ interface IntegrationsScreenProps {
 }
 
 export function IntegrationsScreen({ agentId }: IntegrationsScreenProps) {
+    const t = useTranslations('agentConfig.integrations');
     const { data: agent, isLoading } = useAgent(agentId);
     const updateAgentMCPsMutation = useUpdateAgentMCPs();
 
@@ -39,10 +41,10 @@ export function IntegrationsScreen({ agentId }: IntegrationsScreenProps) {
                 replace_mcps: true
             });
 
-            toast.success('Integration settings updated');
+            toast.success(t('settingsUpdated'));
         } catch (error) {
             console.error('Failed to save MCP changes:', error);
-            toast.error('Failed to save integration changes');
+            toast.error(t('saveFailed'));
 
             // Revert on error
             if (agent) {

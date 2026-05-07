@@ -17,6 +17,7 @@ import { toast } from '@/lib/toast';
 import { AgentAvatar } from '../../thread/content/agent-avatar';
 import { IconPicker } from './icon-picker';
 import { useGenerateAgentIcon } from '@/hooks/agents/use-agent-icon-generation';
+import { useTranslations } from 'next-intl';
 
 interface AgentEditorDialogProps {
     isOpen: boolean;
@@ -81,6 +82,7 @@ export function AgentEditorDialog({
     currentBackgroundColor = '#F3F4F6',
     onSave,
 }: AgentEditorDialogProps) {
+    const t = useTranslations('agentConfig.workerAppearance');
     const [name, setName] = useState(agentName);
     const [iconName, setIconName] = useState(currentIconName || 'bot');
     const [hue, setHue] = useState(0);
@@ -115,7 +117,7 @@ export function AgentEditorDialog({
 
     const handleSave = () => {
         if (!name.trim()) {
-            toast.error('Worker name is required');
+            toast.error(t('workerNameRequired'));
             return;
         }
 
@@ -132,7 +134,7 @@ export function AgentEditorDialog({
 
     const handleAutoGenerate = () => {
         if (!name.trim()) {
-            toast.error('Worker name is required for auto-generation');
+            toast.error(t('workerNameRequiredAutoGen'));
             return;
         }
 
@@ -149,11 +151,11 @@ export function AgentEditorDialog({
                     const generatedHue = hexToHue(result.icon_background);
                     setHue(generatedHue);
 
-                    toast.success('Worker icon auto-generated!');
+                    toast.success(t('iconGenerated'));
                 },
                 onError: (error) => {
                     console.error('Auto-generation failed:', error);
-                    toast.error('Failed to auto-generate icon');
+                    toast.error(t('autoGenFailed'));
                 },
             }
         );
@@ -163,7 +165,7 @@ export function AgentEditorDialog({
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="max-w-5xl max-h-[85vh] flex flex-col p-0">
                 <DialogHeader className="px-6 pt-6 pb-4 shrink-0">
-                    <DialogTitle>Edit Worker</DialogTitle>
+                    <DialogTitle>{t('editWorkerTitle')}</DialogTitle>
                 </DialogHeader>
 
                 <div className="flex-1 min-h-0 overflow-auto px-6 pb-4">
@@ -177,15 +179,15 @@ export function AgentEditorDialog({
                                         iconName={iconName}
                                         iconColor={iconColor}
                                         backgroundColor={backgroundColor}
-                                        agentName={name || 'Worker'}
+                                        agentName={name || t('fallbackAgentName')}
                                         size={120}
                                         className="border-[1.5px] shadow-md"
                                     />
-                                ), [iconName, iconColor, backgroundColor, name])}
+                                ), [iconName, iconColor, backgroundColor, name, t])}
                                 <Input
                                     value={name}
                                     onChange={(e) => setName(e.target.value)}
-                                    placeholder="Worker name"
+                                    placeholder={t('workerNamePlaceholder')}
                                     maxLength={50}
                                     className="text-center font-semibold text-lg h-auto py-2"
                                 />
@@ -193,7 +195,7 @@ export function AgentEditorDialog({
 
                             {/* Hue Slider */}
                             <div className="space-y-3">
-                                <Label className="text-sm font-medium">Tint</Label>
+                                <Label className="text-sm font-medium">{t('tintLabel')}</Label>
                                 <div className="relative h-6 flex items-center">
                                     <div
                                         className="absolute inset-0 rounded-full"
@@ -238,14 +240,14 @@ export function AgentEditorDialog({
                             ) : (
                                 <Wand2 className="h-4 w-4" />
                             )}
-                            Auto-generate
+                            {t('autoGenerate')}
                         </Button>
                         <div className="flex gap-2">
                             <Button variant="outline" onClick={onClose}>
-                                Cancel
+                                {t('cancel')}
                             </Button>
                             <Button onClick={handleSave} disabled={!name.trim()}>
-                                Save Changes
+                                {t('saveChanges')}
                             </Button>
                         </div>
                     </div>

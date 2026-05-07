@@ -14,6 +14,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useCreateNewAgent } from '@/hooks/agents/use-agents';
+import { useTranslations } from 'next-intl';
 import { JsonImportDialog } from './json-import-dialog';
 import { AgentCountLimitError } from '@/lib/api/errors';
 import { toast } from '@/lib/toast';
@@ -47,6 +48,10 @@ export function NewAgentDialog({ open, onOpenChange, onSuccess }: NewAgentDialog
 }
 
 export function NewAgentDialogLegacy({ open, onOpenChange, onSuccess }: NewAgentDialogProps) {
+  const t = useTranslations('agents');
+  const tConfig = useTranslations('agentConfig');
+  const tDialog = useTranslations('agentConfig.newAgentDialog');
+  const tCommon = useTranslations('common');
   const [showJsonImport, setShowJsonImport] = useState(false);
   const [jsonImportText, setJsonImportText] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -63,7 +68,7 @@ export function NewAgentDialogLegacy({ open, onOpenChange, onSuccess }: NewAgent
         if (error instanceof AgentCountLimitError) {
           onOpenChange(false);
         } else {
-          toast.error(error instanceof Error ? error.message : 'Failed to create Worker');
+          toast.error(error instanceof Error ? error.message : tConfig('createWorkerFailed'));
         }
       }
     });
@@ -113,25 +118,27 @@ export function NewAgentDialogLegacy({ open, onOpenChange, onSuccess }: NewAgent
     <AlertDialog open={open} onOpenChange={handleDialogClose}>
       <AlertDialogContent className="max-w-lg">
         <AlertDialogHeader className="space-y-3">
-          <AlertDialogTitle className="text-xl">Create New Worker</AlertDialogTitle>
+          <AlertDialogTitle className="text-xl">{t('createNewWorker')}</AlertDialogTitle>
           <AlertDialogDescription className="text-base leading-relaxed">
-            Create a new worker with default settings that you can customize later, or{' '}
+            {tDialog('intro')}{' '}
             <button
+              type="button"
               onClick={handleFileImport}
               className="text-muted-foreground hover:text-foreground transition-colors underline underline-offset-4 disabled:cursor-not-allowed disabled:opacity-50"
               disabled={isLoading}
             >
-              import from file
+              {tDialog('importFile')}
             </button>
-            {' '}or{' '}
+            {' '}{tDialog('orWord')}{' '}
             <button
+              type="button"
               onClick={() => !isLoading && setShowJsonImport(true)}
               className="text-muted-foreground hover:text-foreground transition-colors underline underline-offset-4 disabled:cursor-not-allowed disabled:opacity-50"
               disabled={isLoading}
             >
-              import from JSON
+              {tDialog('importJson')}
             </button>
-            .
+            {tDialog('period')}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <input
@@ -143,7 +150,7 @@ export function NewAgentDialogLegacy({ open, onOpenChange, onSuccess }: NewAgent
         />
         <AlertDialogFooter className="flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 space-y-2 space-y-reverse sm:space-y-0 pt-6">
           <AlertDialogCancel disabled={isLoading} className="mt-2 sm:mt-0">
-            Cancel
+            {tCommon('cancel')}
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={handleCreateNewAgent}
@@ -153,12 +160,12 @@ export function NewAgentDialogLegacy({ open, onOpenChange, onSuccess }: NewAgent
             {createNewAgentMutation.isPending ? (
               <>
                 <DobbyLoader customSize={16} className="mr-1" />
-                Creating...
+                {tDialog('creating')}
               </>
             ) : (
               <>
                 <Plus className="h-4 w-4" />
-                Create Worker
+                {t('create')}
               </>
             )}
           </AlertDialogAction>

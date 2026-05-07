@@ -6,6 +6,7 @@ import { icons } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
+import { useTranslations } from 'next-intl';
 
 interface IconPickerProps {
   selectedIcon?: string;
@@ -29,6 +30,7 @@ export function IconPicker({
   backgroundColor = '#F3F4F6',
   className
 }: IconPickerProps) {
+  const t = useTranslations('agentConfig.workerAppearance');
   const [searchQuery, setSearchQuery] = useState('');
 
   const allIconNames = useMemo(() => {
@@ -57,7 +59,7 @@ export function IconPicker({
       <div className="pb-3 shrink-0">
         <Input
           type="text"
-          placeholder="Search icons..."
+          placeholder={t('pickerSearchPlaceholder')}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="w-full"
@@ -68,7 +70,7 @@ export function IconPicker({
           {!searchQuery && (
             <div className="space-y-3">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Popular Icons
+                {t('pickerPopularHeading')}
               </p>
               <div className="grid grid-cols-5 sm:grid-cols-8 gap-2">
                 {popularIcons.map((iconName) => (
@@ -100,15 +102,15 @@ export function IconPicker({
           <div className="space-y-3">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               {searchQuery
-                ? `Search Results (${filteredIcons.length})`
-                : `All Icons (${allIconNames.length})`
+                ? t('pickerSearchResultsHeading', { count: filteredIcons.length })
+                : t('pickerAllHeading', { count: allIconNames.length })
               }
             </p>
 
             {filteredIcons.length === 0 ? (
               <div className="text-center py-12 text-sm text-muted-foreground">
-                <p>No icons found matching "{searchQuery}"</p>
-                <p className="text-xs mt-2">Try a different search term</p>
+                <p>{t('pickerNoneTitle', { query: searchQuery })}</p>
+                <p className="text-xs mt-2">{t('pickerNoneHint')}</p>
               </div>
             ) : (
               <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">

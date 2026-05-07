@@ -42,6 +42,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useNameValidation } from '@/lib/validation';
 import { cn } from '@/lib/utils';
 import { type Folder as FolderType } from '@/hooks/knowledge-base/use-folders';
+import { useTranslations } from 'next-intl';
 
 interface FileUploadStatus {
     file: File;
@@ -65,6 +66,7 @@ export function UnifiedKbEntryModal({
     trigger,
     defaultTab = 'upload'
 }: UnifiedKbEntryModalProps) {
+    const t = useTranslations('agentConfig.kbEntryModal');
     const [isOpen, setIsOpen] = useState(false);
     const [activeTab, setActiveTab] = useState(defaultTab);
     const [selectedFolder, setSelectedFolder] = useState<string>('');
@@ -106,22 +108,22 @@ export function UnifiedKbEntryModal({
 
     // Generate a unique "Untitled" folder name
     const generateUntitledName = useCallback((): string => {
-        const base = 'Untitled';
+        const base = t('untitled');
         if (!existingFolderNames.includes(base)) {
             return base;
         }
         let counter = 2;
-        while (existingFolderNames.includes(`${base} (${counter})`)) {
+        while (existingFolderNames.includes(t('untitledNumbered', { n: counter }))) {
             counter++;
         }
-        return `${base} (${counter})`;
-    }, [existingFolderNames]);
+        return t('untitledNumbered', { n: counter });
+    }, [existingFolderNames, t]);
 
 
     // Helper: create folder and return its ID
     const createFolder = async (showToast = true): Promise<string | null> => {
         if (!folderValidation.isValid) {
-            if (showToast) toast.error(folderValidation.friendlyError || 'Invalid folder name');
+            if (showToast) toast.error(folderValidation.friendlyError || t('invalidFolderFallback'));
             return null;
         }
 
@@ -131,7 +133,7 @@ export function UnifiedKbEntryModal({
             const { data: { session } } = await supabase.auth.getSession();
 
             if (!session?.access_token) {
-                throw new Error('No session found');
+                throw new Error(t('noSession'));
             }
 
             const response = await fetch(`${API_URL}/knowledge-base/folders`, {
@@ -152,12 +154,12 @@ export function UnifiedKbEntryModal({
                 return newFolder.folder_id;
             } else {
                 const errorData = await response.json().catch(() => null);
-                if (showToast) toast.error(errorData?.detail || 'Failed to create folder');
+                if (showToast) toast.error(errorData?.detail || t('folderCreateFailed'));
                 return null;
             }
         } catch (error) {
             console.error('Error creating folder:', error);
-            if (showToast) toast.error('Failed to create folder');
+            if (showToast) toast.error(t('folderCreateFailed'));
             return null;
         } finally {
             setIsCreatingFolder(false);
@@ -183,7 +185,7 @@ export function UnifiedKbEntryModal({
             const { data: { session } } = await supabase.auth.getSession();
 
             if (!session?.access_token) {
-                throw new Error('No session found');
+                throw new Error(t('noSession'));
             }
 
             const response = await fetch(`${API_URL}/knowledge-base/folders`, {
@@ -203,12 +205,12 @@ export function UnifiedKbEntryModal({
                 return newFolder.folder_id;
             } else {
                 const errorData = await response.json().catch(() => null);
-                toast.error(errorData?.detail || 'Failed to create folder');
+                toast.error(errorData?.detail || t('folderCreateFailed'));
                 return null;
             }
         } catch (error) {
             console.error('Error creating folder:', error);
-            toast.error('Failed to create folder');
+            toast.error(t('folderCreateFailed'));
             return null;
         } finally {
             setIsCreatingFolder(false);
@@ -218,7 +220,7 @@ export function UnifiedKbEntryModal({
     const handleFolderCreation = async () => {
         const folderId = await createFolder(true);
         if (folderId) {
-            toast.success('Folder created');
+            toast.success(t('folderCreated'));
         }
     };
 
@@ -265,7 +267,7 @@ export function UnifiedKbEntryModal({
 
     const handleFileUpload = async () => {
         if (selectedFiles.length === 0) {
-            toast.error('Please select files to upload');
+            toast.error(t('selectFilesToast'));
             return;
         }
 
@@ -279,7 +281,7 @@ export function UnifiedKbEntryModal({
             const { data: { session } } = await supabase.auth.getSession();
 
             if (!session?.access_token) {
-                throw new Error('No session found');
+                throw new Error(t('noSession'));
             }
 
             let completedFiles = 0;
@@ -311,9 +313,9 @@ export function UnifiedKbEntryModal({
                         if (response.status === 413) {
                             try {
                                 const errorData = await response.json();
-                                errorMessage = errorData.detail || 'Knowledge base limit (50MB) exceeded';
+                                errorMessage = errorData.detail || t('kbLimitExceeded');
                             } catch {
-                                errorMessage = 'Knowledge base limit (50MB) exceeded';
+                                errorMessage = t('kbLimitExceeded');
                             }
                         }
 
@@ -323,24 +325,24 @@ export function UnifiedKbEntryModal({
                     }
                 } catch (fileError) {
                     setUploadStatuses(prev => prev.map((status, index) =>
-                        index === i ? { ...status, status: 'error', progress: 0, error: `Upload failed: ${fileError}` } : status
+                        index === i ? { ...status, status: 'error', progress: 0, error: t('uploadFailedItem', { message: String(fileError) }) } : status
                     ));
                 }
             }
 
             if (completedFiles === selectedFiles.length) {
-                toast.success(`Uploaded ${completedFiles} file(s)`);
+                toast.success(t('uploadedMultiple', { count: completedFiles }));
                 resetAndClose();
             } else if (completedFiles > 0) {
-                toast.success(`Uploaded ${completedFiles} of ${selectedFiles.length} files`);
+                toast.success(t('uploadedPartial', { completed: completedFiles, total: selectedFiles.length }));
             } else {
-                toast.error('Failed to upload files');
+                toast.error(t('uploadFailed'));
             }
 
             onUploadComplete();
         } catch (error) {
             console.error('Error uploading files:', error);
-            toast.error('Failed to upload files');
+            toast.error(t('uploadFailed'));
         } finally {
             setIsUploading(false);
         }
@@ -348,12 +350,12 @@ export function UnifiedKbEntryModal({
 
     const handleTextCreate = async () => {
         if (!filenameValidation.isValid) {
-            toast.error(filenameValidation.friendlyError || 'Invalid filename');
+            toast.error(filenameValidation.friendlyError || t('invalidFilenameFallback'));
             return;
         }
 
         if (!content.trim()) {
-            toast.error('Please enter some content');
+            toast.error(t('enterContentToast'));
             return;
         }
 
@@ -367,7 +369,7 @@ export function UnifiedKbEntryModal({
             const { data: { session } } = await supabase.auth.getSession();
 
             if (!session?.access_token) {
-                throw new Error('No session found');
+                throw new Error(t('noSession'));
             }
 
             const finalFilename = filename.includes('.') ? filename.trim() : `${filename.trim()}.txt`;
@@ -385,19 +387,19 @@ export function UnifiedKbEntryModal({
 
             if (response.ok) {
                 const result = await response.json();
-                toast.success('Text entry created');
+                toast.success(t('textEntryCreated'));
                 if (result.filename_changed) {
-                    toast.info(`File renamed to "${result.final_filename}"`);
+                    toast.info(t('fileRenamedInfo', { name: result.final_filename }));
                 }
                 onUploadComplete();
                 resetAndClose();
             } else {
                 const errorData = await response.json().catch(() => null);
-                toast.error(errorData?.detail || 'Failed to create text entry');
+                toast.error(errorData?.detail || t('textCreateFailed'));
             }
         } catch (error) {
             console.error('Error creating text entry:', error);
-            toast.error('Failed to create text entry');
+            toast.error(t('textCreateFailed'));
         } finally {
             setIsCreatingText(false);
         }
@@ -405,7 +407,7 @@ export function UnifiedKbEntryModal({
 
     const handleGitClone = async () => {
         if (!gitUrl.trim()) {
-            toast.error('Please enter a Git repository URL');
+            toast.error(t('gitUrlRequired'));
             return;
         }
 
@@ -419,7 +421,7 @@ export function UnifiedKbEntryModal({
             const { data: { session } } = await supabase.auth.getSession();
 
             if (!session?.access_token) {
-                throw new Error('No session found');
+                throw new Error(t('noSession'));
             }
 
             const response = await fetch(`${API_URL}/knowledge-base/folders/${folderId}/clone-git-repo`, {
@@ -435,16 +437,16 @@ export function UnifiedKbEntryModal({
             });
 
             if (response.ok) {
-                toast.success('Repository cloning started');
+                toast.success(t('cloneStarted'));
                 onUploadComplete();
                 resetAndClose();
             } else {
                 const errorData = await response.json().catch(() => null);
-                toast.error(errorData?.detail || 'Failed to clone repository');
+                toast.error(errorData?.detail || t('cloneFailed'));
             }
         } catch (error) {
             console.error('Error cloning repository:', error);
-            toast.error('Failed to clone repository');
+            toast.error(t('cloneFailed'));
         } finally {
             setIsCloning(false);
         }
@@ -481,27 +483,27 @@ export function UnifiedKbEntryModal({
                 {trigger || (
                     <Button className="gap-2">
                         <Plus className="h-4 w-4" />
-                        Add Knowledge
+                        {t('triggerAddKnowledge')}
                     </Button>
                 )}
             </DialogTrigger>
             <DialogContent className="sm:max-w-xl p-0 gap-0 overflow-hidden">
                 <DialogHeader className="px-6 pt-6 pb-4">
-                    <DialogTitle>Add to Knowledge Base</DialogTitle>
+                    <DialogTitle>{t('title')}</DialogTitle>
                     <DialogDescription>
-                        Upload files, create text entries, or clone repositories
+                        {t('description')}
                     </DialogDescription>
                 </DialogHeader>
 
                 <div className="px-6 pb-6 space-y-5">
                     {/* Folder Selection */}
                     <div className="space-y-2">
-                        <Label>Folder</Label>
+                        <Label>{t('folderLabel')}</Label>
                         {isEditingNewFolder ? (
                             <div className="flex gap-2">
                                 <Input
                                     ref={newFolderInputRef}
-                                    placeholder="New folder name..."
+                                    placeholder={t('newFolderPlaceholder')}
                                     value={newFolderName}
                                     onChange={(e) => setNewFolderName(e.target.value)}
                                     onKeyDown={(e) => {
@@ -545,7 +547,7 @@ export function UnifiedKbEntryModal({
                             <div className="flex gap-2">
                                 <Select value={selectedFolder} onValueChange={setSelectedFolder}>
                                     <SelectTrigger className="flex-1">
-                                        <SelectValue placeholder="Select or auto-create folder" />
+                                        <SelectValue placeholder={t('folderSelectPlaceholder')} />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {folders.map((folder) => (
@@ -581,16 +583,16 @@ export function UnifiedKbEntryModal({
                         <TabsList className="w-full">
                             <TabsTrigger value="upload" className="flex-1 gap-1.5">
                                 <CloudUpload className="h-4 w-4" />
-                                Upload
+                                {t('tabUpload')}
                             </TabsTrigger>
                             <TabsTrigger value="text" className="flex-1 gap-1.5">
                                 <FileText className="h-4 w-4" />
-                                Text
+                                {t('tabText')}
                             </TabsTrigger>
                             <TabsTrigger value="git" className="flex-1 gap-1.5" disabled>
                                 <GitBranch className="h-4 w-4" />
-                                Git
-                                <span className="text-xs text-muted-foreground">(soon)</span>
+                                {t('tabGit')}
+                                <span className="text-xs text-muted-foreground">{t('tabGitSoon')}</span>
                             </TabsTrigger>
                         </TabsList>
 
@@ -616,10 +618,10 @@ export function UnifiedKbEntryModal({
                                 />
                                 <CloudUpload className="h-8 w-8 mx-auto text-muted-foreground mb-3" />
                                 <p className="text-sm font-medium">
-                                    {isDragOver ? 'Drop files here' : 'Drop files or click to browse'}
+                                    {isDragOver ? t('dropPrompt') : t('dropOrBrowse')}
                                 </p>
                                 <p className="text-xs text-muted-foreground mt-1">
-                                    PDF, DOC, TXT, MD, CSV • Max 50MB total
+                                    {t('fileTypesHint')}
                                 </p>
                             </div>
 
@@ -656,10 +658,10 @@ export function UnifiedKbEntryModal({
                         {/* Text Tab */}
                         <TabsContent value="text" className="mt-4 space-y-4">
                             <div className="space-y-2">
-                                <Label htmlFor="filename">Filename</Label>
+                                <Label htmlFor="filename">{t('filenameLabel')}</Label>
                                 <Input
                                     id="filename"
-                                    placeholder="notes.txt"
+                                    placeholder={t('filenamePlaceholder')}
                                     value={filename}
                                     onChange={(e) => setFilename(e.target.value)}
                                     className={cn(!filenameValidation.isValid && filename && "border-destructive")}
@@ -670,10 +672,10 @@ export function UnifiedKbEntryModal({
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="content">Content</Label>
+                                <Label htmlFor="content">{t('contentLabel')}</Label>
                                 <Textarea
                                     id="content"
-                                    placeholder="Enter your content..."
+                                    placeholder={t('contentPlaceholder')}
                                     value={content}
                                     onChange={(e) => setContent(e.target.value)}
                                     rows={8}
@@ -685,10 +687,10 @@ export function UnifiedKbEntryModal({
                         {/* Git Tab */}
                         <TabsContent value="git" className="mt-4 space-y-4">
                             <div className="space-y-2">
-                                <Label htmlFor="git-url">Repository URL</Label>
+                                <Label htmlFor="git-url">{t('repoUrlLabel')}</Label>
                                 <Input
                                     id="git-url"
-                                    placeholder="https://github.com/user/repo.git"
+                                    placeholder={t('repoUrlPlaceholder')}
                                     value={gitUrl}
                                     onChange={(e) => setGitUrl(e.target.value)}
                                     type="url"
@@ -696,10 +698,10 @@ export function UnifiedKbEntryModal({
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="git-branch">Branch</Label>
+                                <Label htmlFor="git-branch">{t('branchLabel')}</Label>
                                 <Input
                                     id="git-branch"
-                                    placeholder="main"
+                                    placeholder={t('branchPlaceholder')}
                                     value={gitBranch}
                                     onChange={(e) => setGitBranch(e.target.value)}
                                 />
@@ -711,7 +713,7 @@ export function UnifiedKbEntryModal({
                 {/* Footer */}
                 <DialogFooter className="px-6 py-4 border-t border-border bg-card/50">
                     <Button variant="ghost" onClick={() => setIsOpen(false)} disabled={isLoading}>
-                        Cancel
+                        {t('cancel')}
                     </Button>
                     {activeTab === 'upload' && (
                         <Button
@@ -721,12 +723,12 @@ export function UnifiedKbEntryModal({
                             {isUploading ? (
                                 <>
                                     <DobbyLoader size="small" className="mr-2" />
-                                    Uploading...
+                                    {t('uploading')}
                                 </>
                             ) : (
                                 <>
                                     <Upload className="h-4 w-4 mr-2" />
-                                    Upload {selectedFiles.length > 0 && `(${selectedFiles.length})`}
+                                    {selectedFiles.length > 0 ? t('uploadFiles', { count: selectedFiles.length }) : t('uploadFilesPlain')}
                                 </>
                             )}
                         </Button>
@@ -739,12 +741,12 @@ export function UnifiedKbEntryModal({
                             {isCreatingText ? (
                                 <>
                                     <DobbyLoader size="small" className="mr-2" />
-                                    Creating...
+                                    {t('creating')}
                                 </>
                             ) : (
                                 <>
                                     <FileText className="h-4 w-4 mr-2" />
-                                    Create
+                                    {t('createAction')}
                                 </>
                             )}
                         </Button>
@@ -757,12 +759,12 @@ export function UnifiedKbEntryModal({
                             {isCloning ? (
                                 <>
                                     <DobbyLoader size="small" className="mr-2" />
-                                    Cloning...
+                                    {t('cloning')}
                                 </>
                             ) : (
                                 <>
                                     <GitBranch className="h-4 w-4 mr-2" />
-                                    Clone
+                                    {t('cloneAction')}
                                 </>
                             )}
                         </Button>

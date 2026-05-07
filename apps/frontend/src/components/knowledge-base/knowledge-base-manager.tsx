@@ -45,6 +45,7 @@ import { useKnowledgeFolders, type Folder, type Entry } from '@/hooks/knowledge-
 import { FileNameValidator } from '@/lib/validation';
 import { backendApi } from '@/lib/api-client';
 import { createClient } from '@/lib/supabase/client';
+import { useTranslations } from 'next-intl';
 
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || '';
 
@@ -91,6 +92,7 @@ export function KnowledgeBaseManager({
     maxHeight,
     enableAssignments = false
 }: KnowledgeBaseManagerProps) {
+    const tKb = useTranslations('agentConfig.knowledge');
     const [treeData, setTreeData] = useState<TreeItem[]>([]);
     const [folderEntries, setFolderEntries] = useState<{ [folderId: string]: Entry[] }>({});
     const [loadingFolders, setLoadingFolders] = useState<{ [folderId: string]: boolean }>({});
@@ -904,9 +906,13 @@ export function KnowledgeBaseManager({
         );
     }
 
-    const defaultEmptyMessage = enableAssignments
-        ? `No knowledge base content available. Create folders and upload files to provide ${agentName} with searchable knowledge.`
-        : "Start building your knowledge base by creating folders and uploading files.";
+    const resolvedAgentName = agentName || tKb('thisWorker');
+
+    const emptyBody =
+        emptyStateMessage ??
+        (enableAssignments
+            ? tKb('emptyDescription', { name: resolvedAgentName })
+            : tKb('emptyDescriptionGeneral'));
 
     return (
         <div className="space-y-4">
@@ -930,7 +936,7 @@ export function KnowledgeBaseManager({
                         trigger={
                             <Button size="sm" className="gap-2">
                                 <PlusIcon className="h-4 w-4" />
-                                Add Knowledge
+                                {tKb('addKnowledge')}
                             </Button>
                         }
                     />
@@ -1003,10 +1009,10 @@ export function KnowledgeBaseManager({
                                 <FolderIcon className="h-6 w-6 text-muted-foreground" />
                             </div>
                             <h4 className="text-sm font-semibold text-foreground mb-2">
-                                {enableAssignments ? "No knowledge base content available" : "Start Building Your Knowledge Base"}
+                                {enableAssignments ? tKb('emptyHeading') : tKb('emptyHeadingGeneral')}
                             </h4>
                             <p className="text-sm text-muted-foreground mb-6 max-w-sm mx-auto">
-                                {emptyStateMessage || defaultEmptyMessage}
+                                {emptyBody}
                             </p>
                             <UnifiedKbEntryModal
                                 folders={folders}
@@ -1019,7 +1025,7 @@ export function KnowledgeBaseManager({
                                 trigger={
                                     <Button size="sm" className="gap-2">
                                         <PlusIcon className="h-4 w-4" />
-                                        Add Knowledge
+                                        {tKb('addKnowledge')}
                                     </Button>
                                 }
                             />

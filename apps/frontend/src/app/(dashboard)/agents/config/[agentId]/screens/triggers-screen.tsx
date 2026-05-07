@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { Zap, Search, Plus, Play, Pause, Settings, Trash2, Clock, PlugZap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -37,6 +38,8 @@ interface TriggersScreenProps {
 }
 
 export function TriggersScreen({ agentId }: TriggersScreenProps) {
+    const t = useTranslations('agentConfig.triggers');
+    const tCommon = useTranslations('common');
     const [searchQuery, setSearchQuery] = useState('');
     const [triggerDialogType, setTriggerDialogType] = useState<'schedule' | 'event' | null>(null);
     const [editingTrigger, setEditingTrigger] = useState<any>(null);
@@ -65,9 +68,9 @@ export function TriggersScreen({ agentId }: TriggersScreenProps) {
                 triggerId: trigger.trigger_id,
                 isActive: !trigger.is_active,
             });
-            toast.success(`Trigger ${!trigger.is_active ? 'enabled' : 'disabled'}`);
+            toast.success(!trigger.is_active ? t('toggleEnabled') : t('toggleDisabled'));
         } catch (error) {
-            toast.error('Failed to toggle trigger');
+            toast.error(t('toggleFailed'));
         }
     };
 
@@ -91,9 +94,9 @@ export function TriggersScreen({ agentId }: TriggersScreenProps) {
                 triggerId: triggerToDelete.trigger_id,
                 agentId: triggerToDelete.agent_id
             });
-            toast.success('Trigger deleted successfully');
+            toast.success(t('deleteSuccess'));
         } catch (error) {
-            toast.error('Failed to delete trigger');
+            toast.error(t('deleteFailed'));
         } finally {
             setTriggerToDelete(null);
             setDeleteDialogOpen(false);
@@ -103,13 +106,13 @@ export function TriggersScreen({ agentId }: TriggersScreenProps) {
     const handleTriggerCreated = (triggerId: string) => {
         setTriggerDialogType(null);
         setEditingTrigger(null);
-        toast.success('Trigger created successfully');
+        toast.success(t('createSuccess'));
     };
 
     const handleTriggerUpdated = (triggerId: string) => {
         setTriggerDialogType(null);
         setEditingTrigger(null);
-        toast.success('Trigger updated successfully');
+        toast.success(t('updateSuccess'));
     };
 
     return (
@@ -120,7 +123,7 @@ export function TriggersScreen({ agentId }: TriggersScreenProps) {
                     <div className="relative">
                         <Input
                             type="text"
-                            placeholder="Search"
+                            placeholder={t('searchPlaceholder')}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="pl-10"
@@ -138,25 +141,25 @@ export function TriggersScreen({ agentId }: TriggersScreenProps) {
                             className="h-10 px-4 rounded-xl gap-2"
                         >
                             <Plus className="h-4 w-4" />
-                            Create new
+                            {t('createNew')}
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-72">
                         <DropdownMenuItem onClick={() => setTriggerDialogType('schedule')} className='rounded-lg'>
                             <Clock className="h-4 w-4 text-muted-foreground" />
                             <div className="flex flex-col">
-                                <span>Scheduled Trigger</span>
+                                <span>{t('scheduledTrigger')}</span>
                                 <span className="text-xs text-muted-foreground">
-                                    Schedule a trigger to run at a specific time
+                                    {t('scheduledTriggerDesc')}
                                 </span>
                             </div>
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => setTriggerDialogType('event')} className='rounded-lg'>
                             <PlugZap className="h-4 w-4 text-muted-foreground" />
                             <div className="flex flex-col">
-                                <span>Event-based Trigger</span>
+                                <span>{t('eventTrigger')}</span>
                                 <span className="text-xs text-muted-foreground">
-                                    Make a trigger to run when an event occurs
+                                    {t('eventTriggerDesc')}
                                 </span>
                             </div>
                         </DropdownMenuItem>
@@ -172,10 +175,10 @@ export function TriggersScreen({ agentId }: TriggersScreenProps) {
                             <Zap className="h-6 w-6 text-muted-foreground" />
                         </div>
                         <h4 className="text-sm font-semibold text-foreground mb-2">
-                            No triggers configured
+                            {t('emptyTitle')}
                         </h4>
                         <p className="text-sm text-muted-foreground mb-6 max-w-sm mx-auto">
-                            Set up triggers to automate this worker
+                            {t('emptyDescription')}
                         </p>
                     </div>
                 ) : (
@@ -183,7 +186,7 @@ export function TriggersScreen({ agentId }: TriggersScreenProps) {
                         {/* Running Section */}
                         {runningTriggers.length > 0 && (
                             <section className="mb-6">
-                                <h2 className="text-sm font-medium mb-3">Running</h2>
+                                <h2 className="text-sm font-medium mb-3">{t('running')}</h2>
                                 <div className="space-y-2">
                                     {runningTriggers.map((trigger) => (
                                         <TriggerCard
@@ -201,7 +204,7 @@ export function TriggersScreen({ agentId }: TriggersScreenProps) {
                         {/* Paused Section */}
                         {pausedTriggers.length > 0 && (
                             <section>
-                                <h2 className="text-sm font-medium mb-3">Paused</h2>
+                                <h2 className="text-sm font-medium mb-3">{t('paused')}</h2>
                                 <div className="space-y-2">
                                     {pausedTriggers.map((trigger) => (
                                         <TriggerCard
@@ -242,18 +245,18 @@ export function TriggersScreen({ agentId }: TriggersScreenProps) {
             <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Delete Trigger</AlertDialogTitle>
+                        <AlertDialogTitle>{t('deleteTitle')}</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Are you sure you want to delete "{triggerToDelete?.name}"? This action cannot be undone and will stop all automated runs from this trigger.
+                            {t('deleteDescription', { name: triggerToDelete?.name ?? '' })}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogCancel>{tCommon('cancel')}</AlertDialogCancel>
                         <AlertDialogAction
                             onClick={confirmDelete}
                             className="bg-destructive hover:bg-destructive/90 text-white"
                         >
-                            Delete Trigger
+                            {t('deleteConfirm')}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
@@ -270,6 +273,7 @@ interface TriggerCardProps {
 }
 
 function TriggerCard({ trigger, onToggle, onEdit, onDelete }: TriggerCardProps) {
+    const t = useTranslations('agentConfig.triggers');
     return (
         <SpotlightCard className="bg-card border border-border">
             <div className="flex items-center justify-between p-5">
@@ -281,7 +285,7 @@ function TriggerCard({ trigger, onToggle, onEdit, onDelete }: TriggerCardProps) 
                     <div className="flex-1 min-w-0">
                         <h3 className="font-medium text-foreground mb-0.5">{trigger.name}</h3>
                         <p className="text-sm text-muted-foreground truncate">
-                            {trigger.description || 'No description'}
+                            {trigger.description || t('noDescription')}
                         </p>
                     </div>
                 </div>
