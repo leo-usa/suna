@@ -657,7 +657,22 @@
     "shareLinkCopied": "共有リンクをクリップボードにコピーしました！",
     "failedCopyLink": "コピーに失敗しました",
     "openDobbyComputerTooltip": "Dobby Computer を開く",
-    "closeDobbyComputerTooltip": "Dobby Computer を閉じる"
+    "closeDobbyComputerTooltip": "Dobby Computer を閉じる",
+    "sharePopover": {
+      "titlePublicEnabled": "Public link enabled",
+      "titleEnablePublic": "Enable public link",
+      "subtitleAnyoneCanView": "Anyone with the link can view",
+      "subtitleOnlyYou": "Only you can access this thread",
+      "toastLinkEnabled": "Link enabled",
+      "toastLinkDisabled": "Link disabled",
+      "toastFailedToUpdate": "Failed to update",
+      "toastCopied": "Copied",
+      "toastFailedToCopy": "Failed to copy",
+      "open": "Open",
+      "shareOnX": "Share on X",
+      "shareOnLinkedIn": "Share on LinkedIn",
+      "shareXText": "Check out this conversation"
+    }
   },
   "billing": {
     "title": "請求とサブスクリプション",

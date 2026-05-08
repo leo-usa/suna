@@ -1297,7 +1297,22 @@
     "shareLinkCopied": "分享链接已复制到剪贴板！",
     "failedCopyLink": "复制失败",
     "openDobbyComputerTooltip": "打开 Dobby 计算机",
-    "closeDobbyComputerTooltip": "关闭 Dobby 计算机"
+    "closeDobbyComputerTooltip": "关闭 Dobby 计算机",
+    "sharePopover": {
+      "titlePublicEnabled": "已启用公开链接",
+      "titleEnablePublic": "启用公开链接",
+      "subtitleAnyoneCanView": "任何拥有链接的人都可以查看",
+      "subtitleOnlyYou": "只有你可以访问此对话",
+      "toastLinkEnabled": "链接已启用",
+      "toastLinkDisabled": "链接已关闭",
+      "toastFailedToUpdate": "更新失败",
+      "toastCopied": "已复制",
+      "toastFailedToCopy": "复制失败",
+      "open": "打开",
+      "shareOnX": "分享到 X",
+      "shareOnLinkedIn": "分享到 LinkedIn",
+      "shareXText": "看看这段对话"
+    }
   },
   "billing": {
     "title": "计费与订阅",

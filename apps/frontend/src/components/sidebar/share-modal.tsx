@@ -8,6 +8,7 @@ import { toast } from "@/lib/toast"
 import { useThreadQuery, useUpdateThreadMutation } from "@/hooks/threads/use-threads"
 import { Skeleton } from "../ui/skeleton"
 import { cn } from "@/lib/utils"
+import { useTranslations } from "next-intl"
 
 interface SharePopoverProps {
   threadId?: string
@@ -54,6 +55,7 @@ function SharePopoverContent({
   isOpen: boolean 
 }) {
   const [copied, setCopied] = useState(false)
+  const t = useTranslations("threads.sharePopover")
 
   const updateThreadMutation = useUpdateThreadMutation()
   const { data: threadData, isLoading, refetch } = useThreadQuery(threadId || "")
@@ -77,10 +79,10 @@ function SharePopoverContent({
         data: { is_public: checked },
       })
       await refetch()
-      toast.success(checked ? "Link enabled" : "Link disabled")
+      toast.success(checked ? t("toastLinkEnabled") : t("toastLinkDisabled"))
     } catch (error) {
       console.error("Error:", error)
-      toast.error("Failed to update")
+      toast.error(t("toastFailedToUpdate"))
     }
   }
 
@@ -89,17 +91,17 @@ function SharePopoverContent({
     try {
       await navigator.clipboard.writeText(shareLink)
       setCopied(true)
-      toast.success("Copied")
+      toast.success(t("toastCopied"))
       setTimeout(() => setCopied(false), 2000)
     } catch {
-      toast.error("Failed to copy")
+      toast.error(t("toastFailedToCopy"))
     }
   }
 
   const handleOpen = () => window.open(shareLink, "_blank", "noopener,noreferrer")
   
   const handleShareX = () => {
-    const text = encodeURIComponent("Check out this conversation")
+    const text = encodeURIComponent(t("shareXText"))
     const url = encodeURIComponent(shareLink)
     window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, "_blank")
   }
@@ -132,10 +134,10 @@ function SharePopoverContent({
           </div>
           <div className="text-left min-w-0">
             <p className="text-[13px] font-medium leading-tight">
-              {isPublic ? "Public link enabled" : "Enable public link"}
+              {isPublic ? t("titlePublicEnabled") : t("titleEnablePublic")}
             </p>
             <p className="text-[11px] text-muted-foreground leading-tight">
-              {isPublic ? "Anyone with the link can view" : "Only you can access this thread"}
+              {isPublic ? t("subtitleAnyoneCanView") : t("subtitleOnlyYou")}
             </p>
           </div>
         </div>
@@ -180,19 +182,19 @@ function SharePopoverContent({
               className="flex-1 flex items-center justify-center gap-1.5 h-7 rounded-lg text-[11px] font-medium bg-foreground text-background hover:bg-foreground/90 active:scale-[0.98] transition-all"
             >
               <ExternalLink className="h-3 w-3" />
-              Open
+              {t("open")}
             </button>
             <button
               onClick={handleShareX}
               className="flex items-center justify-center h-7 w-7 rounded-lg border border-border/60 hover:bg-muted transition-colors"
-              title="Share on X"
+              title={t("shareOnX")}
             >
               <XIcon />
             </button>
             <button
               onClick={handleShareLinkedIn}
               className="flex items-center justify-center h-7 w-7 rounded-lg border border-border/60 hover:bg-muted transition-colors"
-              title="Share on LinkedIn"
+              title={t("shareOnLinkedIn")}
             >
               <LinkedInIcon />
             </button>
