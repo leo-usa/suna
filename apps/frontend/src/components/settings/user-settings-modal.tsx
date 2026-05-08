@@ -1173,6 +1173,7 @@ function BillingTab({ returnUrl, onOpenPlanModal, isActive }: { returnUrl: strin
                 <Button
                     onClick={handleManageSubscription}
                     disabled={createPortalSessionMutation.isPending}
+                    variant="outline"
                     className="h-10 w-full sm:w-auto"
                 >
                     {createPortalSessionMutation.isPending ? tCommon('loading') : t('manageSubscription')}
@@ -1200,7 +1201,7 @@ function BillingTab({ returnUrl, onOpenPlanModal, isActive }: { returnUrl: strin
                     ) : (
                         <Button
                             onClick={onOpenPlanModal}
-                            variant="outline"
+                            variant="default"
                             className="h-10 w-full sm:w-auto"
                         >
                             {t('changePlan')}

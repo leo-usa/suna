@@ -213,7 +213,7 @@
       "renews": "在 {date} 续费",
       "manageSubscription": "管理订阅",
       "getAdditionalCredits": "微信支付宝预付",
-      "changePlan": "更改计划",
+      "changePlan": "更改订阅计划",
       "annualCommitment": "年度承诺",
       "activeUntil": "有效期至 {date}",
       "subscriptionCancelled": "您的订阅将在 {date} 取消",
