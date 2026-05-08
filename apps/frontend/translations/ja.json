@@ -68,13 +68,6 @@
       "hiringLink": "We're hiring."
     }
   },
-  "dashboard": {
-    "promoBanner": {
-      "apiMessage": "Dobby API is live at {host}",
-      "openCta": "Open",
-      "upgradeCta": "Upgrade"
-    }
-  },
   "settings": {
     "title": "設定",
     "tabs": {
@@ -509,6 +502,15 @@
         "何を考えてる？",
         "さあ、始めよう！"
       ]
+    },
+    "upgradePreview": {
+      "title": "Unlock the full Dobby experience",
+      "subtitle": "Dobby Advanced mode, 100+ Integrations, Triggers, Custom AI Workers & more"
+    },
+    "promoBanner": {
+      "apiMessage": "Dobby API is live at {host}",
+      "openCta": "Open",
+      "upgradeCta": "Upgrade"
     }
   },
   "thread": {

@@ -69,17 +69,6 @@
       "hiringLink": "我们在招聘。"
     }
   },
-  "dashboard": {
-    "upgradePreview": {
-      "title": "解锁完整的 Dobby 体验",
-      "subtitle": "Dobby 高级模式、100+ 集成、触发器、自定义 AI Workers 等更多功能"
-    },
-    "promoBanner": {
-      "apiMessage": "Dobby API 已上线：{host}",
-      "openCta": "打开",
-      "upgradeCta": "升级"
-    }
-  },
   "settings": {
     "title": "设置",
     "tabs": {
@@ -612,7 +601,16 @@
     "usageRowScheduledTriggers": "定时触发器",
     "usageRowScheduledTriggersTip": "按时间自动化（每日、每周、每小时运行）",
     "usageRowAppTriggers": "应用触发器",
-    "usageRowAppTriggersTip": "基于事件的自动化（新邮件、CRM 条目、Notion 页面等）"
+    "usageRowAppTriggersTip": "基于事件的自动化（新邮件、CRM 条目、Notion 页面等）",
+    "upgradePreview": {
+      "title": "解锁完整的 Dobby 体验",
+      "subtitle": "Dobby 高级模式、100+ 集成、触发器、自定义 AI Workers 等更多功能"
+    },
+    "promoBanner": {
+      "apiMessage": "Dobby API 已上线：{host}",
+      "openCta": "打开",
+      "upgradeCta": "升级"
+    }
   },
   "thread": {
     "integrations": "集成",

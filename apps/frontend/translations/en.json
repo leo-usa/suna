@@ -69,17 +69,6 @@
       "hiringLink": "We're hiring."
     }
   },
-  "dashboard": {
-    "upgradePreview": {
-      "title": "Unlock the full Dobby experience",
-      "subtitle": "Dobby Advanced mode, 100+ Integrations, Triggers, Custom AI Workers & more"
-    },
-    "promoBanner": {
-      "apiMessage": "Dobby API is live at {host}",
-      "openCta": "Open",
-      "upgradeCta": "Upgrade"
-    }
-  },
   "settings": {
     "title": "Settings",
     "tabs": {
@@ -620,6 +609,15 @@
         "What's on your mind?",
         "Let's get this show on the road"
       ]
+    },
+    "upgradePreview": {
+      "title": "Unlock the full Dobby experience",
+      "subtitle": "Dobby Advanced mode, 100+ Integrations, Triggers, Custom AI Workers & more"
+    },
+    "promoBanner": {
+      "apiMessage": "Dobby API is live at {host}",
+      "openCta": "Open",
+      "upgradeCta": "Upgrade"
     }
   },
   "thread": {
