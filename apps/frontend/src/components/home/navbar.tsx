@@ -122,7 +122,10 @@ export function Navbar({ isAbsolute = false }: NavbarProps) {
     }
 
     // Update active section
-    const sections = filteredNavLinks.map((item) => item.href.substring(1));
+    const sections = filteredNavLinks
+      .map((item) => item.href)
+      .filter((href) => href.startsWith('#') || href.startsWith('/'))
+      .map((href) => href.substring(1));
     for (const section of sections) {
       const element = document.getElementById(section);
       if (element) {
@@ -164,20 +167,30 @@ export function Navbar({ isAbsolute = false }: NavbarProps) {
 
             {/* Center Section - Nav Links (absolutely centered) */}
             <nav className="hidden md:flex items-center justify-center gap-1 absolute left-1/2 -translate-x-1/2">
-              {filteredNavLinks.map((item) => (
-                <Link
-                  key={item.id}
-                  href={item.href}
-                  className={cn(
-                    "px-3 py-1.5 text-sm font-medium rounded-lg transition-colors",
-                    pathname === item.href
-                      ? "text-foreground"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  {t(`nav.${item.i18nKey}`)}
-                </Link>
-              ))}
+              {filteredNavLinks.map((item) => {
+                const isExternal = item.href.startsWith('http');
+                const className = cn(
+                  "px-3 py-1.5 text-sm font-medium rounded-lg transition-colors",
+                  pathname === item.href
+                    ? "text-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                );
+                return isExternal ? (
+                  <a
+                    key={item.id}
+                    href={item.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={className}
+                  >
+                    {t(`nav.${item.i18nKey}`)}
+                  </a>
+                ) : (
+                  <Link key={item.id} href={item.href} className={className}>
+                    {t(`nav.${item.i18nKey}`)}
+                  </Link>
+                );
+              })}
 
               {SHOW_MOBILE_NAV_LINK && (
               <div className="relative group">

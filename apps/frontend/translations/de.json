@@ -39,7 +39,8 @@
       "dashboard": "Dashboard",
       "scanToDownload": "Zum Herunterladen scannen",
       "openMenu": "Menü öffnen",
-      "closeMenu": "Menü schließen"
+      "closeMenu": "Menü schließen",
+      "api": "API"
     }
   },
   "aboutPage": {

@@ -39,7 +39,8 @@
       "dashboard": "ダッシュボード",
       "scanToDownload": "スキャンしてダウンロード",
       "openMenu": "メニューを開く",
-      "closeMenu": "メニューを閉じる"
+      "closeMenu": "メニューを閉じる",
+      "api": "API"
     }
   },
   "aboutPage": {

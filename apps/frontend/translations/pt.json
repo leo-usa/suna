@@ -39,7 +39,8 @@
       "dashboard": "Painel",
       "scanToDownload": "Escaneie para baixar",
       "openMenu": "Abrir menu",
-      "closeMenu": "Fechar menu"
+      "closeMenu": "Fechar menu",
+      "api": "API"
     }
   },
   "aboutPage": {

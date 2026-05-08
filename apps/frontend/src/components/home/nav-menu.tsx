@@ -164,7 +164,12 @@ export function NavMenu({ links }: NavMenuProps = {}) {
                 : 'text-primary/60 hover:text-primary'
               } tracking-tight`}
           >
-            <a href={item.href} onClick={(e) => handleClick(e, item)}>
+            <a
+              href={item.href}
+              onClick={(e) => handleClick(e, item)}
+              target={item.href.startsWith('http') ? '_blank' : undefined}
+              rel={item.href.startsWith('http') ? 'noopener noreferrer' : undefined}
+            >
               {t(`nav.${item.i18nKey}`)}
             </a>
           </li>

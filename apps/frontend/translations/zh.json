@@ -39,7 +39,8 @@
       "dashboard": "工作台",
       "scanToDownload": "扫码下载",
       "openMenu": "打开菜单",
-      "closeMenu": "关闭菜单"
+      "closeMenu": "关闭菜单",
+      "api": "API"
     },
     "previous": "上一页"
   },
