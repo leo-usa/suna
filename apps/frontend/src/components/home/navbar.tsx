@@ -1,6 +1,7 @@
 'use client';
 
 import { ThemeToggle } from '@/components/home/theme-toggle';
+import { LocaleSwitcher } from '@/components/home/locale-switcher';
 import { siteConfig } from '@/lib/site-config';
 import { cn } from '@/lib/utils';
 import { X, Menu } from 'lucide-react';
@@ -224,6 +225,11 @@ export function Navbar({ isAbsolute = false }: NavbarProps) {
 
             {/* Right Section - Actions */}
             <div className="flex items-center justify-end gap-2 sm:gap-3 ml-auto">
+              <div className="hidden md:flex items-center gap-2">
+                <div className="rounded-lg bg-muted/50">
+                  <LocaleSwitcher variant="compact" />
+                </div>
+              </div>
               {user ? (
                 <Link
                   href="/dashboard"
@@ -368,6 +374,7 @@ export function Navbar({ isAbsolute = false }: NavbarProps) {
                 {/* Theme Toggle */}
                 <div className="flex items-center justify-between">
                   <ThemeToggle />
+                  <LocaleSwitcher variant="compact" />
                 </div>
               </motion.div>
             </div>
