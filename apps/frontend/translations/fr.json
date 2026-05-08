@@ -68,6 +68,13 @@
       "hiringLink": "We're hiring."
     }
   },
+  "dashboard": {
+    "promoBanner": {
+      "apiMessage": "Dobby API is live at {host}",
+      "openCta": "Open",
+      "upgradeCta": "Upgrade"
+    }
+  },
   "settings": {
     "title": "Paramètres",
     "tabs": {

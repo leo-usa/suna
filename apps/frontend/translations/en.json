@@ -73,6 +73,11 @@
     "upgradePreview": {
       "title": "Unlock the full Dobby experience",
       "subtitle": "Dobby Advanced mode, 100+ Integrations, Triggers, Custom AI Workers & more"
+    },
+    "promoBanner": {
+      "apiMessage": "Dobby API is live at {host}",
+      "openCta": "Open",
+      "upgradeCta": "Upgrade"
     }
   },
   "settings": {

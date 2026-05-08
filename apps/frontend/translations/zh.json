@@ -73,6 +73,11 @@
     "upgradePreview": {
       "title": "解锁完整的 Dobby 体验",
       "subtitle": "Dobby 高级模式、100+ 集成、触发器、自定义 AI Workers 等更多功能"
+    },
+    "promoBanner": {
+      "apiMessage": "Dobby API 已上线：{host}",
+      "openCta": "打开",
+      "upgradeCta": "升级"
     }
   },
   "settings": {

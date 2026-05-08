@@ -33,6 +33,26 @@ const PROMOS: PromoConfig[] = [
     endDate: Date.UTC(2025, 11, 26, 7, 59, 59), // 23:59 PST => 07:59 UTC next day
     priority: 50,
   },
+  // NOTE: KORTIX2026 promo disabled.
+  // {
+  //   id: 'welcome-bonus',
+  //   promoCode: 'KORTIX2026',
+  //   badgeLabel: 'Pro',
+  //   description: 'Unlock the full Dobby experience',
+  //   // Active now through end of current month (UTC)
+  //   startDate: Date.UTC(2026, 0, 1, 0, 0, 0),
+  //   endDate: getEndOfCurrentMonthUTC(),
+  //   priority: 10,
+  // },
+  {
+    id: 'dobby-api',
+    promoCode: 'API',
+    badgeLabel: 'New',
+    description: 'Dobby API is live at api.dobby.now',
+    startDate: Date.UTC(2026, 0, 1, 0, 0, 0),
+    endDate: Date.UTC(2100, 0, 1, 0, 0, 0),
+    priority: 10,
+  },
 ];
 
 export interface PromoState {

@@ -9,6 +9,7 @@ import { usePricingModalStore } from '@/stores/pricing-modal-store';
 import { usePathname } from 'next/navigation';
 import { useWelcomeBannerStore } from '@/stores/welcome-banner-store';
 import { usePromo } from '@/hooks/utils/use-promo';
+import { useTranslations } from 'next-intl';
 
 const BANNER_DISMISSED_KEY = 'dashboard-promo-banner-dismissed';
 
@@ -20,13 +21,14 @@ export function DashboardPromoBanner() {
   const pathname = usePathname();
   const { setIsVisible } = useWelcomeBannerStore();
   const promo = usePromo();
+  const t = useTranslations('dashboard.promoBanner');
   
   const tierKey = accountStateSelectors.tierKey(accountState)?.toLowerCase();
   const isFreeTier = !tierKey || tierKey === 'free' || tierKey === 'none';
   const isDashboardPage = pathname === '/dashboard';
   
-  // Show Welcome Bonus promo or KORTIX26 for free tier users
-  const shouldShowPromo = promo?.isActive && (promo.promoId === 'welcome-bonus' || promo.promoCode === 'KORTIX26');
+  // Show API promo (and legacy promo ids, if ever re-enabled)
+  const shouldShowPromo = promo?.isActive && (promo.promoId === 'dobby-api' || promo.promoId === 'welcome-bonus' || promo.promoCode === 'KORTIX26');
 
   // Compute whether banner should be visible
   const shouldShow = mounted && !isDismissed && isDashboardPage && !isLoading && isFreeTier && shouldShowPromo;
@@ -73,27 +75,45 @@ export function DashboardPromoBanner() {
               <div className="flex items-center gap-2">
                 <Sparkles className="h-3.5 w-3.5 text-primary" />
                 <span className="text-xs sm:text-sm font-medium text-foreground">
-                  <span className="text-primary">{promo.promoCode}</span>
-                  <span className="text-muted-foreground mx-1.5">·</span>
-                  30% off
+                  {promo.promoId === 'dobby-api' ? (
+                    <>
+                      <span className="text-primary">API</span>
+                      <span className="text-muted-foreground mx-1.5">·</span>
+                      {t('apiMessage', { host: 'api.dobby.now' })}
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-primary">{promo.promoCode}</span>
+                      <span className="text-muted-foreground mx-1.5">·</span>
+                      30% off
+                    </>
+                  )}
                 </span>
               </div>
 
               <span className="text-muted-foreground/50 hidden sm:inline">·</span>
               
               {/* Countdown - simplified */}
-              <span className="text-xs text-muted-foreground font-mono hidden sm:inline">
-                {promo.timeLabel}
-              </span>
+              {promo.promoId !== 'dobby-api' && (
+                <span className="text-xs text-muted-foreground font-mono hidden sm:inline">
+                  {promo.timeLabel}
+                </span>
+              )}
 
               {/* CTA */}
               <Button
                 size="sm"
                 variant="default"
-                onClick={handleUpgrade}
+                onClick={() => {
+                  if (promo.promoId === 'dobby-api') {
+                    window.open('https://api.dobby.now', '_blank', 'noopener,noreferrer');
+                    return;
+                  }
+                  handleUpgrade();
+                }}
                 className="h-6 px-2.5 text-xs font-medium"
               >
-                Upgrade
+                {promo.promoId === 'dobby-api' ? t('openCta') : t('upgradeCta')}
               </Button>
 
               {/* Close */}
