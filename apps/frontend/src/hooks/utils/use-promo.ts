@@ -24,16 +24,6 @@ const getEndOfCurrentMonthUTC = (): number => {
 
 const PROMOS: PromoConfig[] = [
   {
-    id: 'welcome-bonus',
-    promoCode: 'KORTIX2026',
-    badgeLabel: 'Happy New Year Offer',
-    description: '30% OFF',
-    // Active from now until end of current month
-    startDate: Date.UTC(2025, 0, 1, 0, 0, 0), // Always active (start from beginning of 2025)
-    endDate: getEndOfCurrentMonthUTC(), // End of current month
-    priority: 150, // Lower than KORTIX26 but higher than other promos
-  },
-  {
     id: 'holiday-2025',
     promoCode: 'XMAS50',
     badgeLabel: 'Holiday Special',
@@ -109,12 +99,6 @@ export function usePromo(pollInterval = 1000): PromoState | null {
   }, [pollInterval]);
 
   return useMemo(() => {
-    // Recalculate end date for welcome bonus (end of current month)
-    const welcomeBonusPromo = PROMOS.find(p => p.id === 'welcome-bonus');
-    if (welcomeBonusPromo) {
-      welcomeBonusPromo.endDate = getEndOfCurrentMonthUTC();
-    }
-
     // Find all active promos, sorted by priority (highest first)
     const activePromos = PROMOS.filter(promo => {
       const hasStarted = now >= promo.startDate;
