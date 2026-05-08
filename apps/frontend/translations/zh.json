@@ -1355,6 +1355,26 @@
     "cannotDowngradeDuringCommitment": "在承诺期内无法降级",
     "alreadyOnThisPlan": "你已在此计划上。",
     "localModeMessage": "在本地开发模式下运行 - 账单功能已禁用",
+    "limitAlerts": {
+      "thread": {
+        "title": "已达到线程上限",
+        "subtitle": "你已达到线程数量上限。升级订阅计划以创建更多线程。",
+        "subtitleWithCounts": "你已达到线程数量上限（{current}/{limit}）。升级订阅计划以创建更多线程。"
+      },
+      "project": {
+        "title": "已达到项目上限",
+        "subtitle": "你已达到项目数量上限。升级订阅计划以创建更多项目。",
+        "subtitleWithCounts": "你已达到项目数量上限（{current}/{limit}）。升级订阅计划以创建更多项目。"
+      },
+      "workers": {
+        "title": "已达到 Worker 上限",
+        "subtitle": "你已达到当前订阅计划允许的最大 Worker 数量。"
+      },
+      "concurrentRuns": {
+        "title": "已达到并行运行上限",
+        "subtitle": "升级订阅计划以并行运行更多 Workers。"
+      }
+    },
     "holidayPromo": {
       "badge": "节日优惠",
       "countdown": "{time} 后结束",

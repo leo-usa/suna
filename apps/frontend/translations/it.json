@@ -963,6 +963,26 @@
       "noCheckoutUrl": "No checkout URL received",
       "creditBalanceTitle": "Credit Balance",
       "addCredits": "Add Credits"
+    },
+    "limitAlerts": {
+      "thread": {
+        "title": "Thread Limit Reached",
+        "subtitle": "You've reached your thread limit. Upgrade your plan to create more threads.",
+        "subtitleWithCounts": "You've reached your thread limit ({current}/{limit}). Upgrade your plan to create more threads."
+      },
+      "project": {
+        "title": "Project Limit Reached",
+        "subtitle": "You've reached your project limit. Upgrade your plan to create more projects.",
+        "subtitleWithCounts": "You've reached your project limit ({current}/{limit}). Upgrade your plan to create more projects."
+      },
+      "workers": {
+        "title": "Worker Limit Reached",
+        "subtitle": "You've reached the maximum number of Workers allowed on your current plan."
+      },
+      "concurrentRuns": {
+        "title": "Parallel Runs Limit Reached",
+        "subtitle": "Upgrade to run more workers in parallel."
+      }
     }
   },
   "auth": {

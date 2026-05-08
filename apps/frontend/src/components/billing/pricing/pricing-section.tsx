@@ -1226,6 +1226,61 @@ export function PricingSection({
   }
 
   const isYearly = billingPeriod === 'yearly' || billingPeriod === 'yearly_commitment';
+  
+  const localizedAlert = React.useMemo(() => {
+    if (!isAlert) return { title: alertTitle, subtitle: alertSubtitle };
+
+    const title = alertTitle || '';
+    const subtitle = alertSubtitle || '';
+
+    // Thread limit: "You've reached your thread limit (19/10). Upgrade your plan to create more threads."
+    if (title === 'Thread Limit Reached' || subtitle.toLowerCase().includes('thread limit')) {
+      const match = subtitle.match(/\((\d+)\s*\/\s*(\d+)\)/);
+      const current = match?.[1];
+      const limit = match?.[2];
+      return {
+        title: t('limitAlerts.thread.title'),
+        subtitle: current && limit
+          ? t('limitAlerts.thread.subtitleWithCounts', { current, limit })
+          : t('limitAlerts.thread.subtitle'),
+      };
+    }
+
+    // Project limit
+    if (title === 'Project Limit Reached' || subtitle.toLowerCase().includes('project limit')) {
+      const match = subtitle.match(/\((\d+)\s*\/\s*(\d+)\)/);
+      const current = match?.[1];
+      const limit = match?.[2];
+      return {
+        title: t('limitAlerts.project.title'),
+        subtitle: current && limit
+          ? t('limitAlerts.project.subtitleWithCounts', { current, limit })
+          : t('limitAlerts.project.subtitle'),
+      };
+    }
+
+    // Worker / agent count limit
+    if (title === 'Worker Limit Reached' || subtitle.toLowerCase().includes('maximum number of workers')) {
+      return {
+        title: t('limitAlerts.workers.title'),
+        subtitle: t('limitAlerts.workers.subtitle'),
+      };
+    }
+
+    // Parallel / concurrent runs
+    if (
+      title === 'Parallel Runs Limit Reached' ||
+      title === 'Concurrent Run Limit Reached' ||
+      subtitle.toLowerCase().includes('concurrent')
+    ) {
+      return {
+        title: t('limitAlerts.concurrentRuns.title'),
+        subtitle: t('limitAlerts.concurrentRuns.subtitle'),
+      };
+    }
+
+    return { title: alertTitle, subtitle: alertSubtitle };
+  }, [isAlert, alertTitle, alertSubtitle, t]);
 
   return (
     <section
@@ -1242,11 +1297,11 @@ export function PricingSection({
                 <div className="flex flex-col gap-4 items-center text-center">
                   <div className="flex flex-col gap-2">
                     <h2 className="text-2xl sm:text-3xl lg:text-4xl font-semibold tracking-tight text-foreground">
-                      {alertTitle || t('limitReachedUpgrade')}
+                      {localizedAlert.title || t('limitReachedUpgrade')}
                     </h2>
-                    {alertSubtitle && (
+                    {localizedAlert.subtitle && (
                       <p className="text-base sm:text-lg text-muted-foreground">
-                        {alertSubtitle}
+                        {localizedAlert.subtitle}
                       </p>
                     )}
                   </div>
