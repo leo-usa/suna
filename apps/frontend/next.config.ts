@@ -43,6 +43,11 @@ const nextConfig = (): NextConfig => ({
 
   outputFileTracingRoot: monorepoRoot,
 
+  // Render CI can fail builds on lint warnings; lint still runs in PR/dev via `next lint`.
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+
   // Transpile shared package
   transpilePackages: ['@agentpress/shared'],
   
