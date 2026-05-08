@@ -69,7 +69,7 @@ export const pricingTiers: PricingTier[] = [
     isPopular: false,
     hours: '0 hours',
     features: [
-      { kind: 'weekly_credits', credits: 300 },
+      { kind: 'weekly_credits', credits: 100 },
       { kind: 'concurrent_run_single' },
       { kind: 'basic_mode' },
     ],
