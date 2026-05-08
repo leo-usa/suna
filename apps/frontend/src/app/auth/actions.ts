@@ -243,12 +243,41 @@ export async function signInWithPassword(prevState: any, formData: FormData) {
   const isNewUser = data.user && (Date.now() - new Date(data.user.created_at).getTime()) < 60000;
   const authEvent = isNewUser ? 'signup' : 'login';
 
-  // Return success - client will handle redirect with auth tracking params
+  // If this user never got initialized (webhook gap / older account),
+  // send them through the fallback initializer to avoid a "hanging" dashboard.
+  try {
+    if (data.user) {
+      const { data: accountData } = await supabase
+        .schema('basejump')
+        .from('accounts')
+        .select('id')
+        .eq('primary_owner_user_id', data.user.id)
+        .eq('personal_account', true)
+        .single();
+
+      if (accountData?.id) {
+        const { data: creditAccount } = await supabase
+          .from('credit_accounts')
+          .select('tier')
+          .eq('account_id', accountData.id)
+          .single();
+
+        const needsInitialization = !creditAccount || creditAccount.tier === 'none';
+        if (needsInitialization) {
+          return { success: true, redirectTo: '/setting-up' };
+        }
+      }
+    }
+  } catch {
+    // If the check fails for any reason, proceed to dashboard and let the UI handle errors.
+  }
+
+  // Return success - let the client navigate after cookies are set.
   const finalReturnUrl = returnUrl || '/dashboard';
   const redirectUrl = new URL(finalReturnUrl, 'http://localhost');
   redirectUrl.searchParams.set('auth_event', authEvent);
   redirectUrl.searchParams.set('auth_method', 'email');
-  redirect(`${redirectUrl.pathname}${redirectUrl.search}`);
+  return { success: true, redirectTo: `${redirectUrl.pathname}${redirectUrl.search}` };
 }
 
 export async function signUpWithPassword(prevState: any, formData: FormData) {

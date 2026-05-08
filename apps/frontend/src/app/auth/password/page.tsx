@@ -43,17 +43,23 @@ function PasswordAuthContent() {
         ? await signUpWithPassword(prevState, formData)
         : await signInWithPassword(prevState, formData);
 
-      // If we get here, there was an error (redirect would have happened server-side)
-      if (result && typeof result === 'object' && 'message' in result) {
-        setErrorMessage(result.message as string);
-        toast.error(result.message as string);
-        return result;
+      if (result && typeof result === 'object') {
+        if ('message' in result) {
+          setErrorMessage(result.message as string);
+          toast.error(result.message as string);
+          return result;
+        }
+
+        if ('success' in result && result.success && 'redirectTo' in result && result.redirectTo) {
+          // Full navigation ensures the browser has applied auth cookies
+          // before middleware runs on the next request.
+          window.location.assign(result.redirectTo as string);
+          return;
+        }
       }
 
-      // If no error, redirect manually (fallback in case server redirect didn't work)
-      const finalReturnUrl = returnUrl || '/dashboard';
-      router.push(finalReturnUrl);
-      router.refresh();
+      // Fallback (shouldn't usually be hit)
+      window.location.assign(returnUrl || '/dashboard');
     } catch (error: any) {
       // Next.js redirect() throws a special error - this is expected on success
       if (error?.digest?.startsWith('NEXT_REDIRECT')) {
