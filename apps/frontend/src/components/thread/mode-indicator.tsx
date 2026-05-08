@@ -10,7 +10,6 @@ import { Check, Lock, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useModelSelection } from '@/hooks/agents';
 import { usePricingModalStore } from '@/stores/pricing-modal-store';
-import { isProductionMode } from '@/lib/config';
 import { ModelProviderIcon } from '@/lib/model-provider-icons';
 import { Separator } from '@/components/ui/separator';
 
@@ -57,8 +56,9 @@ export const ModeIndicator = memo(function ModeIndicator() {
     handleModelChange,
   } = useModelSelection();
 
-  // Check if we should show all models option (non-production mode)
-  const showAllModelsOption = !isProductionMode();
+  // Allow users to see/select the full model list in production.
+  // Access is still enforced by the backend (allowed models only are actionable).
+  const showAllModelsOption = true;
 
   const basicModel = useMemo(
     () => modelOptions.find((m) => m.id === 'dobby/basic' || m.label === 'Dobby Basic'),
@@ -187,15 +187,12 @@ export const ModeIndicator = memo(function ModeIndicator() {
           ) : null}
         </div>
 
-        {/* All Models Section - Only in staging/local mode */}
+        {/* All Models Section */}
         {showAllModelsOption && otherModels.length > 0 && (
           <>
             <Separator className="my-2" />
             <div className="px-2 py-1 text-xs font-medium text-muted-foreground flex items-center gap-2">
               <span>All Models</span>
-              <span className="text-[10px] px-1.5 py-0.5 bg-amber-500/10 text-amber-600 dark:text-amber-500 rounded-md">
-                Staging
-              </span>
             </div>
             <div className="max-h-[200px] overflow-y-auto">
               {otherModels.map((model) => {
