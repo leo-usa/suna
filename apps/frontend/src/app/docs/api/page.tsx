@@ -1,20 +1,31 @@
-import type { Metadata } from 'next';
+'use client';
+
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { ArrowLeft, Terminal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-
-export const metadata: Metadata = {
-  title: 'REST API reference',
-  description:
-    'How to call the Dobby API at dobby.now: authentication, JSON requests, and examples.',
-};
 
 const PUBLIC_SITE = 'https://dobby.now';
 
 /** Public docs always show production URLs so local `.env` does not rewrite examples to localhost. */
 const API_V1 = `${PUBLIC_SITE}/v1`;
 
+/** Same-origin app URL from env (see `.env.example`) so links like API Settings work locally. */
+function publicAppOrigin(): string {
+  const raw =
+    process.env.NEXT_PUBLIC_URL?.trim() ||
+    process.env.NEXT_PUBLIC_APP_URL?.trim() ||
+    '';
+  return raw.replace(/\/+$/, '');
+}
+
+function settingsApiKeysHref(): string {
+  const origin = publicAppOrigin();
+  return origin ? `${origin}/settings/api-keys` : '/settings/api-keys';
+}
+
 export default function ApiDocsPage() {
+  const t = useTranslations('docs.apiPage');
   const v1Base = API_V1;
   const swaggerUrl = `${PUBLIC_SITE}/docs`;
   const openapiUrl = `${PUBLIC_SITE}/openapi.json`;
@@ -50,10 +61,17 @@ if (!res.ok) {
 
   return (
     <div className="container mx-auto max-w-4xl px-3 sm:px-4 py-4 sm:py-8 md:py-12">
-      <Button variant="ghost" className="mb-4 -ml-2 h-auto px-2 py-2 text-muted-foreground hover:text-foreground" asChild>
-        <Link href="/help" className="inline-flex items-center gap-2">
+      <Button
+        variant="ghost"
+        className="mb-4 -ml-2 h-auto px-2 py-2 text-muted-foreground hover:text-foreground"
+        asChild
+      >
+        <Link
+          href={settingsApiKeysHref()}
+          className="inline-flex items-center gap-2"
+        >
           <ArrowLeft className="h-4 w-4 shrink-0" />
-          Back to Help Center
+          {t('backToApiSettings')}
         </Link>
       </Button>
 
@@ -61,11 +79,11 @@ if (!res.ok) {
         <div className="flex flex-wrap items-center gap-3">
           <Terminal className="h-7 w-7 sm:h-8 sm:w-8 text-primary shrink-0" aria-hidden />
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-medium tracking-tight text-foreground">
-            Using the Dobby API
+            {t('title')}
           </h1>
         </div>
         <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
-          The production web app lives at{' '}
+          {t('introBeforeLink')}{' '}
           <a
             href={PUBLIC_SITE}
             target="_blank"
@@ -74,78 +92,80 @@ if (!res.ok) {
           >
             {PUBLIC_SITE}
           </a>
-          . Call the HTTP API like other REST services (for example OpenAI): HTTPS, a stable base URL,
-          an authentication header on each request, and JSON responses. Paths below use the{' '}
+          {t('introAfterLink')}{' '}
           <code className="rounded bg-muted px-1.5 py-0.5 text-sm font-mono text-foreground">/v1</code>{' '}
-          prefix.
+          {t('introPrefixSuffix')}
         </p>
       </header>
 
       <div className="space-y-10">
         <section className="space-y-4">
-          <h2 className="text-xl font-semibold text-foreground">Base URL for requests</h2>
-          <p className="text-muted-foreground leading-relaxed">
-            Use production integrations against:
-          </p>
+          <h2 className="text-xl font-semibold text-foreground">{t('sectionBaseUrl')}</h2>
+          <p className="text-muted-foreground leading-relaxed">{t('baseUrlLead')}</p>
           <code className="block w-fit rounded-lg bg-muted px-3 py-2 text-sm font-mono text-foreground">
             {v1Base}
           </code>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Same idea as OpenAI’s{' '}
-            <code className="rounded bg-muted px-1.5 py-0.5 text-xs font-mono">https://api.openai.com/v1</code>
-            : append paths such as{' '}
-            <code className="rounded bg-muted px-1.5 py-0.5 text-xs font-mono">/threads</code> or{' '}
+            {t('baseUrlComparePart')}{' '}
+            <code className="rounded bg-muted px-1.5 py-0.5 text-xs font-mono">
+              https://api.openai.com/v1
+            </code>
+            {t('baseUrlAppendPart')}{' '}
+            <code className="rounded bg-muted px-1.5 py-0.5 text-xs font-mono">/threads</code>{' '}
+            {t('baseUrlOr')}{' '}
             <code className="rounded bg-muted px-1.5 py-0.5 text-xs font-mono">/threads/…/messages</code>.
           </p>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Developing locally with Docker or uvicorn? Point requests at your machine’s{' '}
-            <code className="rounded bg-muted px-1.5 py-0.5 text-xs font-mono">/v1</code> URL (often{' '}
+            {t('baseUrlLocalLead')}{' '}
+            <code className="rounded bg-muted px-1.5 py-0.5 text-xs font-mono">/v1</code>{' '}
+            {t('baseUrlLocalMiddle')}{' '}
             <code className="rounded bg-muted px-1.5 py-0.5 text-xs font-mono">
               http://localhost:8000/v1
             </code>
-            ). The snippets here stay on{' '}
-            <span className="font-medium text-foreground">{PUBLIC_SITE}</span> so copied examples match
-            production.
+            {t('baseUrlLocalTail')}{' '}
+            <span className="font-medium text-foreground">{PUBLIC_SITE}</span>{' '}
+            {t('baseUrlLocalClosing')}
           </p>
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-xl font-semibold text-foreground">Authentication</h2>
+          <h2 className="text-xl font-semibold text-foreground">{t('sectionAuth')}</h2>
           <p className="text-muted-foreground leading-relaxed">
-            Send <strong className="text-foreground font-medium">exactly one</strong> of these on each
-            request:
+            {t('authLeadBefore')}{' '}
+            <strong className="text-foreground font-medium">{t('authLeadStrong')}</strong>{' '}
+            {t('authLeadAfter')}
           </p>
           <div className="overflow-x-auto rounded-lg border border-border">
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-muted/50 border-b border-border">
-                  <th className="text-left p-3 font-medium text-foreground">Use case</th>
-                  <th className="text-left p-3 font-medium text-foreground">Header</th>
-                  <th className="text-left p-3 font-medium text-foreground">Value</th>
+                  <th className="text-left p-3 font-medium text-foreground">{t('authTableUseCase')}</th>
+                  <th className="text-left p-3 font-medium text-foreground">{t('authTableHeader')}</th>
+                  <th className="text-left p-3 font-medium text-foreground">{t('authTableValue')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 <tr>
-                  <td className="p-3 text-muted-foreground">Scripts, servers, integrations</td>
+                  <td className="p-3 text-muted-foreground">{t('authRowScripts')}</td>
                   <td className="p-3 font-mono text-sm text-foreground">X-API-Key</td>
                   <td className="p-3 text-muted-foreground">
-                    <code className="font-mono text-sm text-foreground">pk_…:sk_…</code> — one string:
-                    public key, colon, secret key.
+                    <code className="font-mono text-sm text-foreground">pk_…:sk_…</code>{' '}
+                    {t('authRowScriptsFormat')}
                   </td>
                 </tr>
                 <tr>
-                  <td className="p-3 text-muted-foreground">Signed-in session</td>
+                  <td className="p-3 text-muted-foreground">{t('authRowSession')}</td>
                   <td className="p-3 font-mono text-sm text-foreground">Authorization</td>
                   <td className="p-3 text-muted-foreground">
                     <code className="font-mono text-sm text-foreground">Bearer &lt;access_token&gt;</code>{' '}
-                    — token from signing in to the web app.
+                    {t('authRowSessionFormat')}
                   </td>
                 </tr>
               </tbody>
             </table>
           </div>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Sign in at{' '}
+            {t('authFooterBefore')}{' '}
             <a
               href={PUBLIC_SITE}
               target="_blank"
@@ -154,51 +174,30 @@ if (!res.ok) {
             >
               {PUBLIC_SITE}
             </a>
-            , then create keys under{' '}
+            {t('authFooterMiddle')}{' '}
             <Link href="/settings/api-keys" className="text-primary hover:underline font-medium">
-              Settings → API keys
+              {t('settingsApiKeysLink')}
             </Link>
-            . Store the combined key in a secret such as{' '}
+            {t('authFooterAfter')}{' '}
             <code className="rounded bg-muted px-1.5 py-0.5 text-xs font-mono">DOBBY_API_KEY</code>.
           </p>
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-xl font-semibold text-foreground">Request format</h2>
+          <h2 className="text-xl font-semibold text-foreground">{t('sectionRequestFormat')}</h2>
           <ul className="list-disc pl-5 space-y-2 text-muted-foreground leading-relaxed">
-            <li>
-              Use <code className="font-mono text-sm text-foreground">GET</code>,{' '}
-              <code className="font-mono text-sm text-foreground">POST</code>,{' '}
-              <code className="font-mono text-sm text-foreground">PATCH</code>,{' '}
-              <code className="font-mono text-sm text-foreground">PUT</code>, or{' '}
-              <code className="font-mono text-sm text-foreground">DELETE</code> as documented for each
-              endpoint.
-            </li>
-            <li>
-              JSON bodies: set{' '}
-              <code className="font-mono text-sm text-foreground">Content-Type: application/json</code>{' '}
-              and send UTF-8 JSON.
-            </li>
-            <li>
-              Some endpoints use form fields instead (for example{' '}
-              <code className="font-mono text-sm text-foreground">POST /threads</code> with field{' '}
-              <code className="font-mono text-sm text-foreground">name</code>) — use{' '}
-              <code className="font-mono text-sm text-foreground">multipart/form-data</code> or{' '}
-              <code className="font-mono text-sm text-foreground">-F</code> in curl.
-            </li>
-            <li>
-              Successful responses are usually JSON with HTTP{' '}
-              <code className="font-mono text-sm text-foreground">200</code> or{' '}
-              <code className="font-mono text-sm text-foreground">201</code>.
-            </li>
+            <li>{t('rqMethods')}</li>
+            <li>{t('rqJson')}</li>
+            <li>{t('rqForm')}</li>
+            <li>{t('rqSuccess')}</li>
           </ul>
         </section>
 
         <section className="space-y-6">
-          <h2 className="text-xl font-semibold text-foreground">Examples</h2>
+          <h2 className="text-xl font-semibold text-foreground">{t('sectionExamples')}</h2>
 
           <div className="space-y-3">
-            <h3 className="text-base font-semibold text-foreground">List threads (GET)</h3>
+            <h3 className="text-base font-semibold text-foreground">{t('exListThreads')}</h3>
             <pre className="overflow-x-auto rounded-lg bg-muted p-4 text-sm font-mono text-foreground leading-relaxed border border-border">
               {`curl -sS -H "X-API-Key: pk_your_public_key:sk_your_secret_key" \\
   "${v1Base}/threads"`}
@@ -206,31 +205,23 @@ if (!res.ok) {
           </div>
 
           <div className="space-y-3">
-            <h3 className="text-base font-semibold text-foreground">Create a message (POST JSON)</h3>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              Fields: <code className="font-mono text-xs text-foreground">type</code>,{' '}
-              <code className="font-mono text-xs text-foreground">content</code>, optionally{' '}
-              <code className="font-mono text-xs text-foreground">is_llm_message</code> (boolean).
-            </p>
+            <h3 className="text-base font-semibold text-foreground">{t('exCreateMessage')}</h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">{t('exCreateMessageLead')}</p>
             <pre className="overflow-x-auto rounded-lg bg-muted p-4 text-sm font-mono text-foreground leading-relaxed border border-border">
               {threadsMessagesExample}
             </pre>
           </div>
 
           <div className="space-y-3">
-            <h3 className="text-base font-semibold text-foreground">Create a thread (POST form)</h3>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              Uses form field <code className="font-mono text-xs text-foreground">name</code>, not JSON.
-            </p>
+            <h3 className="text-base font-semibold text-foreground">{t('exCreateThread')}</h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">{t('exCreateThreadLead')}</p>
             <pre className="overflow-x-auto rounded-lg bg-muted p-4 text-sm font-mono text-foreground leading-relaxed border border-border">
               {createThreadFormExample}
             </pre>
           </div>
 
           <div className="space-y-3">
-            <h3 className="text-base font-semibold text-foreground">
-              JavaScript <code className="font-mono font-normal text-sm">fetch</code> with API key
-            </h3>
+            <h3 className="text-base font-semibold text-foreground">{t('exFetch')}</h3>
             <pre className="overflow-x-auto rounded-lg bg-muted p-4 text-sm font-mono text-foreground leading-relaxed border border-border whitespace-pre-wrap">
               {fetchExample}
             </pre>
@@ -238,10 +229,8 @@ if (!res.ok) {
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-xl font-semibold text-foreground">Errors</h2>
-          <p className="text-muted-foreground leading-relaxed">
-            Errors return JSON with HTTP 4xx or 5xx. Common shapes:
-          </p>
+          <h2 className="text-xl font-semibold text-foreground">{t('sectionErrors')}</h2>
+          <p className="text-muted-foreground leading-relaxed">{t('errorsLead')}</p>
           <ul className="list-disc pl-5 space-y-2 text-muted-foreground leading-relaxed">
             <li>
               <code className="font-mono text-sm text-foreground">{`{ "detail": "…" }`}</code>
@@ -250,19 +239,15 @@ if (!res.ok) {
               <code className="font-mono text-sm text-foreground">
                 {`{ "detail": { "message": "…", "error_code": "…" } }`}
               </code>{' '}
-              for limits or billing-related responses.
+              {t('errorsStructuredHint')}
             </li>
           </ul>
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            Check the status code before treating the body as success data.
-          </p>
+          <p className="text-sm text-muted-foreground leading-relaxed">{t('errorsFootnote')}</p>
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-xl font-semibold text-foreground">Interactive reference (Swagger)</h2>
-          <p className="text-muted-foreground leading-relaxed">
-            When available on the API host:
-          </p>
+          <h2 className="text-xl font-semibold text-foreground">{t('sectionSwagger')}</h2>
+          <p className="text-muted-foreground leading-relaxed">{t('swaggerLead')}</p>
           <ul className="list-disc pl-5 space-y-2 text-muted-foreground">
             <li>
               <a
@@ -283,13 +268,10 @@ if (!res.ok) {
               >
                 {openapiUrl}
               </a>{' '}
-              (OpenAPI JSON)
+              {t('openapiJsonSuffix')}
             </li>
           </ul>
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            If those URLs do not load, only <code className="font-mono text-xs">/v1</code> routes may be
-            public — the examples above still apply.
-          </p>
+          <p className="text-sm text-muted-foreground leading-relaxed">{t('swaggerFootnote')}</p>
         </section>
       </div>
     </div>

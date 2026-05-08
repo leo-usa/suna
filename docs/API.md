@@ -4,6 +4,8 @@
 
 **This guide on the site:** [https://dobby.now/docs/api](https://dobby.now/docs/api)
 
+You can also use a locale prefix (for example [https://dobby.now/zh/docs/api](https://dobby.now/zh/docs/api))—the page follows your language preference from the app as well.
+
 There is no implementation detail here—only how to call the HTTP API.
 
 ---

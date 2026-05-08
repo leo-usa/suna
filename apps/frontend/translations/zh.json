@@ -1006,32 +1006,98 @@
         "userSuffix": "（您的时区）"
       },
       "weekdays": {
-        "1": { "long": "星期一", "short": "一" },
-        "2": { "long": "星期二", "short": "二" },
-        "3": { "long": "星期三", "short": "三" },
-        "4": { "long": "星期四", "short": "四" },
-        "5": { "long": "星期五", "short": "五" },
-        "6": { "long": "星期六", "short": "六" },
-        "0": { "long": "星期日", "short": "日" }
+        "1": {
+          "long": "星期一",
+          "short": "一"
+        },
+        "2": {
+          "long": "星期二",
+          "short": "二"
+        },
+        "3": {
+          "long": "星期三",
+          "short": "三"
+        },
+        "4": {
+          "long": "星期四",
+          "short": "四"
+        },
+        "5": {
+          "long": "星期五",
+          "short": "五"
+        },
+        "6": {
+          "long": "星期六",
+          "short": "六"
+        },
+        "0": {
+          "long": "星期日",
+          "short": "日"
+        }
       },
       "presetQuick": {
-        "hourly": { "name": "每小时", "description": "整点巡检" },
-        "daily_9am": { "name": "每天上午 9:00", "description": "晨间例行" },
-        "daily_12pm": { "name": "每天中午 12:00", "description": "午间检查" },
-        "daily_6pm": { "name": "每天下午 6:00", "description": "晚间例行" },
-        "twice_daily": { "name": "每天两次", "description": "上午 9 点与下午 5 点" },
-        "weekdays_9am": { "name": "工作日 9:00", "description": "周一至周五上午" },
-        "monday_mornings": { "name": "每周一上午", "description": "每周一 9:00" },
-        "friday_evenings": { "name": "每周五傍晚", "description": "每周五 17:00" },
-        "weekend_mornings": { "name": "周末上午", "description": "周六与周日 10:00" },
-        "monthly_1st": { "name": "每月 1 日", "description": "每月首日 9:00" },
-        "monthly_15th": { "name": "每月 15 日", "description": "月中 9:00" },
-        "end_of_month": { "name": "每月末", "description": "每月最后几天 9:00" }
+        "hourly": {
+          "name": "每小时",
+          "description": "整点巡检"
+        },
+        "daily_9am": {
+          "name": "每天上午 9:00",
+          "description": "晨间例行"
+        },
+        "daily_12pm": {
+          "name": "每天中午 12:00",
+          "description": "午间检查"
+        },
+        "daily_6pm": {
+          "name": "每天下午 6:00",
+          "description": "晚间例行"
+        },
+        "twice_daily": {
+          "name": "每天两次",
+          "description": "上午 9 点与下午 5 点"
+        },
+        "weekdays_9am": {
+          "name": "工作日 9:00",
+          "description": "周一至周五上午"
+        },
+        "monday_mornings": {
+          "name": "每周一上午",
+          "description": "每周一 9:00"
+        },
+        "friday_evenings": {
+          "name": "每周五傍晚",
+          "description": "每周五 17:00"
+        },
+        "weekend_mornings": {
+          "name": "周末上午",
+          "description": "周六与周日 10:00"
+        },
+        "monthly_1st": {
+          "name": "每月 1 日",
+          "description": "每月首日 9:00"
+        },
+        "monthly_15th": {
+          "name": "每月 15 日",
+          "description": "月中 9:00"
+        },
+        "end_of_month": {
+          "name": "每月末",
+          "description": "每月最后几天 9:00"
+        }
       },
       "presetRecurring": {
-        "weekdays_9am": { "name": "工作日早上 9:00", "description": "仅工作日" },
-        "weekly_monday": { "name": "每周一", "description": "周报小结" },
-        "monthly_1st": { "name": "每月 1 日", "description": "月报汇总" }
+        "weekdays_9am": {
+          "name": "工作日早上 9:00",
+          "description": "仅工作日"
+        },
+        "weekly_monday": {
+          "name": "每周一",
+          "description": "周报小结"
+        },
+        "monthly_1st": {
+          "name": "每月 1 日",
+          "description": "月报汇总"
+        }
       }
     },
     "workerAppearance": {
@@ -2273,6 +2339,59 @@
       "home": "主页",
       "item": "项",
       "items": "项"
+    }
+  },
+  "docs": {
+    "apiPage": {
+      "title": "使用 Dobby API",
+      "introBeforeLink": "正式环境 Web 应用位于",
+      "introAfterLink": "。调用方式与普通 REST API（例如 OpenAI）相同：使用 HTTPS、固定的基础 URL、每次请求携带认证头，响应多为 JSON。下文路径均带有",
+      "introPrefixSuffix": "前缀。",
+      "sectionBaseUrl": "请求的基础 URL",
+      "baseUrlLead": "在生产环境集成时请使用：",
+      "baseUrlComparePart": "可与 OpenAI 的",
+      "baseUrlAppendPart": "类比：在其后追加路径，例如",
+      "baseUrlLocalLead": "若在本地使用 Docker 或 uvicorn 开发，请将请求指向本机的",
+      "baseUrlLocalMiddle": "地址（常见为",
+      "baseUrlLocalTail": "）。本页示例固定使用",
+      "baseUrlLocalClosing": "，便于直接复制到生产集成。",
+      "sectionAuth": "身份验证",
+      "authLeadBefore": "每次请求请选择以下",
+      "authLeadStrong": "一种且仅一种",
+      "authLeadAfter": "方式：",
+      "authTableUseCase": "场景",
+      "authTableHeader": "请求头",
+      "authTableValue": "取值说明",
+      "authRowScripts": "脚本、服务端与自动化集成",
+      "authRowScriptsFormat": "——同一字符串内依次为公钥、英文冒号、私钥。",
+      "authRowSession": "已登录会话",
+      "authRowSessionFormat": "——登录 Web 应用后获得的访问令牌（Bearer）。",
+      "authFooterBefore": "请先在",
+      "authFooterMiddle": "登录，随后在",
+      "authFooterAfter": "创建密钥。请将合并后的密钥保存在私密环境变量中，例如",
+      "settingsApiKeysLink": "设置 → API 密钥",
+      "sectionRequestFormat": "请求格式",
+      "rqMethods": "按接口文档使用 GET、POST、PATCH、PUT 或 DELETE。",
+      "rqJson": "JSON 请求体：设置 Content-Type: application/json，并使用 UTF-8 编码的 JSON。",
+      "rqForm": "部分接口使用表单字段（例如 POST /threads 的 name 字段）——请使用 multipart/form-data，或在 curl 中使用 -F。",
+      "rqSuccess": "成功时通常返回 JSON，HTTP 状态码多为 200 或 201。",
+      "sectionExamples": "示例",
+      "exListThreads": "列出线程（GET）",
+      "exCreateMessage": "创建消息（POST JSON）",
+      "exCreateMessageLead": "字段：type、content，可选 is_llm_message（布尔值）。",
+      "exCreateThread": "创建线程（POST 表单）",
+      "exCreateThreadLead": "使用表单字段 name，而非 JSON。",
+      "exFetch": "使用 API 密钥的 JavaScript fetch",
+      "sectionErrors": "错误响应",
+      "errorsLead": "出错时返回 HTTP 4xx 或 5xx，响应体为 JSON。常见结构例如：",
+      "errorsStructuredHint": "用于额度或账单等相关提示。",
+      "errorsFootnote": "请先确认 HTTP 状态码，再决定是否按成功数据处理响应体。",
+      "sectionSwagger": "交互式参考（Swagger）",
+      "swaggerLead": "若在 API 主机上开放了交互式文档，可访问：",
+      "openapiJsonSuffix": "（OpenAPI JSON）",
+      "swaggerFootnote": "若上述链接无法打开，可能仅对外开放 /v1 路径——仍可参照上文示例调用。",
+      "baseUrlOr": "或",
+      "backToApiSettings": "返回 API 设置"
     }
   }
 }

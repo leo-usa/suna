@@ -1014,32 +1014,98 @@
         "userSuffix": "(Your timezone)"
       },
       "weekdays": {
-        "1": { "long": "Monday", "short": "Mon" },
-        "2": { "long": "Tuesday", "short": "Tue" },
-        "3": { "long": "Wednesday", "short": "Wed" },
-        "4": { "long": "Thursday", "short": "Thu" },
-        "5": { "long": "Friday", "short": "Fri" },
-        "6": { "long": "Saturday", "short": "Sat" },
-        "0": { "long": "Sunday", "short": "Sun" }
+        "1": {
+          "long": "Monday",
+          "short": "Mon"
+        },
+        "2": {
+          "long": "Tuesday",
+          "short": "Tue"
+        },
+        "3": {
+          "long": "Wednesday",
+          "short": "Wed"
+        },
+        "4": {
+          "long": "Thursday",
+          "short": "Thu"
+        },
+        "5": {
+          "long": "Friday",
+          "short": "Fri"
+        },
+        "6": {
+          "long": "Saturday",
+          "short": "Sat"
+        },
+        "0": {
+          "long": "Sunday",
+          "short": "Sun"
+        }
       },
       "presetQuick": {
-        "hourly": { "name": "Every hour", "description": "Hourly check-ins" },
-        "daily_9am": { "name": "Daily at 9 AM", "description": "Morning routine" },
-        "daily_12pm": { "name": "Daily at 12 PM", "description": "Noon check" },
-        "daily_6pm": { "name": "Daily at 6 PM", "description": "Evening routine" },
-        "twice_daily": { "name": "Twice daily", "description": "9 AM and 5 PM" },
-        "weekdays_9am": { "name": "Weekdays at 9 AM", "description": "Monday-Friday mornings" },
-        "monday_mornings": { "name": "Monday mornings", "description": "Every Monday at 9 AM" },
-        "friday_evenings": { "name": "Friday evenings", "description": "Every Friday at 5 PM" },
-        "weekend_mornings": { "name": "Weekend mornings", "description": "Saturday & Sunday at 10 AM" },
-        "monthly_1st": { "name": "Monthly on 1st", "description": "First day of month at 9 AM" },
-        "monthly_15th": { "name": "Monthly on 15th", "description": "Mid-month at 9 AM" },
-        "end_of_month": { "name": "End of month", "description": "Last few days at 9 AM" }
+        "hourly": {
+          "name": "Every hour",
+          "description": "Hourly check-ins"
+        },
+        "daily_9am": {
+          "name": "Daily at 9 AM",
+          "description": "Morning routine"
+        },
+        "daily_12pm": {
+          "name": "Daily at 12 PM",
+          "description": "Noon check"
+        },
+        "daily_6pm": {
+          "name": "Daily at 6 PM",
+          "description": "Evening routine"
+        },
+        "twice_daily": {
+          "name": "Twice daily",
+          "description": "9 AM and 5 PM"
+        },
+        "weekdays_9am": {
+          "name": "Weekdays at 9 AM",
+          "description": "Monday-Friday mornings"
+        },
+        "monday_mornings": {
+          "name": "Monday mornings",
+          "description": "Every Monday at 9 AM"
+        },
+        "friday_evenings": {
+          "name": "Friday evenings",
+          "description": "Every Friday at 5 PM"
+        },
+        "weekend_mornings": {
+          "name": "Weekend mornings",
+          "description": "Saturday & Sunday at 10 AM"
+        },
+        "monthly_1st": {
+          "name": "Monthly on 1st",
+          "description": "First day of month at 9 AM"
+        },
+        "monthly_15th": {
+          "name": "Monthly on 15th",
+          "description": "Mid-month at 9 AM"
+        },
+        "end_of_month": {
+          "name": "End of month",
+          "description": "Last few days at 9 AM"
+        }
       },
       "presetRecurring": {
-        "weekdays_9am": { "name": "Weekdays at 9 AM", "description": "Business hours only" },
-        "weekly_monday": { "name": "Weekly on Monday", "description": "Weekly summary" },
-        "monthly_1st": { "name": "Monthly on 1st", "description": "Monthly reports" }
+        "weekdays_9am": {
+          "name": "Weekdays at 9 AM",
+          "description": "Business hours only"
+        },
+        "weekly_monday": {
+          "name": "Weekly on Monday",
+          "description": "Weekly summary"
+        },
+        "monthly_1st": {
+          "name": "Monthly on 1st",
+          "description": "Monthly reports"
+        }
       }
     },
     "workerAppearance": {
@@ -2281,6 +2347,59 @@
         "title": "Creating Custom Workers - Manual Configuration",
         "description": "Learn how to set up custom AI assistant workers with manual configuration. Explore integration options and tailor workers to your specific needs."
       }
+    }
+  },
+  "docs": {
+    "apiPage": {
+      "title": "Using the Dobby API",
+      "introBeforeLink": "The production web app lives at",
+      "introAfterLink": ". Call the HTTP API like other REST services (for example OpenAI): HTTPS, a stable base URL, an authentication header on each request, and JSON responses. Paths below use the",
+      "introPrefixSuffix": "prefix.",
+      "sectionBaseUrl": "Base URL for requests",
+      "baseUrlLead": "Use production integrations against:",
+      "baseUrlComparePart": "Same idea as OpenAI’s",
+      "baseUrlAppendPart": ": append paths such as",
+      "baseUrlLocalLead": "Developing locally with Docker or uvicorn? Point requests at your machine’s",
+      "baseUrlLocalMiddle": "URL (often",
+      "baseUrlLocalTail": "). The snippets here stay on",
+      "baseUrlLocalClosing": "so copied examples match production.",
+      "sectionAuth": "Authentication",
+      "authLeadBefore": "Send",
+      "authLeadStrong": "exactly one",
+      "authLeadAfter": "of these on each request:",
+      "authTableUseCase": "Use case",
+      "authTableHeader": "Header",
+      "authTableValue": "Value",
+      "authRowScripts": "Scripts, servers, integrations",
+      "authRowScriptsFormat": "— one string: public key, colon, secret key.",
+      "authRowSession": "Signed-in session",
+      "authRowSessionFormat": "— token from signing in to the web app.",
+      "authFooterBefore": "Sign in at",
+      "authFooterMiddle": ", then create keys under",
+      "authFooterAfter": ". Store the combined key in a secret such as",
+      "settingsApiKeysLink": "Settings → API keys",
+      "sectionRequestFormat": "Request format",
+      "rqMethods": "Use GET, POST, PATCH, PUT, or DELETE as documented for each endpoint.",
+      "rqJson": "JSON bodies: set Content-Type: application/json and send UTF-8 JSON.",
+      "rqForm": "Some endpoints use form fields instead (for example POST /threads with field name) — use multipart/form-data or -F in curl.",
+      "rqSuccess": "Successful responses are usually JSON with HTTP 200 or 201.",
+      "sectionExamples": "Examples",
+      "exListThreads": "List threads (GET)",
+      "exCreateMessage": "Create a message (POST JSON)",
+      "exCreateMessageLead": "Fields: type, content, and optionally is_llm_message (boolean).",
+      "exCreateThread": "Create a thread (POST form)",
+      "exCreateThreadLead": "Uses form field name, not JSON.",
+      "exFetch": "JavaScript fetch with API key",
+      "sectionErrors": "Errors",
+      "errorsLead": "Errors return JSON with HTTP 4xx or 5xx. Common shapes:",
+      "errorsStructuredHint": "for limits or billing-related responses.",
+      "errorsFootnote": "Check the status code before treating the body as success data.",
+      "sectionSwagger": "Interactive reference (Swagger)",
+      "swaggerLead": "When available on the API host:",
+      "openapiJsonSuffix": "(OpenAPI JSON)",
+      "swaggerFootnote": "If those URLs do not load, only /v1 routes may be public — the examples above still apply.",
+      "baseUrlOr": "or",
+      "backToApiSettings": "Back to API Settings"
     }
   }
 }
