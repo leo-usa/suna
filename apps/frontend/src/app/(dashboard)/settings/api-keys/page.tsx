@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { Key, Plus, Trash2, Copy, Shield, ExternalLink } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { DobbyLogo } from '@/components/sidebar/dobby-logo';
@@ -237,15 +238,13 @@ export default function APIKeysPage() {
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <a
-                    href="https://api.kortix.com/docs"
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <Link
+                    href="/docs/api"
                     className="inline-flex items-center gap-2 text-xs sm:text-sm font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
                   >
                     <span>{t('viewDocs')}</span>
                     <ExternalLink className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                  </a>
+                  </Link>
                 </div>
               </div>
             </div>

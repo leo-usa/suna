@@ -39,6 +39,7 @@ const PUBLIC_ROUTES = [
   '/careers',
   '/pricing', // Pricing page should be public
   '/tutorials', // Tutorials page should be public
+  '/docs', // API / product docs (e.g. /docs/api)
   '/countryerror', // Country restriction error page should be public
   ...locales.flatMap(locale => MARKETING_ROUTES.map(route => `/${locale}${route === '/' ? '' : route}`)),
 ];
