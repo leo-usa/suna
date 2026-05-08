@@ -401,6 +401,7 @@ const IntegrationsDropdown = memo(function IntegrationsDropdown({
   onOpenRegistry,
   onOpenPlanModal,
 }: IntegrationsDropdownProps) {
+  const tooltipsT = useTranslations('thread.chatInputTooltips');
   if (!isLoggedIn) return null;
 
   return (
@@ -427,7 +428,7 @@ const IntegrationsDropdown = memo(function IntegrationsDropdown({
         </div>
       </TooltipTrigger>
       <TooltipContent side="top">
-        <p>Integrations</p>
+        <p>{tooltipsT('integrations')}</p>
       </TooltipContent>
     </Tooltip>
   );

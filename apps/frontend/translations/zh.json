@@ -617,6 +617,14 @@
     "connect": "连接",
     "seeAllIntegrations": "+ 查看所有集成",
     "connectIntegrations": "连接集成",
+    "chatInputTooltips": {
+      "integrations": "集成",
+      "attachFiles": "添加文件",
+      "loginToAttachFiles": "请先登录再添加文件",
+      "recordVoiceMessage": "录制语音",
+      "clickToStopRecording": "点击停止录制",
+      "processing": "处理中..."
+    },
     "adaptive": "自适应",
     "adaptiveDescription": "智能上下文切换的快速响应",
     "autonomous": "自主",

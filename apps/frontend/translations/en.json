@@ -625,6 +625,14 @@
     "connect": "Connect",
     "seeAllIntegrations": "+ See all integrations",
     "connectIntegrations": "Connect integrations",
+    "chatInputTooltips": {
+      "integrations": "Integrations",
+      "attachFiles": "Attach files",
+      "loginToAttachFiles": "Please login to attach files",
+      "recordVoiceMessage": "Record voice message",
+      "clickToStopRecording": "Click to stop recording",
+      "processing": "Processing..."
+    },
     "adaptive": "Adaptive",
     "adaptiveDescription": "Quick responses with smart context switching",
     "autonomous": "Autonomous",

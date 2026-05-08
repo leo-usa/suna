@@ -13,6 +13,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { useTranslations } from 'next-intl';
 import { UploadedFile } from './chat-input';
 import { normalizeFilenameToNFC, normalizeMimeType } from '@agentpress/shared';
 import { backendApi } from '@/lib/api-client';
@@ -482,6 +483,7 @@ export const FileUploadHandler = memo(forwardRef<
     },
     ref,
   ) => {
+    const t = useTranslations('thread.chatInputTooltips');
     const queryClient = useQueryClient();
     // Clean up object URLs when component unmounts
     useEffect(() => {
@@ -549,7 +551,7 @@ export const FileUploadHandler = memo(forwardRef<
             </span>
           </TooltipTrigger>
           <TooltipContent side="top">
-            <p>{isLoggedIn ? 'Attach files' : 'Please login to attach files'}</p>
+            <p>{isLoggedIn ? t('attachFiles') : t('loginToAttachFiles')}</p>
           </TooltipContent>
         </Tooltip>
 
