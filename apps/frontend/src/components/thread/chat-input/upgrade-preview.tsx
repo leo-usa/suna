@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { isLocalMode } from '@/lib/config';
 import { Button } from '@/components/ui/button';
 import { TierBadge } from '@/components/billing/tier-badge';
+import { useTranslations } from 'next-intl';
 
 const BADGE_ORDER = ['Ultra', 'Plus', 'Pro'] as const;
 
@@ -30,6 +31,7 @@ export const UpgradePreview: React.FC<UpgradePreviewProps> = ({
     onIndicatorClick,
 }) => {
     const [currentBadge, setCurrentBadge] = useState(0);
+    const t = useTranslations('dashboard.upgradePreview');
 
     useEffect(() => {
         const interval = setInterval(() => {
@@ -62,12 +64,12 @@ export const UpgradePreview: React.FC<UpgradePreviewProps> = ({
             <div className="flex-1 min-w-0">
                 <motion.div className="flex items-center gap-2 mb-0.5">
                     <h4 className="text-sm font-medium text-foreground truncate">
-                        Unlock the full Dobby experience
+                        {t('title')}
                     </h4>
                 </motion.div>
 
                 <span className="text-xs text-muted-foreground truncate block">
-                    Dobby Advanced mode, 100+ Integrations, Triggers, Custom AI Workers & more
+                    {t('subtitle')}
                 </span>
             </div>
 

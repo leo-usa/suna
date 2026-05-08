@@ -69,6 +69,12 @@
       "hiringLink": "我们在招聘。"
     }
   },
+  "dashboard": {
+    "upgradePreview": {
+      "title": "解锁完整的 Dobby 体验",
+      "subtitle": "Dobby 高级模式、100+ 集成、触发器、自定义 AI Workers 等更多功能"
+    }
+  },
   "settings": {
     "title": "设置",
     "tabs": {
