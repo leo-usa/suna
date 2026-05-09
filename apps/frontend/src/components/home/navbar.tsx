@@ -109,7 +109,8 @@ export function Navbar({ isAbsolute = false }: NavbarProps) {
   }, []);
 
   // Get the appropriate CTA link based on device type
-  const ctaLink = isMobile ? '/app' : '/auth';
+  // App is disabled; always send users to auth instead of app stores.
+  const ctaLink = '/auth';
 
   // Single unified scroll handler with hysteresis
   const handleScroll = useCallback(() => {
@@ -227,6 +228,11 @@ export function Navbar({ isAbsolute = false }: NavbarProps) {
             <div className="flex items-center justify-end gap-2 sm:gap-3 ml-auto">
               <div className="hidden md:flex items-center gap-2">
                 <div className="rounded-lg bg-muted/50">
+                  <LocaleSwitcher variant="compact" />
+                </div>
+              </div>
+              <div className="flex md:hidden items-center">
+                <div className="rounded-lg bg-muted/30">
                   <LocaleSwitcher variant="compact" />
                 </div>
               </div>
