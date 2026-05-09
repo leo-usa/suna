@@ -341,11 +341,11 @@ async def log_requests_middleware(request: Request, call_next):
 
 # Define allowed origins based on environment
 allowed_origins = [
-    "https://www.dobby.com",
-    "https://dobby.com",
-    "https://dev.dobby.com",
-    "https://staging.dobby.com",
-    "https://prod-test.dobby.com",
+    "https://www.dobby.now",
+    "https://dobby.now",
+    "https://dev.dobby.now",
+    "https://staging.dobby.now",
+    "https://prod-test.dobby.now",
 ]
 # Allow all *.dobby.com subdomains, Vercel preview deployments, and Render Web Services (*.onrender.com)
 allow_origin_regex = (
