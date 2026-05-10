@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createServerClient } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
@@ -82,8 +82,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${baseUrl}/auth?error=${encodeURIComponent(error)}`)
   }
 
-  const supabase = await createClient()
-
   // Handle token-based verification (email confirmation, etc.)
   // Supabase sends these to the redirect URL for processing
   if (token && type) {
@@ -99,6 +97,30 @@ export async function GET(request: NextRequest) {
   // Handle code exchange (OAuth, magic link)
   if (code) {
     try {
+      // Session cookies must be set on the same NextResponse we return. Using
+      // cookies() from next/headers + a fresh NextResponse.redirect drops them
+      // in production (Google OAuth then lands on /auth with no session).
+      const sessionCookies = new Map<
+        string,
+        { value: string; options?: Parameters<NextResponse['cookies']['set']>[2] }
+      >()
+      const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          cookies: {
+            getAll() {
+              return request.cookies.getAll()
+            },
+            setAll(cookiesToSet) {
+              cookiesToSet.forEach(({ name, value, options }) => {
+                sessionCookies.set(name, { value, options })
+              })
+            },
+          },
+        }
+      )
+
       const { data, error } = await supabase.auth.exchangeCodeForSession(code)
       
       if (error) {
@@ -202,6 +224,10 @@ export async function GET(request: NextRequest) {
       redirectUrl.searchParams.set('auth_event', authEvent)
       redirectUrl.searchParams.set('auth_method', authMethod)
       const response = NextResponse.redirect(redirectUrl)
+
+      sessionCookies.forEach(({ value, options }, name) => {
+        response.cookies.set(name, value, options ?? {})
+      })
 
       // Clear referral cookie if it was processed
       if (shouldClearReferralCookie) {

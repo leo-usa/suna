@@ -251,9 +251,10 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Allow all public routes without any checks
+  // Allow all public routes without auth redirects, but still return the response
+  // that carries Supabase cookie updates from getUser() above (SSR refresh).
   if (PUBLIC_ROUTES.some(route => pathname === route || pathname.startsWith(route + '/'))) {
-    return NextResponse.next();
+    return supabaseResponse;
   }
 
   // Everything else requires authentication - reuse the user we already fetched
