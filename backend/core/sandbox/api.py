@@ -15,7 +15,14 @@ from pydantic import BaseModel
 from daytona_sdk import AsyncSandbox, SessionExecuteRequest
 from daytona_sdk.common.errors import DaytonaNotFoundError
 
-from core.sandbox.sandbox import get_or_start_sandbox, delete_sandbox, create_sandbox, daytona, sync_db_after_evicted_sandbox
+from core.sandbox.sandbox import (
+    get_or_start_sandbox,
+    delete_sandbox,
+    create_sandbox,
+    daytona,
+    sync_db_after_evicted_sandbox,
+    download_sandbox_file_bytes,
+)
 from core.utils.logger import logger
 from core.utils.auth_utils import get_optional_user_id, verify_and_get_user_id_from_jwt, verify_sandbox_access, verify_sandbox_access_optional
 from core.services.supabase import DBConnection
@@ -155,7 +162,6 @@ def normalize_path(path: str) -> str:
     except Exception as e:
         logger.error(f"Error normalizing path '{path}': {str(e)}")
         return path  # Return original path if decoding fails
-
 
 
 async def get_sandbox_by_id_safely(client, sandbox_id: str) -> AsyncSandbox:
@@ -481,7 +487,7 @@ async def read_file(
         # Read file with retry logic for transient errors (502, 503, 504)
         try:
             content = await retry_with_backoff(
-                operation=lambda: sandbox.fs.download_file(path),
+                operation=lambda: download_sandbox_file_bytes(sandbox, path),
                 operation_name=f"download_file({path}) from sandbox {sandbox_id}"
             )
         except Exception as download_err:
