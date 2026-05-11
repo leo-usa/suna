@@ -5,7 +5,7 @@ const path = require('path');
 const PROTOCOL_SCHEME = 'dobby';
 
 // Get URL from environment variable or default to production
-const APP_URL = process.env.APP_URL || 'https://dobby.com/';
+const APP_URL = process.env.APP_URL || 'https://dobby.now/';
 
 // Simple dev check without ES module dependency
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
@@ -54,7 +54,7 @@ function handleDeepLink(url) {
     return;
   }
   
-  // Convert dobby://auth/callback?code=xxx to https://dobby.com/auth/callback?code=xxx
+  // Convert dobby://auth/callback?code=xxx to the web app (APP_URL) + same path/query
   const deepLinkPath = url.replace(`${PROTOCOL_SCHEME}://`, '');
   const webUrl = normalizedUrl.endsWith('/') 
     ? normalizedUrl + deepLinkPath 

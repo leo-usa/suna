@@ -53,7 +53,7 @@ Set `APP_URL` environment variable to load a different URL:
 APP_URL=http://localhost:3000 npm start
 ```
 
-By default, it loads `https://dobby.com/`.
+By default, it loads `https://dobby.now/`.
 
 ## Installation
 
