@@ -92,21 +92,21 @@ function ResetPasswordContent() {
   return (
     <main className="flex flex-col items-center justify-center min-h-screen w-full">
       <div className="w-full divide-y divide-border">
-        <section className="w-full relative overflow-hidden">
-          <div className="relative flex flex-col items-center w-full px-6">
-            <div className="absolute inset-x-1/4 top-0 h-[600px] md:h-[800px] -z-20 bg-background rounded-b-xl"></div>
+          <section className="w-full relative overflow-hidden">
+            <div className="relative flex flex-col items-center w-full px-6">
+              <div className="absolute inset-x-1/4 top-0 h-[600px] md:h-[800px] -z-20 bg-background rounded-b-xl"></div>
 
-            {/* Header content */}
-            <div className="relative z-10 pt-24 pb-8 max-w-md mx-auto h-full w-full flex flex-col gap-2 items-center justify-center">
-              <Link
-                href="/auth"
-                className="group border border-border/50 bg-background hover:bg-accent/20 rounded-full text-sm h-8 px-3 flex items-center gap-2 transition-all duration-200 shadow-sm mb-6"
-              >
-                <ArrowLeft className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium text-muted-foreground text-xs tracking-wide">
+              {/* Header content */}
+              <div className="relative z-10 pt-24 pb-8 max-w-md mx-auto h-full w-full flex flex-col gap-2 items-center justify-center">
+                <Link
+                  href="/auth"
+                  className="group border border-border/50 bg-background hover:bg-accent/20 rounded-full text-sm h-8 px-3 flex items-center gap-2 transition-all duration-200 shadow-sm mb-6"
+                >
+                  <ArrowLeft className="h-4 w-4 text-muted-foreground" />
+                  <span className="font-medium text-muted-foreground text-xs tracking-wide">
                   Back to sign in
-                </span>
-              </Link>
+                  </span>
+                </Link>
 
               <h1 className="text-3xl md:text-4xl lg:text-5xl font-medium tracking-tighter text-center text-balance text-primary">
                 Reset Password

@@ -305,17 +305,17 @@ function createWindow() {
     });
   }
 
-  // Always load auth page directly for desktop app
-  const authUrl = normalizedUrl.endsWith('/') 
-    ? normalizedUrl + 'auth' 
-    : normalizedUrl + '/auth';
-  
+  // Open the web app homepage (same origin as APP_URL) so users get marketing + locale switcher
+  const startUrl = normalizedUrl.endsWith('/')
+    ? normalizedUrl
+    : `${normalizedUrl}/`;
+
   // Load the actual URL after the loading screen is shown
   setTimeout(() => {
-    mainWindow.loadURL(authUrl);
+    mainWindow.loadURL(startUrl);
   }, 100);
 
-  // Intercept navigation to prevent going to homepage and handle OAuth
+  // Intercept navigation for OAuth (popup flow)
   webContents.on('will-navigate', (event, navigationUrl) => {
     try {
       const url = new URL(navigationUrl);
@@ -376,68 +376,25 @@ function createWindow() {
         
         return;
       }
-      
-      // Redirect homepage to auth
-      if (url.pathname === '/' || url.pathname === '') {
-        event.preventDefault();
-        mainWindow.loadURL(authUrl);
-        return;
-      }
     } catch (e) {
       console.error('Navigation error:', e);
     }
   });
 
-  // Inject homepage redirect protection on page load
+  // Help OAuth links that use target="_blank" still open in an in-app popup (same as will-navigate flow)
   webContents.on('did-finish-load', () => {
-    
-    // Inject homepage redirect protection
     webContents.executeJavaScript(`
       (function() {
-        const originalPushState = history.pushState;
-        const originalReplaceState = history.replaceState;
-        
-        history.pushState = function() {
-          const url = arguments[2];
-          if (url === '/' || url === '') {
-            window.location.href = '/auth';
-            return;
-          }
-          return originalPushState.apply(history, arguments);
-        };
-        
-        history.replaceState = function() {
-          const url = arguments[2];
-          if (url === '/' || url === '') {
-            window.location.href = '/auth';
-            return;
-          }
-          return originalReplaceState.apply(history, arguments);
-        };
-        
-        if (window.location.pathname === '/' || window.location.pathname === '') {
-          window.location.href = '/auth';
-        }
-        
-        window.addEventListener('popstate', function() {
-          if (window.location.pathname === '/' || window.location.pathname === '') {
-            window.location.href = '/auth';
-          }
-        });
-        
-        // Intercept links with target="_blank" to ensure they open in popups
         document.addEventListener('click', function(e) {
           const link = e.target.closest('a[target="_blank"]');
           if (link && link.href) {
             const href = link.href;
-            // OAuth URLs should open via window.open() to trigger popup handler
             const isOAuthUrl = href.includes('accounts.google.com') ||
                                href.includes('github.com/login/oauth') ||
                                href.includes('api.github.com') ||
                                href.includes('supabase.co/auth') ||
                                href.includes('oauth') ||
                                href.includes('authorize');
-            
             if (isOAuthUrl) {
               e.preventDefault();
               window.open(href, '_blank', 'width=500,height=700');
@@ -446,26 +403,6 @@ function createWindow() {
         }, true);
       })();
     `).catch(() => {});
-  });
-
-  webContents.on('did-navigate', (event, url) => {
-    try {
-      const urlObj = new URL(url);
-      if (urlObj.pathname === '/' || urlObj.pathname === '') {
-        mainWindow.loadURL(authUrl);
-        return;
-      }
-    } catch (e) {}
-  });
-
-  webContents.on('did-navigate-in-page', (event, url) => {
-    try {
-      const urlObj = new URL(url);
-      if (urlObj.pathname === '/' || urlObj.pathname === '') {
-        mainWindow.loadURL(authUrl);
-        return;
-      }
-    } catch (e) {}
   });
 
   // Handle all window.open() calls - OAuth and external links

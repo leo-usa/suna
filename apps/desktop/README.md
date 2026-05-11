@@ -53,7 +53,7 @@ Set `APP_URL` environment variable to load a different URL:
 APP_URL=http://localhost:3000 npm start
 ```
 
-By default, it loads `https://dobby.now/`.
+By default, it loads `https://dobby.now/` (the marketing homepage). Users can change language there, then open **Sign in** to reach `/auth`.
 
 ## Installation
 
