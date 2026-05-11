@@ -16,6 +16,16 @@ npm install
 npm start
 ```
 
+## App icon (macOS / Windows / Linux)
+
+Icons under `assets/` are generated from the Dobby brand SVG in the web app. To refresh after changing the logo:
+
+```bash
+bash scripts/generate-icons-from-brand.sh
+```
+
+Requires **macOS**, **rsvg-convert** (e.g. `brew install librsvg`), and **iconutil** / **sips** (system).
+
 ## Building
 
 Build for your platform:
