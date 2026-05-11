@@ -18,8 +18,12 @@ const STORE_LINKS = {
 
 const DOWNLOAD_LINKS = {
   windows: 'https://download.dobby.com/desktop/latest/windows/Dobby%20Setup%201.0.0.exe',
-  macArm: 'https://download.dobby.com/desktop/latest/macos/Dobby-1.0.0-arm64.dmg',
-  macIntel: 'https://download.dobby.com/desktop/latest/macos/Dobby-1.0.0-x64.dmg',
+  /** Apple Silicon (M1/M2/M3) — hosted on Supabase Storage */
+  macArm:
+    'https://tsdrmlnyclxwkryqrjic.supabase.co/storage/v1/object/public/Desktop%20App/Dobby-1.0.0-arm64.dmg',
+  /** Intel Mac DMG — set when uploaded to the same bucket (otherwise secondary link is hidden) */
+  macIntel:
+    (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_DESKTOP_DOWNLOAD_MAC_INTEL) || '',
 };
 
 type DesktopPlatform = 'windows' | 'mac';
@@ -146,7 +150,9 @@ export function KortixAppBanners(props: KortixAppBannersProps) {
   };
 
   const handleDownloadIntel = () => {
-    window.open(DOWNLOAD_LINKS.macIntel, '_blank');
+    if (DOWNLOAD_LINKS.macIntel) {
+      window.open(DOWNLOAD_LINKS.macIntel, '_blank');
+    }
   };
 
   const desktopPlatformLabel = desktopPlatform === 'windows' ? 'Windows' : 'Mac (M series)';
@@ -352,7 +358,7 @@ export function KortixAppBanners(props: KortixAppBannersProps) {
                         </div>
                       </button>
                       
-                      {desktopPlatform === 'mac' && (
+                      {desktopPlatform === 'mac' && DOWNLOAD_LINKS.macIntel && (
                         <button
                           onClick={handleDownloadIntel}
                           className="w-full mt-2 text-[10px] text-muted-foreground dark:text-white/60 hover:text-foreground dark:hover:text-white transition-colors"
