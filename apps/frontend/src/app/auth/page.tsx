@@ -765,7 +765,7 @@ function LoginContent() {
                   onClick={() => setShowReferralDialog(true)}
                   className="text-[11px] sm:text-xs text-muted-foreground hover:text-foreground transition-colors w-full text-center mt-1 touch-manipulation"
                 >
-                  Have a referral code?
+                  {t('haveReferralCode')}
                 </button>
               )}
             </form>

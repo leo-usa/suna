@@ -1037,7 +1037,10 @@
     "signInOrCreateAccountToTalk": "Inicia sesión o crea una cuenta para hablar con Dobby",
     "orContinueWithEmail": "o continúa con email",
     "signInWithEmail": "Iniciar sesión con email",
-    "signInWithPassword": "Iniciar sesión con contraseña",
+    "signInWithPassword": "Usar contraseña para iniciar sesión o registrarse",
+    "passwordPageDescriptionSignIn": "Introduce tu correo y contraseña para acceder a tu cuenta",
+    "passwordPageDescriptionSignUp": "Introduce tu correo y contraseña para crear tu cuenta",
+    "unexpectedAuthError": "Ha ocurrido un error inesperado",
     "createNewAccount": "Crear nueva cuenta",
     "byContinuingYouAgreeSimple": "Al continuar, aceptas nuestra",
     "phoneVerification": {

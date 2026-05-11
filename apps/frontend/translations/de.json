@@ -955,7 +955,10 @@
     "signInOrCreateAccountToTalk": "Melde dich an oder erstelle ein Konto, um mit Dobby zu sprechen",
     "orContinueWithEmail": "oder mit E-Mail fortfahren",
     "signInWithEmail": "Mit E-Mail anmelden",
-    "signInWithPassword": "Stattdessen mit Passwort anmelden",
+    "signInWithPassword": "Mit Passwort anmelden oder registrieren",
+    "passwordPageDescriptionSignIn": "Gib E-Mail und Passwort ein, um auf dein Konto zuzugreifen",
+    "passwordPageDescriptionSignUp": "Gib E-Mail und Passwort ein, um ein Konto zu erstellen",
+    "unexpectedAuthError": "Ein unerwarteter Fehler ist aufgetreten",
     "createNewAccount": "Neues Konto erstellen",
     "byContinuingYouAgreeSimple": "Durch Fortfahren stimmst du unserer",
     "phoneVerification": {

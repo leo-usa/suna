@@ -14,6 +14,7 @@ import { signInWithPassword, signUpWithPassword } from '../actions';
 import { useAuth } from '@/components/AuthProvider';
 import { DobbyLogo } from '@/components/sidebar/dobby-logo';
 import { cn } from '@/lib/utils';
+import { useTranslations } from 'next-intl';
 
 function PasswordAuthContent() {
   const router = useRouter();
@@ -22,6 +23,7 @@ function PasswordAuthContent() {
   const { user, isLoading } = useAuth();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSignUp, setIsSignUp] = useState(false);
+  const t = useTranslations('auth');
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -67,7 +69,7 @@ function PasswordAuthContent() {
         return;
       }
       
-      const errorMsg = error?.message || 'An unexpected error occurred';
+      const errorMsg = error?.message || t('unexpectedAuthError');
       setErrorMessage(errorMsg);
       toast.error(errorMsg);
     }
@@ -94,7 +96,7 @@ function PasswordAuthContent() {
               >
                 <ArrowLeft className="h-4 w-4 text-muted-foreground" />
                 <span className="font-medium text-muted-foreground text-xs tracking-wide">
-                  Back to sign in
+                  {t('backToSignIn')}
                 </span>
               </Link>
 
@@ -117,7 +119,7 @@ function PasswordAuthContent() {
                       : "text-muted-foreground hover:text-foreground"
                   )}
                 >
-                  Sign in
+                  {t('signIn')}
                 </button>
                 <button
                   type="button"
@@ -132,18 +134,15 @@ function PasswordAuthContent() {
                       : "text-muted-foreground hover:text-foreground"
                   )}
                 >
-                  Sign up
+                  {t('signUp')}
                 </button>
               </div>
 
               <h1 className="text-3xl md:text-4xl lg:text-5xl font-medium tracking-tighter text-center text-balance text-primary">
-                {isSignUp ? 'Create Account' : 'Sign in'}
+                {isSignUp ? t('createAccount') : t('signIn')}
               </h1>
               <p className="text-base md:text-lg text-center text-muted-foreground font-medium text-balance leading-relaxed tracking-tight mt-2 mb-6">
-                {isSignUp 
-                  ? 'Enter your email and password to create your account'
-                  : 'Enter your email and password to access your account'
-                }
+                {isSignUp ? t('passwordPageDescriptionSignUp') : t('passwordPageDescriptionSignIn')}
               </p>
             </div>
           </div>
@@ -164,7 +163,7 @@ function PasswordAuthContent() {
                     id="email"
                     name="email"
                     type="email"
-                    placeholder="Email address"
+                    placeholder={t('emailAddress')}
                     className="h-12 rounded-full bg-background border-border"
                     required
                     autoComplete="email"
@@ -176,7 +175,7 @@ function PasswordAuthContent() {
                     id="password"
                     name="password"
                     type="password"
-                    placeholder="Password"
+                    placeholder={t('password')}
                     className="h-12 rounded-full bg-background border-border"
                     required
                     autoComplete={isSignUp ? 'new-password' : 'current-password'}
@@ -189,7 +188,7 @@ function PasswordAuthContent() {
                       id="confirmPassword"
                       name="confirmPassword"
                       type="password"
-                      placeholder="Confirm password"
+                      placeholder={t('confirmPassword')}
                       className="h-12 rounded-full bg-background border-border"
                       required
                       autoComplete="new-password"
@@ -206,9 +205,9 @@ function PasswordAuthContent() {
                   <SubmitButton
                     formAction={handleAuth}
                     className="w-full h-12 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-md"
-                    pendingText={isSignUp ? 'Creating account...' : 'Signing in...'}
+                    pendingText={isSignUp ? t('creatingAccount') : t('signingIn')}
                   >
-                    {isSignUp ? 'Create account' : 'Sign in'}
+                    {isSignUp ? t('createAccount') : t('signIn')}
                   </SubmitButton>
                 </div>
               </form>
@@ -219,7 +218,7 @@ function PasswordAuthContent() {
                     href="/auth/reset-password"
                     className="text-sm text-muted-foreground hover:text-foreground transition-colors underline-offset-4 hover:underline"
                   >
-                    Forgot your password?
+                    {t('forgotPassword')}
                   </Link>
                 </div>
               )}
@@ -228,7 +227,7 @@ function PasswordAuthContent() {
                 <p className="text-xs text-center text-muted-foreground">
                   {isSignUp ? (
                     <>
-                      Already have an account?{' '}
+                      {t('alreadyHaveAccount')}{' '}
                       <button
                         type="button"
                         onClick={() => {
@@ -237,12 +236,12 @@ function PasswordAuthContent() {
                         }}
                         className="text-primary hover:underline underline-offset-4"
                       >
-                        Sign in
+                        {t('signIn')}
                       </button>
                     </>
                   ) : (
                     <>
-                      Don't have an account?{' '}
+                      {t('dontHaveAccount')}{' '}
                       <button
                         type="button"
                         onClick={() => {
@@ -251,7 +250,7 @@ function PasswordAuthContent() {
                         }}
                         className="text-primary hover:underline underline-offset-4"
                       >
-                        Sign up
+                        {t('signUp')}
                       </button>
                     </>
                   )}

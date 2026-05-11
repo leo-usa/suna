@@ -1039,7 +1039,10 @@
     "signInOrCreateAccountToTalk": "Accedi o crea un account per parlare con Dobby",
     "orContinueWithEmail": "o continua con email",
     "signInWithEmail": "Accedi con email",
-    "signInWithPassword": "Accedi con password",
+    "signInWithPassword": "Accedi o registrati con password",
+    "passwordPageDescriptionSignIn": "Inserisci email e password per accedere al tuo account",
+    "passwordPageDescriptionSignUp": "Inserisci email e password per creare il tuo account",
+    "unexpectedAuthError": "Si è verificato un errore imprevisto",
     "createNewAccount": "Crea nuovo account",
     "byContinuingYouAgreeSimple": "Continuando, accetti la nostra",
     "phoneVerification": {

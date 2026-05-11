@@ -1695,7 +1695,10 @@
     "signInOrCreateAccountToTalk": "登录或创建账户以与Dobby对话",
     "orContinueWithEmail": "或使用邮箱继续",
     "signInWithEmail": "使用邮箱登录",
-    "signInWithPassword": "改用密码登录",
+    "signInWithPassword": "改用密码登录或注册",
+    "passwordPageDescriptionSignIn": "输入邮箱和密码登录账户",
+    "passwordPageDescriptionSignUp": "输入邮箱和密码注册账户",
+    "unexpectedAuthError": "发生意外错误，请稍后重试",
     "createNewAccount": "创建新账户",
     "byContinuingYouAgreeSimple": "继续即表示您同意我们的",
     "phoneVerification": {
