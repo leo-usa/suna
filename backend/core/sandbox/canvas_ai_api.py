@@ -215,7 +215,7 @@ async def process_with_gemini(
             }
         ],
         "modalities": ["image", "text"],
-        "app": "Dobby.com"
+        "app": "Dobby.now"
     }
     
     async with get_http_client() as client:

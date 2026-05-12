@@ -307,8 +307,8 @@ class Configuration:
     OPENROUTER_API_BASE: Optional[str] = "https://openrouter.ai/api/v1"
     OPENAI_COMPATIBLE_API_KEY: Optional[str] = None
     OPENAI_COMPATIBLE_API_BASE: Optional[str] = None
-    OR_SITE_URL: Optional[str] = "https://www.dobby.com"
-    OR_APP_NAME: Optional[str] = "Dobby.com"
+    OR_SITE_URL: Optional[str] = "https://www.dobby.now"
+    OR_APP_NAME: Optional[str] = "Dobby.now"
     
     # Frontend URL configuration
     FRONTEND_URL_ENV: Optional[str] = None
@@ -512,8 +512,8 @@ class Configuration:
         Get the frontend URL based on environment.
         
         Returns:
-        - Production: 'https://dobby.com' (or FRONTEND_URL_ENV if set)
-        - Staging: 'https://staging.dobby.com' (or FRONTEND_URL_ENV if set)
+        - Production: 'https://dobby.now' (or FRONTEND_URL_ENV if set)
+        - Staging: 'https://staging.dobby.now' (or FRONTEND_URL_ENV if set)
         - Local: FRONTEND_URL_ENV or 'http://localhost:3000'
         """
         # Check for environment variable override first
@@ -522,7 +522,7 @@ class Configuration:
         
         # Environment-based defaults
         if self.ENV_MODE == EnvMode.PRODUCTION:
-            return 'https://dobby.com'
+            return 'https://dobby.now'
         elif self.ENV_MODE == EnvMode.STAGING:
             return 'http://localhost:3000'
         else:

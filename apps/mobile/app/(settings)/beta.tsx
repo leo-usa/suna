@@ -27,7 +27,7 @@ export default function BetaScreen() {
 
   const handleVisitWeb = React.useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    Linking.openURL('https://dobby.com');
+    Linking.openURL('https://dobby.now');
   }, []);
 
   return (

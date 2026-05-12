@@ -15,7 +15,7 @@ Pulumi Infrastructure-as-Code for Suna
                     │   ACTIVE_BACKEND=lightsail          (future: ecs)        │
                     │         │                                 │              │
                     │         ▼                                 ▼              │
-                    │   api-lightsail.dobby.com         api-ecs.dobby.com    │
+                    │   api-lightsail.dobby.now         api-ecs.dobby.now    │
                     │   (Tunnel)                         (Direct to ALB)       │
                     └─────────┬─────────────────────────────────┬──────────────┘
                               │                                 │

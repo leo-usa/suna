@@ -3,7 +3,7 @@ User-agent: *
 Allow: /
 
 # Sitemap
-Sitemap: https://dobby.com/sitemap.xml
+Sitemap: https://dobby.now/sitemap.xml
 
 # Disallow sensitive routes
 Disallow: /api/

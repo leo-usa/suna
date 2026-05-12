@@ -106,7 +106,7 @@ dependencies = [
 ]
 
 [project.urls]
-homepage = "https://www.dobby.com"
+homepage = "https://www.dobby.now"
 repository = "https://github.com/kortix-ai/suna"
 
 [tool.uv]

@@ -347,7 +347,7 @@ allowed_origins = [
     "https://staging.dobby.now",
     "https://prod-test.dobby.now",
 ]
-# Allow all *.dobby.com subdomains, Vercel preview deployments, and Render Web Services (*.onrender.com)
+# Allow all *.dobby.now subdomains, Vercel preview deployments, and Render Web Services (*.onrender.com)
 allow_origin_regex = (
     r"https://([a-z0-9-]+\.)?kortix\.com|https://.*-kortixai\.vercel\.app|https://[a-z0-9.-]+\.onrender\.com"
 )
@@ -359,7 +359,7 @@ if config.ENV_MODE == EnvMode.LOCAL:
 
 # Add staging-specific origins
 if config.ENV_MODE == EnvMode.STAGING:
-    allowed_origins.append("https://staging.dobby.com")
+    allowed_origins.append("https://staging.dobby.now")
     allowed_origins.append("http://localhost:3000")
 
 app.add_middleware(

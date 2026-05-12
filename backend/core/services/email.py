@@ -9,9 +9,9 @@ logger = logging.getLogger(__name__)
 class EmailService:
     def __init__(self):
         self.api_token = os.getenv('MAILTRAP_API_TOKEN')
-        self.sender_email = os.getenv('MAILTRAP_SENDER_EMAIL', 'hey@dobby.com')
+        self.sender_email = os.getenv('MAILTRAP_SENDER_EMAIL', 'hey@dobby.now')
         self.sender_name = os.getenv('MAILTRAP_SENDER_NAME', 'Dobby Team')
-        self.hello_email = 'hello@dobby.com'
+        self.hello_email = 'hello@dobby.now'
         
         if not self.api_token:
             logger.warning("MAILTRAP_API_TOKEN not found in environment variables")
@@ -191,7 +191,7 @@ class EmailService:
 
     <p>Hi {user_name},</p>
 
-    <p><em><strong>Welcome to <a href="https://www.dobby.com/">Dobby.com</a> — we're excited to have you on board!</strong></em></p>
+    <p><em><strong>Welcome to <a href="https://www.dobby.now/">Dobby.now</a> — we're excited to have you on board!</strong></em></p>
 
     <p>To get started, we'd like to get to know you better: fill out this short <a href="https://docs.google.com/forms/d/e/1FAIpQLSef1EHuqmIh_iQz-kwhjnzSC3Ml-V_5wIySDpMoMU9W_j24JQ/viewform">form</a>!</p>
 
@@ -208,7 +208,7 @@ class EmailService:
     def _get_welcome_email_text(self, user_name: str) -> str:
         return f"""Hi {user_name},
 
-Welcome to https://www.dobby.com/ — we're excited to have you on board!
+Welcome to https://www.dobby.now/ — we're excited to have you on board!
 
 To get started, we'd like to get to know you better: fill out this short form!
 https://docs.google.com/forms/d/e/1FAIpQLSef1EHuqmIh_iQz-kwhjnzSC3Ml-V_5wIySDpMoMU9W_j24JQ/viewform
@@ -273,7 +273,7 @@ You received this email because you signed up for a Dobby account."""
     <tr>
       <td>
         <div style="text-align: center; margin-bottom: 40px;">
-          <img src="https://dobby.com/Logomark.svg" alt="Dobby" style="height: 24px; width: auto; display: inline-block;" />
+          <img src="https://dobby.now/Logomark.svg" alt="Dobby" style="height: 24px; width: auto; display: inline-block;" />
         </div>
         <div style="background-color: #ffffff; border-radius: 16px; padding: 40px 32px;">
           {content}
@@ -345,7 +345,7 @@ Claim your invite: {referral_url}
     <tr>
       <td>
         <div style="text-align: center; margin-bottom: 40px;">
-          <img src="https://dobby.com/Logomark.svg" alt="Dobby" style="height: 24px; width: auto; display: inline-block;" />
+          <img src="https://dobby.now/Logomark.svg" alt="Dobby" style="height: 24px; width: auto; display: inline-block;" />
         </div>
         <div style="background-color: #ffffff; border-radius: 16px; padding: 40px 32px; text-align: center;">
           <h1 style="font-size: 24px; font-weight: 500; color: #000; margin: 0 0 16px 0; letter-spacing: -0.02em;">

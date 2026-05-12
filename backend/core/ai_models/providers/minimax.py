@@ -30,7 +30,7 @@ class MiniMaxProvider(ProviderConfig):
         
         if self._use_openrouter:
             extra_body = kwargs.get("extra_body", {})
-            extra_body["app"] = kwargs.get("app_name", "Dobby.com")
+            extra_body["app"] = kwargs.get("app_name", "Dobby.now")
             params["extra_body"] = extra_body
         
         return params
@@ -66,7 +66,7 @@ class MiniMaxProvider(ProviderConfig):
 
 class OpenRouterProvider(ProviderConfig):
     
-    def __init__(self, app_name: str = "Dobby.com", site_url: str = "https://www.dobby.com"):
+    def __init__(self, app_name: str = "Dobby.now", site_url: str = "https://www.dobby.now"):
         self._app_name = app_name
         self._site_url = site_url
     

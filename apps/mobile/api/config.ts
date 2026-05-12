@@ -45,18 +45,18 @@ export function getFrontendUrl(): string {
 
   // Infer from backend URL - if backend is production, frontend should be too
   if (BACKEND_URL.includes('api.kortix.com') || BACKEND_URL.includes('api.suna.so')) {
-    return 'https://dobby.com';
+    return 'https://dobby.now';
   }
   if (BACKEND_URL.includes('staging.api') || BACKEND_URL.includes('staging-api')) {
-    return 'https://staging.dobby.com';
+    return 'https://staging.dobby.now';
   }
 
   // Fall back to environment-based defaults
   switch (ENV_MODE) {
     case EnvMode.PRODUCTION:
-      return 'https://dobby.com';
+      return 'https://dobby.now';
     case EnvMode.STAGING:
-      return 'https://staging.dobby.com';
+      return 'https://staging.dobby.now';
     case EnvMode.LOCAL:
     default:
       return 'http://localhost:3000';

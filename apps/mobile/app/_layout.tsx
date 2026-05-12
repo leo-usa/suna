@@ -263,11 +263,11 @@ export default function RootLayout() {
         scheme: parsedUrl.scheme,
       });
 
-      // Check for universal links (https://dobby.com/share/xxx or https://staging.dobby.com/share/xxx)
+      // Check for universal links (https://dobby.now/share/xxx or https://staging.dobby.now/share/xxx)
       const isUniversalLink = parsedUrl.scheme === 'https' &&
-        (parsedUrl.hostname === 'dobby.com' ||
-          parsedUrl.hostname === 'www.dobby.com' ||
-          parsedUrl.hostname === 'staging.dobby.com');
+        (parsedUrl.hostname === 'dobby.now' ||
+          parsedUrl.hostname === 'www.dobby.now' ||
+          parsedUrl.hostname === 'staging.dobby.now');
 
       // Handle universal link share paths first
       if (isUniversalLink && parsedUrl.path?.startsWith('/share/')) {
@@ -452,7 +452,7 @@ export default function RootLayout() {
           router.replace('/auth');
         }
       } else if (parsedUrl.path?.startsWith('share/') || parsedUrl.hostname === 'share') {
-        // Handle share links: dobby://share/xxx or https://dobby.com/share/xxx
+        // Handle share links: dobby://share/xxx or https://dobby.now/share/xxx
         console.log('🔗 Share link detected');
 
         // Extract thread ID from path

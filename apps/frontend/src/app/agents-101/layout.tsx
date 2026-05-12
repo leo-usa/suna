@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Workers 101 | Dobby',
     description: 'An introduction to AI Workers.',
-    url: 'https://www.dobby.com/agents-101',
+    url: 'https://www.dobby.now/agents-101',
     siteName: 'Dobby',
     images: [{ url: '/banner.png', width: 1200, height: 630 }],
     type: 'website',

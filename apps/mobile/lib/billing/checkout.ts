@@ -4,7 +4,7 @@
  * Handles opening checkout URLs (provided by our backend) in an in-app browser.
  * Our backend handles the actual Stripe integration and returns masked/proxied URLs.
  * 
- * Note: The backend should return dobby.com URLs that wrap/proxy Stripe,
+ * Note: The backend should return dobby.now URLs that wrap/proxy Stripe,
  * not direct stripe.com URLs for compliance.
  */
 
@@ -56,7 +56,7 @@ async function fetchApi<T>(
 // Backend API Functions
 // 
 // These call our backend, which handles Stripe integration and returns
-// checkout URLs (should be dobby.com masked URLs, not direct stripe.com)
+// checkout URLs (should be dobby.now masked URLs, not direct stripe.com)
 // ============================================================================
 
 const checkoutApi = {
@@ -112,7 +112,7 @@ function buildCancelUrl(): string {
  * Open checkout URL in in-app browser
  * 
  * The checkout URL is provided by our backend, which should return
- * a dobby.com masked URL (not direct stripe.com for compliance)
+ * a dobby.now masked URL (not direct stripe.com for compliance)
  */
 async function openCheckoutInBrowser(
   checkoutUrl: string,
@@ -283,7 +283,7 @@ export async function openBillingPortal(returnUrl?: string): Promise<void> {
     // Direct users to the web app's billing management page
     const webBillingUrl = process.env.EXPO_PUBLIC_WEB_APP_URL 
       ? `${process.env.EXPO_PUBLIC_WEB_APP_URL}/subscription`
-      : 'https://www.dobby.com/subscription';
+      : 'https://www.dobby.now/subscription';
 
     await openExternalUrl(webBillingUrl);
   } catch (error) {

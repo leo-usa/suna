@@ -119,12 +119,12 @@ additional_redirect_urls = [
   "dobby://auth/callback",
   "http://localhost:3000/**",
   "http://localhost:3000/auth/callback",
-  "https://staging.dobby.com/**",
-  "https://staging.dobby.com/auth/callback",
-  "https://dobby.com/**",
-  "https://dobby.com/auth/callback",
-  "https://www.dobby.com/**",
-  "https://www.dobby.com/auth/callback",
+  "https://staging.dobby.now/**",
+  "https://staging.dobby.now/auth/callback",
+  "https://dobby.now/**",
+  "https://dobby.now/auth/callback",
+  "https://www.dobby.now/**",
+  "https://www.dobby.now/auth/callback",
 ]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600

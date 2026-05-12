@@ -25,7 +25,7 @@ export function isElectron(): boolean {
 
 /**
  * Gets the auth callback URL for the current environment
- * - Web: returns the web URL (https://dobby.com/auth/callback)
+ * - Web: returns the web URL (https://dobby.now/auth/callback)
  * - Electron: returns the custom protocol URL (dobby://auth/callback)
  */
 export function getAuthCallbackUrl(returnUrl?: string, termsAccepted?: boolean): string {

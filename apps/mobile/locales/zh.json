@@ -470,8 +470,8 @@
   "billing": {
     "loadingPaywall": "加载套餐中...",
     "checkoutUnavailable": "移动端结账不可用",
-    "checkoutUnavailableMessage": "要订阅套餐，请在网页上访问 dobby.com。",
-    "goToWeb": "前往 dobby.com",
+    "checkoutUnavailableMessage": "要订阅套餐，请在网页上访问 dobby.now。",
+    "goToWeb": "前往 dobby.now",
     "billingStatus": "账单状态",
     "loading": "加载账单信息中...",
     "error": "加载账单信息失败",
@@ -520,12 +520,12 @@
   "beta": {
     "title": "测试功能",
     "webSupportTitle": "网页版完全支持",
-    "webSupportDescription": "可在 Dobby.com 使用。即将登陆移动端—移动端仍在开发中。",
-    "visitKortix": "访问 Dobby.com",
+    "webSupportDescription": "可在 Dobby.now 使用。即将登陆移动端—移动端仍在开发中。",
+    "visitKortix": "访问 Dobby.now",
     "advancedFeatures": "高级功能",
     "mobileBeta": "移动端测试版",
     "pleaseNote": "注意事项",
-    "mobileWarning": "移动端仍在开发中，可能存在问题。为了获得最佳体验，请使用 Dobby.com。"
+    "mobileWarning": "移动端仍在开发中，可能存在问题。为了获得最佳体验，请使用 Dobby.now。"
   },
   "accountDeletion": {
     "title": "删除账户",

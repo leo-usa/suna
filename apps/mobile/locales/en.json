@@ -550,8 +550,8 @@
   "billing": {
     "loadingPaywall": "Loading plans...",
     "checkoutUnavailable": "Mobile checkout not available",
-    "checkoutUnavailableMessage": "To subscribe to a plan, please visit dobby.com on the web.",
-    "goToWeb": "Go to dobby.com",
+    "checkoutUnavailableMessage": "To subscribe to a plan, please visit dobby.now on the web.",
+    "goToWeb": "Go to dobby.now",
     "billingStatus": "Billing Status",
     "loading": "Loading billing information...",
     "error": "Failed to load billing information",
@@ -600,12 +600,12 @@
   "beta": {
     "title": "Beta Features",
     "webSupportTitle": "Fully Supported on Web",
-    "webSupportDescription": "Available on Dobby.com. Coming to mobile soon—still work-in-progress here.",
-    "visitKortix": "Visit Dobby.com",
+    "webSupportDescription": "Available on Dobby.now. Coming to mobile soon—still work-in-progress here.",
+    "visitKortix": "Visit Dobby.now",
     "advancedFeatures": "Advanced Features",
     "mobileBeta": "Mobile Beta",
     "pleaseNote": "Please Note",
-    "mobileWarning": "Work-in-progress on mobile and may have issues. For the best experience, use Dobby.com."
+    "mobileWarning": "Work-in-progress on mobile and may have issues. For the best experience, use Dobby.now."
   },
   "accountDeletion": {
     "title": "Delete Account",

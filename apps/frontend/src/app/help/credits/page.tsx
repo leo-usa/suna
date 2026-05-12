@@ -315,7 +315,7 @@ export default function CreditsPage() {
             <Button
               variant="outline"
               className="gap-2"
-              onClick={() => window.location.href = 'mailto:hey@dobby.com'}
+              onClick={() => window.location.href = 'mailto:hey@dobby.now'}
             >
               <Mail className="h-4 w-4" />
               Email Support

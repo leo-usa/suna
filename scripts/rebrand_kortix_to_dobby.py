@@ -54,7 +54,7 @@ REPLACE_ORDER: list[tuple[str, str]] = [
     ("dobby/reusables", "dobby/reusables"),
     ("/dobby-", "/dobby-"),
     ("dobby://", "dobby://"),
-    ("dobby.com", "dobby.com"),
+    ("dobby.now", "dobby.now"),
     ("@dobby", "@dobby"),
     ("dobby/", "dobby/"),
     ("from setup.steps.kortix import DobbyStep", "from setup.steps.dobby import DobbyStep"),

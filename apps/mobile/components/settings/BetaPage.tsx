@@ -35,7 +35,7 @@ export function BetaPage({ visible, onClose }: BetaPageProps) {
 
   const handleVisitWeb = React.useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    Linking.openURL('https://dobby.com');
+    Linking.openURL('https://dobby.now');
   }, []);
 
   if (!visible) return null;

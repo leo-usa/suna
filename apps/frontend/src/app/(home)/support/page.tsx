@@ -426,11 +426,11 @@ function SupportPageContent() {
               <div className="pt-6 space-y-2">
                 <p className="text-sm text-muted-foreground">
                   {t('footer.generalInquiries')}{' '}
-                  <a href="mailto:info@dobby.com" className="text-primary hover:underline">info@dobby.com</a>
+                  <a href="mailto:info@dobby.now" className="text-primary hover:underline">info@dobby.now</a>
                 </p>
                 <p className="text-sm text-muted-foreground">
                   {t('footer.securityIssues')}{' '}
-                  <a href="mailto:security@dobby.com" className="text-primary hover:underline">security@dobby.com</a>
+                  <a href="mailto:security@dobby.now" className="text-primary hover:underline">security@dobby.now</a>
                 </p>
               </div>
             </div>

@@ -43,7 +43,7 @@ Use the `X-API-Key` header with your API key in the format: `pk_xxx:sk_xxx`
 curl -H "X-API-Key: pk_abc123:sk_def456" https://<api-host>/v1/threads
 ```
 
-**Get your API key:** [https://www.dobby.com/settings/api-keys](https://www.dobby.com/settings/api-keys)
+**Get your API key:** [https://www.dobby.now/settings/api-keys](https://www.dobby.now/settings/api-keys)
 
 ### 2. Bearer Token (JWT)
 Use the `Authorization` header with a Supabase JWT token:
@@ -63,7 +63,7 @@ curl -H "Authorization: Bearer eyJhbG..." https://<api-host>/v1/threads
                 "type": "apiKey",
                 "in": "header",
                 "name": "X-API-Key",
-                "description": "API Key in format pk_xxx:sk_xxx — Generate at https://www.dobby.com/settings/api-keys"
+                "description": "API Key in format pk_xxx:sk_xxx — Generate at https://www.dobby.now/settings/api-keys"
             },
             "BearerAuth": {
                 "type": "http",

@@ -222,7 +222,7 @@ export default function SREEngineerPage() {
                 </p>
               </div>
               <Button asChild size="lg">
-                <a href="mailto:marko@dobby.com?subject=Infrastructure / SRE Engineer Application">
+                <a href="mailto:marko@dobby.now?subject=Infrastructure / SRE Engineer Application">
                   Apply now
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </a>

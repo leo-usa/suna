@@ -172,7 +172,7 @@ def _create_anthropic_model_config() -> ModelConfig:
 def _create_minimax_model_config() -> ModelConfig:
     return ModelConfig(
         reasoning=ReasoningSettings(enabled=True, split_output=True),
-        extra_body={"app": "Dobby.com"},
+        extra_body={"app": "Dobby.now"},
     )
 
 def _create_kimi_model_config() -> ModelConfig:

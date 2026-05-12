@@ -7,7 +7,7 @@
 > 
 > The API is subject to breaking changes, features may be incomplete, and documentation may be outdated. Use at your own risk.
 
-A Python SDK that enables you to create, manage, and interact with AI Workers on [Dobby](https://www.dobby.com).
+A Python SDK that enables you to create, manage, and interact with AI Workers on [Dobby](https://www.dobby.now).
 
 ## 📦 Installation
 
@@ -64,7 +64,7 @@ if __name__ == "__main__":
 
 ## 🔑 Environment Setup
 
-Get your API key from [https://www.dobby.com/settings/api-keys](https://www.dobby.com/settings/api-keys)
+Get your API key from [https://www.dobby.now/settings/api-keys](https://www.dobby.now/settings/api-keys)
 
 ## 🧪 Running Examples
 

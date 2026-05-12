@@ -2,7 +2,7 @@
  * Site metadata configuration - SIMPLE AND WORKING
  */
 
-const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.dobby.com';
+const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.dobby.now';
 
 export const siteMetadata = {
   name: 'Dobby',

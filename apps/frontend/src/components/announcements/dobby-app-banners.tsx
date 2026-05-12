@@ -17,7 +17,7 @@ const STORE_LINKS = {
 };
 
 const DOWNLOAD_LINKS = {
-  windows: 'https://download.dobby.com/desktop/latest/windows/Dobby%20Setup%201.0.0.exe',
+  windows: 'https://download.dobby.now/desktop/latest/windows/Dobby%20Setup%201.0.0.exe',
   /** Apple Silicon (M1/M2/M3) — hosted on Supabase Storage */
   macArm:
     'https://tsdrmlnyclxwkryqrjic.supabase.co/storage/v1/object/public/Desktop%20App/Dobby-1.0.0-arm64.dmg',

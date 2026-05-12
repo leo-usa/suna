@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     title: 'Suna is now Dobby',
     description: 'Dobby (formerly Suna) - Same powerful open source AI worker, new name.',
     type: 'website',
-    url: 'https://www.dobby.com/suna',
+    url: 'https://www.dobby.now/suna',
     siteName: 'Dobby',
     images: [
       {
@@ -44,7 +44,7 @@ export const metadata: Metadata = {
     images: ['/banner.png'],
   },
   alternates: {
-    canonical: 'https://www.dobby.com/suna',
+    canonical: 'https://www.dobby.now/suna',
   },
   robots: {
     index: true,
@@ -64,8 +64,8 @@ export default function SunaPage() {
             '@type': 'Organization',
             name: 'Dobby',
             alternateName: ['Suna', 'Dobby Suna', 'Suna AI'],
-            url: 'https://www.dobby.com',
-            logo: 'https://www.dobby.com/favicon.png',
+            url: 'https://www.dobby.now',
+            logo: 'https://www.dobby.now/favicon.png',
             sameAs: [
               'https://github.com/kortix-ai',
               'https://x.com/kortix',
@@ -88,13 +88,13 @@ export default function SunaPage() {
                 '@type': 'ListItem',
                 position: 1,
                 name: 'Home',
-                item: 'https://www.dobby.com',
+                item: 'https://www.dobby.now',
               },
               {
                 '@type': 'ListItem',
                 position: 2,
                 name: 'Suna is now Dobby',
-                item: 'https://www.dobby.com/suna',
+                item: 'https://www.dobby.now/suna',
               },
             ],
           }),
@@ -174,7 +174,7 @@ export default function SunaPage() {
                 </h2>
                 <div className="space-y-3 text-base md:text-lg text-muted-foreground font-medium">
                   <p>Our name changed from Suna to Dobby</p>
-                  <p>Our domain is now dobby.com</p>
+                  <p>Our domain is now dobby.now</p>
                 </div>
               </div>
 

@@ -465,8 +465,8 @@
   "billing": {
     "loadingPaywall": "Carregando planos...",
     "checkoutUnavailable": "Checkout móvel não disponível",
-    "checkoutUnavailableMessage": "Para assinar um plano, visite dobby.com na web.",
-    "goToWeb": "Ir para dobby.com",
+    "checkoutUnavailableMessage": "Para assinar um plano, visite dobby.now na web.",
+    "goToWeb": "Ir para dobby.now",
     "billingStatus": "Status de Cobrança",
     "loading": "Carregando informações de cobrança...",
     "error": "Erro ao carregar informações de cobrança",
@@ -515,12 +515,12 @@
   "beta": {
     "title": "Recursos Beta",
     "webSupportTitle": "Totalmente Suportado na Web",
-    "webSupportDescription": "Disponível em Dobby.com. Em breve no mobile—ainda em desenvolvimento aqui.",
-    "visitKortix": "Visitar Dobby.com",
+    "webSupportDescription": "Disponível em Dobby.now. Em breve no mobile—ainda em desenvolvimento aqui.",
+    "visitKortix": "Visitar Dobby.now",
     "advancedFeatures": "Recursos Avançados",
     "mobileBeta": "Beta Mobile",
     "pleaseNote": "Observação",
-    "mobileWarning": "Em desenvolvimento no mobile e pode ter problemas. Para a melhor experiência, use Dobby.com."
+    "mobileWarning": "Em desenvolvimento no mobile e pode ter problemas. Para a melhor experiência, use Dobby.now."
   },
   "accountDeletion": {
     "title": "Excluir Conta",

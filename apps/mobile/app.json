@@ -21,9 +21,9 @@
       "bundleIdentifier": "com.kortix.app",
       "usesAppleSignIn": true,
       "associatedDomains": [
-        "applinks:dobby.com",
-        "applinks:www.dobby.com",
-        "applinks:staging.dobby.com"
+        "applinks:dobby.now",
+        "applinks:www.dobby.now",
+        "applinks:staging.dobby.now"
       ],
       "infoPlist": {
         "NSCameraUsageDescription": "Dobby needs camera access to let you capture photos and attach them to your saved conversations with the AI Worker. For example, you can photograph a document, whiteboard, or product for analysis and receive insights that are stored in your conversation history.",
@@ -47,17 +47,17 @@
           "data": [
             {
               "scheme": "https",
-              "host": "dobby.com",
+              "host": "dobby.now",
               "pathPrefix": "/auth/callback"
             },
             {
               "scheme": "https",
-              "host": "www.dobby.com",
+              "host": "www.dobby.now",
               "pathPrefix": "/auth/callback"
             },
             {
               "scheme": "https",
-              "host": "staging.dobby.com",
+              "host": "staging.dobby.now",
               "pathPrefix": "/auth/callback"
             }
           ],
@@ -72,17 +72,17 @@
           "data": [
             {
               "scheme": "https",
-              "host": "dobby.com",
+              "host": "dobby.now",
               "pathPrefix": "/share"
             },
             {
               "scheme": "https",
-              "host": "www.dobby.com",
+              "host": "www.dobby.now",
               "pathPrefix": "/share"
             },
             {
               "scheme": "https",
-              "host": "staging.dobby.com",
+              "host": "staging.dobby.now",
               "pathPrefix": "/share"
             }
           ],

@@ -439,7 +439,7 @@ Usage:
                     api_base="https://openrouter.ai/api/v1",
                     temperature=0.0,
                     timeout=30.0,
-                    extra_body={"app": "Dobby.com"}
+                    extra_body={"app": "Dobby.now"}
                 )
             else:
                 error_msg = "No Morph or OpenRouter API key found, cannot perform AI edit."
