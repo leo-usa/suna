@@ -98,13 +98,15 @@ class Configuration:
     STRIPE_TIER_200_1000_ID_STAGING: Optional[str] = 'price_1RIKQ2G6l1KZGqIrum9n8SI7'
     
     # Yearly subscription tier IDs - Staging (15% discount)
-    STRIPE_TIER_2_20_YEARLY_ID_STAGING: Optional[str] = 'price_1ReGogG6l1KZGqIrEyBTmtPk'
-    STRIPE_TIER_6_50_YEARLY_ID_STAGING: Optional[str] = 'price_1ReGoJG6l1KZGqIr0DJWtoOc'
-    STRIPE_TIER_12_100_YEARLY_ID_STAGING: Optional[str] = 'price_1ReGnZG6l1KZGqIr0ThLEl5S'
-    STRIPE_TIER_25_200_YEARLY_ID_STAGING: Optional[str] = 'price_1ReGmzG6l1KZGqIre31mqoEJ'
-    STRIPE_TIER_50_400_YEARLY_ID_STAGING: Optional[str] = 'price_1ReGmgG6l1KZGqIrn5nBc7e5'
-    STRIPE_TIER_125_800_YEARLY_ID_STAGING: Optional[str] = 'price_1ReGmMG6l1KZGqIrvE2ycrAX'
-    STRIPE_TIER_200_1000_YEARLY_ID_STAGING: Optional[str] = 'price_1ReGlXG6l1KZGqIrlgurP5GU'
+    # Yearly subscription prices: defaults match production so staging uses the same
+    # Stripe price IDs (single catalog / live-mode parity); override via env if needed.
+    STRIPE_TIER_2_20_YEARLY_ID_STAGING: Optional[str] = 'price_1RnOhYP2cIDuyWfbryEigAqQ'
+    STRIPE_TIER_6_50_YEARLY_ID_STAGING: Optional[str] = 'price_1RnOjXP2cIDuyWfbP2eZnMOE'
+    STRIPE_TIER_12_100_YEARLY_ID_STAGING: Optional[str] = 'price_1RnOl0P2cIDuyWfb0M8AFcf0'
+    STRIPE_TIER_25_200_YEARLY_ID_STAGING: Optional[str] = 'price_1RnOljP2cIDuyWfbnXSXPVNR'
+    STRIPE_TIER_50_400_YEARLY_ID_STAGING: Optional[str] = 'price_1RnOnUP2cIDuyWfbTBzltbAK'
+    STRIPE_TIER_125_800_YEARLY_ID_STAGING: Optional[str] = 'price_1RnOoDP2cIDuyWfbaWewDX98'
+    STRIPE_TIER_200_1000_YEARLY_ID_STAGING: Optional[str] = 'price_1RnOokP2cIDuyWfbEzXTcgCN'
 
     # Credit package price IDs - Production
     STRIPE_CREDITS_10_PRICE_ID_PROD: Optional[str] = 'price_1RxmQUG6l1KZGqIru453O1zW'
