@@ -1023,6 +1023,8 @@
     "sendMagicLink": "Invia magic link",
     "sending": "Invio in corso...",
     "magicLinkSent": "Ti abbiamo inviato un magic link a",
+    "magicLinkCardTitle": "Clicca sul link nell'email per accedere",
+    "magicLinkCardSubtitle": "Controlla la posta in arrivo e la cartella spam",
     "magicLinkDescription": "Clicca sul link nella tua email per accedere. Il link scadrà tra 1 ora.",
     "magicLinkExplanation": "Ti invieremo un link sicuro per accedere. Nessuna password necessaria.",
     "magicLinkExpired": "Questo link è scaduto",

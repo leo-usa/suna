@@ -1679,6 +1679,8 @@
     "sendMagicLink": "发送魔法链接",
     "sending": "发送中...",
     "magicLinkSent": "我们已向以下地址发送魔法链接",
+    "magicLinkCardTitle": "点击邮件中的链接以登录",
+    "magicLinkCardSubtitle": "请查看收件箱与垃圾邮件文件夹",
     "magicLinkDescription": "点击邮件中的链接以登录。链接将在1小时后过期。",
     "magicLinkExplanation": "我们将向您发送一个安全的登录链接。无需密码。",
     "magicLinkExpired": "此链接已过期",

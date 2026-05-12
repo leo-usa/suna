@@ -1021,6 +1021,8 @@
     "sendMagicLink": "Enviar magic link",
     "sending": "Enviando...",
     "magicLinkSent": "Enviamos um magic link para",
+    "magicLinkCardTitle": "Clica no link no teu email para entrares",
+    "magicLinkCardSubtitle": "Verifica a tua caixa de entrada e pasta de spam",
     "magicLinkDescription": "Clica no link no teu email para entrar. O link expirará em 1 hora.",
     "magicLinkExplanation": "Vamos te enviar um link seguro para entrar. Não precisa de senha.",
     "magicLinkExpired": "Este link expirou",

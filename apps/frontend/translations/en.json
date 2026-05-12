@@ -1726,6 +1726,8 @@
     "sendMagicLink": "Send magic link",
     "sending": "Sending...",
     "magicLinkSent": "We sent a magic link to",
+    "magicLinkCardTitle": "Click the link in your email to sign in",
+    "magicLinkCardSubtitle": "Check your inbox and spam folder",
     "magicLinkDescription": "Click the link in your email to sign in. The link will expire in 1 hour.",
     "magicLinkExplanation": "We'll send you a secure link to sign in. No password needed.",
     "magicLinkExpired": "This link has expired",

@@ -579,10 +579,10 @@ function LoginContent() {
                     </div>
                     <div className="flex flex-col gap-0.5">
                       <span className="text-[14px] font-medium text-foreground">
-                        Click the link in your email to sign in
+                        {t('magicLinkCardTitle')}
                       </span>
                       <span className="text-[13px] text-foreground/60">
-                        Check your inbox and spam folder
+                        {t('magicLinkCardSubtitle')}
                       </span>
                     </div>
                   </div>

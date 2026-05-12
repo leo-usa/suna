@@ -1021,6 +1021,8 @@
     "sendMagicLink": "Envoyer magic link",
     "sending": "Envoi en cours...",
     "magicLinkSent": "On t'a envoyé un magic link à",
+    "magicLinkCardTitle": "Clique sur le lien dans ton email pour te connecter",
+    "magicLinkCardSubtitle": "Vérifie ta boîte de réception et le dossier spam",
     "magicLinkDescription": "Clique sur le lien dans ton email pour te connecter. Le lien expirera dans 1 heure.",
     "magicLinkExplanation": "On t'enverra un lien sécurisé pour te connecter. Pas besoin de mot de passe.",
     "magicLinkExpired": "Ce lien a expiré",

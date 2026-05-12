@@ -939,6 +939,8 @@
     "sendMagicLink": "Magic Link senden",
     "sending": "Wird gesendet...",
     "magicLinkSent": "Wir haben einen Magic Link gesendet an",
+    "magicLinkCardTitle": "Klicke in deiner E-Mail auf den Link, um dich anzumelden",
+    "magicLinkCardSubtitle": "Prüfe deinen Posteingang und den Spam-Ordner",
     "magicLinkDescription": "Klicke auf den Link in deiner E-Mail, um dich anzumelden. Der Link läuft in 1 Stunde ab.",
     "magicLinkExplanation": "Wir senden dir einen sicheren Link zum Anmelden. Kein Passwort erforderlich.",
     "magicLinkExpired": "Dieser Link ist abgelaufen",

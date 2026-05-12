@@ -1021,6 +1021,8 @@
     "sendMagicLink": "Enviar magic link",
     "sending": "Enviando...",
     "magicLinkSent": "Enviamos un magic link a",
+    "magicLinkCardTitle": "Haz clic en el enlace de tu correo para iniciar sesión",
+    "magicLinkCardSubtitle": "Revisa tu bandeja de entrada y carpeta de spam",
     "magicLinkDescription": "Haz clic en el enlace de tu email para iniciar sesión. El enlace expirará en 1 hora.",
     "magicLinkExplanation": "Te enviaremos un enlace seguro para iniciar sesión. No se necesita contraseña.",
     "magicLinkExpired": "Este enlace ha expirado",
