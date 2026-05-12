@@ -16,6 +16,7 @@ from core.utils.config import config
 from core.utils.logger import logger
 from core.billing.shared.config import get_tier_by_price_id, TIERS
 from core.billing.credits.manager import credit_manager
+import random
 
 stripe.api_key = config.STRIPE_SECRET_KEY
 
@@ -73,8 +74,10 @@ class StripeSubscriptionSyncV2:
             for customer in customers_result.data:
                 tasks.append(self.sync_customer_subscription(customer))
             
-            for i in range(0, len(tasks), 20):
-                chunk = tasks[i:i+20]
+            # Stripe rate limits can be hit easily with high concurrency.
+            # Keep this conservative for production backfills.
+            for i in range(0, len(tasks), 5):
+                chunk = tasks[i:i+5]
                 await asyncio.gather(*chunk, return_exceptions=True)
             
             offset += batch_size
@@ -97,12 +100,7 @@ class StripeSubscriptionSyncV2:
             
             current_tier = current_account.data.get('tier') if current_account.data else 'none'
             
-            subscriptions = await stripe.Subscription.list_async(
-                customer=stripe_customer_id,
-                status='all',
-                limit=1,
-                expand=['data.items.data.price']
-            )
+            subscriptions = await self._list_subscriptions_with_retry(stripe_customer_id)
             
             if not subscriptions.data:
                 self.stats['no_subscription'] += 1
@@ -163,6 +161,33 @@ class StripeSubscriptionSyncV2:
         except Exception as e:
             logger.error(f"Error syncing customer {stripe_customer_id}: {e}", exc_info=True)
             self.stats['errors'] += 1
+
+    async def _list_subscriptions_with_retry(self, stripe_customer_id: str):
+        """
+        Stripe can respond with 429 rate limits during large backfills.
+        Use a small exponential backoff with jitter and a few retries.
+        """
+        max_attempts = 6
+        base_delay_s = 0.6
+        for attempt in range(1, max_attempts + 1):
+            try:
+                return await stripe.Subscription.list_async(
+                    customer=stripe_customer_id,
+                    status='all',
+                    limit=1,
+                    expand=['data.items.data.price']
+                )
+            except stripe.error.RateLimitError as e:
+                if attempt == max_attempts:
+                    raise
+                delay = base_delay_s * (2 ** (attempt - 1))
+                delay = min(delay, 12.0)
+                delay = delay + random.random() * 0.5
+                logger.warning(
+                    f"Stripe rate limited for customer {stripe_customer_id}; "
+                    f"retrying in {delay:.2f}s (attempt {attempt}/{max_attempts})"
+                )
+                await asyncio.sleep(delay)
     
     def extract_price_id(self, subscription: Any, customer_id: str) -> Optional[str]:
         try:
