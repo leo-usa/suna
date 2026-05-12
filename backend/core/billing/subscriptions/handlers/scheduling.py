@@ -84,12 +84,9 @@ class SchedulingHandler:
 
     @staticmethod
     def _determine_target_price_id(target_tier, commitment_type: Optional[str]) -> str:
-        if commitment_type and len(target_tier.price_ids) >= 3:
-            return target_tier.price_ids[2] if commitment_type == 'yearly_commitment' else target_tier.price_ids[0]
-        elif commitment_type == 'yearly' and len(target_tier.price_ids) >= 2:
+        if commitment_type in ('yearly', 'yearly_commitment') and len(target_tier.price_ids) >= 2:
             return target_tier.price_ids[1]
-        else:
-            return target_tier.price_ids[0]
+        return target_tier.price_ids[0]
 
     @staticmethod
     async def _create_or_update_schedule(

@@ -89,7 +89,6 @@ TIERS: Dict[str, Tier] = {
         price_ids=[
             config.STRIPE_TIER_2_20_ID,
             config.STRIPE_TIER_2_20_YEARLY_ID,
-            config.STRIPE_TIER_2_17_YEARLY_COMMITMENT_ID
         ],
         monthly_credits=Decimal('20.00'),
         display_name='Plus',
@@ -122,7 +121,6 @@ TIERS: Dict[str, Tier] = {
         price_ids=[
             config.STRIPE_TIER_6_50_ID,
             config.STRIPE_TIER_6_50_YEARLY_ID,
-            config.STRIPE_TIER_6_42_YEARLY_COMMITMENT_ID
         ],
         monthly_credits=Decimal('50.00'),
         display_name='Pro',
@@ -152,7 +150,6 @@ TIERS: Dict[str, Tier] = {
         price_ids=[
             config.STRIPE_TIER_25_200_ID,
             config.STRIPE_TIER_25_200_YEARLY_ID,
-            config.STRIPE_TIER_25_170_YEARLY_COMMITMENT_ID
         ],
         monthly_credits=Decimal('200.00'),
         display_name='Ultra',
@@ -379,32 +376,26 @@ def get_project_limit(tier_name: str) -> int:
     return tier.project_limit if tier else 20  # Default to 2x free thread_limit
 
 def is_commitment_price_id(price_id: str) -> bool:
-    commitment_price_ids = [
-        config.STRIPE_TIER_2_17_YEARLY_COMMITMENT_ID,
-        config.STRIPE_TIER_6_42_YEARLY_COMMITMENT_ID,
-        config.STRIPE_TIER_25_170_YEARLY_COMMITMENT_ID
-    ]
-    return price_id in commitment_price_ids
+    """Legacy yearly-commitment Stripe prices removed; always false."""
+    return False
+
 
 def get_commitment_duration_months(price_id: str) -> int:
-    if is_commitment_price_id(price_id):
-        return 12
     return 0
 
+
 def get_price_type(price_id: str) -> str:
-    if is_commitment_price_id(price_id):
-        return 'yearly_commitment'
-    
     yearly_price_ids = [
         config.STRIPE_TIER_2_20_YEARLY_ID,
         config.STRIPE_TIER_6_50_YEARLY_ID,
-        config.STRIPE_TIER_25_200_YEARLY_ID
+        config.STRIPE_TIER_25_200_YEARLY_ID,
     ]
-    
+
     if price_id in yearly_price_ids:
         return 'yearly'
-    
+
     return 'monthly'
+
 
 def get_plan_type(price_id: str) -> str:
     price_type = get_price_type(price_id)

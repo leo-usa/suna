@@ -7,22 +7,18 @@ from core.utils.logger import logger
 from core.billing.shared.config import (
     get_tier_by_price_id, 
     get_tier_by_name,
-    is_commitment_price_id,
-    get_commitment_duration_months,
     get_plan_type
 )
 from core.billing.external.stripe import StripeAPIWrapper
 from ..services.lifecycle_service import LifecycleService
 from ..services.trial_service import TrialService
 from ..repositories.credit_account import CreditAccountRepository
-from ..repositories.commitment import CommitmentRepository
 
 class SubscriptionLifecycleHandler:
     def __init__(self):
         self.lifecycle_service = LifecycleService()
         self.trial_service = TrialService()
         self.credit_repo = CreditAccountRepository()
-        self.commitment_repo = CommitmentRepository()
     
     @classmethod
     async def cancel_subscription(cls, account_id: str, feedback: Optional[str] = None) -> Dict:
@@ -388,40 +384,6 @@ class SubscriptionLifecycleHandler:
 
 
     async def _track_commitment_if_needed(self, account_id: str, price_id: str, subscription: Dict):
-        if not is_commitment_price_id(price_id):
-            return
-        
-        commitment_duration = get_commitment_duration_months(price_id)
-        if commitment_duration == 0:
-            return
-        
-        existing_commitment = await self.commitment_repo.get_existing_commitment(subscription['id'])
-        if existing_commitment:
-            logger.info(f"[COMMITMENT] Commitment already tracked for subscription {subscription['id']}, skipping")
-            return
-        
-        from datetime import timedelta
-        start_date = datetime.fromtimestamp(subscription['current_period_start'], tz=timezone.utc)
-        end_date = start_date + timedelta(days=365) if commitment_duration == 12 else start_date + timedelta(days=commitment_duration * 30)
-        
-        commitment_data = {
-            'commitment_type': 'yearly_commitment',
-            'commitment_start_date': start_date.isoformat(),
-            'commitment_end_date': end_date.isoformat(),
-            'commitment_price_id': price_id,
-            'can_cancel_after': end_date.isoformat()
-        }
-        
-        await self.credit_repo.update_commitment_info(account_id, commitment_data)
-        
-        await self.commitment_repo.create_commitment_history({
-            'account_id': account_id,
-            'commitment_type': 'yearly_commitment',
-            'price_id': price_id,
-            'start_date': start_date.isoformat(),
-            'end_date': end_date.isoformat(),
-            'stripe_subscription_id': subscription['id']
-        })
-        
-        logger.info(f"[COMMITMENT] Tracked yearly commitment for account {account_id}, subscription {subscription['id']}, ends {end_date.date()}")
+        """Yearly-commitment Stripe products were removed; no new commitment tracking from price IDs."""
+        return
         

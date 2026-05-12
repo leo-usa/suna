@@ -87,11 +87,6 @@ class Configuration:
     STRIPE_TIER_125_800_YEARLY_ID_PROD: Optional[str] = 'price_1RnOoDP2cIDuyWfbaWewDX98'
     STRIPE_TIER_200_1000_YEARLY_ID_PROD: Optional[str] = 'price_1RnOokP2cIDuyWfbEzXTcgCN'
 
-    # Yearly commitment prices - Production (15% discount, monthly payments with 12-month commitment via schedules)
-    STRIPE_TIER_2_17_YEARLY_COMMITMENT_ID_PROD: Optional[str] = 'price_1RqtqiG6l1KZGqIrhjVPtE1s'  # $17/month
-    STRIPE_TIER_6_42_YEARLY_COMMITMENT_ID_PROD: Optional[str] = 'price_1Rqtr8G6l1KZGqIrQ0ql0qHi'  # $42.50/month
-    STRIPE_TIER_25_170_YEARLY_COMMITMENT_ID_PROD: Optional[str] = 'price_1RqtrUG6l1KZGqIrEb8hLsk3'  # $170/month
-
     # Subscription tier IDs - Staging
     STRIPE_FREE_TIER_ID_STAGING: Optional[str] = 'price_1RIGvuG6l1KZGqIrw14abxeL'
     STRIPE_TIER_2_20_ID_STAGING: Optional[str] = 'price_1RIGvuG6l1KZGqIrCRu0E4Gi'
@@ -111,11 +106,6 @@ class Configuration:
     STRIPE_TIER_125_800_YEARLY_ID_STAGING: Optional[str] = 'price_1ReGmMG6l1KZGqIrvE2ycrAX'
     STRIPE_TIER_200_1000_YEARLY_ID_STAGING: Optional[str] = 'price_1ReGlXG6l1KZGqIrlgurP5GU'
 
-    # Yearly commitment prices - Staging (15% discount, monthly payments with 12-month commitment via schedules)
-    STRIPE_TIER_2_17_YEARLY_COMMITMENT_ID_STAGING: Optional[str] = 'price_1RqYGaG6l1KZGqIrIzcdPzeQ'  # $17/month
-    STRIPE_TIER_6_42_YEARLY_COMMITMENT_ID_STAGING: Optional[str] = 'price_1RqYH1G6l1KZGqIrWDKh8xIU'  # $42.50/month
-    STRIPE_TIER_25_170_YEARLY_COMMITMENT_ID_STAGING: Optional[str] = 'price_1RqYHbG6l1KZGqIrAUVf8KpG'  # $170/month
-    
     # Credit package price IDs - Production
     STRIPE_CREDITS_10_PRICE_ID_PROD: Optional[str] = 'price_1RxmQUG6l1KZGqIru453O1zW'
     STRIPE_CREDITS_25_PRICE_ID_PROD: Optional[str] = 'price_1RxmQlG6l1KZGqIr3hS5WtGg'
@@ -223,25 +213,6 @@ class Configuration:
         if self.ENV_MODE == EnvMode.STAGING:
             return self.STRIPE_TIER_200_1000_YEARLY_ID_STAGING
         return self.STRIPE_TIER_200_1000_YEARLY_ID_PROD
-    
-    # Yearly commitment prices computed properties
-    @property
-    def STRIPE_TIER_2_17_YEARLY_COMMITMENT_ID(self) -> str:
-        if self.ENV_MODE == EnvMode.STAGING:
-            return self.STRIPE_TIER_2_17_YEARLY_COMMITMENT_ID_STAGING
-        return self.STRIPE_TIER_2_17_YEARLY_COMMITMENT_ID_PROD
-
-    @property
-    def STRIPE_TIER_6_42_YEARLY_COMMITMENT_ID(self) -> str:
-        if self.ENV_MODE == EnvMode.STAGING:
-            return self.STRIPE_TIER_6_42_YEARLY_COMMITMENT_ID_STAGING
-        return self.STRIPE_TIER_6_42_YEARLY_COMMITMENT_ID_PROD
-
-    @property
-    def STRIPE_TIER_25_170_YEARLY_COMMITMENT_ID(self) -> str:
-        if self.ENV_MODE == EnvMode.STAGING:
-            return self.STRIPE_TIER_25_170_YEARLY_COMMITMENT_ID_STAGING
-        return self.STRIPE_TIER_25_170_YEARLY_COMMITMENT_ID_PROD
     
     # Credit package price ID properties
     @property
@@ -445,10 +416,6 @@ class Configuration:
         'tier_50_400_yearly': 100,
         'tier_125_800_yearly': 100,
         'tier_200_1000_yearly': 100,
-        # Yearly commitment plans
-        'tier_2_17_yearly_commitment': 5,
-        'tier_6_42_yearly_commitment': 20,
-        'tier_25_170_yearly_commitment': 100,
     }
 
     # Project limits per billing tier
@@ -470,10 +437,6 @@ class Configuration:
         'tier_50_400_yearly': 5000,
         'tier_125_800_yearly': 10000,
         'tier_200_1000_yearly': 25000,
-        # Yearly commitment plans
-        'tier_2_17_yearly_commitment': 100,
-        'tier_6_42_yearly_commitment': 500,
-        'tier_25_170_yearly_commitment': 2500,
     }
 
     @property

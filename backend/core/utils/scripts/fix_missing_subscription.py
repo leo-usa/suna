@@ -4,7 +4,7 @@ import asyncio
 import sys
 import argparse
 from pathlib import Path
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 from decimal import Decimal
 
 backend_dir = Path(__file__).parent.parent.parent.parent
@@ -14,7 +14,7 @@ import stripe
 from core.services.supabase import DBConnection
 from core.utils.config import config
 from core.utils.logger import logger
-from core.billing.shared.config import get_tier_by_price_id, is_commitment_price_id, get_commitment_duration_months
+from core.billing.shared.config import get_tier_by_price_id, get_plan_type
 from core.billing.credits.manager import credit_manager
 
 stripe.api_key = config.STRIPE_SECRET_KEY
@@ -188,20 +188,17 @@ async def fix_missing_subscription(user_email: str):
     tier = get_tier_by_price_id(price_id)
     if not tier:
         logger.error(f"❌ Price ID {price_id} doesn't match any known tier")
-        logger.info("\nKnown yearly commitment price IDs:")
-        logger.info(f"  Prod $17/mo: {config.STRIPE_TIER_2_17_YEARLY_COMMITMENT_ID}")
-        logger.info(f"  Prod $42.50/mo: {config.STRIPE_TIER_6_42_YEARLY_COMMITMENT_ID}")
-        logger.info(f"  Prod $170/mo: {config.STRIPE_TIER_25_170_YEARLY_COMMITMENT_ID}")
+        logger.info("\nKnown yearly price IDs (prod):")
+        logger.info(f"  tier_2_20 yearly: {config.STRIPE_TIER_2_20_YEARLY_ID}")
+        logger.info(f"  tier_6_50 yearly: {config.STRIPE_TIER_6_50_YEARLY_ID}")
+        logger.info(f"  tier_25_200 yearly: {config.STRIPE_TIER_25_200_YEARLY_ID}")
         return
     
     logger.info(f"\n✅ Matched to tier: {tier.name} ({tier.display_name})")
     logger.info(f"   Monthly credits: ${tier.monthly_credits}")
     
-    is_commitment = is_commitment_price_id(price_id)
-    commitment_duration = get_commitment_duration_months(price_id)
-    
-    logger.info(f"   Is commitment: {is_commitment}")
-    logger.info(f"   Commitment duration: {commitment_duration} months")
+    plan_type = get_plan_type(price_id)
+    logger.info(f"   Plan type: {plan_type}")
     
     logger.info("\n" + "="*80)
     logger.info("CHECKING CURRENT DATABASE STATE")
@@ -233,34 +230,15 @@ async def fix_missing_subscription(user_email: str):
         'stripe_subscription_id': subscription.id,
         'billing_cycle_anchor': start_date.isoformat(),
         'next_credit_grant': next_grant.isoformat(),
-        'updated_at': datetime.now(timezone.utc).isoformat()
+        'plan_type': plan_type,
+        'updated_at': datetime.now(timezone.utc).isoformat(),
+        'commitment_type': None,
+        'commitment_start_date': None,
+        'commitment_end_date': None,
+        'commitment_price_id': None,
+        'can_cancel_after': None,
     }
-    
-    if is_commitment and commitment_duration > 0:
-        end_date = start_date + timedelta(days=365)
-        
-        update_data.update({
-            'commitment_type': 'yearly_commitment',
-            'commitment_start_date': start_date.isoformat(),
-            'commitment_end_date': end_date.isoformat(),
-            'commitment_price_id': price_id,
-            'can_cancel_after': end_date.isoformat()
-        })
-        
-        logger.info(f"Setting up yearly commitment:")
-        logger.info(f"  Start date: {start_date.date()}")
-        logger.info(f"  End date: {end_date.date()}")
-        logger.info(f"  Duration: 12 months")
-    else:
-        update_data.update({
-            'commitment_type': None,
-            'commitment_start_date': None,
-            'commitment_end_date': None,
-            'commitment_price_id': None,
-            'can_cancel_after': None
-        })
-        
-        logger.info(f"Clearing commitment data (this is a regular monthly subscription)")
+    logger.info("Cleared commitment fields (yearly-commitment products removed)")
     
     await client.from_('credit_accounts').upsert(
         {**update_data, 'account_id': account_id},
@@ -268,25 +246,6 @@ async def fix_missing_subscription(user_email: str):
     ).execute()
     
     logger.info("✅ Updated credit_accounts table")
-    
-    if is_commitment and commitment_duration > 0:
-        existing_commitment = await client.from_('commitment_history').select('id').eq('stripe_subscription_id', subscription.id).execute()
-        
-        if not existing_commitment.data:
-            end_date = start_date + timedelta(days=365)
-            
-            await client.from_('commitment_history').insert({
-                'account_id': account_id,
-                'commitment_type': 'yearly_commitment',
-                'price_id': price_id,
-                'start_date': start_date.isoformat(),
-                'end_date': end_date.isoformat(),
-                'stripe_subscription_id': subscription.id
-            }).execute()
-            
-            logger.info("✅ Created commitment_history record")
-        else:
-            logger.info("✅ Commitment_history record already exists")
     
     logger.info("\n" + "="*80)
     logger.info("GRANTING INITIAL CREDITS")
@@ -305,7 +264,7 @@ async def fix_missing_subscription(user_email: str):
             account_id=account_id,
             amount=credits_to_grant,
             is_expiring=True,
-            description=f"Initial credits for {tier.display_name} (yearly commitment)"
+            description=f"Initial credits for {tier.display_name} ({plan_type})"
         )
         
         if result.get('success'):
@@ -333,13 +292,11 @@ async def fix_missing_subscription(user_email: str):
         logger.info(f"  ✅ Commitment end: {acc.get('commitment_end_date')}")
         logger.info(f"  ✅ Next credit grant: {acc.get('next_credit_grant')}")
     
-    if is_commitment:
-        commitment_history = await client.from_('commitment_history').select('*').eq('account_id', account_id).execute()
-        
-        if commitment_history.data:
-            logger.info(f"\n  ✅ Commitment history records: {len(commitment_history.data)}")
-            for record in commitment_history.data:
-                logger.info(f"     - Type: {record.get('commitment_type')}, ends: {record.get('end_date')}")
+    commitment_history = await client.from_('commitment_history').select('*').eq('account_id', account_id).execute()
+    if commitment_history.data:
+        logger.info(f"\n  Commitment history records: {len(commitment_history.data)}")
+        for record in commitment_history.data:
+            logger.info(f"     - Type: {record.get('commitment_type')}, ends: {record.get('end_date')}")
     
     logger.info("\n" + "="*80)
     logger.info("✅ SUBSCRIPTION SETUP COMPLETE")

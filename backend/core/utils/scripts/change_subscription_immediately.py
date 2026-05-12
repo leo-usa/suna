@@ -3,7 +3,7 @@ import asyncio
 import sys
 import argparse
 from pathlib import Path
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 from decimal import Decimal
 from typing import Optional
 
@@ -18,8 +18,7 @@ from core.billing.shared.config import (
     TIERS,
     get_tier_by_price_id,
     get_tier_by_name,
-    is_commitment_price_id,
-    get_commitment_duration_months
+    get_plan_type,
 )
 from core.billing.credits.manager import credit_manager
 
@@ -29,17 +28,14 @@ TIER_PRICE_MAPPING = {
     'tier_2_20': {
         'monthly': config.STRIPE_TIER_2_20_ID,
         'yearly': config.STRIPE_TIER_2_20_YEARLY_ID,
-        'yearly_commitment': config.STRIPE_TIER_2_17_YEARLY_COMMITMENT_ID,
     },
     'tier_6_50': {
         'monthly': config.STRIPE_TIER_6_50_ID,
         'yearly': config.STRIPE_TIER_6_50_YEARLY_ID,
-        'yearly_commitment': config.STRIPE_TIER_6_42_YEARLY_COMMITMENT_ID,
     },
     'tier_25_200': {
         'monthly': config.STRIPE_TIER_25_200_ID,
         'yearly': config.STRIPE_TIER_25_200_YEARLY_ID,
-        'yearly_commitment': config.STRIPE_TIER_25_170_YEARLY_COMMITMENT_ID,
     },
     'free': {
         'monthly': config.STRIPE_FREE_TIER_ID,
@@ -53,7 +49,7 @@ def get_available_tiers() -> str:
         if tier_name in ['none'] or tier_name.startswith('tier_12') or tier_name.startswith('tier_50') or tier_name.startswith('tier_125') or tier_name.startswith('tier_200') or tier_name.startswith('tier_150'):
             continue
         lines.append(f"  - {tier_name} ({tier.display_name}): ${tier.monthly_credits}/mo credits")
-    lines.append("\nBilling types: monthly, yearly, yearly_commitment")
+    lines.append("\nBilling types: monthly, yearly")
     return "\n".join(lines)
 
 
@@ -100,6 +96,9 @@ async def change_subscription_immediately(
     billing_type: str = 'monthly',
     dry_run: bool = False
 ):
+    if billing_type == 'yearly_commitment':
+        billing_type = 'yearly'
+
     logger.info("=" * 80)
     logger.info(f"{'[DRY RUN] ' if dry_run else ''}CHANGING SUBSCRIPTION FOR {user_email}")
     logger.info(f"Target: {target_tier} ({billing_type})")
@@ -173,15 +172,15 @@ async def change_subscription_immediately(
         logger.info("User is already on the target plan")
         return True
     
-    is_current_commitment = is_commitment_price_id(current_price_id)
-    if is_current_commitment:
-        credit_account = await client.from_('credit_accounts').select('commitment_end_date').eq('account_id', account_id).execute()
-        if credit_account.data and credit_account.data[0].get('commitment_end_date'):
-            commitment_end = datetime.fromisoformat(credit_account.data[0]['commitment_end_date'].replace('Z', '+00:00'))
+    credit_account = await client.from_('credit_accounts').select('commitment_end_date, commitment_type').eq('account_id', account_id).execute()
+    if credit_account.data:
+        row = credit_account.data[0]
+        if row.get('commitment_type') == 'yearly_commitment' and row.get('commitment_end_date'):
+            commitment_end = datetime.fromisoformat(row['commitment_end_date'].replace('Z', '+00:00'))
             if commitment_end > datetime.now(timezone.utc):
                 logger.warning(f"User has active commitment until {commitment_end.date()}")
                 logger.warning("Proceeding anyway as this is an admin override")
-    
+
     logger.info(f"\nChanging to:")
     logger.info(f"  Tier: {target_tier} ({target_tier_info.display_name})")
     logger.info(f"  Billing: {billing_type}")
@@ -193,8 +192,6 @@ async def change_subscription_immediately(
         logger.info(f"  1. Cancel any pending schedule on subscription {current_subscription.id}")
         logger.info(f"  2. Update subscription item {current_item_id} to price {target_price_id}")
         logger.info(f"  3. Update credit_accounts table with new tier info")
-        if is_commitment_price_id(target_price_id):
-            logger.info(f"  4. Set up yearly commitment tracking")
         logger.info("\n[DRY RUN] No changes made")
         return True
     
@@ -238,29 +235,14 @@ async def change_subscription_immediately(
         'updated_at': datetime.now(timezone.utc).isoformat()
     }
     
-    is_commitment = is_commitment_price_id(target_price_id)
-    commitment_duration = get_commitment_duration_months(target_price_id)
-    
-    if is_commitment and commitment_duration > 0:
-        end_date = start_date + timedelta(days=365)
-        update_data.update({
-            'commitment_type': 'yearly_commitment',
-            'commitment_start_date': start_date.isoformat(),
-            'commitment_end_date': end_date.isoformat(),
-            'commitment_price_id': target_price_id,
-            'can_cancel_after': end_date.isoformat()
-        })
-        logger.info(f"Setting up yearly commitment: {start_date.date()} to {end_date.date()}")
-    else:
-        update_data.update({
-            'commitment_type': None,
-            'commitment_start_date': None,
-            'commitment_end_date': None,
-            'commitment_price_id': None,
-            'can_cancel_after': None
-        })
-    
-    update_data['plan_type'] = 'yearly_commitment' if is_commitment else 'monthly'
+    update_data.update({
+        'commitment_type': None,
+        'commitment_start_date': None,
+        'commitment_end_date': None,
+        'commitment_price_id': None,
+        'can_cancel_after': None
+    })
+    update_data['plan_type'] = get_plan_type(target_price_id)
     
     update_result = await client.from_('credit_accounts').update(
         {k: v for k, v in update_data.items() if k != 'account_id'}
@@ -271,21 +253,6 @@ async def change_subscription_immediately(
         logger.info("Created credit_accounts record")
     else:
         logger.info("Updated credit_accounts table")
-    
-    if is_commitment and commitment_duration > 0:
-        existing = await client.from_('commitment_history').select('id').eq('stripe_subscription_id', updated_subscription.id).execute()
-        
-        if not existing.data:
-            end_date = start_date + timedelta(days=365)
-            await client.from_('commitment_history').insert({
-                'account_id': account_id,
-                'commitment_type': 'yearly_commitment',
-                'price_id': target_price_id,
-                'start_date': start_date.isoformat(),
-                'end_date': end_date.isoformat(),
-                'stripe_subscription_id': updated_subscription.id
-            }).execute()
-            logger.info("Created commitment_history record")
     
     current_balance = await client.from_('credit_accounts').select('balance').eq('account_id', account_id).execute()
     balance = Decimal(str(current_balance.data[0]['balance'])) if current_balance.data else Decimal('0')
