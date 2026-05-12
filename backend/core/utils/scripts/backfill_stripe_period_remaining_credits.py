@@ -23,7 +23,7 @@ Usage:
   cd backend && PYTHONPATH=. uv run python core/utils/scripts/backfill_stripe_period_remaining_credits.py --apply
   cd backend && PYTHONPATH=. uv run python core/utils/scripts/backfill_stripe_period_remaining_credits.py --tsv-out reports/backfill_dryrun.tsv
   cd backend && PYTHONPATH=. uv run python core/utils/scripts/backfill_stripe_period_remaining_credits.py \\
-      --tsv-out reports/backfill_dryrun.tsv --tsv-scan-out reports/backfill_scan.tsv
+      --yearly-only --tsv-out reports/backfill_dryrun_yearly.tsv --tsv-scan-out reports/backfill_scan_yearly.tsv
   cd backend && PYTHONPATH=. uv run python core/utils/scripts/backfill_stripe_period_remaining_credits.py --account-id <uuid> --apply
 """
 
@@ -398,6 +398,7 @@ async def process_account(
     apply: bool,
     scan_rows: Optional[List[Dict[str, Any]]] = None,
     credit_row: Optional[Dict[str, Any]] = None,
+    yearly_only: bool = False,
 ) -> Tuple[str, Optional[Decimal], Optional[Dict[str, Any]]]:
     """
     Returns (status, delta_granted_or_none, detail_for_report_or_none).
@@ -442,6 +443,11 @@ async def process_account(
         return "skipped_no_refill", None, None
 
     stripe_interval = _stripe_plan_interval_label(subscription, price_obj)
+
+    if yearly_only:
+        catalog_plan_check = get_plan_type(price_id)
+        if catalog_plan_check != "yearly" and stripe_interval != "year":
+            return "skipped_not_yearly", None, None
 
     if status == "trialing":
         entitlement = TRIAL_CREDITS
@@ -573,6 +579,7 @@ async def run_backfill(
     max_accounts: Optional[int],
     tsv_out: Optional[str],
     tsv_scan_out: Optional[str],
+    yearly_only: bool = False,
 ) -> None:
     db = DBConnection()
     await db.initialize()
@@ -597,6 +604,8 @@ async def run_backfill(
         )
         if account_id_filter:
             q = q.eq("account_id", account_id_filter)
+        if yearly_only:
+            q = q.in_("plan_type", ["yearly", "yearly_commitment"])
         res = await q.range(offset, offset + ACCOUNT_BATCH - 1).execute()
         rows: List[Dict[str, Any]] = res.data or []
         if not rows:
@@ -624,6 +633,7 @@ async def run_backfill(
                 apply,
                 scan_rows,
                 row,
+                yearly_only,
             )
             stats[st] = stats.get(st, 0) + 1
             processed += 1
@@ -653,12 +663,18 @@ async def run_backfill(
             print("\nNote: --tsv-scan-out is ignored with --apply.\n")
         else:
             sw = _write_scan_tsv(tsv_scan_out, scan_rows)
-            print(f"\nWrote scan TSV ({len(scan_rows)} rows, all accounts evaluated for usage): {sw}\n")
+            scan_label = (
+                f"{len(scan_rows)} rows (yearly-only, Stripe-confirmed)"
+                if yearly_only
+                else f"{len(scan_rows)} rows, all accounts evaluated for usage"
+            )
+            print(f"\nWrote scan TSV ({scan_label}): {sw}\n")
 
     print("\n" + "=" * 60)
     print("STRIPE MONTHLY-PACK REMAINING CREDITS BACKFILL")
     print("=" * 60)
-    print(f"Mode: {'APPLY (writes enabled)' if apply else 'DRY-RUN (no writes)'}")
+    print(f"Mode: {'APPLY (writes enabled)' if apply else 'DRY-RUN (no writes)'}"
+          f"{' | yearly-only (DB plan_type + Stripe yearly price)' if yearly_only else ''}")
     if not apply:
         print("\nAccounts that would receive an expiring-credit top-up (delta > 0):")
         print("(usage = sum of estimated $ from assistant_response_end messages in the period window)\n")
@@ -709,6 +725,15 @@ def main() -> None:
         metavar="PATH",
         help="Dry-run only: write every account that reached usage aggregation (includes yearly); filter column stripe_interval.",
     )
+    parser.add_argument(
+        "--yearly-only",
+        action="store_true",
+        help=(
+            "Only credit_accounts with plan_type yearly (or legacy yearly_commitment), and only "
+            "keep rows where Stripe price is yearly (catalog or interval=year). Fewer API calls; "
+            "excludes accounts mis-tagged as monthly in DB but on a yearly Stripe price."
+        ),
+    )
     args = parser.parse_args()
     asyncio.run(
         run_backfill(
@@ -717,6 +742,7 @@ def main() -> None:
             max_accounts=args.max_accounts,
             tsv_out=args.tsv_out,
             tsv_scan_out=args.tsv_scan_out,
+            yearly_only=args.yearly_only,
         )
     )
 
