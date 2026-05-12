@@ -2218,6 +2218,29 @@
       },
       "manageButton": "管理记忆",
       "dismissButton": "知道了"
+    },
+    "tutorialsBanner": {
+      "title": "初次使用 Dobby？从这里开始",
+      "description": "7 个互动教程，帮您掌握各项功能",
+      "walkthroughs": "互动式引导",
+      "viewTutorials": "查看教程"
+    },
+    "appBanners": {
+      "collapsedTitle": "获取 Dobby 应用",
+      "collapsedSubtitle": "移动端与桌面端",
+      "mobileTitle": "Dobby 移动端已上线",
+      "mobileDescription": "扫码或点击下载",
+      "desktopTitle": "Dobby 桌面端已上线",
+      "desktopDescriptionMac": "把任务交给 Dobby。在 Mac 上随时随地使用。立即下载。",
+      "desktopDescriptionDesktop": "把任务交给 Dobby。在电脑上随时随地使用。立即下载。",
+      "downloadFor": "下载适用于",
+      "platformMacM": "Mac（M 系列芯片）",
+      "platformWindows": "Windows",
+      "intelMacLink": "使用 Intel Mac？点此下载",
+      "appStore": "App Store",
+      "googlePlay": "Google Play",
+      "ios": "iOS",
+      "android": "Android"
     }
   },
   "support": {

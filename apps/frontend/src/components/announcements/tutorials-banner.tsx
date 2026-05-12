@@ -5,11 +5,13 @@ import { useState, useEffect } from 'react';
 import { X, BookOpen, Play, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { useAuth } from '@/components/AuthProvider';
 
 const STORAGE_KEY = 'kortix-tutorials-banner-dismissed';
 
 export function TutorialsBanner() {
+  const t = useTranslations('announcements.tutorialsBanner');
   const [isVisible, setIsVisible] = useState(false);
   const [mounted, setMounted] = useState(false);
   const { user } = useAuth();
@@ -105,10 +107,10 @@ export function TutorialsBanner() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="text-foreground dark:text-white text-sm font-semibold mb-1">
-                    New to Dobby? Start here
+                    {t('title')}
                   </h3>
                   <p className="text-muted-foreground dark:text-white/60 text-xs leading-relaxed">
-                    7 interactive tutorials to help you master every feature
+                    {t('description')}
                   </p>
                 </div>
               </div>
@@ -117,10 +119,10 @@ export function TutorialsBanner() {
               <div className="mt-3 flex items-center justify-between">
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                   <Play className="w-3 h-3" />
-                  <span>Interactive walkthroughs</span>
+                  <span>{t('walkthroughs')}</span>
                 </div>
                 <div className="flex items-center gap-1 text-xs font-medium text-primary group-hover:gap-2 transition-all">
-                  <span>View tutorials</span>
+                  <span>{t('viewTutorials')}</span>
                   <ArrowRight className="w-3 h-3" />
                 </div>
               </div>

@@ -1560,6 +1560,29 @@
       },
       "manageButton": "Erinnerungen verwalten",
       "dismissButton": "Verstanden"
+    },
+    "tutorialsBanner": {
+      "title": "New to Dobby? Start here",
+      "description": "7 interactive tutorials to help you master every feature",
+      "walkthroughs": "Interactive walkthroughs",
+      "viewTutorials": "View tutorials"
+    },
+    "appBanners": {
+      "collapsedTitle": "Get Dobby Apps",
+      "collapsedSubtitle": "Mobile & Desktop",
+      "mobileTitle": "Dobby for Mobile is here",
+      "mobileDescription": "Scan QR or tap to download",
+      "desktopTitle": "Dobby for Desktop is here",
+      "desktopDescriptionMac": "Hand it off to Dobby. From anywhere on your Mac. Download now.",
+      "desktopDescriptionDesktop": "Hand it off to Dobby. From anywhere on your computer. Download now.",
+      "downloadFor": "Download for",
+      "platformMacM": "Mac (M series)",
+      "platformWindows": "Windows",
+      "intelMacLink": "Intel Mac? Download here",
+      "appStore": "App Store",
+      "googlePlay": "Google Play",
+      "ios": "iOS",
+      "android": "Android"
     }
   },
   "support": {

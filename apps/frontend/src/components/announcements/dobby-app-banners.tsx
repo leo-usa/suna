@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { isElectron } from '@/lib/utils/is-electron';
 import { featureFlags } from '@/lib/feature-flags';
 import { AppDownloadQR, APP_DOWNLOAD_URL } from '@/components/common/app-download-qr';
+import { useTranslations } from 'next-intl';
 
 const MOBILE_STORAGE_KEY = 'kortix-mobile-banner-dismissed';
 const DESKTOP_STORAGE_KEY = 'kortix-desktop-banner-dismissed';
@@ -85,6 +86,7 @@ function detectDesktopPlatform(): DesktopPlatform {
 }
 
 export function KortixAppBanners(props: KortixAppBannersProps) {
+  const t = useTranslations('announcements.appBanners');
   const disableMobileAdvertising =
     props.disableMobileAdvertising ?? featureFlags.disableMobileAdvertising;
 
@@ -155,8 +157,6 @@ export function KortixAppBanners(props: KortixAppBannersProps) {
     }
   };
 
-  const desktopPlatformLabel = desktopPlatform === 'windows' ? 'Windows' : 'Mac (M series)';
-
   if (!mounted || !isVisible) return null;
   if (!mobileVisible && !desktopVisible) return null;
 
@@ -195,10 +195,10 @@ export function KortixAppBanners(props: KortixAppBannersProps) {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-foreground dark:text-white text-sm font-semibold truncate">
-                    Get Dobby Apps
+                    {t('collapsedTitle')}
                   </p>
                   <p className="text-muted-foreground dark:text-white/60 text-xs">
-                    Mobile & Desktop
+                    {t('collapsedSubtitle')}
                   </p>
                 </div>
                 <div className="w-10 h-10 rounded-xl bg-foreground dark:bg-white flex items-center justify-center shadow-sm">
@@ -246,10 +246,10 @@ export function KortixAppBanners(props: KortixAppBannersProps) {
                     {/* Content area */}
                     <div className="p-4 bg-muted/50 dark:bg-[#161618]">
                       <h3 className="text-foreground dark:text-white text-sm font-semibold mb-1">
-                        Dobby for Mobile is here
+                        {t('mobileTitle')}
                       </h3>
                       <p className="text-muted-foreground dark:text-white/60 text-xs leading-relaxed mb-3">
-                        Scan QR or tap to download
+                        {t('mobileDescription')}
                       </p>
 
                       {/* Store buttons - direct links */}
@@ -263,10 +263,10 @@ export function KortixAppBanners(props: KortixAppBannersProps) {
                           <AppleLogo className="h-5 w-5 text-white dark:text-black" />
                           <div className="flex flex-col items-start">
                             <span className="text-[8px] text-white/70 dark:text-black/70 leading-none">
-                              App Store
+                              {t('appStore')}
                             </span>
                             <span className="text-[11px] font-semibold text-white dark:text-black leading-tight">
-                              iOS
+                              {t('ios')}
                             </span>
                           </div>
                         </a>
@@ -279,10 +279,10 @@ export function KortixAppBanners(props: KortixAppBannersProps) {
                           <GooglePlayLogo className="h-4 w-4 text-white dark:text-black" />
                           <div className="flex flex-col items-start">
                             <span className="text-[8px] text-white/70 dark:text-black/70 leading-none">
-                              Google Play
+                              {t('googlePlay')}
                             </span>
                             <span className="text-[11px] font-semibold text-white dark:text-black leading-tight">
-                              Android
+                              {t('android')}
                             </span>
                           </div>
                         </a>
@@ -332,10 +332,12 @@ export function KortixAppBanners(props: KortixAppBannersProps) {
                     {/* Content area */}
                     <div className="p-4 bg-muted/50 dark:bg-[#161618]">
                       <h3 className="text-foreground dark:text-white text-sm font-semibold mb-1">
-                        Dobby for Desktop is here
+                        {t('desktopTitle')}
                       </h3>
                       <p className="text-muted-foreground dark:text-white/60 text-xs leading-relaxed mb-3">
-                        Hand it off to Dobby. From anywhere on your {desktopPlatform === 'mac' ? 'Mac' : 'Desktop'}. Download now.
+                        {desktopPlatform === 'mac'
+                          ? t('desktopDescriptionMac')
+                          : t('desktopDescriptionDesktop')}
                       </p>
 
                       {/* Desktop download badge */}
@@ -350,10 +352,10 @@ export function KortixAppBanners(props: KortixAppBannersProps) {
                         )}
                         <div className="flex flex-col items-start">
                           <span className="text-[8px] text-white/80 dark:text-black/80 leading-none">
-                            Download for
+                            {t('downloadFor')}
                           </span>
                           <span className="text-[11px] font-semibold text-white dark:text-black leading-tight">
-                            {desktopPlatformLabel}
+                            {desktopPlatform === 'windows' ? t('platformWindows') : t('platformMacM')}
                           </span>
                         </div>
                       </button>
@@ -363,7 +365,7 @@ export function KortixAppBanners(props: KortixAppBannersProps) {
                           onClick={handleDownloadIntel}
                           className="w-full mt-2 text-[10px] text-muted-foreground dark:text-white/60 hover:text-foreground dark:hover:text-white transition-colors"
                         >
-                          Intel Mac? Download here
+                          {t('intelMacLink')}
                         </button>
                       )}
                     </div>
