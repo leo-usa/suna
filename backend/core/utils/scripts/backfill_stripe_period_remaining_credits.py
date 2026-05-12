@@ -1,18 +1,20 @@
 #!/usr/bin/env python3
 """
-Backfill expiring (monthly) credits from legacy chat usage vs Stripe billing period.
+Backfill expiring credits from estimated chat usage vs the **current credit pack** window.
 
 For each paid Stripe subscription on credit_accounts:
-  entitlement = tier monthly pack for the current Stripe period (yearly → 12 × monthly)
-  used       = sum of estimated $ from messages (type=assistant_response_end) in [period_start, min(now, period_end))
-  remaining  = max(0, entitlement - used)
-  delta      = remaining - current expiring_credits
-If delta > small epsilon, grant delta once via atomic_add_credits with a stable stripe_event_id
-  stripe_event_id = stripe_period_remaining_v1:{subscription_id}:{period_start}
+  Monthly Stripe billing: entitlement = tier monthly credits; usage window = current Stripe
+    subscription period [period_start, min(now, period_end)).
 
-Default is dry-run (no DB writes). Dry-run prints a TSV table of accounts that would receive a positive
-expiring-credit delta: owner email, plan, Stripe billing period start (`current_period_start` UTC),
-estimated usage in the window, entitlement, current expiring balance, target expiring, and delta.
+  Yearly Stripe billing (pay yearly, credits refilled monthly): matches production — **one monthly
+    pack at a time** (`process_monthly_refills`, `BillingPeriodHandler`). Entitlement = tier monthly
+    credits (not 12×). Usage window = current month-bucket from `billing_cycle_anchor` (monthiversary),
+    clamped to the Stripe subscription period.
+
+  remaining = max(0, entitlement - used); delta = remaining - current expiring_credits.
+If delta > epsilon, grant once with stripe_event_id = stripe_month_pack_v1:{sub_id}:{usage_window_start_epoch}.
+
+Default is dry-run. Use --tsv-out / --tsv-scan-out for reports.
 
 Pass --apply to write.
 
@@ -37,13 +39,15 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, TypedDict
 
+from dateutil.relativedelta import relativedelta  # type: ignore
+
 backend_dir = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(backend_dir))
 
 import stripe
 from core.billing import repo as billing_repo
 from core.billing.credits.calculator import calculate_token_cost
-from core.billing.shared.config import TRIAL_CREDITS, get_tier_by_price_id
+from core.billing.shared.config import TRIAL_CREDITS, get_plan_type, get_tier_by_price_id
 from core.services.supabase import DBConnection
 from core.utils.config import config
 from core.utils.logger import logger
@@ -54,7 +58,7 @@ MESSAGE_BATCH = 500
 ACCOUNT_BATCH = 150
 USAGE_CHUNK_DAYS = 7
 EPSILON = Decimal("0.005")
-MIGRATION_STRIPE_EVENT_PREFIX = "stripe_period_remaining_v1"
+MIGRATION_STRIPE_EVENT_PREFIX = "stripe_month_pack_v1"
 
 REPORT_TSV_COLUMNS = [
     "email",
@@ -66,7 +70,8 @@ REPORT_TSV_COLUMNS = [
     "expiring_credits_now",
     "target_expiring",
     "delta_dollars",
-    "usage_window_end_utc",
+    "usage_query_start_utc",
+    "usage_query_end_utc",
     "price_id",
     "stripe_subscription_id",
 ]
@@ -80,7 +85,8 @@ SCAN_TSV_COLUMNS = [
     "plan_label",
     "billing_period_start_utc",
     "billing_period_end_utc",
-    "usage_window_end_utc",
+    "usage_query_start_utc",
+    "usage_query_end_utc",
     "stripe_subscription_id",
 ]
 
@@ -94,7 +100,8 @@ class WouldChangeRow(TypedDict, total=False):
     stripe_interval: str
     billing_period_start_utc: str
     billing_period_end_utc: str
-    usage_window_end_utc: str
+    usage_query_start_utc: str
+    usage_query_end_utc: str
     entitlement_dollars: str
     usage_estimated_dollars: str
     expiring_credits_now: str
@@ -179,29 +186,57 @@ def _primary_price_id(subscription: Any) -> Optional[str]:
         return None
 
 
-def _price_interval_months(subscription: Any, price_obj: Any) -> int:
-    """1 for monthly Stripe period; 12 for yearly (full-period entitlement = 12 × monthly pack)."""
-    interval = None
+def _parse_iso_dt(value: Optional[str], fallback: datetime) -> datetime:
+    if not value:
+        return fallback
     try:
-        if isinstance(subscription, dict):
-            plan = subscription.get("plan") or {}
-            interval = plan.get("interval") if isinstance(plan, dict) else None
-        elif getattr(subscription, "plan", None):
-            pl = subscription.plan
-            interval = getattr(pl, "interval", None)
-        if not interval and price_obj:
-            if isinstance(price_obj, dict):
-                rec = price_obj.get("recurring") or {}
-                interval = rec.get("interval")
-            else:
-                rec = getattr(price_obj, "recurring", None)
-                if rec is not None:
-                    interval = getattr(rec, "interval", None)
-        if interval == "year":
-            return 12
+        dt = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt
     except Exception:
-        pass
-    return 1
+        return fallback
+
+
+def monthly_credit_pack_window(
+    *,
+    is_yearly_plan: bool,
+    now: datetime,
+    stripe_period_start: datetime,
+    stripe_period_end: datetime,
+    billing_cycle_anchor_iso: Optional[str],
+) -> Tuple[datetime, datetime, datetime]:
+    """
+    Returns (usage_query_start, usage_query_end, credits_expire_at).
+    Yearly plans: one monthly pack per monthiversary from billing_cycle_anchor (see process_monthly_refills).
+    """
+    anchor = _parse_iso_dt(billing_cycle_anchor_iso, stripe_period_start)
+    if anchor.tzinfo is None:
+        anchor = anchor.replace(tzinfo=timezone.utc)
+    anchor = max(anchor, stripe_period_start)
+    if not is_yearly_plan:
+        u0 = stripe_period_start
+        u1 = min(now, stripe_period_end)
+        return u0, u1, stripe_period_end
+    if now <= anchor:
+        u1 = min(now, stripe_period_end)
+        exp = min(anchor + relativedelta(months=1), stripe_period_end)
+        return anchor, u1, exp
+    m = 0
+    while m < 24:
+        ws = anchor + relativedelta(months=m)
+        we = anchor + relativedelta(months=m + 1)
+        if now < we:
+            u0 = max(ws, stripe_period_start)
+            u1 = min(now, we, stripe_period_end)
+            exp = min(we, stripe_period_end)
+            return u0, u1, exp
+        m += 1
+    ws = anchor + relativedelta(months=11)
+    we = min(anchor + relativedelta(months=12), stripe_period_end)
+    u0 = max(ws, stripe_period_start)
+    u1 = min(now, stripe_period_end)
+    return u0, u1, stripe_period_end
 
 
 def _stripe_plan_interval_label(subscription: Any, price_obj: Any) -> str:
@@ -362,6 +397,7 @@ async def process_account(
     current_expiring: Decimal,
     apply: bool,
     scan_rows: Optional[List[Dict[str, Any]]] = None,
+    credit_row: Optional[Dict[str, Any]] = None,
 ) -> Tuple[str, Optional[Decimal], Optional[Dict[str, Any]]]:
     """
     Returns (status, delta_granted_or_none, detail_for_report_or_none).
@@ -405,11 +441,15 @@ async def process_account(
     if tier.monthly_refill_enabled is False:
         return "skipped_no_refill", None, None
 
+    stripe_interval = _stripe_plan_interval_label(subscription, price_obj)
+
     if status == "trialing":
         entitlement = TRIAL_CREDITS
+        use_yearly_month_buckets = False
     else:
-        months_pack = _price_interval_months(subscription, price_obj)
-        entitlement = Decimal(str(tier.monthly_credits)) * Decimal(months_pack)
+        entitlement = Decimal(str(tier.monthly_credits))
+        catalog_plan = get_plan_type(price_id)
+        use_yearly_month_buckets = catalog_plan == "yearly" or stripe_interval == "year"
 
     period_start = subscription.get("current_period_start") if isinstance(subscription, dict) else subscription.current_period_start
     period_end = subscription.get("current_period_end") if isinstance(subscription, dict) else subscription.current_period_end
@@ -419,18 +459,31 @@ async def process_account(
     start_dt = datetime.fromtimestamp(int(period_start), tz=timezone.utc)
     end_dt = datetime.fromtimestamp(int(period_end), tz=timezone.utc)
     now = datetime.now(timezone.utc)
-    window_end = min(now, end_dt)
-    if window_end <= start_dt:
+    if min(now, end_dt) <= start_dt:
         return "skipped_status", None, None
 
-    start_iso = start_dt.isoformat()
-    end_iso = window_end.isoformat()
-    stripe_interval = _stripe_plan_interval_label(subscription, price_obj)
     nick = _price_nickname(price_obj)
     if nick:
         plan_label = f"{tier.name} ({stripe_interval}) — {nick}"
     else:
         plan_label = f"{tier.name} ({stripe_interval})"
+    if use_yearly_month_buckets and status != "trialing":
+        plan_label = f"{plan_label} — monthly credit pack window"
+
+    ca = credit_row or {}
+    anchor_iso = ca.get("billing_cycle_anchor")
+    usage_u0, usage_u1, credits_expire_at = monthly_credit_pack_window(
+        is_yearly_plan=use_yearly_month_buckets,
+        now=now,
+        stripe_period_start=start_dt,
+        stripe_period_end=end_dt,
+        billing_cycle_anchor_iso=str(anchor_iso) if anchor_iso else None,
+    )
+    if usage_u1 <= usage_u0:
+        return "skipped_status", None, None
+
+    start_iso = usage_u0.isoformat()
+    end_iso = usage_u1.isoformat()
 
     if scan_rows is not None:
         scan_rows.append(
@@ -443,7 +496,8 @@ async def process_account(
                 "plan_label": plan_label,
                 "billing_period_start_utc": start_dt.isoformat(),
                 "billing_period_end_utc": end_dt.isoformat(),
-                "usage_window_end_utc": window_end.isoformat(),
+                "usage_query_start_utc": usage_u0.isoformat(),
+                "usage_query_end_utc": usage_u1.isoformat(),
                 "stripe_subscription_id": sub_id,
             }
         )
@@ -458,10 +512,10 @@ async def process_account(
     if delta <= EPSILON:
         return "noop_delta", None, None
 
-    stripe_event_id = f"{MIGRATION_STRIPE_EVENT_PREFIX}:{sub_id}:{int(period_start)}"
+    stripe_event_id = f"{MIGRATION_STRIPE_EVENT_PREFIX}:{sub_id}:{int(usage_u0.timestamp())}"
     description = (
-        f"Stripe period remaining backfill (v1): tier={tier.name}, "
-        f"period={start_iso}/{end_dt.isoformat()}, used_est=${used}, target_expiring=${remaining}"
+        f"Monthly pack remaining backfill: tier={tier.name}, "
+        f"usage_window={start_iso}/{end_iso}, used_est=${used}, target_expiring=${remaining}"
     )
 
     if not apply:
@@ -478,7 +532,8 @@ async def process_account(
             "stripe_interval": stripe_interval,
             "billing_period_start_utc": start_dt.isoformat(),
             "billing_period_end_utc": end_dt.isoformat(),
-            "usage_window_end_utc": window_end.isoformat(),
+            "usage_query_start_utc": usage_u0.isoformat(),
+            "usage_query_end_utc": usage_u1.isoformat(),
             "entitlement_dollars": str(entitlement.quantize(Decimal("0.01"))),
             "usage_estimated_dollars": str(used.quantize(Decimal("0.01"))),
             "expiring_credits_now": str(current_expiring),
@@ -488,7 +543,7 @@ async def process_account(
         }
         return "dry_run", delta, detail
 
-    expires_at = end_dt.isoformat()
+    expires_at = credits_expire_at.isoformat()
     result = await billing_repo.atomic_add_credits(
         account_id=account_id,
         amount=float(delta),
@@ -533,7 +588,10 @@ async def run_backfill(
     while True:
         q = (
             client.from_("credit_accounts")
-            .select("account_id, tier, stripe_subscription_id, expiring_credits, provider")
+            .select(
+                "account_id, tier, stripe_subscription_id, expiring_credits, provider, "
+                "plan_type, billing_cycle_anchor, next_credit_grant"
+            )
             .not_.in_("tier", ["none", "free"])
             .not_.is_("stripe_subscription_id", "null")
         )
@@ -565,6 +623,7 @@ async def run_backfill(
                 expiring,
                 apply,
                 scan_rows,
+                row,
             )
             stats[st] = stats.get(st, 0) + 1
             processed += 1
@@ -597,7 +656,7 @@ async def run_backfill(
             print(f"\nWrote scan TSV ({len(scan_rows)} rows, all accounts evaluated for usage): {sw}\n")
 
     print("\n" + "=" * 60)
-    print("STRIPE PERIOD REMAINING CREDITS BACKFILL (v1)")
+    print("STRIPE MONTHLY-PACK REMAINING CREDITS BACKFILL")
     print("=" * 60)
     print(f"Mode: {'APPLY (writes enabled)' if apply else 'DRY-RUN (no writes)'}")
     if not apply:
