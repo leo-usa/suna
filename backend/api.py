@@ -368,7 +368,16 @@ app.add_middleware(
     allow_origin_regex=allow_origin_regex,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allow_headers=["Content-Type", "Authorization", "X-Project-Id", "X-MCP-URL", "X-MCP-Type", "X-MCP-Headers", "X-API-Key"],
+    allow_headers=[
+        "Content-Type",
+        "Authorization",
+        "X-Project-Id",
+        "X-MCP-URL",
+        "X-MCP-Type",
+        "X-MCP-Headers",
+        "X-API-Key",
+        "X-Wechat-Ilink-Bridge-Secret",
+    ],
 )
 
 # Create a main API router
@@ -400,10 +409,13 @@ api_router.include_router(system_status_admin_router)
 api_router.include_router(sandbox_pool_admin_router)
 api_router.include_router(system_status_router)
 
+from core.integrations.wechat_ilink import api as wechat_ilink_api
 from core.mcp_module import api as mcp_api
 from core.credentials import api as credentials_api
 from core.templates import api as template_api
 from core.templates import presentations_api
+
+api_router.include_router(wechat_ilink_api.router, prefix="/integrations/wechat-ilink")
 
 if config.ACTIVATE_MCPS_TRIG:
     api_router.include_router(mcp_api.router)

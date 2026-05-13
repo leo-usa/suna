@@ -493,6 +493,7 @@
     "knowledgeBase": "知识库",
     "generalSection": "常规",
     "support": "帮助与支持",
+    "wechat": "微信",
     "tutorials": "教程",
     "userFeedback": "用户反馈",
     "analytics": "数据分析",
@@ -2474,5 +2475,23 @@
       "baseUrlOr": "或",
       "backToApiSettings": "返回 API 设置"
     }
+  },
+  "wechatIlinkPage": {
+    "title": "微信（iLink）",
+    "subtitle": "通过腾讯官方 iLink 在微信里使用 Dobby。每个工作区可单独绑定。",
+    "workspaceLabel": "工作区",
+    "linkedSessions": "已绑定的微信会话数",
+    "generateCode": "生成验证码",
+    "codeLabel": "验证码",
+    "expiresLabel": "过期时间",
+    "instructionsTitle": "如何连接",
+    "step1": "选择该微信要使用的工作区（积分与对话均属于该工作区）。",
+    "step2": "点击「生成验证码」，会得到 6 位字符，15 分钟内有效。",
+    "step3": "在服务器上运行 iLink 桥接进程（见 apps/ilink-bridge 的 README），配置 SUNA_API_BASE 与 SUNA_ILINK_BRIDGE_SECRET。",
+    "step4": "在微信中打开你的机器人，单独发送一条仅含这 6 位字符的消息以完成绑定。",
+    "step5": "绑定后即可正常发消息；Dobby 会按该工作区生成回复。",
+    "loadError": "无法加载绑定状态。",
+    "codeError": "无法生成验证码，请重试。",
+    "noAccounts": "没有可用的工作区。"
   }
 }

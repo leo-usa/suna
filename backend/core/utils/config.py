@@ -378,6 +378,9 @@ class Configuration:
     # Admin API key for server-side operations
     DOBBY_ADMIN_API_KEY: Optional[str] = None
 
+    # Shared secret for the WeChat iLink bridge process (server-to-server only).
+    WECHAT_ILINK_BRIDGE_SECRET: Optional[str] = None
+
     # API Keys system configuration
     API_KEY_SECRET: Optional[str] = "default-secret-key-change-in-production"
     API_KEY_LAST_USED_THROTTLE_SECONDS: Optional[int] = 900
