@@ -1,8 +1,8 @@
 """
-HTTP API for WeChat iLink pairing (JWT) and bridge chat (shared secret).
+HTTP API for Telegram bot pairing (JWT) and bridge chat (shared secret).
 
-Each basejump account may link one or more ilink_peer_id rows; pairing ties a
-WeChat peer to the workspace the user selected when generating the code.
+Each basejump account may link one or more Telegram users; pairing ties a
+Telegram user id to the workspace selected when generating the code.
 """
 
 from __future__ import annotations
@@ -34,21 +34,41 @@ from core.utils.auth_utils import verify_and_get_user_id_from_jwt
 from core.utils.config import config
 from core.utils.logger import logger
 
-router = APIRouter(tags=["wechat-ilink"])
+router = APIRouter(tags=["telegram-bot"])
 
 _PAIRING_CODE_ALPHABET = string.ascii_uppercase + string.digits
 _PAIRING_CODE_PATTERN = re.compile(r"^[A-Z0-9]{6}$")
 _MAX_POLL_SECONDS = 120
 _POLL_INTERVAL_SEC = 1.5
 
-MSG_BIND_OK = "已成功绑定当前工作区。请继续向 Dobby 发送消息。"
-MSG_BIND_INVALID = "验证码无效或已过期。请在本页重新生成验证码，并在微信中单独发送该 6 位码。"
-MSG_BIND_NEEDED = "请先在 Dobby 网页端：用户菜单 → 微信，选择工作区并生成验证码，然后在微信中单独发送该 6 位码完成绑定。"
+MSG_BIND_OK = "已成功绑定当前工作区。请继续在 Telegram 中与 Dobby 对话。"
+MSG_BIND_INVALID = "验证码无效或已过期。请在本页重新生成验证码，并在 Telegram 中单独发送该 6 位码。"
+MSG_BIND_NEEDED = "请先在 Dobby 网页端：用户菜单 → Telegram，选择工作区并生成验证码，然后在 Telegram 中单独发送该 6 位码完成绑定。"
 MSG_RUN_FAILED = "Dobby 暂时无法完成请求，请稍后再试。"
+MSG_NEW_THREAD = (
+    "已开始新对话。下一条消息会在新的线程里进行（仍属于当前绑定的工作区）。\n"
+    "发送 /newchat 或 /new 可随时再开新线程。\n\n"
+    "New thread started. Your next message opens a fresh conversation in the same workspace.\n"
+    "Use /newchat or /new any time to start another new thread."
+)
+
+
+def _reraise_if_missing_telegram_tables(exc: Exception) -> None:
+    """Clear 503 when migration was not applied to the DB this API uses."""
+    msg = str(exc).lower()
+    if "does not exist" in msg and "telegram_bot" in msg:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Telegram tables are missing on this database. "
+                "Apply migration 20260513120000_telegram_bot_integration.sql "
+                "(same Postgres as DATABASE_POOLER_URL / this API), then reload."
+            ),
+        ) from exc
 
 
 class PairingCodeRequest(BaseModel):
-    account_id: str = Field(..., description="Workspace (basejump account) to bind this WeChat peer to.")
+    account_id: str = Field(..., description="Workspace (basejump account) to bind this Telegram user to.")
 
 
 class PairingCodeResponse(BaseModel):
@@ -57,7 +77,7 @@ class PairingCodeResponse(BaseModel):
 
 
 class BridgeChatRequest(BaseModel):
-    ilink_peer_id: str = Field(..., min_length=1, max_length=256)
+    telegram_user_id: str = Field(..., min_length=1, max_length=32)
     message: str = Field(..., min_length=1, max_length=32000)
 
 
@@ -75,11 +95,11 @@ class LinkStatusResponse(BaseModel):
     linked_peer_count: int
 
 
-def _require_bridge_secret(x_wechat_ilink_bridge_secret: Optional[str]) -> None:
-    expected = (config.WECHAT_ILINK_BRIDGE_SECRET or "").strip()
+def _require_bridge_secret(x_telegram_bridge_secret: Optional[str]) -> None:
+    expected = (config.TELEGRAM_BRIDGE_SECRET or "").strip()
     if not expected:
-        raise HTTPException(status_code=503, detail="WeChat iLink bridge is not configured")
-    got = (x_wechat_ilink_bridge_secret or "").strip()
+        raise HTTPException(status_code=503, detail="Telegram bridge is not configured")
+    got = (x_telegram_bridge_secret or "").strip()
     if not got or not hmac.compare_digest(got, expected):
         raise HTTPException(status_code=401, detail="Invalid bridge secret")
 
@@ -88,43 +108,65 @@ def _generate_pairing_code() -> str:
     return "".join(secrets.choice(_PAIRING_CODE_ALPHABET) for _ in range(6))
 
 
-async def _get_link(ilink_peer_id: str) -> Optional[Dict[str, Any]]:
+async def _clear_link_thread(telegram_user_id: str) -> None:
     sql = """
-    SELECT ilink_peer_id, account_id::text AS account_id, thread_id::text AS thread_id
-    FROM public.wechat_ilink_links
-    WHERE ilink_peer_id = :ilink_peer_id
+    UPDATE public.telegram_bot_links
+    SET thread_id = NULL, updated_at = timezone('utc', now())
+    WHERE telegram_user_id = :telegram_user_id
+    RETURNING 1
     """
-    return await execute_one_read(sql, {"ilink_peer_id": ilink_peer_id})
+    await execute_one(sql, {"telegram_user_id": telegram_user_id}, commit=True)
 
 
-async def _upsert_link(ilink_peer_id: str, account_id: str) -> None:
+def _telegram_slash_command(message: str) -> Optional[str]:
+    """Return base command without leading slash and without @bot suffix, or None."""
+    s = (message or "").strip()
+    if not s.startswith("/"):
+        return None
+    first = s.split()[0]
+    base = first.split("@", 1)[0].lower()
+    if not base.startswith("/"):
+        return None
+    return base[1:]
+
+
+async def _get_link(telegram_user_id: str) -> Optional[Dict[str, Any]]:
     sql = """
-    INSERT INTO public.wechat_ilink_links (ilink_peer_id, account_id, thread_id, created_at, updated_at)
-    VALUES (:ilink_peer_id, CAST(:account_id AS uuid), NULL, timezone('utc', now()), timezone('utc', now()))
-    ON CONFLICT (ilink_peer_id) DO UPDATE SET
+    SELECT telegram_user_id, account_id::text AS account_id, thread_id::text AS thread_id
+    FROM public.telegram_bot_links
+    WHERE telegram_user_id = :telegram_user_id
+    """
+    return await execute_one_read(sql, {"telegram_user_id": telegram_user_id})
+
+
+async def _upsert_link(telegram_user_id: str, account_id: str) -> None:
+    sql = """
+    INSERT INTO public.telegram_bot_links (telegram_user_id, account_id, thread_id, created_at, updated_at)
+    VALUES (:telegram_user_id, CAST(:account_id AS uuid), NULL, timezone('utc', now()), timezone('utc', now()))
+    ON CONFLICT (telegram_user_id) DO UPDATE SET
         account_id = EXCLUDED.account_id,
         thread_id = NULL,
         updated_at = timezone('utc', now())
     RETURNING 1
     """
-    await execute_one(sql, {"ilink_peer_id": ilink_peer_id, "account_id": account_id}, commit=True)
+    await execute_one(sql, {"telegram_user_id": telegram_user_id, "account_id": account_id}, commit=True)
 
 
-async def _update_link_thread(ilink_peer_id: str, thread_id: str) -> None:
+async def _update_link_thread(telegram_user_id: str, thread_id: str) -> None:
     sql = """
-    UPDATE public.wechat_ilink_links
+    UPDATE public.telegram_bot_links
     SET thread_id = CAST(:thread_id AS uuid), updated_at = timezone('utc', now())
-    WHERE ilink_peer_id = :ilink_peer_id
+    WHERE telegram_user_id = :telegram_user_id
     RETURNING 1
     """
-    await execute_one(sql, {"ilink_peer_id": ilink_peer_id, "thread_id": thread_id}, commit=True)
+    await execute_one(sql, {"telegram_user_id": telegram_user_id, "thread_id": thread_id}, commit=True)
 
 
-async def _update_link_thread_resilient(ilink_peer_id: str, thread_id: str) -> None:
-    """Retry when threads row is not committed yet (FK wechat_ilink_links.thread_id → threads)."""
+async def _update_link_thread_resilient(telegram_user_id: str, thread_id: str) -> None:
+    """Retry when threads row is not committed yet (FK telegram_bot_links.thread_id → threads)."""
     for attempt in range(24):
         try:
-            await _update_link_thread(ilink_peer_id, thread_id)
+            await _update_link_thread(telegram_user_id, thread_id)
             return
         except Exception as e:
             msg = str(e).lower()
@@ -136,7 +178,7 @@ async def _update_link_thread_resilient(ilink_peer_id: str, thread_id: str) -> N
 
 async def _consume_pairing_code(code: str) -> Optional[str]:
     sql = """
-    DELETE FROM public.wechat_ilink_pairing_codes
+    DELETE FROM public.telegram_bot_pairing_codes
     WHERE code = :code AND expires_at > timezone('utc', now())
     RETURNING account_id::text AS account_id
     """
@@ -192,11 +234,15 @@ async def create_pairing_code(
     if not await threads_repo.check_account_user_access(user_id, body.account_id):
         raise HTTPException(status_code=403, detail="No access to this workspace")
 
-    await execute_one(
-        "DELETE FROM public.wechat_ilink_pairing_codes WHERE account_id = CAST(:aid AS uuid) RETURNING 1",
-        {"aid": body.account_id},
-        commit=True,
-    )
+    try:
+        await execute_one(
+            "DELETE FROM public.telegram_bot_pairing_codes WHERE account_id = CAST(:aid AS uuid) RETURNING 1",
+            {"aid": body.account_id},
+            commit=True,
+        )
+    except Exception as e:
+        _reraise_if_missing_telegram_tables(e)
+        raise
 
     expires = datetime.now(timezone.utc) + timedelta(minutes=15)
     last_err: Optional[Exception] = None
@@ -205,7 +251,7 @@ async def create_pairing_code(
         try:
             await execute_one(
                 """
-                INSERT INTO public.wechat_ilink_pairing_codes (code, account_id, expires_at)
+                INSERT INTO public.telegram_bot_pairing_codes (code, account_id, expires_at)
                 VALUES (:code, CAST(:account_id AS uuid), :expires_at)
                 RETURNING code
                 """,
@@ -214,13 +260,14 @@ async def create_pairing_code(
             )
             return PairingCodeResponse(code=code, expires_at=expires.isoformat())
         except Exception as e:
+            _reraise_if_missing_telegram_tables(e)
             last_err = e
             msg = str(e).lower()
             if "duplicate key" in msg or "unique constraint" in msg:
                 continue
             raise
 
-    logger.exception("[wechat_ilink] failed to generate unique pairing code", exc_info=last_err)
+    logger.exception("[telegram_bot] failed to generate unique pairing code", exc_info=last_err)
     raise HTTPException(status_code=500, detail="Failed to generate pairing code")
 
 
@@ -231,13 +278,18 @@ async def link_status(
 ):
     if not await threads_repo.check_account_user_access(user_id, account_id):
         raise HTTPException(status_code=403, detail="No access to this workspace")
-    row = await execute_one_read(
-        """
-        SELECT COUNT(*)::int AS c FROM public.wechat_ilink_links
-        WHERE account_id = CAST(:aid AS uuid)
-        """,
-        {"aid": account_id},
-    )
+    try:
+        # Primary session: avoids read-replica lag right after migrations.
+        row = await execute_one(
+            """
+            SELECT COUNT(*)::int AS c FROM public.telegram_bot_links
+            WHERE account_id = CAST(:aid AS uuid)
+            """,
+            {"aid": account_id},
+        )
+    except Exception as e:
+        _reraise_if_missing_telegram_tables(e)
+        raise
     n = int(row["c"]) if row else 0
     return LinkStatusResponse(account_id=account_id, linked_peer_count=n)
 
@@ -245,10 +297,10 @@ async def link_status(
 @router.post("/bridge/chat", response_model=BridgeChatResponse)
 async def bridge_chat(
     body: BridgeChatRequest,
-    x_wechat_ilink_bridge_secret: Optional[str] = Header(None, alias="X-Wechat-Ilink-Bridge-Secret"),
+    x_telegram_bridge_secret: Optional[str] = Header(None, alias="X-Telegram-Bridge-Secret"),
 ):
-    _require_bridge_secret(x_wechat_ilink_bridge_secret)
-    peer = body.ilink_peer_id.strip()
+    _require_bridge_secret(x_telegram_bridge_secret)
+    peer = body.telegram_user_id.strip()
     raw = (body.message or "").strip()
     if not peer or not raw:
         return BridgeChatResponse(ok=False, reply=MSG_BIND_NEEDED)
@@ -263,6 +315,11 @@ async def bridge_chat(
             await _upsert_link(peer, account_id)
             return BridgeChatResponse(ok=True, reply=MSG_BIND_OK, paired=True)
         return BridgeChatResponse(ok=False, reply=MSG_BIND_NEEDED)
+
+    cmd = _telegram_slash_command(raw)
+    if cmd in ("newchat", "new"):
+        await _clear_link_thread(peer)
+        return BridgeChatResponse(ok=True, reply=MSG_NEW_THREAD, paired=False)
 
     account_id = link["account_id"]
     thread_id = link.get("thread_id")
@@ -279,7 +336,7 @@ async def bridge_chat(
             model_name=None,
             thread_id=thread_id,
             project_id=None,
-            metadata={"source": "wechat_ilink", "ilink_peer_id": peer},
+            metadata={"source": "telegram_bot", "telegram_user_id": peer},
             skip_limits_check=False,
             memory_enabled=None,
             is_optimistic=False,
@@ -293,10 +350,10 @@ async def bridge_chat(
             msg = detail.get("message") or str(detail)
         else:
             msg = str(detail)
-        logger.warning(f"[wechat_ilink] start_agent_run HTTPException: {msg}")
+        logger.warning(f"[telegram_bot] start_agent_run HTTPException: {msg}")
         return BridgeChatResponse(ok=False, reply=f"{MSG_RUN_FAILED} ({msg})")
     except Exception:
-        logger.exception("[wechat_ilink] start_agent_run failed")
+        logger.exception("[telegram_bot] start_agent_run failed")
         return BridgeChatResponse(ok=False, reply=MSG_RUN_FAILED)
 
     agent_run_id = result.get("agent_run_id")
@@ -322,17 +379,16 @@ async def bridge_chat(
         reply_text = await _latest_assistant_reply(str(tid), str(agent_run_id), raw)
         if not reply_text:
             reply_text = "（暂无文本回复，请在网页端查看详情。）"
-        # Long replies are split in apps/bridges (wechat-ilink). Do not cap at ~4k here
-        # or the tail (e.g. later list items) is dropped before chunking reaches WeChat.
+        if len(reply_text) > 3400:
+            reply_text = reply_text[:3390] + "…"
         reply_text, thread_browser_url = await append_thread_workspace_link(
             reply_text,
             str(tid),
             threads_repo=threads_repo,
             frontend_url=config.FRONTEND_URL,
         )
-        _max = 180_000
-        if len(reply_text) > _max:
-            reply_text = reply_text[: _max - 1] + "…"
+        if len(reply_text) > 4090:
+            reply_text = reply_text[:4078] + "…"
 
         await _update_link_thread_resilient(peer, str(tid))
         return BridgeChatResponse(
@@ -343,5 +399,5 @@ async def bridge_chat(
             thread_browser_url=thread_browser_url,
         )
     except Exception:
-        logger.exception("[wechat_ilink] bridge_chat after start_agent_run failed")
+        logger.exception("[telegram_bot] bridge_chat after start_agent_run failed")
         return BridgeChatResponse(ok=False, reply=MSG_RUN_FAILED)

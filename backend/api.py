@@ -377,6 +377,7 @@ app.add_middleware(
         "X-MCP-Headers",
         "X-API-Key",
         "X-Wechat-Ilink-Bridge-Secret",
+        "X-Telegram-Bridge-Secret",
     ],
 )
 
@@ -410,12 +411,14 @@ api_router.include_router(sandbox_pool_admin_router)
 api_router.include_router(system_status_router)
 
 from core.integrations.wechat_ilink import api as wechat_ilink_api
+from core.integrations.telegram_bot import api as telegram_bot_api
 from core.mcp_module import api as mcp_api
 from core.credentials import api as credentials_api
 from core.templates import api as template_api
 from core.templates import presentations_api
 
 api_router.include_router(wechat_ilink_api.router, prefix="/integrations/wechat-ilink")
+api_router.include_router(telegram_bot_api.router, prefix="/integrations/telegram-bot")
 
 if config.ACTIVATE_MCPS_TRIG:
     api_router.include_router(mcp_api.router)

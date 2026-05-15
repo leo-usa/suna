@@ -32,7 +32,7 @@ import {
   Heart,
   LifeBuoy,
   AlertTriangle,
-  MessageCircle,
+  Send,
 } from 'lucide-react';
 import { useAccounts } from '@/hooks/account';
 import { useAccountState } from '@/hooks/billing';
@@ -430,9 +430,9 @@ export function NavUserWithTeams({
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/dashboard/wechat" className="gap-2 p-2">
-                    <MessageCircle className="h-4 w-4" />
-                    <span>{t('wechat')}</span>
+                  <Link href="/dashboard/telegram" className="gap-2 p-2">
+                    <Send className="h-4 w-4" />
+                    <span>{t('telegramBot')}</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem

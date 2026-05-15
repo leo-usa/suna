@@ -1,0 +1,14 @@
+{
+  "name": "bridges",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Unified long-poll workers: Telegram, WeChat iLink → backend API.",
+  "scripts": {
+    "start": "node src/index.mjs"
+  },
+  "dependencies": {
+    "dotenv": "^16.6.1",
+    "qrcode-terminal": "^0.12.0"
+  }
+}

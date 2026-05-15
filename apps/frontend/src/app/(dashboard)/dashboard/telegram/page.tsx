@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
-import { MessageCircle } from 'lucide-react';
+import { Send } from 'lucide-react';
 import { BackgroundAALChecker } from '@/components/auth/background-aal-checker';
 import { useAccounts } from '@/hooks/account';
 import { backendApi } from '@/lib/api-client';
@@ -27,8 +27,8 @@ type PairingResponse = {
   expires_at: string;
 };
 
-export default function WeChatIlinkDashboardPage() {
-  const t = useTranslations('wechatIlinkPage');
+export default function TelegramBotDashboardPage() {
+  const t = useTranslations('telegramBotPage');
   const queryClient = useQueryClient();
   const { data: accounts, isLoading: accountsLoading } = useAccounts();
   const [accountId, setAccountId] = useState<string>('');
@@ -46,10 +46,10 @@ export default function WeChatIlinkDashboardPage() {
   }, [accountId]);
 
   const linkQuery = useQuery({
-    queryKey: ['wechat-ilink-link-status', accountId],
+    queryKey: ['telegram-bot-link-status', accountId],
     queryFn: async () => {
       const res = await backendApi.get<LinkStatus>(
-        `/integrations/wechat-ilink/link-status?account_id=${encodeURIComponent(accountId)}`,
+        `/integrations/telegram-bot/link-status?account_id=${encodeURIComponent(accountId)}`,
         { showErrors: false },
       );
       if (!res.success || !res.data) {
@@ -63,7 +63,7 @@ export default function WeChatIlinkDashboardPage() {
   const pairingMutation = useMutation({
     mutationFn: async () => {
       const res = await backendApi.post<PairingResponse>(
-        '/integrations/wechat-ilink/pairing-code',
+        '/integrations/telegram-bot/pairing-code',
         { account_id: accountId },
       );
       if (!res.success || !res.data) {
@@ -72,7 +72,7 @@ export default function WeChatIlinkDashboardPage() {
       return res.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['wechat-ilink-link-status', accountId] });
+      queryClient.invalidateQueries({ queryKey: ['telegram-bot-link-status', accountId] });
     },
   });
 
@@ -90,7 +90,7 @@ export default function WeChatIlinkDashboardPage() {
       <div className="mx-auto max-w-2xl px-4 py-10 space-y-6">
         <div className="flex items-start gap-3">
           <div className="mt-1 rounded-lg bg-primary/10 p-2">
-            <MessageCircle className="h-6 w-6 text-primary" />
+            <Send className="h-6 w-6 text-primary" />
           </div>
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
