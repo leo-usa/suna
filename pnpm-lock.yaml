@@ -19,6 +19,15 @@ importers:
         specifier: ^16.1.4
         version: 16.1.4(babel-plugin-react-compiler@1.0.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(sass@1.97.2)
 
+  apps/bridges:
+    dependencies:
+      dotenv:
+        specifier: ^16.6.1
+        version: 16.6.1
+      qrcode-terminal:
+        specifier: ^0.11.0
+        version: 0.11.0
+
   apps/desktop:
     devDependencies:
       '@electron/notarize':

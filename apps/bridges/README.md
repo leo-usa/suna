@@ -39,6 +39,10 @@ WeChat iLink:
 
 ## Run
 
+**Monorepo:** Depend on the root `pnpm-lock.yaml`. From the repo root run `pnpm install` whenever you change `package.json` here, then commit the updated lockfile (CI uses `pnpm install --frozen-lockfile`).
+
+Local, from this directory:
+
 ```bash
 cd apps/bridges
 cp .env.example .env   # first time only; then edit .env
