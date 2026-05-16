@@ -16,8 +16,10 @@ import time
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, Depends, Header, HTTPException
+from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, UploadFile
 from pydantic import BaseModel, Field
+
+from core.services.transcription import transcribe_audio_bytes
 
 from core.integrations.bridge_reply_format import (
     BRIDGE_POST_RUN_SETTLE_SEC,
@@ -116,6 +118,11 @@ class BridgeChatSnapshotResponse(BaseModel):
 class LinkStatusResponse(BaseModel):
     account_id: str
     linked_peer_count: int
+
+
+class BridgeTranscribeResponse(BaseModel):
+    ok: bool
+    text: str = ""
 
 
 def _require_bridge_secret(x_telegram_bridge_secret: Optional[str]) -> None:
@@ -436,6 +443,35 @@ async def link_status(
         raise
     n = int(row["c"]) if row else 0
     return LinkStatusResponse(account_id=account_id, linked_peer_count=n)
+
+
+@router.post("/bridge/transcribe", response_model=BridgeTranscribeResponse)
+async def bridge_transcribe(
+    telegram_user_id: str = Form(...),
+    audio_file: UploadFile = File(...),
+    x_telegram_bridge_secret: Optional[str] = Header(None, alias="X-Telegram-Bridge-Secret"),
+):
+    """Whisper transcription for Telegram voice/audio (bridge secret only)."""
+    _require_bridge_secret(x_telegram_bridge_secret)
+    peer = telegram_user_id.strip()
+    if not peer:
+        return BridgeTranscribeResponse(ok=False, text="")
+
+    content = await audio_file.read()
+    try:
+        text = await transcribe_audio_bytes(
+            content,
+            filename=audio_file.filename or "voice.ogg",
+            content_type=audio_file.content_type,
+        )
+        return BridgeTranscribeResponse(ok=True, text=text)
+    except HTTPException as e:
+        detail = e.detail if isinstance(e.detail, str) else str(e.detail)
+        logger.warning(f"[telegram_bot] bridge_transcribe failed for {peer}: {detail}")
+        raise
+    except Exception:
+        logger.exception("[telegram_bot] bridge_transcribe failed")
+        raise HTTPException(status_code=500, detail="Transcription failed") from None
 
 
 @router.post("/bridge/chat", response_model=BridgeChatResponse)

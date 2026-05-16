@@ -111,6 +111,79 @@ async function postBridgeFinalize(telegramUserId, agentRunId, threadId, message)
   return readBridgeJson(res);
 }
 
+async function postBridgeTranscribe(telegramUserId, buffer, filename, mimeType) {
+  const form = new FormData();
+  form.append("telegram_user_id", telegramUserId);
+  const blob = new Blob([buffer], { type: mimeType });
+  form.append("audio_file", blob, filename);
+  const url = `${API_BASE}/integrations/telegram-bot/bridge/transcribe`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "X-Telegram-Bridge-Secret": TELEGRAM_BRIDGE_SECRET },
+    body: form,
+  });
+  return readBridgeJson(res);
+}
+
+function mimeFromFilename(filename) {
+  const ext = (filename || "").split(".").pop()?.toLowerCase() || "";
+  const map = {
+    ogg: "audio/ogg",
+    oga: "audio/ogg",
+    opus: "audio/opus",
+    mp3: "audio/mpeg",
+    m4a: "audio/mp4",
+    mp4: "audio/mp4",
+    wav: "audio/wav",
+    webm: "audio/webm",
+  };
+  return map[ext] || "audio/ogg";
+}
+
+async function downloadTelegramFile(fileId) {
+  const meta = await tgPost("getFile", { file_id: fileId });
+  if (!meta?.file_path) throw new Error("getFile: missing file_path");
+  const fileUrl = `https://api.telegram.org/file/bot${TELEGRAM_BOT_TOKEN}/${meta.file_path}`;
+  const res = await fetch(fileUrl);
+  if (!res.ok) throw new Error(`download file: HTTP ${res.status}`);
+  const buffer = await res.arrayBuffer();
+  let filename = meta.file_path.split("/").pop() || "voice.ogg";
+  // Telegram voice notes use .oga; OpenAI transcription accepts .ogg (same container).
+  if (filename.toLowerCase().endsWith(".oga")) {
+    filename = `${filename.slice(0, -4)}.ogg`;
+  }
+  return { buffer, filename, mimeType: mimeFromFilename(filename) };
+}
+
+/**
+ * Text message, or voice/audio transcribed via backend Whisper (same as web UI).
+ */
+async function resolveIncomingUserText(msg, telegramUserId) {
+  const hasVoice = Boolean(msg.voice?.file_id);
+  const hasAudio = Boolean(msg.audio?.file_id);
+  const caption = (msg.caption || "").trim();
+  const plainText = (msg.text || "").trim();
+
+  if (!hasVoice && !hasAudio) {
+    return plainText || caption || null;
+  }
+
+  const fileId = msg.voice?.file_id || msg.audio?.file_id;
+  const { buffer, filename, mimeType } = await downloadTelegramFile(fileId);
+  const data = await postBridgeTranscribe(telegramUserId, buffer, filename, mimeType);
+  const transcript = (data.text || "").trim();
+  if (!transcript) {
+    throw new Error(typeof data.detail === "string" ? data.detail : "语音转写失败");
+  }
+  if (caption && !plainText) {
+    return `${caption}\n\n${transcript}`;
+  }
+  return transcript;
+}
+
+const MSG_NEED_TEXT_OR_VOICE =
+  "请发送文字或语音消息。首次使用请在网页端：用户菜单 → Telegram 生成 6 位验证码，并单独发送该验证码完成绑定。";
+
 function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
@@ -214,6 +287,85 @@ export function isTelegramBridgeConfigured() {
   return Boolean(TELEGRAM_BOT_TOKEN && TELEGRAM_BRIDGE_SECRET);
 }
 
+async function handleTelegramChatTurn(chatId, uid, text) {
+  const started = await postBridgeChatStart(uid, text);
+  if (!started.agent_run_id) {
+    const reply = typeof started.reply === "string" ? started.reply : JSON.stringify(started);
+    await sendReply(chatId, reply || "（无回复）", {});
+    return;
+  }
+
+  const tid = started.thread_id;
+  const rid = started.agent_run_id;
+  const userMsg = typeof started.message === "string" && started.message.trim() ? started.message.trim() : text;
+
+  const t0 = Date.now();
+  let previewId = null;
+  let lastShown = "";
+  let sawTerminal = false;
+
+  while (Date.now() - t0 < STREAM_MAX_MS) {
+    let snap;
+    try {
+      snap = await postBridgeSnapshot(uid, rid, tid, userMsg);
+    } catch (e) {
+      console.error("[telegram] snapshot:", e.message);
+      await sleep(STREAM_POLL_MS);
+      continue;
+    }
+
+    if (!snap.ok) {
+      const errReply = typeof snap.reply === "string" ? snap.reply : "快照失败";
+      const errSlice = errReply.slice(0, 4096);
+      if (previewId != null) {
+        try {
+          await tgEditMessageText(chatId, previewId, errSlice);
+        } catch {
+          await sendReply(chatId, errReply, {});
+        }
+      } else {
+        await sendReply(chatId, errReply, {});
+      }
+      return;
+    }
+
+    const snapText = (snap.reply || "").trim() || "…";
+    const vis = snapText.slice(0, 4096);
+    if (previewId == null) {
+      const sent = await tgPost("sendMessage", { chat_id: chatId, text: vis });
+      previewId = sent.message_id;
+      lastShown = vis;
+    } else if (vis !== lastShown) {
+      try {
+        await tgEditMessageText(chatId, previewId, vis);
+        lastShown = vis;
+      } catch (e) {
+        console.error("[telegram] editMessage:", e.message);
+      }
+    }
+
+    if (snap.terminal) {
+      sawTerminal = true;
+      break;
+    }
+    await sleep(STREAM_POLL_MS);
+  }
+
+  if (previewId != null && !sawTerminal) {
+    try {
+      await tgEditMessageText(chatId, previewId, "等待超时，请在网页端查看完整回复。");
+    } catch {
+      await sendReply(chatId, "等待超时，请在网页端查看完整回复。", {});
+    }
+    return;
+  }
+
+  if (!sawTerminal) return;
+
+  const fin = await postBridgeFinalize(uid, rid, tid, userMsg);
+  await applyFinalReply(chatId, previewId, fin);
+}
+
 /**
  * @param {AbortSignal} [signal]
  */
@@ -254,95 +406,25 @@ export async function runTelegramBridge(signal) {
 
         const uid = String(from.id);
         const chatId = msg.chat.id;
-        const text = (msg.text || "").trim();
-        if (!text) {
-          await sendReply(
-            chatId,
-            "请发送文字消息。首次使用请在网页端：用户菜单 → Telegram 生成 6 位验证码，并单独发送该验证码完成绑定。",
-          );
-          continue;
-        }
 
         try {
-          const started = await postBridgeChatStart(uid, text);
-          if (!started.agent_run_id) {
-            const reply = typeof started.reply === "string" ? started.reply : JSON.stringify(started);
-            await sendReply(chatId, reply || "（无回复）", {});
+          if (msg.voice?.file_id || msg.audio?.file_id) {
+            try {
+              await tgPost("sendChatAction", { chat_id: chatId, action: "typing" });
+            } catch (_) {}
+          }
+          const text = await resolveIncomingUserText(msg, uid);
+          if (!text) {
+            await sendReply(chatId, MSG_NEED_TEXT_OR_VOICE);
             continue;
           }
-
-          const tid = started.thread_id;
-          const rid = started.agent_run_id;
-          const userMsg = typeof started.message === "string" && started.message.trim() ? started.message.trim() : text;
-
-          const t0 = Date.now();
-          let previewId = null;
-          let lastShown = "";
-          let sawTerminal = false;
-
-          while (Date.now() - t0 < STREAM_MAX_MS) {
-            let snap;
-            try {
-              snap = await postBridgeSnapshot(uid, rid, tid, userMsg);
-            } catch (e) {
-              console.error("[telegram] snapshot:", e.message);
-              await sleep(STREAM_POLL_MS);
-              continue;
-            }
-
-            if (!snap.ok) {
-              const errReply = typeof snap.reply === "string" ? snap.reply : "快照失败";
-              const errSlice = errReply.slice(0, 4096);
-              if (previewId != null) {
-                try {
-                  await tgEditMessageText(chatId, previewId, errSlice);
-                } catch {
-                  await sendReply(chatId, errReply, {});
-                }
-              } else {
-                await sendReply(chatId, errReply, {});
-              }
-              continue;
-            }
-
-            const snapText = (snap.reply || "").trim() || "…";
-            const vis = snapText.slice(0, 4096);
-            if (previewId == null) {
-              const sent = await tgPost("sendMessage", { chat_id: chatId, text: vis });
-              previewId = sent.message_id;
-              lastShown = vis;
-            } else if (vis !== lastShown) {
-              try {
-                await tgEditMessageText(chatId, previewId, vis);
-                lastShown = vis;
-              } catch (e) {
-                console.error("[telegram] editMessage:", e.message);
-              }
-            }
-
-            if (snap.terminal) {
-              sawTerminal = true;
-              break;
-            }
-            await sleep(STREAM_POLL_MS);
-          }
-
-          if (previewId != null && !sawTerminal) {
-            try {
-              await tgEditMessageText(chatId, previewId, "等待超时，请在网页端查看完整回复。");
-            } catch {
-              await sendReply(chatId, "等待超时，请在网页端查看完整回复。", {});
-            }
-            continue;
-          }
-
-          if (!sawTerminal) continue;
-
-          const fin = await postBridgeFinalize(uid, rid, tid, userMsg);
-          await applyFinalReply(chatId, previewId, fin);
+          await handleTelegramChatTurn(chatId, uid, text);
         } catch (err) {
           console.error("[telegram] bridge:", err.message);
-          await sendReply(chatId, `服务暂时不可用：${err.message.slice(0, 500)}`);
+          const hint = String(err.message || "").toLowerCase().includes("transcri")
+            ? `语音转写失败：${err.message.slice(0, 400)}`
+            : `服务暂时不可用：${err.message.slice(0, 500)}`;
+          await sendReply(chatId, hint);
         }
       }
     } catch (err) {
