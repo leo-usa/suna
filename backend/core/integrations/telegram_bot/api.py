@@ -21,11 +21,9 @@ from pydantic import BaseModel, Field
 
 from core.integrations.bridge_reply_format import (
     BRIDGE_POST_RUN_SETTLE_SEC,
-    BRIDGE_REPLY_POLL_DELAYS,
     append_thread_workspace_link,
-    best_bridge_reply_from_snapshots,
-    bridge_turn_assistant_body,
     compose_bridge_turn_plain_text,
+    latest_bridge_reply_plain_text_via_poll,
 )
 from core.agents import repo as agents_repo
 from core.services.db import execute_one, execute_one_read
@@ -38,7 +36,7 @@ router = APIRouter(tags=["telegram-bot"])
 
 _PAIRING_CODE_ALPHABET = string.ascii_uppercase + string.digits
 _PAIRING_CODE_PATTERN = re.compile(r"^[A-Z0-9]{6}$")
-_MAX_POLL_SECONDS = 120
+_MAX_POLL_SECONDS = 900
 _POLL_INTERVAL_SEC = 1.5
 
 MSG_BIND_OK = "已成功绑定当前工作区。请继续在 Telegram 中与 Dobby 对话。"
@@ -88,6 +86,31 @@ class BridgeChatResponse(BaseModel):
     agent_run_id: Optional[str] = None
     paired: bool = False
     thread_browser_url: Optional[str] = None
+
+
+class BridgeChatStartResponse(BaseModel):
+    """Immediate response after enqueueing a run (Telegram bridge polls /snapshot + /finalize)."""
+
+    ok: bool
+    reply: str = ""
+    agent_run_id: Optional[str] = None
+    thread_id: Optional[str] = None
+    message: str = ""
+    paired: bool = False
+
+
+class BridgeChatSessionRequest(BaseModel):
+    telegram_user_id: str = Field(..., min_length=1, max_length=32)
+    agent_run_id: str = Field(..., min_length=1, max_length=80)
+    thread_id: str = Field(..., min_length=1, max_length=80)
+    message: str = Field(..., min_length=1, max_length=32000)
+
+
+class BridgeChatSnapshotResponse(BaseModel):
+    ok: bool
+    run_status: str
+    reply: str
+    terminal: bool
 
 
 class LinkStatusResponse(BaseModel):
@@ -207,23 +230,144 @@ async def _latest_assistant_reply(thread_id: str, agent_run_id: str, user_prompt
     if run_row:
         started = run_row.get("started_at") or run_row.get("created_at")
 
-    snapshots: List[tuple[str, str]] = []
-    for delay in BRIDGE_REPLY_POLL_DELAYS:
-        if delay > 0:
-            await asyncio.sleep(delay)
-        rows = await threads_repo.get_thread_messages(
+    async def fetch_rows():
+        return await threads_repo.get_thread_messages(
             thread_id,
             order="desc",
             optimized=True,
             allowed_types=["user", "tool", "assistant", "status"],
         )
-        snapshots.append(
-            (
-                compose_bridge_turn_plain_text(rows, started, user_prompt),
-                bridge_turn_assistant_body(rows, started, user_prompt),
-            )
+
+    return await latest_bridge_reply_plain_text_via_poll(started, user_prompt, fetch_rows)
+
+
+async def _compose_live_reply(thread_id: str, agent_run_id: str, user_prompt: str) -> str:
+    """Single DB read — for streaming snapshots while the run is still executing."""
+    run_row = await agents_repo.get_agent_run_by_id(agent_run_id)
+    started = None
+    if run_row:
+        started = run_row.get("started_at") or run_row.get("created_at")
+    rows = await threads_repo.get_thread_messages(
+        thread_id,
+        order="desc",
+        optimized=True,
+        allowed_types=["user", "tool", "assistant", "status"],
+    )
+    return (compose_bridge_turn_plain_text(rows, started, user_prompt) or "").strip()
+
+
+async def _verify_telegram_bridge_run(peer: str, agent_run_id: str, thread_id: str) -> Dict[str, Any]:
+    link = await _get_link(peer)
+    if not link:
+        raise HTTPException(status_code=403, detail="Telegram user is not linked")
+    run_row = await agents_repo.get_agent_run_by_id(agent_run_id)
+    if not run_row:
+        raise HTTPException(status_code=404, detail="Agent run not found")
+    if str(run_row.get("thread_id") or "") != str(thread_id):
+        raise HTTPException(status_code=400, detail="Thread mismatch for this run")
+    if str(run_row.get("thread_account_id") or "") != str(link.get("account_id") or ""):
+        raise HTTPException(status_code=403, detail="Workspace mismatch for this run")
+    return run_row
+
+
+async def _bridge_build_success_reply(
+    peer: str,
+    tid: str,
+    agent_run_id: str,
+    raw: str,
+) -> BridgeChatResponse:
+    await asyncio.sleep(BRIDGE_POST_RUN_SETTLE_SEC)
+    reply_text = await _latest_assistant_reply(str(tid), str(agent_run_id), raw)
+    if not reply_text:
+        reply_text = "（暂无文本回复，请在网页端查看详情。）"
+    reply_text, thread_browser_url = await append_thread_workspace_link(
+        reply_text,
+        str(tid),
+        threads_repo=threads_repo,
+        frontend_url=config.FRONTEND_URL,
+    )
+    _max = 180_000
+    if len(reply_text) > _max:
+        reply_text = reply_text[: _max - 1] + "…"
+
+    await _update_link_thread_resilient(peer, str(tid))
+    return BridgeChatResponse(
+        ok=True,
+        reply=reply_text,
+        thread_id=str(tid),
+        agent_run_id=str(agent_run_id),
+        thread_browser_url=thread_browser_url,
+    )
+
+
+async def _bridge_start_agent_for_chat(peer: str, raw: str) -> BridgeChatStartResponse:
+    """
+    Pairing / thread commands and start_agent_run. Does not wait for run completion.
+    """
+    link = await _get_link(peer)
+    if not link:
+        candidate = re.sub(r"\s+", "", raw).upper()
+        if _PAIRING_CODE_PATTERN.match(candidate):
+            account_id = await _consume_pairing_code(candidate)
+            if not account_id:
+                return BridgeChatStartResponse(ok=False, reply=MSG_BIND_INVALID)
+            await _upsert_link(peer, account_id)
+            return BridgeChatStartResponse(ok=True, reply=MSG_BIND_OK, paired=True)
+        return BridgeChatStartResponse(ok=False, reply=MSG_BIND_NEEDED)
+
+    cmd = _telegram_slash_command(raw)
+    if cmd in ("newchat", "new"):
+        await _clear_link_thread(peer)
+        return BridgeChatStartResponse(ok=True, reply=MSG_NEW_THREAD, paired=False)
+
+    account_id = link["account_id"]
+    thread_id = link.get("thread_id")
+    if thread_id is not None:
+        thread_id = str(thread_id)
+
+    from core.agents.api import start_agent_run
+
+    try:
+        result = await start_agent_run(
+            account_id=account_id,
+            prompt=raw,
+            agent_id=None,
+            model_name=None,
+            thread_id=thread_id,
+            project_id=None,
+            metadata={"source": "telegram_bot", "telegram_user_id": peer},
+            skip_limits_check=False,
+            memory_enabled=None,
+            is_optimistic=False,
+            emit_timing=False,
+            mode=None,
+            files_data=None,
         )
-    return best_bridge_reply_from_snapshots(snapshots)
+    except HTTPException as e:
+        detail = e.detail
+        if isinstance(detail, dict):
+            msg = detail.get("message") or str(detail)
+        else:
+            msg = str(detail)
+        logger.warning(f"[telegram_bot] start_agent_run HTTPException: {msg}")
+        return BridgeChatStartResponse(ok=False, reply=f"{MSG_RUN_FAILED} ({msg})")
+    except Exception:
+        logger.exception("[telegram_bot] start_agent_run failed")
+        return BridgeChatStartResponse(ok=False, reply=MSG_RUN_FAILED)
+
+    agent_run_id = result.get("agent_run_id")
+    tid = result.get("thread_id")
+    if not agent_run_id or not tid:
+        return BridgeChatStartResponse(ok=False, reply=MSG_RUN_FAILED)
+
+    return BridgeChatStartResponse(
+        ok=True,
+        reply="",
+        agent_run_id=str(agent_run_id),
+        thread_id=str(tid),
+        message=raw,
+        paired=False,
+    )
 
 
 @router.post("/pairing-code", response_model=PairingCodeResponse)
@@ -299,70 +443,22 @@ async def bridge_chat(
     body: BridgeChatRequest,
     x_telegram_bridge_secret: Optional[str] = Header(None, alias="X-Telegram-Bridge-Secret"),
 ):
+    """
+    One-shot chat (long HTTP hold). Prefer /bridge/chat/start + /snapshot + /finalize
+    from the Telegram bridge to avoid proxy timeouts on long tool runs.
+    """
     _require_bridge_secret(x_telegram_bridge_secret)
     peer = body.telegram_user_id.strip()
     raw = (body.message or "").strip()
     if not peer or not raw:
         return BridgeChatResponse(ok=False, reply=MSG_BIND_NEEDED)
 
-    link = await _get_link(peer)
-    if not link:
-        candidate = re.sub(r"\s+", "", raw).upper()
-        if _PAIRING_CODE_PATTERN.match(candidate):
-            account_id = await _consume_pairing_code(candidate)
-            if not account_id:
-                return BridgeChatResponse(ok=False, reply=MSG_BIND_INVALID)
-            await _upsert_link(peer, account_id)
-            return BridgeChatResponse(ok=True, reply=MSG_BIND_OK, paired=True)
-        return BridgeChatResponse(ok=False, reply=MSG_BIND_NEEDED)
-
-    cmd = _telegram_slash_command(raw)
-    if cmd in ("newchat", "new"):
-        await _clear_link_thread(peer)
-        return BridgeChatResponse(ok=True, reply=MSG_NEW_THREAD, paired=False)
-
-    account_id = link["account_id"]
-    thread_id = link.get("thread_id")
-    if thread_id is not None:
-        thread_id = str(thread_id)
-
-    from core.agents.api import start_agent_run
+    start = await _bridge_start_agent_for_chat(peer, raw)
+    if not start.agent_run_id:
+        return BridgeChatResponse(ok=start.ok, reply=start.reply, paired=start.paired)
 
     try:
-        result = await start_agent_run(
-            account_id=account_id,
-            prompt=raw,
-            agent_id=None,
-            model_name=None,
-            thread_id=thread_id,
-            project_id=None,
-            metadata={"source": "telegram_bot", "telegram_user_id": peer},
-            skip_limits_check=False,
-            memory_enabled=None,
-            is_optimistic=False,
-            emit_timing=False,
-            mode=None,
-            files_data=None,
-        )
-    except HTTPException as e:
-        detail = e.detail
-        if isinstance(detail, dict):
-            msg = detail.get("message") or str(detail)
-        else:
-            msg = str(detail)
-        logger.warning(f"[telegram_bot] start_agent_run HTTPException: {msg}")
-        return BridgeChatResponse(ok=False, reply=f"{MSG_RUN_FAILED} ({msg})")
-    except Exception:
-        logger.exception("[telegram_bot] start_agent_run failed")
-        return BridgeChatResponse(ok=False, reply=MSG_RUN_FAILED)
-
-    agent_run_id = result.get("agent_run_id")
-    tid = result.get("thread_id")
-    if not agent_run_id or not tid:
-        return BridgeChatResponse(ok=False, reply=MSG_RUN_FAILED)
-
-    try:
-        terminal = await _poll_run_for_terminal(str(agent_run_id))
+        terminal = await _poll_run_for_terminal(str(start.agent_run_id))
         status = terminal.get("status")
         if status == "failed":
             err = terminal.get("error") or "failed"
@@ -371,33 +467,101 @@ async def bridge_chat(
             return BridgeChatResponse(
                 ok=True,
                 reply="处理时间较长，请稍后在 Dobby 网页端查看该对话的完整回复。",
-                thread_id=str(tid),
-                agent_run_id=str(agent_run_id),
+                thread_id=str(start.thread_id),
+                agent_run_id=str(start.agent_run_id),
             )
 
-        await asyncio.sleep(BRIDGE_POST_RUN_SETTLE_SEC)
-        reply_text = await _latest_assistant_reply(str(tid), str(agent_run_id), raw)
-        if not reply_text:
-            reply_text = "（暂无文本回复，请在网页端查看详情。）"
-        if len(reply_text) > 3400:
-            reply_text = reply_text[:3390] + "…"
-        reply_text, thread_browser_url = await append_thread_workspace_link(
-            reply_text,
-            str(tid),
-            threads_repo=threads_repo,
-            frontend_url=config.FRONTEND_URL,
-        )
-        if len(reply_text) > 4090:
-            reply_text = reply_text[:4078] + "…"
-
-        await _update_link_thread_resilient(peer, str(tid))
-        return BridgeChatResponse(
-            ok=True,
-            reply=reply_text,
-            thread_id=str(tid),
-            agent_run_id=str(agent_run_id),
-            thread_browser_url=thread_browser_url,
-        )
+        return await _bridge_build_success_reply(peer, str(start.thread_id), str(start.agent_run_id), raw)
     except Exception:
         logger.exception("[telegram_bot] bridge_chat after start_agent_run failed")
+        return BridgeChatResponse(ok=False, reply=MSG_RUN_FAILED)
+
+
+@router.post("/bridge/chat/start", response_model=BridgeChatStartResponse)
+async def bridge_chat_start(
+    body: BridgeChatRequest,
+    x_telegram_bridge_secret: Optional[str] = Header(None, alias="X-Telegram-Bridge-Secret"),
+):
+    _require_bridge_secret(x_telegram_bridge_secret)
+    peer = body.telegram_user_id.strip()
+    raw = (body.message or "").strip()
+    if not peer or not raw:
+        return BridgeChatStartResponse(ok=False, reply=MSG_BIND_NEEDED)
+    try:
+        return await _bridge_start_agent_for_chat(peer, raw)
+    except Exception:
+        logger.exception("[telegram_bot] bridge_chat_start failed")
+        return BridgeChatStartResponse(ok=False, reply=MSG_RUN_FAILED)
+
+
+@router.post("/bridge/chat/snapshot", response_model=BridgeChatSnapshotResponse)
+async def bridge_chat_snapshot(
+    body: BridgeChatSessionRequest,
+    x_telegram_bridge_secret: Optional[str] = Header(None, alias="X-Telegram-Bridge-Secret"),
+):
+    _require_bridge_secret(x_telegram_bridge_secret)
+    peer = body.telegram_user_id.strip()
+    raw = (body.message or "").strip()
+    if not peer or not raw:
+        return BridgeChatSnapshotResponse(ok=False, run_status="error", reply=MSG_BIND_NEEDED, terminal=True)
+    try:
+        await _verify_telegram_bridge_run(peer, body.agent_run_id.strip(), body.thread_id.strip())
+        row = await agents_repo.get_agent_run_status(body.agent_run_id.strip())
+        if not row:
+            return BridgeChatSnapshotResponse(ok=True, run_status="missing", reply="", terminal=True)
+        st = (row.get("status") or "").lower()
+        reply = await _compose_live_reply(body.thread_id.strip(), body.agent_run_id.strip(), raw)
+        terminal = st in ("completed", "failed", "cancelled", "stopped", "error")
+        return BridgeChatSnapshotResponse(ok=True, run_status=st, reply=reply, terminal=terminal)
+    except HTTPException:
+        raise
+    except Exception:
+        logger.exception("[telegram_bot] bridge_chat_snapshot failed")
+        return BridgeChatSnapshotResponse(ok=False, run_status="error", reply=MSG_RUN_FAILED, terminal=True)
+
+
+@router.post("/bridge/chat/finalize", response_model=BridgeChatResponse)
+async def bridge_chat_finalize(
+    body: BridgeChatSessionRequest,
+    x_telegram_bridge_secret: Optional[str] = Header(None, alias="X-Telegram-Bridge-Secret"),
+):
+    _require_bridge_secret(x_telegram_bridge_secret)
+    peer = body.telegram_user_id.strip()
+    raw = (body.message or "").strip()
+    tid = body.thread_id.strip()
+    rid = body.agent_run_id.strip()
+    if not peer or not raw:
+        return BridgeChatResponse(ok=False, reply=MSG_BIND_NEEDED)
+    try:
+        await _verify_telegram_bridge_run(peer, rid, tid)
+        row = await agents_repo.get_agent_run_status(rid)
+        if not row:
+            return BridgeChatResponse(
+                ok=True,
+                reply="（运行记录缺失，请在网页端查看该对话。）",
+                thread_id=tid,
+                agent_run_id=rid,
+            )
+        st = (row.get("status") or "").lower()
+        if st in ("failed", "error"):
+            err = row.get("error") or "failed"
+            return BridgeChatResponse(ok=False, reply=f"{MSG_RUN_FAILED} ({err})")
+        if st in ("running", "queued", "pending"):
+            live = await _compose_live_reply(tid, rid, raw)
+            hint = "处理尚未结束，请稍后。"
+            reply = f"{live}\n\n{hint}" if live else hint
+            return BridgeChatResponse(ok=True, reply=reply, thread_id=tid, agent_run_id=rid)
+        if st == "timeout":
+            return BridgeChatResponse(
+                ok=True,
+                reply="处理时间较长，请稍后在 Dobby 网页端查看该对话的完整回复。",
+                thread_id=tid,
+                agent_run_id=rid,
+            )
+
+        return await _bridge_build_success_reply(peer, tid, rid, raw)
+    except HTTPException:
+        raise
+    except Exception:
+        logger.exception("[telegram_bot] bridge_chat_finalize failed")
         return BridgeChatResponse(ok=False, reply=MSG_RUN_FAILED)

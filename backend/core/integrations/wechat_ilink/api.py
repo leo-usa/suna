@@ -21,11 +21,8 @@ from pydantic import BaseModel, Field
 
 from core.integrations.bridge_reply_format import (
     BRIDGE_POST_RUN_SETTLE_SEC,
-    BRIDGE_REPLY_POLL_DELAYS,
     append_thread_workspace_link,
-    best_bridge_reply_from_snapshots,
-    bridge_turn_assistant_body,
-    compose_bridge_turn_plain_text,
+    latest_bridge_reply_plain_text_via_poll,
 )
 from core.agents import repo as agents_repo
 from core.services.db import execute_one, execute_one_read
@@ -165,23 +162,15 @@ async def _latest_assistant_reply(thread_id: str, agent_run_id: str, user_prompt
     if run_row:
         started = run_row.get("started_at") or run_row.get("created_at")
 
-    snapshots: List[tuple[str, str]] = []
-    for delay in BRIDGE_REPLY_POLL_DELAYS:
-        if delay > 0:
-            await asyncio.sleep(delay)
-        rows = await threads_repo.get_thread_messages(
+    async def fetch_rows():
+        return await threads_repo.get_thread_messages(
             thread_id,
             order="desc",
             optimized=True,
             allowed_types=["user", "tool", "assistant", "status"],
         )
-        snapshots.append(
-            (
-                compose_bridge_turn_plain_text(rows, started, user_prompt),
-                bridge_turn_assistant_body(rows, started, user_prompt),
-            )
-        )
-    return best_bridge_reply_from_snapshots(snapshots)
+
+    return await latest_bridge_reply_plain_text_via_poll(started, user_prompt, fetch_rows)
 
 
 @router.post("/pairing-code", response_model=PairingCodeResponse)

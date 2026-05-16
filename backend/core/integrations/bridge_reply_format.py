@@ -9,12 +9,13 @@ Never use str(dict) for content — that produces Python repr, not JSON.
 from __future__ import annotations
 
 import ast
+import asyncio
 import json
 import re
 import unicodedata
 import urllib.parse
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Awaitable, Callable, Dict, List, Optional
 
 from core.integrations.bridge_tool_labels import tool_completed_label, tool_started_label
 
@@ -35,29 +36,92 @@ BRIDGE_REPLY_POLL_DELAYS: tuple[float, ...] = (
     5.5,
     7.5,
     10.0,
+    8.0,
+    16.0,
 )
 
 # Brief pause after agent_runs reaches a terminal status so WAL / batch flushes
 # can land in Postgres before we read messages for the bridge reply.
-BRIDGE_POST_RUN_SETTLE_SEC = 0.5
+BRIDGE_POST_RUN_SETTLE_SEC = 2.0
+
+
+def bridge_progress_tail_looks_inflight(composed: str) -> bool:
+    """True when the last non-empty line looks like a tool still running (``→ …``)."""
+    c = (composed or "").strip()
+    if not c:
+        return False
+    lines = [ln.strip() for ln in c.splitlines() if ln.strip()]
+    if not lines:
+        return False
+    return lines[-1].startswith("→ ")
 
 
 def best_bridge_reply_from_snapshots(snapshots: List[tuple[str, str]]) -> str:
     """
-    Return the last non-empty composed reply from the poll ladder.
+    Pick the best composed reply from the poll ladder.
 
-    The final poll has waited the longest for DB / WAL writes. Preferring
-    ``max(len(composed))`` could still pick an *earlier* snapshot whose composed
-    string was inflated by large tool / command blocks while missing later
-    assistant paragraphs that only appear in a later (sometimes shorter) read.
+    1) Prefer the **latest** snapshot where both composed text and assistant/tool
+       body are non-empty — avoids returning a poll that only has status rows
+       before the final assistant rows are committed.
+    2) Else prefer the **longest** composed among the last few polls (stability
+       if the final read is oddly short).
+    3) Else fall back to the last non-empty composed string.
     """
     if not snapshots:
         return ""
+    for composed, body in reversed(snapshots):
+        c = (composed or "").strip()
+        b = (body or "").strip()
+        if c and b:
+            return c
+    tail_n = min(6, len(snapshots))
+    tail = snapshots[-tail_n:]
+    best = ""
+    for composed, _ in tail:
+        c = (composed or "").strip()
+        if len(c) > len(best):
+            best = c
+    if best:
+        return best
     for composed, _ in reversed(snapshots):
         c = (composed or "").strip()
         if c:
             return c
     return ""
+
+
+async def latest_bridge_reply_plain_text_via_poll(
+    run_started_at: Any,
+    user_prompt: str,
+    fetch_rows: Callable[[], Awaitable[List[Dict[str, Any]]]],
+) -> str:
+    """
+    Poll thread messages after a terminal run status; ``fetch_rows`` loads
+    current messages (same query each time).
+    """
+    snapshots: List[tuple[str, str]] = []
+    for delay in BRIDGE_REPLY_POLL_DELAYS:
+        if delay > 0:
+            await asyncio.sleep(delay)
+        rows = await fetch_rows()
+        snapshots.append(
+            (
+                compose_bridge_turn_plain_text(rows, run_started_at, user_prompt),
+                bridge_turn_assistant_body(rows, run_started_at, user_prompt),
+            )
+        )
+    text = best_bridge_reply_from_snapshots(snapshots)
+    if bridge_progress_tail_looks_inflight(text):
+        await asyncio.sleep(4.0)
+        rows = await fetch_rows()
+        snapshots.append(
+            (
+                compose_bridge_turn_plain_text(rows, run_started_at, user_prompt),
+                bridge_turn_assistant_body(rows, run_started_at, user_prompt),
+            )
+        )
+        text = best_bridge_reply_from_snapshots(snapshots)
+    return text
 
 
 def _parse_ts(val: Any) -> Optional[datetime]:
@@ -725,28 +789,91 @@ def bridge_turn_assistant_body(
     return (body or "").strip()
 
 
+def _trim_earliest_status_lines_from_events(events: List[Dict[str, Any]], max_lines: int) -> None:
+    """Drop oldest status lines (chronological) until count <= max_lines. Mutates events."""
+    if max_lines <= 0:
+        return
+
+    def count_status_lines() -> int:
+        n = 0
+        for ev in events:
+            if ev.get("kind") != "status":
+                continue
+            n += sum(1 for ln in ev["text"].splitlines() if ln.strip())
+        return n
+
+    while count_status_lines() > max_lines:
+        idx = next((i for i, e in enumerate(events) if e.get("kind") == "status"), None)
+        if idx is None:
+            break
+        raw_lines = [ln for ln in events[idx]["text"].splitlines() if ln.strip()]
+        if not raw_lines:
+            events.pop(idx)
+            continue
+        raw_lines = raw_lines[1:]
+        if raw_lines:
+            events[idx]["text"] = "\n".join(raw_lines)
+        else:
+            events.pop(idx)
+
+
 def compose_bridge_turn_plain_text(
     rows: List[Dict[str, Any]],
     run_started_at: Any,
     user_prompt: str,
     *,
-    max_progress_lines: int = 40,
+    max_progress_lines: int = 120,
 ) -> str:
     """
-    Full plain-text reply for IM bridges: tool progress (from status rows) plus
-    assistant text for the same agent run.
+    Plain-text reply for IM bridges: status rows, assistant text, and tool
+    summaries in **chronological order** (same rhythm as the web UI), not all
+    tool lines batched ahead of prose.
     """
     content_anchor = bridge_turn_content_anchor(rows, run_started_at, user_prompt)
     anchor_dt = _parse_ts(content_anchor)
-    progress_block = _progress_block_for_bridge(rows, anchor_dt, max_lines=max_progress_lines)
-    body = bridge_turn_assistant_body(rows, run_started_at, user_prompt)
-    if progress_block and body:
-        return _finalize_bridge_plain_text(f"{progress_block}\n\n──\n{body}")
-    if body:
-        return _finalize_bridge_plain_text(body)
-    if progress_block:
-        return _finalize_bridge_plain_text(progress_block)
-    return ""
+
+    events: List[Dict[str, Any]] = []
+    status_buf: List[str] = []
+
+    def flush_status() -> None:
+        if not status_buf:
+            return
+        joined = "\n".join(_dedupe_consecutive_lines(status_buf)).strip()
+        status_buf.clear()
+        if joined:
+            events.append({"kind": "status", "text": joined})
+
+    for msg in _rows_sorted_by_event_time(rows):
+        et = _message_event_time(msg)
+        if anchor_dt and (et is None or et < anchor_dt):
+            continue
+        mtype = msg.get("type")
+        if mtype == "status":
+            line = status_message_row_to_bridge_line(msg)
+            if line:
+                status_buf.append(line)
+        elif mtype == "assistant":
+            tx = assistant_message_row_to_plain_text(msg)
+            if tx:
+                flush_status()
+                events.append({"kind": "text", "text": tx})
+        elif mtype == "tool":
+            tx = tool_message_row_to_bridge_text(msg)
+            if tx:
+                flush_status()
+                events.append({"kind": "text", "text": tx})
+
+    flush_status()
+    _trim_earliest_status_lines_from_events(events, max_progress_lines)
+
+    parts: List[str] = [ev["text"] for ev in events if ev.get("text")]
+    deduped: List[str] = []
+    for p in parts:
+        if deduped and deduped[-1] == p:
+            continue
+        deduped.append(p)
+    raw = "\n\n".join(deduped).strip()
+    return _finalize_bridge_plain_text(raw)
 
 
 def public_http_url_for_im_linkify(url: str) -> str:
