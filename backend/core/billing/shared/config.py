@@ -34,6 +34,7 @@ class Tier:
     custom_workers_limit: int
     scheduled_triggers_limit: int
     app_triggers_limit: int
+    dedicated_computer_limit: int = 0
     memory_config: Optional[Dict] = None
     daily_credit_config: Optional[Dict] = None
     monthly_refill_enabled: Optional[bool] = True
@@ -133,6 +134,7 @@ TIERS: Dict[str, Tier] = {
         scheduled_triggers_limit=10,
         # Matches frontend pricing copy: "50 app triggers"
         app_triggers_limit=50,
+        dedicated_computer_limit=1,
         memory_config={
             'enabled': True,
             'max_memories': 500,
@@ -162,6 +164,7 @@ TIERS: Dict[str, Tier] = {
         scheduled_triggers_limit=50,
         # Matches frontend pricing copy: "200 app triggers"
         app_triggers_limit=200,
+        dedicated_computer_limit=1,
         memory_config={
             'enabled': True,
             'max_memories': 2000,
@@ -421,6 +424,10 @@ def get_app_triggers_limit(tier_name: str) -> int:
     tier = TIERS.get(tier_name)
     return tier.app_triggers_limit if tier else TIERS['free'].app_triggers_limit
 
+def get_dedicated_computer_limit(tier_name: str) -> int:
+    tier = TIERS.get(tier_name)
+    return tier.dedicated_computer_limit if tier else TIERS['free'].dedicated_computer_limit
+
 def get_tier_limits(tier_name: str) -> Dict:
     tier = TIERS.get(tier_name, TIERS['free'])
     return {
@@ -430,6 +437,7 @@ def get_tier_limits(tier_name: str) -> Dict:
         'custom_workers_limit': tier.custom_workers_limit,
         'scheduled_triggers_limit': tier.scheduled_triggers_limit,
         'app_triggers_limit': tier.app_triggers_limit,
+        'dedicated_computer_limit': tier.dedicated_computer_limit,
         'agent_limit': tier.custom_workers_limit,
         'can_purchase_credits': tier.can_purchase_credits,
         'models': tier.models,

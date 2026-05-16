@@ -165,6 +165,18 @@ function PricingPlanFeatureRow({ feature }: { feature: PricingFeatureItem }) {
           </span>
         </>,
       );
+    case 'dedicated_computer':
+      return liShell(
+        'dc',
+        <>
+          <span className="text-xs sm:text-sm font-medium">
+            {t('pricingFeatureItems.dedicatedComputer')}
+          </span>
+          <span className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 hidden sm:block">
+            {t('pricingFeatureItems.dedicatedComputerDesc')}
+          </span>
+        </>,
+      );
     case 'integrations_100':
       return liShell(
         'i100',
@@ -788,7 +800,9 @@ function PricingCard({
                       ? t('pricingDisabled.noScheduledTriggers')
                       : item.kind === 'no_app_triggers'
                         ? t('pricingDisabled.noAppTriggers')
-                        : t('pricingDisabled.noIntegrations')}
+                        : item.kind === 'no_dedicated_computer'
+                          ? t('pricingDisabled.noDedicatedComputer')
+                          : t('pricingDisabled.noIntegrations')}
                 </span>
               </li>
             ))}

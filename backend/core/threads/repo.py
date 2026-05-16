@@ -31,6 +31,7 @@ async def list_user_threads(
         p.name AS project_name,
         p.icon_name AS project_icon_name,
         p.is_public AS project_is_public,
+        p.dedicated_at AS project_dedicated_at,
         p.created_at AS project_created_at,
         p.updated_at AS project_updated_at,
         -- Sandbox fields (NULL if no sandbox)
@@ -75,6 +76,7 @@ async def list_user_threads(
                 "name": row["project_name"] or "",
                 "icon_name": row["project_icon_name"],
                 "is_public": row["project_is_public"] or False,
+                "dedicated_at": row.get("project_dedicated_at"),
                 "created_at": row["project_created_at"],
                 "updated_at": row["project_updated_at"],
                 "sandbox": sandbox_info
@@ -400,12 +402,80 @@ async def update_project_visibility(project_id: str, is_public: bool) -> bool:
 async def get_project_by_id(project_id: str) -> Optional[Dict[str, Any]]:
     sql = """
     SELECT project_id, name, description, account_id, is_public, 
-           icon_name, sandbox_resource_id, created_at, updated_at
+           icon_name, sandbox_resource_id, dedicated_at, created_at, updated_at
     FROM projects 
     WHERE project_id = :project_id
     """
     result = await execute_one(sql, {"project_id": project_id})
     return serialize_row(dict(result)) if result else None
+
+
+async def get_dedicated_project_for_account(account_id: str) -> Optional[Dict[str, Any]]:
+    sql = """
+    SELECT project_id, name, dedicated_at
+    FROM projects
+    WHERE account_id = :account_id AND dedicated_at IS NOT NULL
+    ORDER BY dedicated_at DESC
+    LIMIT 1
+    """
+    result = await execute_one(sql, {"account_id": account_id})
+    return serialize_row(dict(result)) if result else None
+
+
+async def clear_account_dedicated_except(account_id: str, except_project_id: str) -> None:
+    from datetime import datetime, timezone
+    from core.services.db import execute_mutate
+
+    sql = """
+    UPDATE projects
+    SET dedicated_at = NULL, updated_at = :updated_at
+    WHERE account_id = :account_id
+      AND dedicated_at IS NOT NULL
+      AND project_id != :except_project_id
+    """
+    await execute_mutate(sql, {
+        "account_id": account_id,
+        "except_project_id": except_project_id,
+        "updated_at": datetime.now(timezone.utc),
+    })
+
+
+async def set_project_dedicated(project_id: str, account_id: str) -> bool:
+    from datetime import datetime, timezone
+    from core.services.db import execute_mutate
+
+    now = datetime.now(timezone.utc)
+    sql = """
+    UPDATE projects
+    SET dedicated_at = :dedicated_at, updated_at = :updated_at
+    WHERE project_id = :project_id AND account_id = :account_id
+    RETURNING project_id
+    """
+    result = await execute_mutate(sql, {
+        "project_id": project_id,
+        "account_id": account_id,
+        "dedicated_at": now,
+        "updated_at": now,
+    })
+    return len(result) > 0
+
+
+async def clear_project_dedicated(project_id: str, account_id: str) -> bool:
+    from datetime import datetime, timezone
+    from core.services.db import execute_mutate
+
+    sql = """
+    UPDATE projects
+    SET dedicated_at = NULL, updated_at = :updated_at
+    WHERE project_id = :project_id AND account_id = :account_id
+    RETURNING project_id
+    """
+    result = await execute_mutate(sql, {
+        "project_id": project_id,
+        "account_id": account_id,
+        "updated_at": datetime.now(timezone.utc),
+    })
+    return len(result) > 0
 
 
 async def create_project(

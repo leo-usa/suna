@@ -183,6 +183,7 @@ async def get_project(
             "sandbox": sandbox_info,
             "is_public": project.get('is_public', False),
             "icon_name": project.get('icon_name'),
+            "dedicated_at": project.get('dedicated_at'),
             "created_at": project['created_at'],
             "updated_at": project.get('updated_at')
         }
@@ -195,6 +196,100 @@ async def get_project(
     except Exception as e:
         logger.error(f"Error fetching project {project_id}: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch project: {str(e)}")
+
+
+async def _authorize_project_access(project_id: str, user_id: str) -> dict:
+    from core.threads import repo as threads_repo
+
+    project = await threads_repo.get_project_by_id(project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    account_id = project.get("account_id")
+    if not account_id:
+        raise HTTPException(status_code=500, detail="Project has no associated account")
+
+    is_admin = await threads_repo.check_user_admin_role(user_id)
+    if not is_admin:
+        has_access = await threads_repo.check_account_user_access(user_id, account_id)
+        if not has_access:
+            raise HTTPException(status_code=403, detail="Not authorized to access this project")
+
+    return project
+
+
+@router.post(
+    "/projects/{project_id}/dedicate",
+    summary="Make project a dedicated computer",
+    operation_id="dedicate_project",
+)
+async def dedicate_project(
+    project_id: str,
+    user_id: str = Depends(verify_and_get_user_id_from_jwt),
+):
+    from core.billing.shared.config import get_dedicated_computer_limit
+    from core.billing.subscriptions.handlers.tier import TierHandler
+    from core.threads import repo as threads_repo
+    from core.sandbox.dedicated import sync_sandbox_dedicated_label
+
+    project = await _authorize_project_access(project_id, user_id)
+    account_id = project["account_id"]
+
+    tier_info = await TierHandler.get_user_subscription_tier(account_id)
+    limit = get_dedicated_computer_limit(tier_info.get("name", "none"))
+    if limit <= 0:
+        raise HTTPException(
+            status_code=402,
+            detail={
+                "message": "Dedicated computer is available on Pro and Ultra plans.",
+                "error_code": "DEDICATED_COMPUTER_NOT_AVAILABLE",
+            },
+        )
+
+    await threads_repo.clear_account_dedicated_except(account_id, project_id)
+    updated = await threads_repo.set_project_dedicated(project_id, account_id)
+    if not updated:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    sandbox_row = await threads_repo.get_project_with_sandbox(project_id)
+    sandbox_id = (sandbox_row or {}).get("resource_external_id")
+    if sandbox_id:
+        await sync_sandbox_dedicated_label(sandbox_id, True)
+
+    refreshed = await threads_repo.get_project_by_id(project_id)
+    return {
+        "project_id": project_id,
+        "dedicated_at": refreshed.get("dedicated_at") if refreshed else None,
+    }
+
+
+@router.delete(
+    "/projects/{project_id}/dedicate",
+    summary="Remove dedicated computer from project",
+    operation_id="undedicate_project",
+)
+async def undedicate_project(
+    project_id: str,
+    user_id: str = Depends(verify_and_get_user_id_from_jwt),
+):
+    from core.threads import repo as threads_repo
+    from core.sandbox.dedicated import sync_sandbox_dedicated_label
+
+    project = await _authorize_project_access(project_id, user_id)
+    account_id = project["account_id"]
+
+    sandbox_row = await threads_repo.get_project_with_sandbox(project_id)
+    sandbox_id = (sandbox_row or {}).get("resource_external_id")
+
+    updated = await threads_repo.clear_project_dedicated(project_id, account_id)
+    if not updated:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    if sandbox_id:
+        await sync_sandbox_dedicated_label(sandbox_id, False)
+
+    return {"project_id": project_id, "dedicated_at": None}
+
 
 @router.get("/projects/{project_id}/threads", summary="List Project Threads", operation_id="list_project_threads")
 async def get_project_threads(

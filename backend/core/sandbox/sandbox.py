@@ -125,6 +125,22 @@ async def _evict_oldest_deletable_sandboxes_if_over_limit() -> None:
         deletable = [
             s for s in sandboxes if s.state in (SandboxState.ARCHIVED, SandboxState.STOPPED)
         ]
+        if deletable:
+            from core.sandbox.dedicated import get_dedicated_sandbox_ids
+
+            candidate_ids = [
+                getattr(s, "id", None) or str(s) for s in deletable
+            ]
+            dedicated_ids = await get_dedicated_sandbox_ids(candidate_ids)
+            if dedicated_ids:
+                before = len(deletable)
+                deletable = [
+                    s for s in deletable
+                    if (getattr(s, "id", None) or str(s)) not in dedicated_ids
+                ]
+                logger.info(
+                    f"[SANDBOX LRU] Skipped {before - len(deletable)} dedicated sandbox(es)"
+                )
         logger.info(f"[SANDBOX LRU] Attempt {retry_count}/{SANDBOX_LRU_MAX_RETRIES}: {len(deletable)} deletable (stopped/archived)")
 
         if not deletable:

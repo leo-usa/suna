@@ -530,6 +530,13 @@
     "threadMenuRename": "重命名",
     "threadMenuDelete": "删除",
     "threadMenuOpenChat": "打开对话",
+    "threadMenuMakeDedicated": "设为专属电脑",
+    "threadMenuRemoveDedicated": "取消专属电脑",
+    "dedicatedComputerSection": "专属电脑",
+    "dedicatedBadge": "专属",
+    "dedicatedComputerTooltip": "此电脑上的文件与工具会保留，不会被系统自动回收。",
+    "moveDedicatedTitle": "将专属电脑移到此项目？",
+    "moveDedicatedDescription": "原项目的专属环境将被取消。",
     "renameProjectTooltip": "重命名",
     "newChatTooltip": "新对话",
     "creatingChatTooltip": "创建中…",
@@ -1568,12 +1575,15 @@
       "premiumModels": "高级 AI 模型",
       "prioritySupport": "优先支持",
       "accountManager": "专属客户经理",
-      "customDeployment": "自定义部署"
+      "customDeployment": "自定义部署",
+      "dedicatedComputer": "1 个专属电脑",
+      "dedicatedComputerDesc": "工作区文件与工具长期保留，环境不会被系统自动回收"
     },
     "pricingDisabled": {
       "noCustomWorkers": "无自定义 AI Worker",
       "noScheduledTriggers": "无定时触发器",
       "noAppTriggers": "无应用触发器",
+      "noDedicatedComputer": "无专属电脑",
       "noIntegrations": "无集成"
     },
     "features": {

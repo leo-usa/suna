@@ -640,7 +640,14 @@ async def execute_mutate(sql: str, params: Optional[dict] = None) -> List[dict]:
         result = await session.execute(text(sql), _prep_params(params))
         await session.commit()
         try:
-            return [dict(row._mapping) for row in result.fetchall()]
+            rows = [dict(row._mapping) for row in result.fetchall()]
+            if rows:
+                return rows
+            # UPDATE/DELETE without RETURNING: fetchall() is empty even on success
+            rowcount = getattr(result, "rowcount", None)
+            if rowcount is not None and rowcount > 0:
+                return [{"_rowcount": rowcount}]
+            return []
         except Exception:
             return []
 

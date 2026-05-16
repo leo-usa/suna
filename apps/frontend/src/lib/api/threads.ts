@@ -70,6 +70,7 @@ export type Project = {
   };
   is_public?: boolean;
   icon_name?: string | null;
+  dedicated_at?: string | null;
   [key: string]: any;
 };
 
@@ -84,6 +85,7 @@ export const getProject = async (projectId: string): Promise<Project> => {
     sandbox: any;
     is_public?: boolean;
     icon_name?: string | null;
+    dedicated_at?: string | null;
   }>(`/projects/${projectId}`, {
     showErrors: true
   });
@@ -114,7 +116,37 @@ export const getProject = async (projectId: string): Promise<Project> => {
       sandbox_url: '',
     },
     icon_name: projectData.icon_name,
+    dedicated_at: projectData.dedicated_at ?? null,
   };
+};
+
+export const dedicateProject = async (
+  projectId: string,
+): Promise<{ project_id: string; dedicated_at: string | null }> => {
+  const response = await backendApi.post<{ project_id: string; dedicated_at: string | null }>(
+    `/projects/${projectId}/dedicate`,
+    {},
+    { showErrors: true },
+  );
+  if (response.error) {
+    handleApiError(response.error, { operation: 'dedicate project', resource: `project ${projectId}` });
+    throw new Error(response.error.message || 'Failed to dedicate project');
+  }
+  return response.data!;
+};
+
+export const undedicateProject = async (
+  projectId: string,
+): Promise<{ project_id: string; dedicated_at: null }> => {
+  const response = await backendApi.delete<{ project_id: string; dedicated_at: null }>(
+    `/projects/${projectId}/dedicate`,
+    { showErrors: true },
+  );
+  if (response.error) {
+    handleApiError(response.error, { operation: 'remove dedication', resource: `project ${projectId}` });
+    throw new Error(response.error.message || 'Failed to remove dedication');
+  }
+  return response.data!;
 };
 
 // Get threads for a specific project

@@ -21,6 +21,7 @@ export type PricingFeatureItem =
   | { kind: 'scheduled_triggers'; count: number }
   | { kind: 'app_triggers'; count: number }
   | { kind: 'integrations_100' }
+  | { kind: 'dedicated_computer' }
   | { kind: 'advanced_mode' }
   | { kind: 'private_projects' }
   | { kind: 'premium_models' }
@@ -32,6 +33,7 @@ export type PricingDisabledItem =
   | { kind: 'no_custom_workers' }
   | { kind: 'no_scheduled_triggers' }
   | { kind: 'no_app_triggers' }
+  | { kind: 'no_dedicated_computer' }
   | { kind: 'no_integrations' };
 
 export interface PricingTier {
@@ -77,6 +79,7 @@ export const pricingTiers: PricingTier[] = [
       { kind: 'no_custom_workers' },
       { kind: 'no_scheduled_triggers' },
       { kind: 'no_app_triggers' },
+      { kind: 'no_dedicated_computer' },
       { kind: 'no_integrations' },
     ],
     tierKey: config.SUBSCRIPTION_TIERS.FREE_TIER.tierKey,
@@ -104,6 +107,7 @@ export const pricingTiers: PricingTier[] = [
       { kind: 'integrations_100' },
       { kind: 'advanced_mode' },
     ],
+    disabledFeatures: [{ kind: 'no_dedicated_computer' }],
     tierKey: config.SUBSCRIPTION_TIERS.TIER_2_20.tierKey,
     upgradePlans: [],
   },
@@ -122,6 +126,7 @@ export const pricingTiers: PricingTier[] = [
     features: [
       { kind: 'credits_monthly', credits: 5000 },
       { kind: 'unlimited_chats' },
+      { kind: 'dedicated_computer' },
       { kind: 'concurrent_runs', count: 5 },
       { kind: 'custom_workers', count: 20 },
       { kind: 'scheduled_triggers', count: 10 },
@@ -169,6 +174,7 @@ export const pricingTiers: PricingTier[] = [
     features: [
       { kind: 'credits_monthly', credits: 20_000 },
       { kind: 'unlimited_chats' },
+      { kind: 'dedicated_computer' },
       { kind: 'concurrent_runs', count: 20 },
       { kind: 'custom_workers', count: 100 },
       { kind: 'scheduled_triggers', count: 50 },

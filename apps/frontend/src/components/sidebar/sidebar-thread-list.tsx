@@ -13,6 +13,7 @@ import {
   Frown,
   ExternalLink,
   Pencil,
+  Monitor,
 } from 'lucide-react';
 import { DobbyLoader } from '@/components/ui/dobby-loader';
 import { ThreadIcon } from './thread-icon';
@@ -45,6 +46,8 @@ import {
   ProjectGroup,
   GroupedByDateThenProject,
   groupThreadsByDateThenProject,
+  groupDedicatedProjects,
+  compareProjectGroups,
 } from '@/hooks/sidebar/use-sidebar';
 import {
   useDeleteMultipleThreads,
@@ -58,7 +61,19 @@ import { useThreads } from '@/hooks/threads/use-threads';
 import { useTranslations } from 'next-intl';
 import { useDeleteOperation } from '@/stores/delete-operation-store';
 import { useStartNavigation } from '@/stores/thread-navigation-store';
-import { useUpdateProject } from '@/hooks/threads/use-project';
+import { useUpdateProject, useDedicateProjectMutation } from '@/hooks/threads/use-project';
+import { useAccountState } from '@/hooks/billing';
+import { usePricingModalStore } from '@/stores/pricing-modal-store';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { RenameProjectDialog } from '@/components/sidebar/rename-project-dialog';
 
 // Date group header component - shared across tabs
@@ -68,6 +83,17 @@ const DateGroupHeader: React.FC<{ dateGroup: string }> = ({ dateGroup }) => {
     <div className="py-2 mt-4 first:mt-2">
       <div className="text-xs font-medium text-muted-foreground px-2.5">
         {t(`dateGroups.${dateGroup}` as any)}
+      </div>
+    </div>
+  );
+};
+
+const DedicatedGroupHeader: React.FC = () => {
+  const t = useTranslations('sidebar');
+  return (
+    <div className="py-2 mt-2">
+      <div className="text-xs font-medium text-primary px-2.5">
+        {t('dedicatedComputerSection')}
       </div>
     </div>
   );
@@ -84,7 +110,9 @@ interface ThreadItemCardProps {
   onDelete: (threadId: string, threadName: string) => void;
   onRename: (projectId: string, currentName: string) => void;
   onCreateNewChat?: (projectId: string) => Promise<void>;
+  onToggleDedicated?: (projectId: string, isDedicated: boolean) => void;
   isCreatingChat?: boolean;
+  isDedicating?: boolean;
   mode: 'chats' | 'library';
 }
 
@@ -99,7 +127,9 @@ const ThreadItemCard: React.FC<ThreadItemCardProps> = ({
   onDelete,
   onRename,
   onCreateNewChat,
+  onToggleDedicated,
   isCreatingChat = false,
+  isDedicating = false,
   mode,
 }) => {
   const tMenu = useTranslations('sidebar');
@@ -149,7 +179,21 @@ const ThreadItemCard: React.FC<ThreadItemCardProps> = ({
           </div>
           
           {/* Name */}
-          <span className="flex-1 truncate">{projectGroup.projectName}</span>
+          <span className="flex-1 truncate flex items-center gap-1.5 min-w-0">
+            <span className="truncate">{projectGroup.projectName}</span>
+            {projectGroup.dedicatedAt && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-primary/10 text-primary">
+                    {tMenu('dedicatedBadge')}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  {tMenu('dedicatedComputerTooltip')}
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </span>
           
           {/* Date & Menu */}
           <div className="flex-shrink-0 relative">
@@ -219,6 +263,24 @@ const ThreadItemCard: React.FC<ThreadItemCardProps> = ({
                   <Pencil className="mr-2 h-4 w-4" />
                   {tMenu('threadMenuRename')}
                 </DropdownMenuItem>
+                {mode === 'chats' && onToggleDedicated && (
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onToggleDedicated(
+                        projectGroup.projectId,
+                        Boolean(projectGroup.dedicatedAt),
+                      );
+                    }}
+                    disabled={isDedicating}
+                  >
+                    <Monitor className="mr-2 h-4 w-4" />
+                    {projectGroup.dedicatedAt
+                      ? tMenu('threadMenuRemoveDedicated')
+                      : tMenu('threadMenuMakeDedicated')}
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={(e) => {
@@ -270,6 +332,14 @@ export function SidebarThreadList({ mode }: SidebarThreadListProps) {
   const [renameProjectId, setRenameProjectId] = useState<string | null>(null);
   const [renameProjectName, setRenameProjectName] = useState('');
   const updateProjectMutation = useUpdateProject();
+  const dedicateProjectMutation = useDedicateProjectMutation();
+  const { data: accountState } = useAccountState();
+  const { openPricingModal } = usePricingModalStore();
+  const [moveDedicatedDialogOpen, setMoveDedicatedDialogOpen] = useState(false);
+  const [pendingDedicateProjectId, setPendingDedicateProjectId] = useState<string | null>(null);
+
+  const canUseDedicatedComputer =
+    accountState?.limits?.dedicated_computer?.can_use ?? false;
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -330,6 +400,7 @@ export function SidebarThreadList({ mode }: SidebarThreadListProps) {
 
       const displayName = project?.name || 'Unnamed Project';
       const iconName = project?.icon_name;
+      const dedicatedAt = project?.dedicated_at ?? null;
       const updatedAt = thread.updated_at || project?.updated_at || new Date().toISOString();
       const formattedDate = formatDateForList(updatedAt);
 
@@ -340,6 +411,7 @@ export function SidebarThreadList({ mode }: SidebarThreadListProps) {
         threadName: thread.name && thread.name.trim() ? thread.name : formattedDate,
         url: `/projects/${projectId}/thread/${thread.thread_id}`,
         updatedAt: updatedAt,
+        dedicatedAt,
         iconName: iconName,
       });
     }
@@ -349,15 +421,52 @@ export function SidebarThreadList({ mode }: SidebarThreadListProps) {
     );
   }, [currentThreads]);
 
-  // Group threads by date, then by project
-  const groupedByDateThenProject: GroupedByDateThenProject =
-    groupThreadsByDateThenProject(combinedThreads);
+  // Group threads by date, then by project (dedicated projects are pinned above)
+  const dedicatedProjectGroups = useMemo(
+    () => groupDedicatedProjects(combinedThreads),
+    [combinedThreads],
+  );
+  const groupedByDateThenProject: GroupedByDateThenProject = useMemo(
+    () => groupThreadsByDateThenProject(combinedThreads),
+    [combinedThreads],
+  );
+
+  const chatListSections = useMemo(() => {
+    const sections: {
+      key: string;
+      header: React.ReactNode;
+      projects: ProjectGroup[];
+    }[] = [];
+
+    if (dedicatedProjectGroups.length > 0) {
+      sections.push({
+        key: 'dedicated-computer',
+        header: <DedicatedGroupHeader />,
+        projects: dedicatedProjectGroups,
+      });
+    }
+
+    for (const [dateGroup, projectsInDate] of Object.entries(
+      groupedByDateThenProject,
+    )) {
+      sections.push({
+        key: dateGroup,
+        header: <DateGroupHeader dateGroup={dateGroup} />,
+        projects: Object.values(projectsInDate).sort(compareProjectGroups),
+      });
+    }
+
+    return sections;
+  }, [dedicatedProjectGroups, groupedByDateThenProject]);
 
   // Initialize expanded projects
   useEffect(() => {
-    const allProjectIds = Object.values(groupedByDateThenProject).flatMap((dateGroup) =>
-      Object.keys(dateGroup)
-    );
+    const allProjectIds = [
+      ...dedicatedProjectGroups.map((p) => p.projectId),
+      ...Object.values(groupedByDateThenProject).flatMap((dateGroup) =>
+        Object.keys(dateGroup),
+      ),
+    ];
     if (allProjectIds.length > 0 && expandedProjects.size === 0) {
       setExpandedProjects(new Set(allProjectIds));
     }
@@ -425,6 +534,66 @@ export function SidebarThreadList({ mode }: SidebarThreadListProps) {
     setRenameDialogOpen(false);
     setRenameProjectId(null);
     setRenameProjectName('');
+  };
+
+  const dedicatedProjectIdElsewhere = useMemo(() => {
+    const dedicated = combinedThreads.find((t) => t.dedicatedAt);
+    return dedicated?.projectId ?? null;
+  }, [combinedThreads]);
+
+  const applyDedicateProject = (projectId: string) => {
+    dedicateProjectMutation.mutate(
+      { projectId, dedicate: true },
+      {
+        onSuccess: () => {
+          toast.success(t('threadMenuMakeDedicated'));
+          void queryClient.invalidateQueries({ queryKey: threadKeys.all });
+        },
+      },
+    );
+  };
+
+  const handleToggleDedicated = (projectId: string, isDedicated: boolean) => {
+    if (isDedicated) {
+      dedicateProjectMutation.mutate(
+        { projectId, dedicate: false },
+        {
+          onSuccess: () => {
+            toast.success(t('threadMenuRemoveDedicated'));
+            void queryClient.invalidateQueries({ queryKey: threadKeys.all });
+          },
+        },
+      );
+      return;
+    }
+
+    if (!canUseDedicatedComputer) {
+      openPricingModal({
+        isAlert: true,
+        alertTitle: t('threadMenuMakeDedicated'),
+        alertSubtitle: t('dedicatedComputerTooltip'),
+      });
+      return;
+    }
+
+    if (
+      dedicatedProjectIdElsewhere &&
+      dedicatedProjectIdElsewhere !== projectId
+    ) {
+      setPendingDedicateProjectId(projectId);
+      setMoveDedicatedDialogOpen(true);
+      return;
+    }
+
+    applyDedicateProject(projectId);
+  };
+
+  const handleConfirmMoveDedicated = () => {
+    if (pendingDedicateProjectId) {
+      applyDedicateProject(pendingDedicateProjectId);
+    }
+    setMoveDedicatedDialogOpen(false);
+    setPendingDedicateProjectId(null);
   };
 
   // Pagination helpers
@@ -780,12 +949,16 @@ export function SidebarThreadList({ mode }: SidebarThreadListProps) {
               </div>
             ) : combinedThreads.length > 0 ? (
               <>
-                {Object.entries(groupedByDateThenProject).map(
-                  ([dateGroup, projectsInDate]) => (
-                    <div key={dateGroup}>
-                      <DateGroupHeader dateGroup={dateGroup} />
+                {chatListSections.map((section) => (
+                    <div
+                      key={section.key}
+                      className={
+                        section.key === 'dedicated-computer' ? 'mb-1' : undefined
+                      }
+                    >
+                      {section.header}
                       <div className="space-y-1.5">
-                        {Object.values(projectsInDate).map((projectGroup: ProjectGroup) => {
+                        {section.projects.map((projectGroup: ProjectGroup) => {
                           const isExpanded = expandedProjects.has(projectGroup.projectId);
                           const projectThreads = projectGroup.threads;
                           const hasActiveThread = projectThreads.some((t) =>
@@ -813,7 +986,11 @@ export function SidebarThreadList({ mode }: SidebarThreadListProps) {
                                 onDelete={handleDeleteThread}
                                 onRename={handleStartRename}
                                 onCreateNewChat={mode === 'chats' ? handleCreateNewChat : undefined}
+                                onToggleDedicated={
+                                  mode === 'chats' ? handleToggleDedicated : undefined
+                                }
                                 isCreatingChat={isCreatingChat}
+                                isDedicating={dedicateProjectMutation.isPending}
                                 mode={mode}
                               />
                             );
@@ -851,8 +1028,13 @@ export function SidebarThreadList({ mode }: SidebarThreadListProps) {
 
                                     {/* Project Name & Chat Count */}
                                     <div className="flex-1 min-w-0">
-                                      <span className="block text-sm truncate text-foreground/90">
-                                        {projectGroup.projectName}
+                                      <span className="flex items-center gap-1.5 text-sm truncate text-foreground/90">
+                                        <span className="truncate">{projectGroup.projectName}</span>
+                                        {projectGroup.dedicatedAt && (
+                                          <span className="shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-primary/10 text-primary">
+                                            {t('dedicatedBadge')}
+                                          </span>
+                                        )}
                                       </span>
                                       <span className="text-[11px] text-muted-foreground">
                                         {t('projectChatCount', { count: projectThreads.length })}
@@ -863,6 +1045,28 @@ export function SidebarThreadList({ mode }: SidebarThreadListProps) {
                                     <div className="flex items-center gap-1 flex-shrink-0">
                                       {mode === 'chats' && (
                                         <>
+                                          <Tooltip>
+                                            <TooltipTrigger asChild>
+                                              <button
+                                                className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground opacity-0 group-hover/project:opacity-100"
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  handleToggleDedicated(
+                                                    projectGroup.projectId,
+                                                    Boolean(projectGroup.dedicatedAt),
+                                                  );
+                                                }}
+                                                disabled={dedicateProjectMutation.isPending}
+                                              >
+                                                <Monitor className="h-3.5 w-3.5" />
+                                              </button>
+                                            </TooltipTrigger>
+                                            <TooltipContent side="right">
+                                              {projectGroup.dedicatedAt
+                                                ? t('threadMenuRemoveDedicated')
+                                                : t('threadMenuMakeDedicated')}
+                                            </TooltipContent>
+                                          </Tooltip>
                                           <Tooltip>
                                             <TooltipTrigger asChild>
                                               <button
@@ -1018,8 +1222,7 @@ export function SidebarThreadList({ mode }: SidebarThreadListProps) {
                         })}
                       </div>
                     </div>
-                  )
-                )}
+                  ))}
 
                 {/* Pagination controls */}
                 {pagination && totalPages > 1 && (
@@ -1111,6 +1314,23 @@ export function SidebarThreadList({ mode }: SidebarThreadListProps) {
           isBulk={threadToDelete.id === 'multiple'}
         />
       )}
+
+      <AlertDialog open={moveDedicatedDialogOpen} onOpenChange={setMoveDedicatedDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('moveDedicatedTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>{t('moveDedicatedDescription')}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setPendingDedicateProjectId(null)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmMoveDedicated}>
+              {t('threadMenuMakeDedicated')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <RenameProjectDialog
         isOpen={renameDialogOpen}

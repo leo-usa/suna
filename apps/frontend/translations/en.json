@@ -538,6 +538,13 @@
     "threadMenuRename": "Rename",
     "threadMenuDelete": "Delete",
     "threadMenuOpenChat": "Open chat",
+    "threadMenuMakeDedicated": "Make dedicated",
+    "threadMenuRemoveDedicated": "Remove dedication",
+    "dedicatedComputerSection": "Dedicated computer",
+    "dedicatedBadge": "Dedicated",
+    "dedicatedComputerTooltip": "Files and tools stay on this computer until you remove it.",
+    "moveDedicatedTitle": "Move dedicated computer here?",
+    "moveDedicatedDescription": "Your other project will no longer keep its environment.",
     "renameProjectTooltip": "Rename",
     "newChatTooltip": "New chat",
     "creatingChatTooltip": "Creating...",
@@ -1647,12 +1654,15 @@
       "premiumModels": "Premium AI Models",
       "prioritySupport": "Priority support",
       "accountManager": "Dedicated account manager",
-      "customDeployment": "Custom deployment"
+      "customDeployment": "Custom deployment",
+      "dedicatedComputer": "1 dedicated computer",
+      "dedicatedComputerDesc": "Your workspace files and tools are kept — the environment is not auto-deleted"
     },
     "pricingDisabled": {
       "noCustomWorkers": "No custom AI Workers",
       "noScheduledTriggers": "No scheduled triggers",
       "noAppTriggers": "No app-based triggers",
+      "noDedicatedComputer": "No dedicated computer",
       "noIntegrations": "No integrations"
     },
     "features": {

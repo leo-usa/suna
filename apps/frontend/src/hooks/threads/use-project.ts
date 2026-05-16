@@ -1,6 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { threadKeys, projectKeys } from "./keys";
-import { getProject, updateProject, deleteProject, type Project } from "@/lib/api/threads";
+import {
+  getProject,
+  updateProject,
+  deleteProject,
+  dedicateProject,
+  undedicateProject,
+  type Project,
+} from "@/lib/api/threads";
 import { toast } from '@/lib/toast';
 import { handleApiError } from '@/lib/error-handler';
 import { useMemo } from 'react';
@@ -47,6 +54,7 @@ export const useProjectQuery = (projectId: string | undefined, options?) => {
         sandbox_url: '',
       },
       icon_name: projectData.icon_name,
+      dedicated_at: projectData.dedicated_at ?? null,
     } as Project;
   }, [projectId, cachedThreads]);
   
@@ -103,6 +111,7 @@ export const useProjects = (options?) => {
               sandbox_url: '',
             },
             icon_name: project.icon_name,
+            dedicated_at: project.dedicated_at ?? null,
           });
         }
       }
@@ -189,6 +198,26 @@ export const useUpdateProjectMutation = () => {
 
 // Alias for backward compatibility
 export const useUpdateProject = useUpdateProjectMutation;
+
+export const useDedicateProjectMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      projectId,
+      dedicate,
+    }: {
+      projectId: string;
+      dedicate: boolean;
+    }) => (dedicate ? dedicateProject(projectId) : undedicateProject(projectId)),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: threadKeys.lists() });
+    },
+    onError: (error: Error) => {
+      handleApiError(error, { operation: 'update dedicated computer', resource: 'project' });
+    },
+  });
+};
 
 export const useDeleteProject = () => {
   const queryClient = useQueryClient();

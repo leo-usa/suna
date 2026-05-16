@@ -52,6 +52,7 @@ class TierHandler:
             'custom_workers_limit': tier_obj.custom_workers_limit,
             'scheduled_triggers_limit': tier_obj.scheduled_triggers_limit,
             'app_triggers_limit': tier_obj.app_triggers_limit,
+            'dedicated_computer_limit': tier_obj.dedicated_computer_limit,
             'agent_limit': tier_obj.custom_workers_limit,
             'is_trial': trial_status == 'active'
         }

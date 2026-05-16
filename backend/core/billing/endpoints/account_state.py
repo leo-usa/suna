@@ -554,7 +554,11 @@ async def _build_account_state(account_id: str, skip_cache: bool = False) -> Dic
                     'can_create': trigger_limit.get('app', {}).get('can_create', False)
                 },
                 'tier_name': trigger_limit.get('tier_name', tier_name)
-            }
+            },
+            'dedicated_computer': {
+                'max': tier_info.dedicated_computer_limit,
+                'can_use': tier_info.dedicated_computer_limit > 0,
+            },
         },
         
 

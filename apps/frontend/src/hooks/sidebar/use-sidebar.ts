@@ -17,6 +17,7 @@ export type ThreadWithProject = {
   threadName: string;
   url: string;
   updatedAt: string;
+  dedicatedAt?: string | null;
   // Icon system field for thread categorization
   iconName?: string | null;
 };
@@ -43,6 +44,7 @@ export const processThreadsWithProjects = (
     // Use dedicated icon_name field from backend
     const displayName = project.name || 'Unnamed Project';
     const iconName = project.icon_name; // Get icon from dedicated database field
+    const dedicatedAt = project.dedicated_at ?? null;
 
     // Format date for fallback if thread has no name
     const updatedAt = thread.updated_at || project.updated_at || new Date().toISOString();
@@ -55,6 +57,7 @@ export const processThreadsWithProjects = (
       threadName: thread.name && thread.name.trim() ? thread.name : formattedDate,
       url: `/projects/${projectId}/thread/${thread.thread_id}`,
       updatedAt: updatedAt,
+      dedicatedAt,
       // Use dedicated field or parsed embedded data
       iconName: iconName,
     });
@@ -79,8 +82,18 @@ export type ProjectGroup = {
   projectId: string;
   projectName: string;
   iconName?: string | null;
+  dedicatedAt?: string | null;
   threads: ThreadWithProject[];
   latestUpdate: string;
+};
+
+export const compareProjectGroups = (a: ProjectGroup, b: ProjectGroup) => {
+  const aDedicated = a.dedicatedAt ? 1 : 0;
+  const bDedicated = b.dedicatedAt ? 1 : 0;
+  if (aDedicated !== bDedicated) {
+    return bDedicated - aDedicated;
+  }
+  return new Date(b.latestUpdate).getTime() - new Date(a.latestUpdate).getTime();
 };
 
 export type GroupedByProject = {
@@ -101,6 +114,7 @@ export const groupThreadsByProject = (
         projectId: projectId,
         projectName: thread.projectName,
         iconName: thread.iconName,
+        dedicatedAt: thread.dedicatedAt,
         threads: [],
         latestUpdate: thread.updatedAt,
       };
@@ -114,10 +128,7 @@ export const groupThreadsByProject = (
     }
   });
   
-  // Sort projects by latest update
-  const sortedProjects = Object.values(grouped).sort((a, b) => {
-    return new Date(b.latestUpdate).getTime() - new Date(a.latestUpdate).getTime();
-  });
+  const sortedProjects = Object.values(grouped).sort(compareProjectGroups);
   
   // Rebuild grouped object with sorted order
   const sortedGrouped: GroupedByProject = {};
@@ -190,6 +201,11 @@ export const groupThreadsByDateThenProject = (
   startOfToday.setHours(0, 0, 0, 0);
   
   sortedThreads.forEach(thread => {
+    // Dedicated projects live in the pinned section at the top of the sidebar
+    if (thread.dedicatedAt) {
+      return;
+    }
+
     const threadDate = new Date(thread.updatedAt);
     
     // Get start of thread date (midnight)
@@ -228,6 +244,7 @@ export const groupThreadsByDateThenProject = (
         projectId: projectId,
         projectName: thread.projectName,
         iconName: thread.iconName,
+        dedicatedAt: thread.dedicatedAt,
         threads: [],
         latestUpdate: thread.updatedAt,
       };
@@ -242,4 +259,16 @@ export const groupThreadsByDateThenProject = (
   });
   
   return grouped;
+};
+
+/** Pinned dedicated-computer projects (shown above date groups). */
+export const groupDedicatedProjects = (
+  threadsList: ThreadWithProject[],
+): ProjectGroup[] => {
+  const dedicatedThreads = threadsList.filter((t) => Boolean(t.dedicatedAt));
+  if (dedicatedThreads.length === 0) {
+    return [];
+  }
+  const grouped = groupThreadsByProject(dedicatedThreads);
+  return Object.values(grouped).sort(compareProjectGroups);
 };
