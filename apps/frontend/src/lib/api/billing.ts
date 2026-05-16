@@ -112,6 +112,10 @@ export interface AccountState {
       };
       tier_name: string;
     };
+    dedicated_computer: {
+      max: number;
+      can_use: boolean;
+    };
   };
   tier: {
     name: string;
@@ -427,7 +431,11 @@ export const billingApi = {
               can_create: false
             },
             tier_name: 'none'
-          }
+          },
+          dedicated_computer: {
+            max: 0,
+            can_use: false,
+          },
         },
         tier: {
           name: 'none',
