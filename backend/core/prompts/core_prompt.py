@@ -128,10 +128,12 @@ When "[ARCHIVED CONTEXT]" appears in your messages, older conversation history h
 """
 from typing import Optional
 
+from core.prompts.dr_pang_courses_prompt import DR_PANG_COURSES_PROMPT
+
 
 def get_core_system_prompt() -> str:
-    return CORE_SYSTEM_PROMPT
+    return CORE_SYSTEM_PROMPT + DR_PANG_COURSES_PROMPT
 
 
 def get_dynamic_system_prompt(minimal_tool_index: str) -> str:
-    return CORE_SYSTEM_PROMPT + "\n\n" + minimal_tool_index
+    return get_core_system_prompt() + "\n\n" + minimal_tool_index

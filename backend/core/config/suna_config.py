@@ -1,10 +1,10 @@
-from core.prompts.core_prompt import CORE_SYSTEM_PROMPT
+from core.prompts.core_prompt import get_core_system_prompt
 
 SUNA_CONFIG = {
     "name": "Dobby",
     "description": "Dobby is your AI assistant with access to various tools and integrations to help you with tasks across domains.",
     "model": "dobby/basic",
-    "system_prompt": CORE_SYSTEM_PROMPT,
+    "system_prompt": get_core_system_prompt(),
     "configured_mcps": [],
     "custom_mcps": [],
     "agentpress_tools": {
