@@ -50,7 +50,7 @@
     "subtitleMac": "Hand it off to Dobby. From anywhere on your Mac.",
     "subtitleDesktop": "Hand it off to Dobby. From anywhere on your computer.",
     "downloadHeading": "Download the desktop app",
-    "downloadHint": "Version 1.0.0 · macOS (Apple Silicon) and Windows",
+    "downloadHint": "Version 1.0.0 · macOS (Apple Silicon)",
     "featuresTitle": "Why you'll love it",
     "features": {
       "handoff": {

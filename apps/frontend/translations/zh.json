@@ -50,7 +50,7 @@
     "subtitleMac": "把任务交给 Dobby，在 Mac 上随时随地继续。",
     "subtitleDesktop": "把任务交给 Dobby，在电脑上随时随地继续。",
     "downloadHeading": "下载桌面应用",
-    "downloadHint": "版本 1.0.0 · 支持 macOS（Apple 芯片）与 Windows",
+    "downloadHint": "版本 1.0.0 · macOS（Apple 芯片）",
     "featuresTitle": "你会喜欢的理由",
     "features": {
       "handoff": {

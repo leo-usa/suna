@@ -6,11 +6,8 @@ import { motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { SimpleFooter } from '@/components/home/simple-footer';
 import { DobbyLogo } from '@/components/sidebar/dobby-logo';
-import {
-  DESKTOP_DOWNLOAD_LINKS,
-  detectDesktopPlatform,
-  type DesktopPlatform,
-} from '@/lib/desktop-download';
+import { DESKTOP_DOWNLOAD_LINKS } from '@/lib/desktop-download';
+// import { detectDesktopPlatform, type DesktopPlatform } from '@/lib/desktop-download';
 
 function AppleLogo({ className }: { className?: string }) {
   return (
@@ -57,19 +54,20 @@ export default function DesktopDownloadPage() {
   const t = useTranslations('downloadPage');
   const tBanners = useTranslations('announcements.appBanners');
   const [mounted, setMounted] = useState(false);
-  const [platform, setPlatform] = useState<DesktopPlatform>('mac');
+  // const [platform, setPlatform] = useState<DesktopPlatform>('mac');
 
   useEffect(() => {
     setMounted(true);
-    setPlatform(detectDesktopPlatform());
+    // setPlatform(detectDesktopPlatform());
   }, []);
 
   if (!mounted) {
     return null;
   }
 
-  const primaryHref =
-    platform === 'windows' ? DESKTOP_DOWNLOAD_LINKS.windows : DESKTOP_DOWNLOAD_LINKS.macArm;
+  const primaryHref = DESKTOP_DOWNLOAD_LINKS.macArm;
+  // Windows installer — enable when build is published:
+  // platform === 'windows' ? DESKTOP_DOWNLOAD_LINKS.windows : DESKTOP_DOWNLOAD_LINKS.macArm;
 
   return (
     <main className="w-full min-h-screen bg-background relative flex flex-col">
@@ -94,7 +92,7 @@ export default function DesktopDownloadPage() {
             {t('title')}
           </h1>
           <p className="text-base text-muted-foreground text-center max-w-xl leading-relaxed">
-            {platform === 'mac' ? t('subtitleMac') : t('subtitleDesktop')}
+            {t('subtitleMac')}
           </p>
         </motion.div>
 
@@ -125,39 +123,21 @@ export default function DesktopDownloadPage() {
                 <DownloadButton
                   href={primaryHref}
                   sublabel={tBanners('downloadFor')}
-                  label={
-                    platform === 'windows'
-                      ? tBanners('platformWindows')
-                      : tBanners('platformMacM')
-                  }
-                  icon={
-                    platform === 'windows' ? (
-                      <Monitor className="h-5 w-5 text-white dark:text-black" />
-                    ) : (
-                      <AppleLogo className="h-5 w-5 text-white dark:text-black" />
-                    )
-                  }
+                  label={tBanners('platformMacM')}
+                  icon={<AppleLogo className="h-5 w-5 text-white dark:text-black" />}
                 />
               </div>
 
+              {/* Windows download — uncomment when installer is ready
               <div className="mt-4 flex flex-wrap gap-3 justify-center">
-                {platform !== 'windows' && (
-                  <DownloadButton
-                    href={DESKTOP_DOWNLOAD_LINKS.windows}
-                    sublabel={tBanners('downloadFor')}
-                    label={tBanners('platformWindows')}
-                    icon={<Monitor className="h-5 w-5 text-white dark:text-black" />}
-                  />
-                )}
-                {platform === 'windows' && (
-                  <DownloadButton
-                    href={DESKTOP_DOWNLOAD_LINKS.macArm}
-                    sublabel={tBanners('downloadFor')}
-                    label={tBanners('platformMacM')}
-                    icon={<AppleLogo className="h-5 w-5 text-white dark:text-black" />}
-                  />
-                )}
+                <DownloadButton
+                  href={DESKTOP_DOWNLOAD_LINKS.windows}
+                  sublabel={tBanners('downloadFor')}
+                  label={tBanners('platformWindows')}
+                  icon={<Monitor className="h-5 w-5 text-white dark:text-black" />}
+                />
               </div>
+              */}
 
               {DESKTOP_DOWNLOAD_LINKS.macIntel && (
                 <p className="mt-4 text-center">
