@@ -32,6 +32,7 @@
     "basic": "Basic",
     "tryFree": "Get started",
     "nav": {
+      "download": "Download",
       "home": "Home",
       "about": "About",
       "pricing": "Pricing",
@@ -42,6 +43,32 @@
       "openMenu": "Open menu",
       "closeMenu": "Close menu",
       "api": "API"
+    }
+  },
+  "downloadPage": {
+    "title": "Dobby for Desktop",
+    "subtitleMac": "Hand it off to Dobby. From anywhere on your Mac.",
+    "subtitleDesktop": "Hand it off to Dobby. From anywhere on your computer.",
+    "downloadHeading": "Download the desktop app",
+    "downloadHint": "Version 1.0.0 · macOS (Apple Silicon) and Windows",
+    "featuresTitle": "Why you'll love it",
+    "features": {
+      "handoff": {
+        "title": "Hand off from the web",
+        "description": "Start a task in the browser and continue in the native app without losing context."
+      },
+      "native": {
+        "title": "Native notifications",
+        "description": "Get alerted when your agents finish work or need your input, even when Dobby is in the background."
+      },
+      "shortcuts": {
+        "title": "System integration",
+        "description": "Dock, menu bar, and OS-level shortcuts keep Dobby one click away."
+      },
+      "fast": {
+        "title": "Built for focus",
+        "description": "A dedicated window for your AI worker, without browser tab clutter."
+      }
     }
   },
   "aboutPage": {

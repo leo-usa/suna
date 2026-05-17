@@ -31,6 +31,7 @@
     "basic": "基础版",
     "tryFree": "开始",
     "nav": {
+      "download": "下载",
       "home": "首页",
       "about": "关于",
       "pricing": "定价",
@@ -43,6 +44,32 @@
       "api": "API"
     },
     "previous": "上一页"
+  },
+  "downloadPage": {
+    "title": "Dobby 桌面版",
+    "subtitleMac": "把任务交给 Dobby，在 Mac 上随时随地继续。",
+    "subtitleDesktop": "把任务交给 Dobby，在电脑上随时随地继续。",
+    "downloadHeading": "下载桌面应用",
+    "downloadHint": "版本 1.0.0 · 支持 macOS（Apple 芯片）与 Windows",
+    "featuresTitle": "你会喜欢的理由",
+    "features": {
+      "handoff": {
+        "title": "从网页无缝交接",
+        "description": "在浏览器中开始任务，在原生应用中继续，上下文不丢失。"
+      },
+      "native": {
+        "title": "系统级通知",
+        "description": "代理完成任务或需要输入时及时提醒，即使 Dobby 在后台运行。"
+      },
+      "shortcuts": {
+        "title": "系统集成",
+        "description": "Dock、菜单栏和系统快捷键，让 Dobby 触手可及。"
+      },
+      "fast": {
+        "title": "专注工作流",
+        "description": "为 AI 助手准备的独立窗口，告别浏览器标签页干扰。"
+      }
+    }
   },
   "aboutPage": {
     "visasLabel": "签证",

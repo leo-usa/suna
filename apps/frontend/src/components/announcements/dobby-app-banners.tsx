@@ -8,6 +8,11 @@ import { isElectron } from '@/lib/utils/is-electron';
 import { featureFlags } from '@/lib/feature-flags';
 import { AppDownloadQR, APP_DOWNLOAD_URL } from '@/components/common/app-download-qr';
 import { useTranslations } from 'next-intl';
+import {
+  DESKTOP_DOWNLOAD_LINKS,
+  detectDesktopPlatform,
+  type DesktopPlatform,
+} from '@/lib/desktop-download';
 
 const MOBILE_STORAGE_KEY = 'kortix-mobile-banner-dismissed';
 const DESKTOP_STORAGE_KEY = 'kortix-desktop-banner-dismissed';
@@ -16,18 +21,6 @@ const STORE_LINKS = {
   ios: 'https://apps.apple.com/ie/app/dobby/id6754448524',
   android: 'https://play.google.com/store/apps/details?id=com.kortix.app',
 };
-
-const DOWNLOAD_LINKS = {
-  windows: 'https://download.dobby.now/desktop/latest/windows/Dobby%20Setup%201.0.0.exe',
-  /** Apple Silicon (M1/M2/M3) — hosted on Supabase Storage */
-  macArm:
-    'https://tsdrmlnyclxwkryqrjic.supabase.co/storage/v1/object/public/Desktop%20App/Dobby-1.0.0-arm64.dmg',
-  /** Intel Mac DMG — set when uploaded to the same bucket (otherwise secondary link is hidden) */
-  macIntel:
-    (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_DESKTOP_DOWNLOAD_MAC_INTEL) || '',
-};
-
-type DesktopPlatform = 'windows' | 'mac';
 
 type KortixAppBannersProps = {
   /**
@@ -70,19 +63,6 @@ function KortixSymbol({ size = 24, className }: { size?: number; className?: str
       <path d="M25.5614 24.916H29.8268C29.8268 19.6306 26.9378 15.0039 22.6171 12.4587C26.9377 9.91355 29.8267 5.28685 29.8267 0.00146484H25.5613C25.5613 5.00287 21.8906 9.18692 17.0654 10.1679V0.00146484H12.8005V10.1679C7.9526 9.20401 4.3046 5.0186 4.3046 0.00146484H0.0391572C0.0391572 5.28685 2.92822 9.91355 7.24884 12.4587C2.92818 15.0039 0.0390625 19.6306 0.0390625 24.916H4.30451C4.30451 19.8989 7.95259 15.7135 12.8005 14.7496V24.9206H17.0654V14.7496C21.9133 15.7134 25.5614 19.8989 25.5614 24.916Z"/>
     </svg>
   );
-}
-
-function detectDesktopPlatform(): DesktopPlatform {
-  if (typeof window === 'undefined') return 'mac';
-  
-  const userAgent = window.navigator.userAgent.toLowerCase();
-  const platform = window.navigator.platform?.toLowerCase() || '';
-  
-  if (platform.includes('win') || userAgent.includes('windows')) {
-    return 'windows';
-  }
-  
-  return 'mac';
 }
 
 export function KortixAppBanners(props: KortixAppBannersProps) {
@@ -141,19 +121,16 @@ export function KortixAppBanners(props: KortixAppBannersProps) {
   };
 
   const handleDownload = () => {
-    let downloadUrl: string;
-    if (desktopPlatform === 'windows') {
-      downloadUrl = DOWNLOAD_LINKS.windows;
-    } else {
-      // Mac - default to ARM (M series)
-      downloadUrl = DOWNLOAD_LINKS.macArm;
-    }
+    const downloadUrl =
+      desktopPlatform === 'windows'
+        ? DESKTOP_DOWNLOAD_LINKS.windows
+        : DESKTOP_DOWNLOAD_LINKS.macArm;
     window.open(downloadUrl, '_blank');
   };
 
   const handleDownloadIntel = () => {
-    if (DOWNLOAD_LINKS.macIntel) {
-      window.open(DOWNLOAD_LINKS.macIntel, '_blank');
+    if (DESKTOP_DOWNLOAD_LINKS.macIntel) {
+      window.open(DESKTOP_DOWNLOAD_LINKS.macIntel, '_blank');
     }
   };
 
@@ -360,7 +337,7 @@ export function KortixAppBanners(props: KortixAppBannersProps) {
                         </div>
                       </button>
                       
-                      {desktopPlatform === 'mac' && DOWNLOAD_LINKS.macIntel && (
+                      {desktopPlatform === 'mac' && DESKTOP_DOWNLOAD_LINKS.macIntel && (
                         <button
                           onClick={handleDownloadIntel}
                           className="w-full mt-2 text-[10px] text-muted-foreground dark:text-white/60 hover:text-foreground dark:hover:text-white transition-colors"
