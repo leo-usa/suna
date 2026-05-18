@@ -49,7 +49,7 @@ import { toast } from '@/lib/toast';
 import { cn } from '@/lib/utils';
 import { DobbyLogo } from '@/components/sidebar/dobby-logo';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useAccountState } from '@/hooks/billing';
+import { useAccountState, isFreeBillingTier } from '@/hooks/billing';
 import { usePricingModalStore } from '@/stores/pricing-modal-store';
 import { isLocalMode } from '@/lib/config';
 
@@ -101,10 +101,7 @@ export function AgentConfigurationDialog({
   const { data: accountState } = useAccountState();
   const { openPricingModal } = usePricingModalStore();
   
-  const isFreeTier = accountState && (
-    accountState.subscription?.tier_key === 'free' ||
-    accountState.tier?.name === 'free'
-  ) && !isLocalMode();
+  const isFreeTier = isFreeBillingTier(accountState?.subscription) && !isLocalMode();
 
   const [activeTab, setActiveTab] = useState(initialTab);
   const [isEditingName, setIsEditingName] = useState(false);

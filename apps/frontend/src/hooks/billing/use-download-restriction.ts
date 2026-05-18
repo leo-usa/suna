@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useSubscriptionStore } from '@/stores/subscription-store';
 import { usePricingModalStore } from '@/stores/pricing-modal-store';
 import { isLocalMode } from '@/lib/config';
+import { isFreeBillingTier } from '@/lib/billing/tier-access';
 import { toast } from '@/lib/toast';
 
 type DownloadFeatureName =
@@ -61,14 +62,7 @@ export function useDownloadRestriction(options?: UseDownloadRestrictionOptions):
   const accountState = useSubscriptionStore((state) => state.accountState);
   const { openPricingModal } = usePricingModalStore();
 
-  const isFreeTier = accountState?.subscription && (
-    accountState.subscription.tier_key === 'free' ||
-    accountState.subscription.tier_key === 'none' ||
-    !accountState.subscription.tier_key
-  );
-
-  // Downloads are restricted if user is on free tier and NOT in local mode
-  const isRestricted = isFreeTier && !isLocalMode();
+  const isRestricted = isFreeBillingTier(accountState?.subscription) && !isLocalMode();
 
   const showUpgradePrompt = useCallback(() => {
     const featureKey = (options?.featureName || 'files') as DownloadFeatureName;

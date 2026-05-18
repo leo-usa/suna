@@ -6,7 +6,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useIsMobile } from '@/hooks/utils';
 import { useAuth } from '@/components/AuthProvider';
 import { isLocalMode, isStagingMode } from '@/lib/config';
-import { useAccountState, accountStateSelectors, invalidateAccountState } from '@/hooks/billing';
+import { useAccountState, accountStateSelectors, invalidateAccountState, isFreeBillingTier } from '@/hooks/billing';
 import { usePricingModalStore } from '@/stores/pricing-modal-store';
 import { toast } from '@/lib/toast';
 import { useSidebar } from '@/components/ui/sidebar';
@@ -277,11 +277,7 @@ export function DashboardContent() {
     logPrefix: '[Dashboard]',
   });
 
-  const isFreeTier = accountState?.subscription && (
-    accountState.subscription.tier_key === 'free' ||
-    accountState.subscription.tier_key === 'none' ||
-    !accountState.subscription.tier_key
-  );
+  const isFreeTier = isFreeBillingTier(accountState?.subscription);
 
   return (
     <>

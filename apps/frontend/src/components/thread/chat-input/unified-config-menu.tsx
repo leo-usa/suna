@@ -31,7 +31,7 @@ import { NewAgentDialog } from '@/components/agents/new-agent-dialog';
 import { AgentAvatar } from '@/components/thread/content/agent-avatar';
 import { AgentConfigurationDialog } from '@/components/agents/agent-configuration-dialog';
 import { usePricingModalStore } from '@/stores/pricing-modal-store';
-import { useAccountState, accountStateSelectors } from '@/hooks/billing';
+import { useAccountState, isFreeBillingTier } from '@/hooks/billing';
 import { isLocalMode } from '@/lib/config';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 
@@ -67,11 +67,7 @@ const LoggedInMenu: React.FC<UnifiedConfigMenuProps> = memo(function LoggedInMen
     const [isMobile, setIsMobile] = useState(false);
     const [mobileSection, setMobileSection] = useState<'main' | 'agents'>('main');
 
-    const tierKey = accountStateSelectors.tierKey(accountState);
-    const isFreeTier = tierKey && (
-      tierKey === 'free' ||
-      tierKey === 'none'
-    ) && !isLocalMode();
+    const isFreeTier = isFreeBillingTier(accountState?.subscription) && !isLocalMode();
 
     // Detect mobile view
     useEffect(() => {

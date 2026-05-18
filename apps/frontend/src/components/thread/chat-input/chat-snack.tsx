@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { UpgradePreview } from './upgrade-preview';
 import { FloatingToolPreview, ToolCallInput } from './floating-tool-preview';
 import { isLocalMode } from '@/lib/config';
+import { isFreeBillingTier } from '@/hooks/billing';
 import { Volume2, Play, Pause, RotateCcw, X, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useVoicePlayerStore } from '@/stores/voice-player-store';
@@ -54,11 +55,10 @@ export const ChatSnack: React.FC<ChatSnackProps> = ({
     const isVoiceEnded = voiceState === 'ended';
     const isVoiceError = voiceState === 'error';
 
-    const isFreeTier = subscriptionData && (
-        subscriptionData.tier_key === 'free' ||
-        subscriptionData.tier?.name === 'free' ||
-        subscriptionData.plan_name === 'free'
-    );
+    const isFreeTier = subscriptionData && isFreeBillingTier({
+        tier_key: subscriptionData.tier_key,
+        prepaid_unlock: (subscriptionData as { prepaid_unlock?: boolean }).prepaid_unlock,
+    });
 
     const notifications: string[] = [];
 

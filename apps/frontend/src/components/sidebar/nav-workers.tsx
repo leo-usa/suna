@@ -13,7 +13,7 @@ import { DobbyLoader } from '@/components/ui/dobby-loader';
 import { useSidebar } from '@/components/ui/sidebar';
 import { useIsMobile } from '@/hooks/utils';
 import { usePricingModalStore } from '@/stores/pricing-modal-store';
-import { useAccountState, accountStateSelectors } from '@/hooks/billing';
+import { useAccountState, isFreeBillingTier } from '@/hooks/billing';
 import { isLocalMode } from '@/lib/config';
 import { Sparkles } from 'lucide-react';
 
@@ -29,11 +29,7 @@ export function NavWorkers() {
   const { openPricingModal } = usePricingModalStore();
   const { data: accountState } = useAccountState();
   
-  const tierKey = accountStateSelectors.tierKey(accountState);
-  const isFreeTier = tierKey && (
-    tierKey === 'free' ||
-    tierKey === 'none'
-  ) && !isLocalMode();
+  const isFreeTier = isFreeBillingTier(accountState?.subscription) && !isLocalMode();
 
   const { data: agentsResponse, isLoading } = useAgents({ limit: 50 });
   const agents = useMemo(() => {

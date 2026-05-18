@@ -13,7 +13,7 @@ import { ComposioToolsManager } from '../composio/composio-tools-manager';
 import { ToolsManager } from './tools-manager';
 import { toast } from '@/lib/toast';
 import { useQueryClient } from '@tanstack/react-query';
-import { useAccountState } from '@/hooks/billing';
+import { useAccountState, isFreeBillingTier } from '@/hooks/billing';
 import { usePricingModalStore } from '@/stores/pricing-modal-store';
 import { isLocalMode } from '@/lib/config';
 
@@ -39,10 +39,7 @@ export const MCPConfigurationNew: React.FC<MCPConfigurationProps> = ({
   const { data: accountState } = useAccountState();
   const { openPricingModal } = usePricingModalStore();
   
-  const isFreeTier = accountState && (
-    accountState.subscription?.tier_key === 'free' ||
-    accountState.tier?.name === 'free'
-  ) && !isLocalMode();
+  const isFreeTier = isFreeBillingTier(accountState?.subscription) && !isLocalMode();
 
   const handleAgentChange = (newAgentId: string | undefined) => {
     setSelectedAgentId(newAgentId);

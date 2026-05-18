@@ -53,7 +53,7 @@ import { cn } from '@/lib/utils';
 import { toast } from '@/lib/toast';
 import { useQueryClient } from '@tanstack/react-query';
 import type { ComposioProfileSummary, ComposioToolkitGroup } from '@/hooks/composio/utils';
-import { useAccountState } from '@/hooks/billing';
+import { useAccountState, isFreeBillingTier } from '@/hooks/billing';
 import { usePricingModalStore } from '@/stores/pricing-modal-store';
 import { isLocalMode } from '@/lib/config';
 import { useTranslations } from 'next-intl';
@@ -516,10 +516,7 @@ export const ComposioConnectionsSection: React.FC<ComposioConnectionsSectionProp
   const { data: accountState } = useAccountState();
   const { openPricingModal } = usePricingModalStore();
   
-  const isFreeTier = accountState && (
-    accountState.subscription?.tier_key === 'free' ||
-    accountState.tier?.name === 'free'
-  ) && !isLocalMode();
+  const isFreeTier = isFreeBillingTier(accountState?.subscription) && !isLocalMode();
 
   const filteredToolkits = useMemo(() => {
     if (!toolkits || !searchQuery.trim()) return toolkits || [];

@@ -20,7 +20,7 @@ import {
 import { toast } from '@/lib/toast';
 import { EventBasedTriggerDialog } from './event-based-trigger-dialog';
 import { config, EnvMode, isLocalMode } from '@/lib/config';
-import { useAccountState } from '@/hooks/billing';
+import { useAccountState, isFreeBillingTier } from '@/hooks/billing';
 import { usePricingModalStore } from '@/stores/pricing-modal-store';
 import {
   Tooltip,
@@ -51,10 +51,7 @@ export const OneClickIntegrations: React.FC<OneClickIntegrationsProps> = ({
   const { data: accountState } = useAccountState();
   const { openPricingModal } = usePricingModalStore();
   
-  const isFreeTier = accountState && (
-    accountState.subscription?.tier_key === 'free' ||
-    accountState.tier?.name === 'free'
-  ) && !isLocalMode();
+  const isFreeTier = isFreeBillingTier(accountState?.subscription) && !isLocalMode();
   
   // Schedule trigger form state
   const [scheduleConfig, setScheduleConfig] = useState<ScheduleTriggerConfig>({

@@ -5,7 +5,7 @@ import { ChatInput } from '@/components/thread/chat-input/chat-input';
 import { useAgentStartInput, UseAgentStartInputOptions } from '@/hooks/dashboard';
 import { useTranslations } from 'next-intl';
 import { usePricingModalStore } from '@/stores/pricing-modal-store';
-import { useAccountState, accountStateSelectors } from '@/hooks/billing';
+import { useAccountState, accountStateSelectors, isFreeBillingTier } from '@/hooks/billing';
 import { useAuth } from '@/components/AuthProvider';
 import { Button } from '@/components/ui/button';
 import { ChevronRight } from 'lucide-react';
@@ -96,11 +96,7 @@ export function AgentStartInput({
   const pricingModalStore = usePricingModalStore();
   const { data: accountState, isLoading: isAccountStateLoading } = useAccountState({ enabled: !!user });
   
-  const isFreeTier = accountState?.subscription && (
-    accountState.subscription.tier_key === 'free' ||
-    accountState.subscription.tier_key === 'none' ||
-    !accountState.subscription.tier_key
-  );
+  const isFreeTier = isFreeBillingTier(accountState?.subscription);
   
   const canCreateThread = accountState?.limits?.threads?.can_create || false;
   const isDismissed = typeof window !== 'undefined' && sessionStorage.getItem('threadLimitAlertDismissed') === 'true';

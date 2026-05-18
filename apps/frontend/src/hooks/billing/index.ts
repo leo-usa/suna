@@ -55,6 +55,9 @@ export { useBillingModal } from './use-billing-modal';
 // Download restriction for free tier
 export { useDownloadRestriction } from './use-download-restriction';
 
+// Tier helpers (prepaid unlock on Basic)
+export { isFreeBillingTier, hasPaidFeatureAccess } from '@/lib/billing/tier-access';
+
 // Credit & Thread Usage analytics
 export { useCreditUsage } from './use-credit-usage';
 export { useThreadUsage } from './use-thread-usage';

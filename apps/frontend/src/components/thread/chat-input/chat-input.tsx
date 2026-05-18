@@ -40,7 +40,7 @@ import { ContextUsageIndicator } from '../ContextUsageIndicator';
 import { IntegrationsRegistry } from '@/components/agents/integrations-registry';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
-import { useAccountState, accountStateSelectors } from '@/hooks/billing';
+import { useAccountState, accountStateSelectors, isFreeBillingTier } from '@/hooks/billing';
 import { isStagingMode, isLocalMode } from '@/lib/config';
 import { PlanSelectionModal } from '@/components/billing/pricing';
 import { AgentConfigurationDialog } from '@/components/agents/agent-configuration-dialog';
@@ -945,6 +945,7 @@ export const ChatInput = memo(forwardRef<ChatInputHandles, ChatInputProps>(
         
         return {
           tier_key: accountState.subscription.tier_key,
+          prepaid_unlock: accountState.subscription.prepaid_unlock,
           tier: {
             name: accountState.subscription.tier_key,
             display_name: accountState.subscription.tier_display_name,
@@ -966,6 +967,7 @@ export const ChatInput = memo(forwardRef<ChatInputHandles, ChatInputProps>(
       
       return {
         tier_key: accountState.subscription.tier_key,
+        prepaid_unlock: accountState.subscription.prepaid_unlock,
         tier: {
           name: accountState.subscription.tier_key,
           display_name: accountState.subscription.tier_display_name,
@@ -981,11 +983,9 @@ export const ChatInput = memo(forwardRef<ChatInputHandles, ChatInputProps>(
       };
     })() : null;
     
-    const isFreeTier = accountState?.subscription && (
-      accountState.subscription.tier_key === 'free' ||
-      accountState.subscription.tier_key === 'none' ||
-      !accountState.subscription.tier_key
-    );
+    const isFreeTier = accountState?.subscription
+      ? isFreeBillingTier(accountState.subscription) && !isLocalMode()
+      : false;
     
     // Chat input button has inverted background from theme
     // Dark theme → light button → needs black loader
