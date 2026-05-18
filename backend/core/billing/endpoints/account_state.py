@@ -326,7 +326,14 @@ async def _build_account_state(account_id: str, skip_cache: bool = False) -> Dic
     )
     credit_account = credit_account or {}
     
-    tier_name = subscription_tier_info.get('name', 'none')
+    effective_tier_name = subscription_tier_info.get('name', 'none')
+    prepaid_unlock = bool(subscription_tier_info.get('prepaid_unlock'))
+    billing_tier_name = (
+        subscription_tier_info.get('billing_tier', effective_tier_name)
+        if prepaid_unlock
+        else effective_tier_name
+    )
+    tier_name = billing_tier_name
     tier_info = get_tier_by_name(tier_name)
     if not tier_info:
         tier_info = TIERS['none']
@@ -455,8 +462,9 @@ async def _build_account_state(account_id: str, skip_cache: bool = False) -> Dic
 
     all_models = model_manager.list_available_models(include_disabled=True)
     models = []
+    model_tier_name = effective_tier_name if prepaid_unlock else tier_name
     for model in all_models:
-        allowed = is_model_allowed(tier_name, model['id'])
+        allowed = is_model_allowed(model_tier_name, model['id'])
         models.append({
             'id': model['id'],
             'name': model['name'],
@@ -491,6 +499,8 @@ async def _build_account_state(account_id: str, skip_cache: bool = False) -> Dic
         },
         'subscription': {
             'tier_key': tier_name,
+            'prepaid_unlock': prepaid_unlock,
+            'effective_tier_key': effective_tier_name if prepaid_unlock else None,
             'tier_display_name': display_name,
             'status': status,
             'billing_period': billing_period,
@@ -593,7 +603,7 @@ async def get_minimal_account_state(
         return {
             'credits': {
                 'total': 999999,
-                'daily': 200,
+                'daily': 20,
                 'monthly': 999799,
                 'extra': 0,
                 'can_run': True,
@@ -660,7 +670,7 @@ async def get_account_state(
         return {
             'credits': {
                 'total': 999999,
-                'daily': 200,
+                'daily': 20,
                 'monthly': 999799,
                 'extra': 0,
                 'can_run': True,

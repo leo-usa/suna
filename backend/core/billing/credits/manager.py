@@ -49,6 +49,9 @@ class CreditManager:
                     }
                     await Cache.set(f"credit_balance:{account_id}", balance_data, ttl=300)
                     await Cache.invalidate(f"credit_summary:{account_id}")
+                    if not is_expiring:
+                        from core.billing.shared.cache_utils import invalidate_account_state_cache
+                        await invalidate_account_state_cache(account_id)
                     
                     return {
                         'success': True,

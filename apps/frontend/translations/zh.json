@@ -625,6 +625,7 @@
       ]
     },
     "usageLimitsDescription": "当前套餐的资源上限",
+    "usageLimitsPrepaidDescription": "Basic 套餐在持有预付额度时享受 Plus 资源上限",
     "usageUnlimited": "无限制",
     "usageRowChats": "聊天",
     "usageRowChatsTip": "与 AI Worker 的对话总数",
@@ -1409,6 +1410,44 @@
       "concurrentRuns": {
         "title": "已达到并行运行上限",
         "subtitle": "升级订阅计划以并行运行更多 Workers。"
+      },
+      "download": {
+        "title": "升级以下载",
+        "subtitle": "导出与下载功能仅限付费计划。立即升级以下载您的{feature}等内容。",
+        "toastTitle": "升级以下载{feature}",
+        "toastDescription": "下载功能仅限付费用户使用。",
+        "featureNames": {
+          "files": "文件",
+          "presentations": "演示文稿",
+          "images": "图片",
+          "exports": "导出内容",
+          "designs": "设计稿",
+          "spreadsheets": "电子表格"
+        }
+      },
+      "billingCheck": {
+        "title": "账单检查失败",
+        "subtitle": "请升级以继续。",
+        "subtitleWithBalance": "当前余额为 {balance} 积分。请升级订阅计划以继续。"
+      },
+      "insufficientCredits": {
+        "title": "您的积分已用完",
+        "subtitle": "升级订阅计划以获取更多积分并继续使用。",
+        "subtitleWithBalance": "当前余额为 {balance} 积分。请升级订阅计划以继续。"
+      },
+      "modelAccess": {
+        "title": "需要高级模型权限",
+        "subtitle": "该 AI 模型仅限更高档位订阅使用。请升级以使用高级模型。"
+      },
+      "customWorkers": {
+        "title": "已达到自定义 AI员工上限",
+        "subtitle": "你已达到自定义 AI员工数量上限。升级订阅计划以创建更多 AI员工。",
+        "subtitleWithCounts": "你已达到自定义 AI员工数量上限（{current}/{limit}）。升级订阅计划以创建更多 AI员工。"
+      },
+      "trigger": {
+        "title": "已达到触发器上限",
+        "subtitle": "你已达到触发器数量上限。升级订阅计划以创建更多触发器。",
+        "subtitleWithCounts": "你已达到触发器数量上限（{current}/{limit}）。升级订阅计划以创建更多触发器。"
       }
     },
     "holidayPromo": {
@@ -1501,7 +1540,7 @@
       "typesOverviewIntro": "积分分为两类：过期与不过期。运行任务时，扣款顺序为：先扣过期积分（每日/每周，再月度），再扣不过期积分。",
       "typeCards": {
         "dailyWeeklyTitle": "每日 / 每周",
-        "dailyWeeklyBody": "免费档：每周 300 积分。付费档：每日 200 积分。用不完不结转——到期重置。",
+        "dailyWeeklyBody": "免费档：每周 20 积分。付费档：每日 20 积分。用不完不结转——到期重置。",
         "monthlyTitle": "每月",
         "monthlyBody": "包含在订阅计划中。每个计费周期开始时刷新，不结转。",
         "extraTitle": "额外",
@@ -1509,7 +1548,7 @@
       },
       "expiringDetailsTitle": "过期积分（每日/每周 + 每月）",
       "expiringDailyWeeklyLabel": "每日/每周积分：",
-      "expiringDailyWeeklyText": "免费档每周 300 积分，付费档每日 200 积分。请在账单页面查看下次刷新时间。未用完不结转。",
+      "expiringDailyWeeklyText": "免费档每周 20 积分，付费档每日 20 积分。请在账单页面查看下次刷新时间。未用完不结转。",
       "expiringMonthlyLabel": "每月积分：",
       "expiringMonthlyText": "订阅的主要积分额度。每个计费周期开始时刷新，不累积——请在周期内使用。",
       "expiringPromotionalLabel": "促销积分：",
@@ -1546,6 +1585,13 @@
     "confirmDowngradeDescription": "您即将切换到{planName}计划。此更改将在您当前计费周期结束时生效。",
     "confirmDowngrade": "是的，降级",
     "pickPlan": "选择适合你的计划。",
+    "subscriptionPage": {
+      "titleRequired": "需要订阅",
+      "titleTrialEnded": "试用已结束",
+      "descriptionRequired": "使用 Dobby 需要订阅，请选择适合您的套餐。",
+      "descriptionTrialEnded": "您的 7 天免费试用已结束，请选择套餐以继续使用 Dobby AI。",
+      "questionsContact": "有疑问？请通过 <email>support@dobby.now</email> 联系我们"
+    },
     "limitReachedUpgrade": "已达到限制。升级以继续。",
     "creditsExhaustedTitle": "积分已用完。升级以继续。",
     "chatLimitReached": "聊天限制已达到。升级以获得无限聊天。",
@@ -1573,9 +1619,16 @@
       "monthlyCreditsLabel": "月度积分",
       "refreshesEachCycle": "每个计费周期刷新",
       "customWorkersFragment": "{count, number} 个自定义",
-      "aiWorkersLabel": "AI Worker",
+      "aiWorkersLabel": "AI员工",
       "basic": "基础",
       "advanced": "高级"
+    },
+    "pricingTierDescriptions": {
+      "Basic": "非常适合体验 Dobby AI员工",
+      "Plus": "适合个人与小团队",
+      "Pro": "适合成长中的团队与企业",
+      "Ultra": "适合重度用户",
+      "Business": "适合成熟企业"
     },
     "pricingFeatureItems": {
       "creditsMonthly": "每月 {count, number} 积分",
@@ -1587,9 +1640,9 @@
       "basicMode": "基础模式 — 核心 Dobby 体验与基础自主能力",
       "concurrentRuns": "{count, number} 个并发运行",
       "concurrentRunsDesc": "同时运行多个聊天",
-      "customWorkers": "{count, number} 个自定义 AI Worker",
-      "customWorkersDesc": "创建具备自定义知识、工具与集成的 Dobby Worker",
-      "customWorkersShort": "{count, number} 个自定义 Worker",
+      "customWorkers": "{count, number} 个自定义 AI员工",
+      "customWorkersDesc": "创建具备自定义知识、工具与集成的 Dobby AI员工",
+      "customWorkersShort": "{count, number} 个自定义 AI员工",
       "scheduledTriggers": "{count, number} 个定时触发器",
       "scheduledTriggersDesc": "如每日 9 点、每周一、每月首日…",
       "appTriggers": "{count, number} 个应用触发器",
@@ -1607,7 +1660,7 @@
       "dedicatedComputerDesc": "工作区文件与工具长期保留，环境不会被系统自动回收"
     },
     "pricingDisabled": {
-      "noCustomWorkers": "无自定义 AI Worker",
+      "noCustomWorkers": "无自定义 AI员工",
       "noScheduledTriggers": "无定时触发器",
       "noAppTriggers": "无应用触发器",
       "noDedicatedComputer": "无专属电脑",

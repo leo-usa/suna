@@ -802,7 +802,7 @@
       "typesOverviewIntro": "Credits fall into two categories: expiring and non-expiring. When you run a task, credits are deducted in this priority order: expiring credits first (daily/weekly, then monthly), followed by non-expiring credits.",
       "typeCards": {
         "dailyWeeklyTitle": "Daily / Weekly",
-        "dailyWeeklyBody": "Free tier: 300 credits weekly. Paid tiers: 200 credits daily. Use it or lose it—these credits reset and don't roll over.",
+        "dailyWeeklyBody": "Free tier: 20 credits weekly. Paid tiers: 20 credits daily. Use it or lose it—these credits reset and don't roll over.",
         "monthlyTitle": "Monthly",
         "monthlyBody": "Included with your subscription plan. Refresh at the start of each billing cycle and don't roll over.",
         "extraTitle": "Extra",
@@ -810,7 +810,7 @@
       },
       "expiringDetailsTitle": "Expiring credits (Daily/Weekly + Monthly)",
       "expiringDailyWeeklyLabel": "Daily/Weekly credits:",
-      "expiringDailyWeeklyText": "Free tier gets 300 credits weekly. Paid tiers get 200 credits daily. Check your billing page to see when your next refresh happens. Unused credits don't roll over.",
+      "expiringDailyWeeklyText": "Free tier gets 20 credits weekly. Paid tiers get 20 credits daily. Check your billing page to see when your next refresh happens. Unused credits don't roll over.",
       "expiringMonthlyLabel": "Monthly credits:",
       "expiringMonthlyText": "Your subscription's main credit allocation. These refresh at the start of each billing cycle and don't accumulate—use them within the month.",
       "expiringPromotionalLabel": "Promotional credits:",
@@ -847,6 +847,13 @@
     "confirmDowngradeDescription": "Stai per passare al piano {planName}. Questa modifica avrà effetto alla fine del tuo attuale periodo di fatturazione.",
     "confirmDowngrade": "Sì, Passa a un Piano Inferiore",
     "pickPlan": "Scegli il piano che fa per te.",
+    "subscriptionPage": {
+      "titleRequired": "Subscription Required",
+      "titleTrialEnded": "Your Trial Has Ended",
+      "descriptionRequired": "A subscription is required to use Dobby. Choose the plan that works best for you.",
+      "descriptionTrialEnded": "Your 7-day free trial has ended. Choose a plan to continue using Dobby AI.",
+      "questionsContact": "Questions? Contact us at <email>support@dobby.now</email>"
+    },
     "limitReachedUpgrade": "Limite raggiunto. Aggiorna per continuare.",
     "creditsExhaustedTitle": "Crediti esauriti. Aggiorna per continuare.",
     "chatLimitReached": "Limite chat raggiunto. Aggiorna per chat illimitate.",

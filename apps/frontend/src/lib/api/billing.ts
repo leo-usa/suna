@@ -22,6 +22,8 @@ export interface AccountState {
   };
   subscription: {
     tier_key: string;
+    prepaid_unlock?: boolean;
+    effective_tier_key?: string | null;
     tier_display_name: string;
     status: string;
     billing_period: 'monthly' | 'yearly' | 'yearly_commitment' | null;

@@ -40,6 +40,11 @@ import { convertPriceString, parsePriceAmount, formatPrice } from '@/lib/utils/c
 import { usePromo } from '@/hooks/utils/use-promo';
 import { backendApi } from '@/lib/api-client';
 
+function getWeeklyCreditsFromTier(tier: PricingTier): number {
+  const weekly = tier.features.find((f) => f.kind === 'weekly_credits');
+  return weekly && weekly.kind === 'weekly_credits' ? weekly.credits : 20;
+}
+
 // Constants
 export const SUBSCRIPTION_PLANS = {
   FREE: 'free',
@@ -892,6 +897,7 @@ function BasicTierCard({
   const scheduleDowngradeMutation = useScheduleDowngrade();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [isSubscribing, setIsSubscribing] = useState(false);
+  const weeklyCredits = getWeeklyCreditsFromTier(tier);
 
   const isSameTier =
     currentSubscription?.subscription.tier_key === tier.tierKey ||
@@ -1004,11 +1010,13 @@ function BasicTierCard({
             <TierBadge planName={tier.name} size="lg" variant="default" />
             <span className="text-sm text-muted-foreground font-medium">{t('pricingUi.freeForever')}</span>
           </div>
-          <p className="text-sm text-muted-foreground">{tier.description}</p>
+          <p className="text-sm text-muted-foreground">
+            {t(`pricingTierDescriptions.${tier.name}`)}
+          </p>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
             <span className="flex items-center gap-1.5">
               <CheckIcon className="size-3.5 text-muted-foreground" />
-              {t('pricingFeatureItems.weeklyCreditsShort', { count: 300 })}
+              {t('pricingFeatureItems.weeklyCreditsShort', { count: weeklyCredits })}
             </span>
             <span className="flex items-center gap-1.5">
               <CheckIcon className="size-3.5 text-muted-foreground" />
@@ -1487,6 +1495,33 @@ export function PricingSection({
           })()}
         </div>
 
+        {/* Get Additional Credits — above plan cards (plan modal, out of credits, change plan) */}
+        {showBuyCredits &&
+          isAuthenticated &&
+          currentSubscription?.subscription.can_purchase_credits && (
+            <div className="w-full max-w-5xl mx-auto mb-6 sm:mb-8 flex flex-col items-center gap-4">
+              <Button
+                onClick={() => setShowCreditPurchaseModal(true)}
+                variant="outline"
+                size="lg"
+                className="gap-2"
+              >
+                <ShoppingCart className="h-5 w-5" />
+                {t('getAdditionalCredits')}
+              </Button>
+              <Button
+                variant="link"
+                asChild
+                className="text-muted-foreground hover:text-foreground h-auto p-0"
+              >
+                <Link href="/credits-explained" target="_blank" rel="noopener noreferrer">
+                  <Lightbulb className="h-3.5 w-3.5 mr-2" />
+                  <span className="text-sm">{t('creditsExplained')}</span>
+                </Link>
+              </Button>
+            </div>
+          )}
+
         {/* Scheduled Downgrade Alert */}
         {isAuthenticated && hasScheduledChange && scheduledChange && (
           <div className="w-full max-w-5xl mx-auto mb-6">
@@ -1534,34 +1569,7 @@ export function PricingSection({
           )}
         </div>
 
-        {/* Get Additional Credits Button */}
-        {showBuyCredits &&
-          isAuthenticated &&
-          currentSubscription?.subscription.can_purchase_credits && (
-            <div className="w-full max-w-5xl mx-auto mt-12 pb-8 flex flex-col items-center gap-4">
-              <Button
-                onClick={() => setShowCreditPurchaseModal(true)}
-                variant="outline"
-                size="lg"
-                className="gap-2"
-              >
-                <ShoppingCart className="h-5 w-5" />
-                {t('getAdditionalCredits')}
-              </Button>
-              <Button
-                variant="link"
-                asChild
-                className="text-muted-foreground hover:text-foreground h-auto p-0"
-              >
-                <Link href="/credits-explained" target="_blank" rel="noopener noreferrer">
-                  <Lightbulb className="h-3.5 w-3.5 mr-2" />
-                  <span className="text-sm">{t('creditsExplained')}</span>
-                </Link>
-              </Button>
-            </div>
-          )}
-
-        {/* Credits Explained Link */}
+        {/* Credits Explained Link (when prepaid purchase not available) */}
         {(!isAuthenticated || !currentSubscription?.subscription.can_purchase_credits) && (
           <div className="w-full max-w-5xl mx-auto mt-8 pb-8 flex justify-center">
             <Button

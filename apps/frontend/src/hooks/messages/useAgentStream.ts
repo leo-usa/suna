@@ -17,6 +17,7 @@ import { knowledgeBaseKeys } from '@/hooks/knowledge-base/keys';
 import { fileQueryKeys } from '@/hooks/files/use-file-queries';
 import { threadKeys, projectKeys } from '@/hooks/threads/keys';
 import { usePricingModalStore } from '@/stores/pricing-modal-store';
+import { useTranslations } from 'next-intl';
 import { accountStateKeys } from '@/hooks/billing';
 import { clearToolTracking } from './tool-tracking';
 
@@ -57,6 +58,8 @@ export function useAgentStream(
   setMessages: (messages: UnifiedMessage[]) => void,
   agentId?: string,
 ): UseAgentStreamResult {
+  const t = useTranslations('billing');
+
   const queryKeys: (string | readonly string[])[] = useMemo(() => {
     const keys: (string | readonly string[])[] = [
       fileQueryKeys.all,
@@ -100,28 +103,30 @@ export function useAgentStream(
 
   const handleBillingError = useMemo(() => (errorMessage: string, balance?: string | null) => {
     const messageLower = errorMessage.toLowerCase();
-    const isCreditsExhausted = 
+    const isCreditsExhausted =
       messageLower.includes('insufficient credits') ||
       messageLower.includes('out of credits') ||
       messageLower.includes('no credits') ||
       messageLower.includes('balance');
-    
-    const alertTitle = isCreditsExhausted 
-      ? 'You ran out of credits'
-      : 'Billing check failed';
-    
-    const alertSubtitle = balance 
-      ? `Your current balance is ${balance} credits. Upgrade your plan to continue.`
-      : isCreditsExhausted 
-        ? 'Upgrade your plan to get more credits and continue using the AI assistant.'
-        : 'Please upgrade to continue.';
-    
-    usePricingModalStore.getState().openPricingModal({ 
-      isAlert: true, 
+
+    const alertTitle = isCreditsExhausted
+      ? t('limitAlerts.insufficientCredits.title')
+      : t('limitAlerts.billingCheck.title');
+
+    const alertSubtitle = balance
+      ? isCreditsExhausted
+        ? t('limitAlerts.insufficientCredits.subtitleWithBalance', { balance })
+        : t('limitAlerts.billingCheck.subtitleWithBalance', { balance })
+      : isCreditsExhausted
+        ? t('limitAlerts.insufficientCredits.subtitle')
+        : t('limitAlerts.billingCheck.subtitle');
+
+    usePricingModalStore.getState().openPricingModal({
+      isAlert: true,
       alertTitle,
-      alertSubtitle
+      alertSubtitle,
     });
-  }, []);
+  }, [t]);
 
   const showToast = useMemo(() => (message: string, type?: 'error' | 'success' | 'warning') => {
     if (type === 'error') {

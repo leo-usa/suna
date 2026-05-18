@@ -12,8 +12,8 @@ import {
   AgentRunLimitError, 
   ProjectLimitError, 
   ThreadLimitError,
-  formatTierErrorForUI
 } from '@/lib/api/errors';
+import { getLocalizedTierErrorForUI } from '@/lib/billing/limit-error-i18n';
 import { isTierRestrictionError } from '@agentpress/shared/errors';
 import { useOptimisticFilesStore } from '@/stores/optimistic-files-store';
 import { usePricingModalStore } from '@/stores/pricing-modal-store';
@@ -100,7 +100,7 @@ export function useOptimisticAgentStart(
 
   // Unified handler for all tier restriction errors using shared formatting
   const handleTierError = useCallback((error: any) => {
-    const errorUI = formatTierErrorForUI(error);
+    const errorUI = getLocalizedTierErrorForUI(error);
     if (errorUI) {
       router.replace(redirectOnError);
       pricingModalStore.openPricingModal({

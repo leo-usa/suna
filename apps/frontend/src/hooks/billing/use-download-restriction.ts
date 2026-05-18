@@ -1,10 +1,19 @@
 'use client';
 
 import { useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { useSubscriptionStore } from '@/stores/subscription-store';
 import { usePricingModalStore } from '@/stores/pricing-modal-store';
 import { isLocalMode } from '@/lib/config';
 import { toast } from '@/lib/toast';
+
+type DownloadFeatureName =
+  | 'files'
+  | 'presentations'
+  | 'images'
+  | 'exports'
+  | 'designs'
+  | 'spreadsheets';
 
 interface UseDownloadRestrictionOptions {
   /** Custom feature name for the toast message (e.g., "files", "presentations", "images") */
@@ -48,6 +57,7 @@ interface UseDownloadRestrictionReturn {
  * ```
  */
 export function useDownloadRestriction(options?: UseDownloadRestrictionOptions): UseDownloadRestrictionReturn {
+  const t = useTranslations('billing.limitAlerts.download');
   const accountState = useSubscriptionStore((state) => state.accountState);
   const { openPricingModal } = usePricingModalStore();
 
@@ -61,22 +71,21 @@ export function useDownloadRestriction(options?: UseDownloadRestrictionOptions):
   const isRestricted = isFreeTier && !isLocalMode();
 
   const showUpgradePrompt = useCallback(() => {
-    const featureName = options?.featureName || 'files';
-    
-    // Show toast notification at top center
-    toast.error(`Upgrade to download ${featureName}`, {
-      description: 'Downloads are available on paid plans.',
+    const featureKey = (options?.featureName || 'files') as DownloadFeatureName;
+    const featureLabel = t(`featureNames.${featureKey}`);
+
+    toast.error(t('toastTitle', { feature: featureLabel }), {
+      description: t('toastDescription'),
       position: 'top-center',
       duration: 5000,
     });
-    
-    // Also open the pricing modal
+
     openPricingModal({
       isAlert: true,
-      alertTitle: 'Upgrade to Download',
-      alertSubtitle: `Export and download features are available on paid plans. Upgrade now to download your ${featureName} and more.`,
+      alertTitle: t('title'),
+      alertSubtitle: t('subtitle', { feature: featureLabel }),
     });
-  }, [openPricingModal, options?.featureName]);
+  }, [openPricingModal, options?.featureName, t]);
 
   const withRestrictionCheck = useCallback(<T extends (...args: any[]) => any>(callback: T) => {
     return (...args: Parameters<T>): ReturnType<T> | void => {

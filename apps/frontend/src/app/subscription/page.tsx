@@ -12,7 +12,8 @@ import { clearUserLocalStorage } from '@/lib/utils/clear-local-storage';
 import { useMaintenanceNoticeQuery } from '@/hooks/edge-flags';
 import { useAdminRole } from '@/hooks/admin';
 import { useAccountState } from '@/hooks/billing';
-import { SUPPORT_EMAIL, SUPPORT_MAILTO } from '@/lib/site-config';
+import { SUPPORT_MAILTO } from '@/lib/site-config';
+import { useTranslations } from 'next-intl';
 
 // Lazy load heavy components
 const PricingSection = lazy(() => import('@/components/billing/pricing').then(mod => ({ default: mod.PricingSection })));
@@ -40,6 +41,8 @@ function SubscriptionSkeleton() {
 }
 
 export default function SubscriptionRequiredPage() {
+  const t = useTranslations('billing.subscriptionPage');
+  const tSidebar = useTranslations('sidebar');
   const router = useRouter();
   const { data: maintenanceNotice, isLoading: maintenanceLoading } = useMaintenanceNoticeQuery();
   const { data: adminRoleData, isLoading: isCheckingAdminRole } = useAdminRole();
@@ -106,7 +109,7 @@ export default function SubscriptionRequiredPage() {
             <div className="flex-1" />
             <div className="text-2xl font-medium flex items-center justify-center gap-2">
               <DobbyLogo />
-              <span>{isTrialExpired ? 'Your Trial Has Ended' : 'Subscription Required'}</span>
+              <span>{isTrialExpired ? t('titleTrialEnded') : t('titleRequired')}</span>
             </div>
             <div className="flex-1 flex justify-end">
               <Button
@@ -116,14 +119,12 @@ export default function SubscriptionRequiredPage() {
                 className="gap-2"
               >
                 <LogOut className="h-4 w-4" />
-                Log Out
+                {tSidebar('logout')}
               </Button>
             </div>
           </div>
           <p className="text-md text-muted-foreground max-w-2xl mx-auto">
-            {isTrialExpired
-              ? 'Your 7-day free trial has ended. Choose a plan to continue using Dobby AI.'
-              : 'A subscription is required to use Dobby. Choose the plan that works best for you.'}
+            {isTrialExpired ? t('descriptionTrialEnded') : t('descriptionRequired')}
           </p>
         </div>
         <Suspense fallback={
@@ -137,14 +138,18 @@ export default function SubscriptionRequiredPage() {
             returnUrl={`${typeof window !== 'undefined' ? window.location.origin : ''}/dashboard?subscription=activated`}
             showTitleAndTabs={false}
             onSubscriptionUpdate={handleSubscriptionUpdate}
+            showBuyCredits={true}
           />
         </Suspense>
         <div className="text-center text-sm text-muted-foreground -mt-10">
           <p>
-            Questions? Contact us at{' '}
-            <a href={SUPPORT_MAILTO} className="underline hover:text-primary">
-              {SUPPORT_EMAIL}
-            </a>
+            {t.rich('questionsContact', {
+              email: (chunks) => (
+                <a href={SUPPORT_MAILTO} className="underline hover:text-primary">
+                  {chunks}
+                </a>
+              ),
+            })}
           </p>
         </div>
       </div>

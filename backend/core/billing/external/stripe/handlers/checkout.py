@@ -101,6 +101,9 @@ class CheckoutHandler:
                     )
                 
                 return
+
+            from core.billing.shared.cache_utils import invalidate_account_state_cache
+            await invalidate_account_state_cache(account_id)
         except Exception as e:
             try:
                 purchase_id = metadata.get('purchase_id')

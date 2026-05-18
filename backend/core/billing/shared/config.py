@@ -40,6 +40,9 @@ class Tier:
     monthly_refill_enabled: Optional[bool] = True
     disabled_tools: Optional[List[str]] = None  # Tools disabled for this tier
 
+# When Basic/none users have prepaid (non-expiring) balance, limits/models match this tier.
+PREPAID_UNLOCK_TIER_NAME = 'tier_2_20'
+
 TIERS: Dict[str, Tier] = {
     'none': Tier(
         name='none',
@@ -80,7 +83,7 @@ TIERS: Dict[str, Tier] = {
         },
         daily_credit_config={
             'enabled': True,
-            'amount': Decimal('1.00'),
+            'amount': Decimal('0.20'),  # 20 credits at CREDITS_PER_DOLLAR=100
             'refresh_interval_hours': 168
         },
         monthly_refill_enabled=False,
@@ -112,7 +115,7 @@ TIERS: Dict[str, Tier] = {
         },
         daily_credit_config={
             'enabled': True,
-            'amount': Decimal('2.00'),
+            'amount': Decimal('0.20'),  # 20 credits at CREDITS_PER_DOLLAR=100
             'refresh_interval_hours': 24
         },
         monthly_refill_enabled=True
@@ -142,7 +145,7 @@ TIERS: Dict[str, Tier] = {
         },
         daily_credit_config={
             'enabled': True,
-            'amount': Decimal('2.00'),
+            'amount': Decimal('0.20'),  # 20 credits at CREDITS_PER_DOLLAR=100
             'refresh_interval_hours': 24
         },
         monthly_refill_enabled=True
@@ -172,7 +175,7 @@ TIERS: Dict[str, Tier] = {
         },
         daily_credit_config={
             'enabled': True,
-            'amount': Decimal('2.00'),
+            'amount': Decimal('0.20'),  # 20 credits at CREDITS_PER_DOLLAR=100
             'refresh_interval_hours': 24
         },
         monthly_refill_enabled=True
@@ -199,7 +202,7 @@ TIERS: Dict[str, Tier] = {
         },
         daily_credit_config={
             'enabled': True,
-            'amount': Decimal('2.00'),
+            'amount': Decimal('0.20'),  # 20 credits at CREDITS_PER_DOLLAR=100
             'refresh_interval_hours': 24
         },
         monthly_refill_enabled=True
@@ -224,7 +227,7 @@ TIERS: Dict[str, Tier] = {
         },
         daily_credit_config={
             'enabled': True,
-            'amount': Decimal('2.00'),
+            'amount': Decimal('0.20'),  # 20 credits at CREDITS_PER_DOLLAR=100
             'refresh_interval_hours': 24
         },
         monthly_refill_enabled=True
@@ -249,7 +252,7 @@ TIERS: Dict[str, Tier] = {
         },
         daily_credit_config={
             'enabled': True,
-            'amount': Decimal('2.00'),
+            'amount': Decimal('0.20'),  # 20 credits at CREDITS_PER_DOLLAR=100
             'refresh_interval_hours': 24
         },
         monthly_refill_enabled=True
@@ -274,7 +277,7 @@ TIERS: Dict[str, Tier] = {
         },
         daily_credit_config={
             'enabled': True,
-            'amount': Decimal('2.00'),
+            'amount': Decimal('0.20'),  # 20 credits at CREDITS_PER_DOLLAR=100
             'refresh_interval_hours': 24
         },
         monthly_refill_enabled=True
@@ -299,7 +302,7 @@ TIERS: Dict[str, Tier] = {
         },
         daily_credit_config={
             'enabled': True,
-            'amount': Decimal('2.00'),
+            'amount': Decimal('0.20'),  # 20 credits at CREDITS_PER_DOLLAR=100
             'refresh_interval_hours': 24
         },
         monthly_refill_enabled=True

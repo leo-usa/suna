@@ -592,6 +592,7 @@
     "describeWhatYouNeed": "Describe what you need help with...",
     "usageLimits": "Usage Limits",
     "usageLimitsDescription": "Resource limits for your current plan",
+    "usageLimitsPrepaidDescription": "Plus limits while you have prepaid credits on Basic",
     "usageUnlimited": "Unlimited",
     "usageRowChats": "Chats",
     "usageRowChatsTip": "Total conversations with your AI Workers",
@@ -1456,6 +1457,44 @@
       "concurrentRuns": {
         "title": "Parallel Runs Limit Reached",
         "subtitle": "Upgrade to run more workers in parallel."
+      },
+      "download": {
+        "title": "Upgrade to Download",
+        "subtitle": "Export and download features are available on paid plans. Upgrade now to download your {feature} and more.",
+        "toastTitle": "Upgrade to download {feature}",
+        "toastDescription": "Downloads are available on paid plans.",
+        "featureNames": {
+          "files": "files",
+          "presentations": "presentations",
+          "images": "images",
+          "exports": "exports",
+          "designs": "designs",
+          "spreadsheets": "spreadsheets"
+        }
+      },
+      "billingCheck": {
+        "title": "Billing check failed",
+        "subtitle": "Please upgrade to continue.",
+        "subtitleWithBalance": "Your current balance is {balance} credits. Upgrade your plan to continue."
+      },
+      "insufficientCredits": {
+        "title": "You ran out of credits",
+        "subtitle": "Upgrade your plan to get more credits and continue using the AI assistant.",
+        "subtitleWithBalance": "Your current balance is {balance} credits. Upgrade your plan to continue."
+      },
+      "modelAccess": {
+        "title": "Premium Model Access Required",
+        "subtitle": "This AI model is only available on higher tier plans. Upgrade to access premium models."
+      },
+      "customWorkers": {
+        "title": "Custom Worker Limit Reached",
+        "subtitle": "You've reached your custom worker limit. Upgrade your plan to create more custom workers.",
+        "subtitleWithCounts": "You've reached your custom worker limit ({current}/{limit}). Upgrade your plan to create more custom workers."
+      },
+      "trigger": {
+        "title": "Trigger Limit Reached",
+        "subtitle": "You've reached your trigger limit. Upgrade your plan to create more triggers.",
+        "subtitleWithCounts": "You've reached your trigger limit ({current}/{limit}). Upgrade your plan to create more triggers."
       }
     },
     "holidayPromo": {
@@ -1548,7 +1587,7 @@
       "typesOverviewIntro": "Credits fall into two categories: expiring and non-expiring. When you run a task, credits are deducted in this priority order: expiring credits first (daily/weekly, then monthly), followed by non-expiring credits.",
       "typeCards": {
         "dailyWeeklyTitle": "Daily / Weekly",
-        "dailyWeeklyBody": "Free tier: 300 credits weekly. Paid tiers: 200 credits daily. Use it or lose it—these credits reset and don't roll over.",
+        "dailyWeeklyBody": "Free tier: 20 credits weekly. Paid tiers: 20 credits daily. Use it or lose it—these credits reset and don't roll over.",
         "monthlyTitle": "Monthly",
         "monthlyBody": "Included with your subscription plan. Refresh at the start of each billing cycle and don't roll over.",
         "extraTitle": "Extra",
@@ -1556,7 +1595,7 @@
       },
       "expiringDetailsTitle": "Expiring credits (Daily/Weekly + Monthly)",
       "expiringDailyWeeklyLabel": "Daily/Weekly credits:",
-      "expiringDailyWeeklyText": "Free tier gets 300 credits weekly. Paid tiers get 200 credits daily. Check your billing page to see when your next refresh happens. Unused credits don't roll over.",
+      "expiringDailyWeeklyText": "Free tier gets 20 credits weekly. Paid tiers get 20 credits daily. Check your billing page to see when your next refresh happens. Unused credits don't roll over.",
       "expiringMonthlyLabel": "Monthly credits:",
       "expiringMonthlyText": "Your subscription's main credit allocation. These refresh at the start of each billing cycle and don't accumulate—use them within the month.",
       "expiringPromotionalLabel": "Promotional credits:",
@@ -1625,6 +1664,13 @@
     "confirmDowngradeDescription": "You're about to downgrade to {planName}. This change will take effect at the end of your current billing period.",
     "confirmDowngrade": "Yes, Downgrade",
     "pickPlan": "Pick the plan that works for you.",
+    "subscriptionPage": {
+      "titleRequired": "Subscription Required",
+      "titleTrialEnded": "Your Trial Has Ended",
+      "descriptionRequired": "A subscription is required to use Dobby. Choose the plan that works best for you.",
+      "descriptionTrialEnded": "Your 7-day free trial has ended. Choose a plan to continue using Dobby AI.",
+      "questionsContact": "Questions? Contact us at <email>support@dobby.now</email>"
+    },
     "limitReachedUpgrade": "Limit reached. Upgrade to continue.",
     "creditsExhaustedTitle": "Credits exhausted. Upgrade to continue.",
     "chatLimitReached": "Chat limit reached. Upgrade for unlimited chats.",
@@ -1655,6 +1701,13 @@
       "aiWorkersLabel": "AI Workers",
       "basic": "Basic",
       "advanced": "Advanced"
+    },
+    "pricingTierDescriptions": {
+      "Basic": "Perfect for trying out Dobby AI Workers",
+      "Plus": "Best for individuals and small teams",
+      "Pro": "Ideal for growing businesses",
+      "Ultra": "For power users",
+      "Business": "For established businesses"
     },
     "pricingFeatureItems": {
       "creditsMonthly": "{count, number} credits/month",

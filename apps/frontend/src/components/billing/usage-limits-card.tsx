@@ -22,6 +22,7 @@ export function UsageLimitsCard() {
   const t = useTranslations('dashboard');
   const { data: accountState, isLoading } = useAccountState();
   const limits = accountState?.limits;
+  const prepaidUnlock = accountState?.subscription?.prepaid_unlock;
   const UNLIMITED_THRESHOLD = 100_000;
 
   const formatMax = (max: number | undefined) => {
@@ -60,7 +61,7 @@ export function UsageLimitsCard() {
       <CardHeader>
         <CardTitle className="text-base sm:text-lg">{t('usageLimits')}</CardTitle>
         <CardDescription className="mt-1 sm:mt-2 text-xs sm:text-sm">
-          {t('usageLimitsDescription')}
+          {prepaidUnlock ? t('usageLimitsPrepaidDescription') : t('usageLimitsDescription')}
         </CardDescription>
       </CardHeader>
       <CardContent>

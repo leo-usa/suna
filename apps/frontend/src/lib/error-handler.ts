@@ -8,9 +8,9 @@ import {
   CustomWorkerLimitError,
   ThreadLimitError,
   AgentCountLimitError,
-  formatTierErrorForUI,
   isTierRestrictionError
 } from './api/errors';
+import { getLocalizedTierErrorForUI } from '@/lib/billing/limit-error-i18n';
 import { usePricingModalStore } from '@/stores/pricing-modal-store';
 
 export interface ApiError extends Error {
@@ -169,7 +169,7 @@ export const handleApiError = (error: any, context?: ErrorContext): void => {
   const formattedMessage = formatErrorMessage(rawMessage, context);
 
   // Handle tier restriction errors using shared formatting function
-  const errorUI = formatTierErrorForUI(error);
+  const errorUI = getLocalizedTierErrorForUI(error);
   if (errorUI) {
     usePricingModalStore.getState().openPricingModal({ 
       isAlert: true, 
