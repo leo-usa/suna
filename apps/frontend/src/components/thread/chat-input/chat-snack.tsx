@@ -57,7 +57,7 @@ export const ChatSnack: React.FC<ChatSnackProps> = ({
 
     const isFreeTier = subscriptionData && isFreeBillingTier({
         tier_key: subscriptionData.tier_key,
-        prepaid_unlock: (subscriptionData as { prepaid_unlock?: boolean }).prepaid_unlock,
+        prepaid_unlock: subscriptionData.prepaid_unlock,
     });
 
     const notifications: string[] = [];
