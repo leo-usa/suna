@@ -14,7 +14,7 @@ from core.agentpress.thread_manager import ThreadManager
 from core.utils.config import config, EnvMode
 from core.utils.logger import logger
 from core.billing.credits.manager import CreditManager
-from core.billing.shared.config import TOKEN_PRICE_MULTIPLIER
+from core.billing.shared.config import CREDITS_PER_DOLLAR, TOKEN_PRICE_MULTIPLIER
 from core.services.supabase import DBConnection
 from core.services.redis import get_client, set as redis_set, get as redis_get, delete as redis_delete
 from core.sandbox.tool_base import SandboxToolsBase
@@ -142,7 +142,7 @@ from core.sandbox.tool_base import SandboxToolsBase
 - Approval requests estimate costs and require user approval
 - Credits are ONLY deducted after approval AND successful execution
 - Apify costs passed through + 20% markup
-- IMPORTANT: 1 CREDIT = 1 CENT ($0.01 USD)
+- IMPORTANT: 1 CREDIT = 0.1 CENT ($0.001 USD); 1,000 credits = $1.00 USD
 - When discussing costs with users, use format: "$X.XX (XXX credits)" or "XXX credits ($X.XX)"
 - Check pricing before running - some actors have no Apify cost, others charge per result/event
 - Approvals expire after 24 hours - create new approval if expired
@@ -156,7 +156,7 @@ from core.sandbox.tool_base import SandboxToolsBase
   1. use search_apify_actors with query "twitter"
   2. use get_actor_details with actor_id "apify/twitter-scraper"
   3. use request_apify_approval with actor_id "apify/twitter-scraper" and run_input parameter
-  4. **USE ASK TOOL:** "I've created an approval request for scraping tweets. Maximum cost: 120 credits ($1.00). Please click the 'Approve' button in the approval card above to approve it. I cannot approve it for you - only you can approve by clicking the button in the UI. Once you click it, I'll immediately start scraping the LinkedIn posts for you! After you approve, you can say 'I have approved', 'you can start', 'go ahead', or just 'approved' and I'll start immediately. If you want a cheaper option, say 'find cheaper'."
+  4. **USE ASK TOOL:** "I've created an approval request for scraping tweets. Maximum cost: 1200 credits ($1.00). Please click the 'Approve' button in the approval card above to approve it. I cannot approve it for you - only you can approve by clicking the button in the UI. Once you click it, I'll immediately start scraping the LinkedIn posts for you! After you approve, you can say 'I have approved', 'you can start', 'go ahead', or just 'approved' and I'll start immediately. If you want a cheaper option, say 'find cheaper'."
   5. **Wait for user response, then proceed directly:**
      - **If user says "approved"/"start"/"go ahead" → Directly use run_apify_actor (step 6) - it will return an error if not approved**
      - **If user says "find cheaper": Search for cheaper actors and create new approval**
@@ -182,7 +182,7 @@ from core.sandbox.tool_base import SandboxToolsBase
   1. use search_apify_actors with query "google maps"
   2. use get_actor_details with actor_id "compass/crawler-google-places"
   3. use request_apify_approval with actor_id "compass/crawler-google-places" and run_input parameter
-  4. **USE ASK TOOL:** "Created approval for Google Maps search. Maximum cost: 100 credits ($1.00). Please click the 'Approve' button in the approval card above to approve it. I cannot approve it for you - only you can approve via the UI. Once you approve, say 'I have approved' or 'you can start' and I'll search for restaurants immediately. If you want a cheaper option, say 'find cheaper'."
+  4. **USE ASK TOOL:** "Created approval for Google Maps search. Maximum cost: 1000 credits ($1.00). Please click the 'Approve' button in the approval card above to approve it. I cannot approve it for you - only you can approve via the UI. Once you approve, say 'I have approved' or 'you can start' and I'll search for restaurants immediately. If you want a cheaper option, say 'find cheaper'."
   5. **Wait for user response, then proceed directly:**
      - **If user says "approved"/"start"/"go ahead" → Directly use run_apify_actor (step 6) - it will return an error if not approved**
      - **If user says "find cheaper": Search for cheaper actors and create new approval**
@@ -409,9 +409,8 @@ class ApifyTool(SandboxToolsBase):
         if cost_usd is None or cost_usd == 0:
             return "0 credits"
         
-        # Convert to credits (1 credit = $0.01, with 20% markup)
-        # Ensure all operands are Decimal to avoid type errors
-        credits_decimal = cost_usd * TOKEN_PRICE_MULTIPLIER * Decimal('100')
+        # Convert to display credits (with markup)
+        credits_decimal = cost_usd * TOKEN_PRICE_MULTIPLIER * Decimal(str(CREDITS_PER_DOLLAR))
         credits = float(credits_decimal)
         
         # Format USD nicely
@@ -481,7 +480,7 @@ class ApifyTool(SandboxToolsBase):
                 # If we can't get pricing info, use max_cost_usd as estimate
                 logger.debug(f"Could not get pricing info for {actor_id}, using max_cost_usd as estimate")
                 estimated_usd = max_cost_usd
-                estimated_credits = max_cost_usd * TOKEN_PRICE_MULTIPLIER * Decimal("100")  # Convert to credits (1 credit = $0.01)
+                estimated_credits = max_cost_usd * TOKEN_PRICE_MULTIPLIER * Decimal(str(CREDITS_PER_DOLLAR))
                 return estimated_usd, estimated_credits
             
             # Estimate based on pricing model
@@ -529,8 +528,7 @@ class ApifyTool(SandboxToolsBase):
             # Cap at max_cost_usd
             estimated_usd = min(estimated_usd, max_cost_usd)
             
-            # Convert to credits with markup (1 credit = $0.01 USD)
-            estimated_credits = estimated_usd * TOKEN_PRICE_MULTIPLIER * Decimal("100")
+            estimated_credits = estimated_usd * TOKEN_PRICE_MULTIPLIER * Decimal(str(CREDITS_PER_DOLLAR))
             
             return estimated_usd, estimated_credits
             
@@ -538,7 +536,7 @@ class ApifyTool(SandboxToolsBase):
             logger.warning(f"Error estimating cost for {actor_id}: {e}")
             # Fallback to max_cost_usd
             estimated_usd = max_cost_usd
-            estimated_credits = max_cost_usd * TOKEN_PRICE_MULTIPLIER * Decimal("100")
+            estimated_credits = max_cost_usd * TOKEN_PRICE_MULTIPLIER * Decimal(str(CREDITS_PER_DOLLAR))
             return estimated_usd, estimated_credits
     
     def _get_approval_key(self, approval_id: str) -> str:
@@ -1347,8 +1345,9 @@ class ApifyTool(SandboxToolsBase):
             if not approval_id:
                 return self.fail_response("Failed to create approval request")
             
-            # Calculate max_cost_credits (max_cost_usd * 100 * 1.2 for markup)
-            max_cost_credits = float(max_cost_usd_decimal * Decimal('100') * Decimal(str(TOKEN_PRICE_MULTIPLIER)))
+            max_cost_credits = float(
+                max_cost_usd_decimal * Decimal(str(CREDITS_PER_DOLLAR)) * Decimal(str(TOKEN_PRICE_MULTIPLIER))
+            )
             
             return self.success_response({
                 "approval_id": approval_id,

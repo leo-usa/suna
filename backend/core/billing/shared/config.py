@@ -13,7 +13,7 @@ TOKEN_PRICE_MULTIPLIER = Decimal('1.5')
 MINIMUM_CREDIT_FOR_RUN = Decimal('0.01')
 DEFAULT_TOKEN_COST = Decimal('0.000002')
 
-CREDITS_PER_DOLLAR = 100
+CREDITS_PER_DOLLAR = 1000
 
 FREE_TIER_INITIAL_CREDITS = Decimal('0.00')
 
@@ -83,7 +83,7 @@ TIERS: Dict[str, Tier] = {
         },
         daily_credit_config={
             'enabled': True,
-            'amount': Decimal('0.20'),  # 20 credits at CREDITS_PER_DOLLAR=100
+            'amount': Decimal('0.20'),  # 200 credits at CREDITS_PER_DOLLAR=1000
             'refresh_interval_hours': 168
         },
         monthly_refill_enabled=False,
@@ -115,7 +115,7 @@ TIERS: Dict[str, Tier] = {
         },
         daily_credit_config={
             'enabled': True,
-            'amount': Decimal('0.20'),  # 20 credits at CREDITS_PER_DOLLAR=100
+            'amount': Decimal('0.20'),  # 200 credits at CREDITS_PER_DOLLAR=1000
             'refresh_interval_hours': 24
         },
         monthly_refill_enabled=True
@@ -145,7 +145,7 @@ TIERS: Dict[str, Tier] = {
         },
         daily_credit_config={
             'enabled': True,
-            'amount': Decimal('0.20'),  # 20 credits at CREDITS_PER_DOLLAR=100
+            'amount': Decimal('0.20'),  # 200 credits at CREDITS_PER_DOLLAR=1000
             'refresh_interval_hours': 24
         },
         monthly_refill_enabled=True
@@ -175,7 +175,7 @@ TIERS: Dict[str, Tier] = {
         },
         daily_credit_config={
             'enabled': True,
-            'amount': Decimal('0.20'),  # 20 credits at CREDITS_PER_DOLLAR=100
+            'amount': Decimal('0.20'),  # 200 credits at CREDITS_PER_DOLLAR=1000
             'refresh_interval_hours': 24
         },
         monthly_refill_enabled=True
@@ -202,7 +202,7 @@ TIERS: Dict[str, Tier] = {
         },
         daily_credit_config={
             'enabled': True,
-            'amount': Decimal('0.20'),  # 20 credits at CREDITS_PER_DOLLAR=100
+            'amount': Decimal('0.20'),  # 200 credits at CREDITS_PER_DOLLAR=1000
             'refresh_interval_hours': 24
         },
         monthly_refill_enabled=True
@@ -227,7 +227,7 @@ TIERS: Dict[str, Tier] = {
         },
         daily_credit_config={
             'enabled': True,
-            'amount': Decimal('0.20'),  # 20 credits at CREDITS_PER_DOLLAR=100
+            'amount': Decimal('0.20'),  # 200 credits at CREDITS_PER_DOLLAR=1000
             'refresh_interval_hours': 24
         },
         monthly_refill_enabled=True
@@ -252,7 +252,7 @@ TIERS: Dict[str, Tier] = {
         },
         daily_credit_config={
             'enabled': True,
-            'amount': Decimal('0.20'),  # 20 credits at CREDITS_PER_DOLLAR=100
+            'amount': Decimal('0.20'),  # 200 credits at CREDITS_PER_DOLLAR=1000
             'refresh_interval_hours': 24
         },
         monthly_refill_enabled=True
@@ -277,7 +277,7 @@ TIERS: Dict[str, Tier] = {
         },
         daily_credit_config={
             'enabled': True,
-            'amount': Decimal('0.20'),  # 20 credits at CREDITS_PER_DOLLAR=100
+            'amount': Decimal('0.20'),  # 200 credits at CREDITS_PER_DOLLAR=1000
             'refresh_interval_hours': 24
         },
         monthly_refill_enabled=True
@@ -302,7 +302,7 @@ TIERS: Dict[str, Tier] = {
         },
         daily_credit_config={
             'enabled': True,
-            'amount': Decimal('0.20'),  # 20 credits at CREDITS_PER_DOLLAR=100
+            'amount': Decimal('0.20'),  # 200 credits at CREDITS_PER_DOLLAR=1000
             'refresh_interval_hours': 24
         },
         monthly_refill_enabled=True

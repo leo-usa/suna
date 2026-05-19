@@ -42,7 +42,7 @@ import { backendApi } from '@/lib/api-client';
 
 function getWeeklyCreditsFromTier(tier: PricingTier): number {
   const weekly = tier.features.find((f) => f.kind === 'weekly_credits');
-  return weekly && weekly.kind === 'weekly_credits' ? weekly.credits : 20;
+  return weekly && weekly.kind === 'weekly_credits' ? weekly.credits : 200;
 }
 
 // Constants

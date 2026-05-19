@@ -143,11 +143,11 @@
     "referrals": {
       "title": "Freunde empfehlen & Credits verdienen",
       "description": "Lade Freunde zu Dobby ein und verdient beide",
-      "creditsPerReferral": "+400 Credits",
+      "creditsPerReferral": "+1.000 Credits",
       "youEarn": "Du verdienst",
       "friendGets": "Dein Freund bekommt",
       "maxEarnable": "Maximal verdienbar:",
-      "maxCredits": "400 Credits",
+      "maxCredits": "$100 in Credits",
       "yourReferralCode": "Empfehlungscode",
       "referralLink": "Empfehlungslink",
       "shareYourLink": "Teile deinen Empfehlungslink",
@@ -357,7 +357,7 @@
   "sidebar": {
     "referAndEarn": "Empfehlen",
     "referralShareTitle": "Freunde empfehlen",
-    "referralShareSubtitle": "Erhalte 400 Credits",
+    "referralShareSubtitle": "Erhalte 1.000 Credits",
     "new": "Neu",
     "upgrade": "Upgrade",
     "chats": "Chats",
@@ -560,7 +560,17 @@
     "submit": "Absenden",
     "submitting": "Wird gesendet...",
     "feedbackSubmittedSuccess": "Feedback erfolgreich übermittelt",
-    "feedbackSubmitFailed": "Feedback konnte nicht übermittelt werden"
+    "feedbackSubmitFailed": "Feedback konnte nicht übermittelt werden",
+    "agentLoader": {
+      "brewingIdeas": "Brewing ideas",
+      "connectingDots": "Connecting the dots",
+      "cookingUp": "Cooking up",
+      "almostThere": "Almost there",
+      "spinningNeurons": "Spinning up neurons",
+      "piecingTogether": "Piecing it together",
+      "workingMagic": "Working some magic",
+      "crunchingThoughts": "Crunching thoughts"
+    }
   },
   "agents": {
     "title": "Worker",
@@ -611,7 +621,7 @@
     "credits": "Credits",
     "popular": "Beliebt",
     "creditsExplained": "Credits erklärt",
-    "creditsExhausted": "+100 Credits in {time}. Jetzt upgraden, um sofort zu nutzen.",
+    "creditsExhausted": "+200 Credits in {time}. Jetzt upgraden, um sofort zu nutzen.",
     "creditsExhaustedRefreshIn": "Ihre Credits sind aufgebraucht. Sie werden in {time} erneuert",
     "trialActive": "Testversion aktiv",
     "trialBadge": "7-Tage-Testversion",
@@ -738,7 +748,7 @@
       "typesOverviewIntro": "Credits fall into two categories: expiring and non-expiring. When you run a task, credits are deducted in this priority order: expiring credits first (daily/weekly, then monthly), followed by non-expiring credits.",
       "typeCards": {
         "dailyWeeklyTitle": "Daily / Weekly",
-        "dailyWeeklyBody": "Free tier: 20 credits weekly. Paid tiers: 20 credits daily. Use it or lose it—these credits reset and don't roll over.",
+        "dailyWeeklyBody": "Free tier: 200 credits weekly. Paid tiers: 200 credits daily. Use it or lose it—these credits reset and don't roll over.",
         "monthlyTitle": "Monthly",
         "monthlyBody": "Included with your subscription plan. Refresh at the start of each billing cycle and don't roll over.",
         "extraTitle": "Extra",
@@ -746,7 +756,7 @@
       },
       "expiringDetailsTitle": "Expiring credits (Daily/Weekly + Monthly)",
       "expiringDailyWeeklyLabel": "Daily/Weekly credits:",
-      "expiringDailyWeeklyText": "Free tier gets 20 credits weekly. Paid tiers get 20 credits daily. Check your billing page to see when your next refresh happens. Unused credits don't roll over.",
+      "expiringDailyWeeklyText": "Free tier gets 200 credits weekly. Paid tiers get 200 credits daily. Check your billing page to see when your next refresh happens. Unused credits don't roll over.",
       "expiringMonthlyLabel": "Monthly credits:",
       "expiringMonthlyText": "Your subscription's main credit allocation. These refresh at the start of each billing cycle and don't accumulate—use them within the month.",
       "expiringPromotionalLabel": "Promotional credits:",

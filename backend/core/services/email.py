@@ -233,7 +233,7 @@ You received this email because you signed up for a Dobby account."""
       </p>
       <p style="margin:0 0 20px 0; font-size:15px; line-height:1.6;">
         <strong>{sender_name}</strong> has invited you to join Dobby using a personal referral code.
-        When you sign up using this link, both you and {sender_name} will receive 100 in non-expiring credits 🎁
+        When you sign up using this link, both you and {sender_name} will receive 1,000 in non-expiring credits 🎁
       </p>
       <p style="margin:0 0 10px 0; font-weight:600;">
         What You Both Get
@@ -242,7 +242,7 @@ You received this email because you signed up for a Dobby account."""
         <tr>
           <td style="font-size:14px; line-height:1.6;">
             <ul style="margin:0; padding-left:18px;">
-              <li>100 non-expiring credits to be used in the platform</li>
+              <li>1,000 non-expiring credits to be used in the platform</li>
             </ul>
           </td>
         </tr>
@@ -294,10 +294,10 @@ You received this email because you signed up for a Dobby account."""
 
 {sender_name} has invited you to join Dobby using a personal referral code.
 
-When you sign up using this link, both you and {sender_name} will receive 100 in non-expiring credits 🎁
+When you sign up using this link, both you and {sender_name} will receive 1,000 in non-expiring credits 🎁
 
 What You Both Get:
-• 100 non-expiring credits to be used in the platform
+• 1,000 non-expiring credits to be used in the platform
 
 Claim your invite: {referral_url}
 

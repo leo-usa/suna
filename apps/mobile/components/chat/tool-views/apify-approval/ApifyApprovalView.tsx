@@ -128,7 +128,7 @@ export function ApifyApprovalView({
   };
 
   const maxCostUsd = currentApproval?.max_cost_usd || currentApproval?.estimated_cost_usd || 0;
-  const maxCostCredits = maxCostUsd * 100 * 1.2;
+  const maxCostCredits = maxCostUsd * 1000 * 1.2;
 
   return (
     <ToolViewCard

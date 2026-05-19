@@ -20,7 +20,7 @@ from core.utils.config import config, EnvMode
 from core.utils.logger import logger
 from core.agentpress.thread_manager import ThreadManager
 from core.billing.credits.manager import CreditManager
-from core.billing.shared.config import TOKEN_PRICE_MULTIPLIER
+from core.billing.shared.config import CREDITS_PER_DOLLAR, TOKEN_PRICE_MULTIPLIER
 from core.services.supabase import DBConnection
 
 @tool_metadata(
@@ -304,16 +304,16 @@ class CompanySearchTool(Tool):
             
             if config.ENV_MODE == EnvMode.LOCAL:
                 logger.info("Running in LOCAL mode - skipping billing for company search")
-                cost_deducted_str = f"{int(total_cost * 100)} credits (LOCAL - not charged)"
+                cost_deducted_str = f"{int(total_cost * CREDITS_PER_DOLLAR)} credits (LOCAL - not charged)"
             else:
                 credits_deducted = await self._deduct_credits(user_id, len(formatted_results), thread_id)
                 if not credits_deducted:
                     return self.fail_response(
                         "Insufficient credits for company search. "
-                        f"This search costs {int(total_cost * 100)} credits ({len(formatted_results)} results). "
+                        f"This search costs {int(total_cost * CREDITS_PER_DOLLAR)} credits ({len(formatted_results)} results). "
                         "Please add credits to continue."
                     )
-                cost_deducted_str = f"{int(total_cost * 100)} credits"
+                cost_deducted_str = f"{int(total_cost * CREDITS_PER_DOLLAR)} credits"
             
             output = {
                 "query": query,

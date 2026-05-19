@@ -170,7 +170,7 @@
     "referrals": {
       "title": "推荐计划",
       "description": "与朋友分享您的推荐链接。当他们注册并创建账户时，您将获得",
-      "creditsPerReferral": "100个永久积分",
+      "creditsPerReferral": "1,000个永久积分",
       "youEarn": "您获得",
       "friendGets": "您的朋友获得",
       "maxEarnable": "通过推荐最多可获得：",
@@ -468,7 +468,7 @@
   "sidebar": {
     "referAndEarn": "推荐赚取",
     "referralShareTitle": "推荐好友",
-    "referralShareSubtitle": "获得 400 积分",
+    "referralShareSubtitle": "获得 1,000 积分",
     "new": "新",
     "upgrade": "升级",
     "chats": "聊天",
@@ -701,7 +701,17 @@
     "submit": "提交",
     "submitting": "提交中...",
     "feedbackSubmittedSuccess": "反馈提交成功",
-    "feedbackSubmitFailed": "反馈提交失败"
+    "feedbackSubmitFailed": "反馈提交失败",
+    "agentLoader": {
+      "brewingIdeas": "酝酿创意",
+      "connectingDots": "串联思路",
+      "cookingUp": "正在准备",
+      "almostThere": "马上就好",
+      "spinningNeurons": "调动思维",
+      "piecingTogether": "整理答案",
+      "workingMagic": "施展魔力",
+      "crunchingThoughts": "深度思考"
+    }
   },
   "agents": {
     "title": "Workers",
@@ -1375,7 +1385,7 @@
     "credits": "积分",
     "popular": "热门",
     "creditsExplained": "积分说明",
-    "creditsExhausted": "+100积分将在{time}后到账。立即升级即可使用。",
+    "creditsExhausted": "+200积分将在{time}后到账。立即升级即可使用。",
     "creditsExhaustedRefreshIn": "您的积分已用完。将在{time}后刷新",
     "trialActive": "试用激活",
     "trialBadge": "7天试用",
@@ -1540,7 +1550,7 @@
       "typesOverviewIntro": "积分分为两类：过期与不过期。运行任务时，扣款顺序为：先扣过期积分（每日/每周，再月度），再扣不过期积分。",
       "typeCards": {
         "dailyWeeklyTitle": "每日 / 每周",
-        "dailyWeeklyBody": "免费档：每周 20 积分。付费档：每日 20 积分。用不完不结转——到期重置。",
+        "dailyWeeklyBody": "免费档：每周 200 积分。付费档：每日 200 积分。用不完不结转——到期重置。",
         "monthlyTitle": "每月",
         "monthlyBody": "包含在订阅计划中。每个计费周期开始时刷新，不结转。",
         "extraTitle": "额外",
@@ -1548,7 +1558,7 @@
       },
       "expiringDetailsTitle": "过期积分（每日/每周 + 每月）",
       "expiringDailyWeeklyLabel": "每日/每周积分：",
-      "expiringDailyWeeklyText": "免费档每周 20 积分，付费档每日 20 积分。请在账单页面查看下次刷新时间。未用完不结转。",
+      "expiringDailyWeeklyText": "免费档每周 200 积分，付费档每日 200 积分。请在账单页面查看下次刷新时间。未用完不结转。",
       "expiringMonthlyLabel": "每月积分：",
       "expiringMonthlyText": "订阅的主要积分额度。每个计费周期开始时刷新，不累积——请在周期内使用。",
       "expiringPromotionalLabel": "促销积分：",

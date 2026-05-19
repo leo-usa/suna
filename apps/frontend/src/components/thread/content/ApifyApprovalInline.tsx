@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Clock, CheckCircle2, AlertCircle } from 'lucide-react';
 import { DobbyLoader } from '@/components/ui/dobby-loader';
+import { CREDITS_PER_DOLLAR } from '@agentpress/shared';
 import { ApifyApproval } from '@/hooks/apify/use-apify-approvals';
 import { useApproveApifyRequest, useGetApifyApprovalStatus } from '@/hooks/apify/use-apify-approvals';
 
@@ -39,7 +40,7 @@ export function ApifyApprovalInline({ approval, threadId, onApproved }: ApifyApp
   };
 
   const maxCostUsd = currentApproval.max_cost_usd || currentApproval.estimated_cost_usd || 0;
-  const maxCostCredits = currentApproval.estimated_cost_credits || (maxCostUsd * 100 * 1.2);
+  const maxCostCredits = currentApproval.estimated_cost_credits || (maxCostUsd * CREDITS_PER_DOLLAR * 1.2);
 
   if (currentApproval.status === 'approved') {
     return (

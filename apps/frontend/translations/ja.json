@@ -143,7 +143,7 @@
     "referrals": {
       "title": "紹介プログラム",
       "description": "友達に紹介リンクを共有してください。サインアップしてアカウントを作成すると、獲得できます",
-      "creditsPerReferral": "100個の無期限クレジット",
+      "creditsPerReferral": "1,000個の無期限クレジット",
       "youEarn": "あなたが獲得",
       "friendGets": "友達が獲得",
       "maxEarnable": "紹介で獲得できる最大額:",
@@ -357,7 +357,7 @@
   "sidebar": {
     "referAndEarn": "紹介して獲得",
     "referralShareTitle": "友達を紹介",
-    "referralShareSubtitle": "400クレジット獲得",
+    "referralShareSubtitle": "1,000クレジット獲得",
     "new": "新規",
     "upgrade": "アップグレード",
     "chats": "チャット",
@@ -560,7 +560,17 @@
     "submit": "送信",
     "submitting": "送信中...",
     "feedbackSubmittedSuccess": "フィードバックが正常に送信されました",
-    "feedbackSubmitFailed": "フィードバックの送信に失敗しました"
+    "feedbackSubmitFailed": "フィードバックの送信に失敗しました",
+    "agentLoader": {
+      "brewingIdeas": "Brewing ideas",
+      "connectingDots": "Connecting the dots",
+      "cookingUp": "Cooking up",
+      "almostThere": "Almost there",
+      "spinningNeurons": "Spinning up neurons",
+      "piecingTogether": "Piecing it together",
+      "workingMagic": "Working some magic",
+      "crunchingThoughts": "Crunching thoughts"
+    }
   },
   "agents": {
     "title": "ワーカー",
@@ -693,7 +703,7 @@
     "credits": "クレジット",
     "popular": "人気",
     "creditsExplained": "クレジットの説明",
-    "creditsExhausted": "+100クレジットが{time}後に追加されます。今すぐアップグレードして使用してください。",
+    "creditsExhausted": "+200クレジットが{time}後に追加されます。今すぐアップグレードして使用してください。",
     "creditsExhaustedRefreshIn": "クレジットを使い果たしました。{time}後に更新されます",
     "trialActive": "トライアル有効",
     "trialBadge": "7日間トライアル",
@@ -800,7 +810,7 @@
       "typesOverviewIntro": "Credits fall into two categories: expiring and non-expiring. When you run a task, credits are deducted in this priority order: expiring credits first (daily/weekly, then monthly), followed by non-expiring credits.",
       "typeCards": {
         "dailyWeeklyTitle": "Daily / Weekly",
-        "dailyWeeklyBody": "Free tier: 20 credits weekly. Paid tiers: 20 credits daily. Use it or lose it—these credits reset and don't roll over.",
+        "dailyWeeklyBody": "Free tier: 200 credits weekly. Paid tiers: 200 credits daily. Use it or lose it—these credits reset and don't roll over.",
         "monthlyTitle": "Monthly",
         "monthlyBody": "Included with your subscription plan. Refresh at the start of each billing cycle and don't roll over.",
         "extraTitle": "Extra",
@@ -808,7 +818,7 @@
       },
       "expiringDetailsTitle": "Expiring credits (Daily/Weekly + Monthly)",
       "expiringDailyWeeklyLabel": "Daily/Weekly credits:",
-      "expiringDailyWeeklyText": "Free tier gets 20 credits weekly. Paid tiers get 20 credits daily. Check your billing page to see when your next refresh happens. Unused credits don't roll over.",
+      "expiringDailyWeeklyText": "Free tier gets 200 credits weekly. Paid tiers get 200 credits daily. Check your billing page to see when your next refresh happens. Unused credits don't roll over.",
       "expiringMonthlyLabel": "Monthly credits:",
       "expiringMonthlyText": "Your subscription's main credit allocation. These refresh at the start of each billing cycle and don't accumulate—use them within the month.",
       "expiringPromotionalLabel": "Promotional credits:",

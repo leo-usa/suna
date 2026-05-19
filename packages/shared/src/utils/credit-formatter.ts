@@ -5,7 +5,7 @@
  * Robust version with null handling from mobile implementation
  */
 
-export const CREDITS_PER_DOLLAR = 100;
+export const CREDITS_PER_DOLLAR = 1000;
 
 /**
  * Convert dollars to credits

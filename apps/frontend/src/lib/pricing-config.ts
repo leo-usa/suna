@@ -71,7 +71,7 @@ export const pricingTiers: PricingTier[] = [
     isPopular: false,
     hours: '0 hours',
     features: [
-      { kind: 'weekly_credits', credits: 20 },
+      { kind: 'weekly_credits', credits: 200 },
       { kind: 'concurrent_run_single' },
       { kind: 'basic_mode' },
     ],
@@ -96,9 +96,9 @@ export const pricingTiers: PricingTier[] = [
     buttonColor: 'bg-primary text-white dark:text-black',
     isPopular: false,
     hours: '2 hours',
-    baseCredits: 2000,
+    baseCredits: 20000,
     features: [
-      { kind: 'credits_monthly', credits: 2000 },
+      { kind: 'credits_monthly', credits: 20000 },
       { kind: 'unlimited_chats' },
       { kind: 'concurrent_runs', count: 3 },
       { kind: 'custom_workers', count: 5 },
@@ -122,9 +122,9 @@ export const pricingTiers: PricingTier[] = [
     buttonColor: 'bg-primary text-white dark:text-black',
     isPopular: true,
     hours: '6 hours',
-    baseCredits: 5000,
+    baseCredits: 50000,
     features: [
-      { kind: 'credits_monthly', credits: 5000 },
+      { kind: 'credits_monthly', credits: 50000 },
       { kind: 'unlimited_chats' },
       { kind: 'dedicated_computer' },
       { kind: 'concurrent_runs', count: 5 },
@@ -149,7 +149,7 @@ export const pricingTiers: PricingTier[] = [
     isPopular: false,
     hours: '12 hours',
     features: [
-      { kind: 'credits_monthly', credits: 10_000 },
+      { kind: 'credits_monthly', credits: 100_000 },
       { kind: 'custom_workers_short', count: 20 },
       { kind: 'private_projects' },
       { kind: 'integrations_100' },
@@ -170,9 +170,9 @@ export const pricingTiers: PricingTier[] = [
     buttonColor: 'bg-primary text-white dark:text-black',
     isPopular: false,
     hours: '25 hours',
-    baseCredits: 20000,
+    baseCredits: 200000,
     features: [
-      { kind: 'credits_monthly', credits: 20_000 },
+      { kind: 'credits_monthly', credits: 200_000 },
       { kind: 'unlimited_chats' },
       { kind: 'dedicated_computer' },
       { kind: 'concurrent_runs', count: 20 },

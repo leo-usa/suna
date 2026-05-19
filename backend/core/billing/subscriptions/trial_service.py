@@ -6,6 +6,7 @@ from core.utils.config import config
 from core.utils.logger import logger
 from core.billing import repo as billing_repo
 from ..shared.config import (
+    CREDITS_PER_DOLLAR,
     TRIAL_ENABLED,
     TRIAL_DURATION_DAYS,
     TRIAL_TIER,
@@ -232,7 +233,7 @@ class TrialService:
                         'currency': 'usd',
                         'product_data': {
                             'name': f'{TRIAL_DURATION_DAYS}-Day Trial',
-                            'description': f'Start your {TRIAL_DURATION_DAYS}-day free trial with {int(TRIAL_CREDITS * 100)} credits'
+                            'description': f'Start your {TRIAL_DURATION_DAYS}-day free trial with {int(TRIAL_CREDITS * CREDITS_PER_DOLLAR)} credits'
                         },
                         'unit_amount': 2000,
                         'recurring': {

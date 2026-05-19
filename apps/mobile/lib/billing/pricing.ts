@@ -73,10 +73,10 @@ export const PRICING_TIERS: PricingTier[] = [
     price: '$20',
     priceMonthly: 20,
     priceYearly: 17, // 15% off = $17/month billed yearly
-    credits: 20, // $20/month = 2,000 credits/month (20 * 100)
+    credits: 20, // $20/month = 20,000 credits/month (20 * 1000)
     description: 'Best for individuals and small teams',
     features: [
-      '2,000 credits/month',
+      '20,000 credits/month',
       'Unlimited Chats',
       '3 concurrent runs - Run multiple Chats simultaneously',
       // '5 custom AI Workers - Create Dobby Agents with custom Knowledge, Tools & Integrations',
@@ -98,10 +98,10 @@ export const PRICING_TIERS: PricingTier[] = [
     price: '$50',
     priceMonthly: 50,
     priceYearly: 42.5, // 15% off = $42.50/month billed yearly
-    credits: 50, // $50/month = 5,000 credits/month (50 * 100)
+    credits: 50, // $50/month = 50,000 credits/month (50 * 1000)
     description: 'Ideal for growing businesses',
     features: [
-      '5,000 credits/month',
+      '50,000 credits/month',
       'Unlimited Chats',
       '5 concurrent runs - Run multiple Chats simultaneously',
       // '20 custom AI Workers - Create Dobby Agents with custom Knowledge, Tools & Integrations',
@@ -123,10 +123,10 @@ export const PRICING_TIERS: PricingTier[] = [
     price: '$200',
     priceMonthly: 200,
     // No yearly option available for Ultra
-    credits: 200, // $200/month = 20,000 credits/month (200 * 100)
+    credits: 200, // $200/month = 200,000 credits/month (200 * 1000)
     description: 'For power users',
     features: [
-      '20,000 credits/month',
+      '200,000 credits/month',
       'Unlimited Chats',
       '20 concurrent runs - Run multiple Chats simultaneously',
       // '100 custom AI Workers - Create Dobby Agents with custom Knowledge, Tools & Integrations',

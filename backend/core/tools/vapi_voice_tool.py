@@ -11,7 +11,7 @@ from core.agentpress.thread_manager import ThreadManager
 from core.utils.logger import logger
 from core.services.http_client import get_http_client
 from core.config.vapi_config import vapi_config, DEFAULT_SYSTEM_PROMPT, DEFAULT_FIRST_MESSAGE
-from core.billing.shared.config import TOKEN_PRICE_MULTIPLIER
+from core.billing.shared.config import CREDITS_PER_DOLLAR, TOKEN_PRICE_MULTIPLIER
 
 def normalize_phone_number(raw_number: str, default_region: str = "US") -> tuple[str, str, str]:
     import re
@@ -746,7 +746,7 @@ class VapiVoiceTool(Tool):
 
 **Status**: {status}
 **Duration**: {duration} seconds
-**Credits Used**: {int(credits_deducted * 100)} credits
+**Credits Used**: {int(credits_deducted * CREDITS_PER_DOLLAR)} credits
 **Call ID**: `{call_id[:8]}...`
 
 The voice call has ended. You can continue with any follow-up actions."""

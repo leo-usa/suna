@@ -808,7 +808,7 @@ function LegalContent() {
                       </p>
                       <p className="text-muted-foreground text-balance mb-4">
                         <strong>Credit System.</strong> The Service may utilize a credit
-                        system where 1 credit equals $0.01 USD. Credits may be consumed
+                        system where 1 credit equals $0.001 USD. Credits may be consumed
                         for various Service features and third-party service usage.
                         Credits are non-refundable and may expire according to the terms
                         of your subscription plan.

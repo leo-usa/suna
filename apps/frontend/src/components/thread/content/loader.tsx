@@ -1,17 +1,25 @@
-import React, { useState, useEffect } from 'react';
+'use client';
 
-const thinkingPhrases = [
-  'Brewing ideas',
-  'Connecting the dots',
-  'Cooking up',
-  'Almost there',
-  'Spinning up neurons',
-  'Piecing it together',
-  'Working some magic',
-  'Crunching thoughts',
-];
+import React, { useState, useEffect, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
+
+const AGENT_LOADER_PHRASE_KEYS = [
+  'brewingIdeas',
+  'connectingDots',
+  'cookingUp',
+  'almostThere',
+  'spinningNeurons',
+  'piecingTogether',
+  'workingMagic',
+  'crunchingThoughts',
+] as const;
 
 export const AgentLoader = () => {
+  const t = useTranslations('thread.agentLoader');
+  const thinkingPhrases = useMemo(
+    () => AGENT_LOADER_PHRASE_KEYS.map((key) => t(key)),
+    [t],
+  );
   const [phraseIndex, setPhraseIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
@@ -25,19 +33,17 @@ export const AgentLoader = () => {
     }, 2800);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [thinkingPhrases.length]);
 
   return (
     <div className="flex py-2 items-center gap-2.5 w-full">
-      {/* Bouncy dots */}
       <div className="flex items-center gap-[5px]">
         <span className="bouncy-dot bouncy-dot-1" />
         <span className="bouncy-dot bouncy-dot-2" />
         <span className="bouncy-dot bouncy-dot-3" />
       </div>
 
-      {/* Fun cycling text */}
-      <span 
+      <span
         className={`text-sm text-muted-foreground whitespace-nowrap thinking-text ${
           isTransitioning ? 'thinking-text-exit' : 'thinking-text-enter'
         }`}

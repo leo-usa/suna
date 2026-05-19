@@ -5,7 +5,7 @@ from core.billing.credits.calculator import calculate_token_cost, calculate_cach
 from core.billing.credits.manager import credit_manager
 from core.utils.config import config, EnvMode
 from core.utils.logger import logger
-from ..shared.config import is_model_allowed
+from ..shared.config import CREDITS_PER_DOLLAR, is_model_allowed
 from ..shared.cache_utils import invalidate_account_state_cache
 
 class BillingIntegration:
@@ -71,9 +71,9 @@ class BillingIntegration:
             balance = Decimal(str(balance_info or 0))
         
         if balance < 0:
-            return False, f"Insufficient credits. Your balance is {int(balance * 100)} credits. Please add credits to continue.", None
+            return False, f"Insufficient credits. Your balance is {int(balance * CREDITS_PER_DOLLAR)} credits. Please add credits to continue.", None
         
-        return True, f"Credits available: {int(balance * 100)} credits", None
+        return True, f"Credits available: {int(balance * CREDITS_PER_DOLLAR)} credits", None
     
     @staticmethod
     async def check_model_and_billing_access(

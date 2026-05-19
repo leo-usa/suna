@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { AlertCircle, CheckCircle2, XCircle, Clock } from 'lucide-react';
 import { DobbyLoader } from '@/components/ui/dobby-loader';
 import { cn } from '@/lib/utils';
+import { CREDITS_PER_DOLLAR } from '@agentpress/shared';
 import { ApifyApproval } from '@/hooks/apify/use-apify-approvals';
 import { useApproveApifyRequest, useGetApifyApprovalStatus } from '@/hooks/apify/use-apify-approvals';
 
@@ -88,7 +89,7 @@ export function ApifyApprovalCard({ approval, threadId, onApproved }: ApifyAppro
           <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Maximum Cost</p>
           <div className="flex items-baseline gap-2">
             <span className="text-3xl font-bold text-zinc-900 dark:text-zinc-100 tabular-nums">
-              {formatCredits(currentApproval.max_cost_usd ? currentApproval.max_cost_usd * 100 * 1.2 : 0)}
+              {formatCredits(currentApproval.max_cost_usd ? currentApproval.max_cost_usd * CREDITS_PER_DOLLAR * 1.2 : 0)}
             </span>
             <span className="text-sm font-medium text-zinc-500 dark:text-zinc-400">credits</span>
           </div>

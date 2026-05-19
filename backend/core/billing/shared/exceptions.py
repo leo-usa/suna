@@ -1,3 +1,6 @@
+from core.billing.shared.config import CREDITS_PER_DOLLAR
+
+
 class BillingError(Exception):
     pass
 
@@ -7,9 +10,12 @@ class InsufficientCreditsError(BillingError):
         self.required = required
         if message is None:
             if required:
-                message = f"Insufficient credits. Balance: {int(balance * 100)} credits, Required: {int(required * 100)} credits"
+                message = (
+                    f"Insufficient credits. Balance: {int(balance * CREDITS_PER_DOLLAR)} credits, "
+                    f"Required: {int(required * CREDITS_PER_DOLLAR)} credits"
+                )
             else:
-                message = f"Insufficient credits. Balance: {int(balance * 100)} credits"
+                message = f"Insufficient credits. Balance: {int(balance * CREDITS_PER_DOLLAR)} credits"
         super().__init__(message)
 
 class SubscriptionError(BillingError):

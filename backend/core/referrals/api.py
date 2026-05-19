@@ -8,6 +8,7 @@ from core.utils.logger import logger
 from core.utils.config import config
 from core.services.supabase import DBConnection
 from .service import ReferralService
+from core.billing.shared.config import CREDITS_PER_DOLLAR
 from .config import MAX_EARNABLE_CREDITS_FROM_REFERRAL
 from core.utils.config import config
 
@@ -175,7 +176,7 @@ async def get_user_referrals(
             Referral(
                 id=r['id'],
                 referred_account_id=r['referred_account_id'],
-                credits_awarded=Decimal(str(r['credits_awarded'])),
+                credits_awarded=Decimal(str(r['credits_awarded'])) * CREDITS_PER_DOLLAR,
                 status=r['status'],
                 created_at=r['created_at'],
                 completed_at=r.get('completed_at')

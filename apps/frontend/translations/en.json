@@ -229,7 +229,7 @@
     "referrals": {
       "title": "Referral Program",
       "description": "Share your referral link with friends and earn credits when they sign up.",
-      "creditsPerReferral": "100 credits",
+      "creditsPerReferral": "1,000 credits",
       "youEarn": "You earn",
       "friendGets": "Your friend gets",
       "maxEarnable": "Maximum earnable through referrals:",
@@ -476,7 +476,7 @@
   "sidebar": {
     "referAndEarn": "Refer & Earn",
     "referralShareTitle": "Refer Friends",
-    "referralShareSubtitle": "Get 400 credits",
+    "referralShareSubtitle": "Get 1,000 credits",
     "new": "New",
     "upgrade": "Upgrade",
     "chats": "Chats",
@@ -709,7 +709,17 @@
     "submit": "Submit",
     "submitting": "Submitting...",
     "feedbackSubmittedSuccess": "Feedback submitted successfully",
-    "feedbackSubmitFailed": "Failed to submit feedback"
+    "feedbackSubmitFailed": "Failed to submit feedback",
+    "agentLoader": {
+      "brewingIdeas": "Brewing ideas",
+      "connectingDots": "Connecting the dots",
+      "cookingUp": "Cooking up",
+      "almostThere": "Almost there",
+      "spinningNeurons": "Spinning up neurons",
+      "piecingTogether": "Piecing it together",
+      "workingMagic": "Working some magic",
+      "crunchingThoughts": "Crunching thoughts"
+    }
   },
   "agents": {
     "title": "Workers",
@@ -1422,7 +1432,7 @@
     "credits": "Credits",
     "popular": "Popular",
     "creditsExplained": "Credits explained",
-    "creditsExhausted": "+100 Credits in {time}. Upgrade to use now.",
+    "creditsExhausted": "+200 Credits in {time}. Upgrade to use now.",
     "creditsExhaustedRefreshIn": "You've exhausted your credits. They will refresh in {time}",
     "trialActive": "Trial Active",
     "trialBadge": "7-Day Trial",
@@ -1587,7 +1597,7 @@
       "typesOverviewIntro": "Credits fall into two categories: expiring and non-expiring. When you run a task, credits are deducted in this priority order: expiring credits first (daily/weekly, then monthly), followed by non-expiring credits.",
       "typeCards": {
         "dailyWeeklyTitle": "Daily / Weekly",
-        "dailyWeeklyBody": "Free tier: 20 credits weekly. Paid tiers: 20 credits daily. Use it or lose it—these credits reset and don't roll over.",
+        "dailyWeeklyBody": "Free tier: 200 credits weekly. Paid tiers: 200 credits daily. Use it or lose it—these credits reset and don't roll over.",
         "monthlyTitle": "Monthly",
         "monthlyBody": "Included with your subscription plan. Refresh at the start of each billing cycle and don't roll over.",
         "extraTitle": "Extra",
@@ -1595,7 +1605,7 @@
       },
       "expiringDetailsTitle": "Expiring credits (Daily/Weekly + Monthly)",
       "expiringDailyWeeklyLabel": "Daily/Weekly credits:",
-      "expiringDailyWeeklyText": "Free tier gets 20 credits weekly. Paid tiers get 20 credits daily. Check your billing page to see when your next refresh happens. Unused credits don't roll over.",
+      "expiringDailyWeeklyText": "Free tier gets 200 credits weekly. Paid tiers get 200 credits daily. Check your billing page to see when your next refresh happens. Unused credits don't roll over.",
       "expiringMonthlyLabel": "Monthly credits:",
       "expiringMonthlyText": "Your subscription's main credit allocation. These refresh at the start of each billing cycle and don't accumulate—use them within the month.",
       "expiringPromotionalLabel": "Promotional credits:",
