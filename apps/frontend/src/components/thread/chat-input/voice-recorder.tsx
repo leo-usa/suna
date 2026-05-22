@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, memo } from 'react';
+import React, { useState, useRef, useEffect, memo, useCallback } from 'react';
 import { Mic, Square } from 'lucide-react';
 import { DobbyLoader } from '@/components/ui/dobby-loader';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,35 @@ interface VoiceRecorderProps {
 }
 
 const MAX_RECORDING_TIME = 15 * 60 * 1000; // 15 minutes in milliseconds
+const IOS_TIMESLICE_MS = 250;
+
+type RecordingFormat = {
+    mimeType?: string;
+    extension: string;
+    blobType: string;
+};
+
+function getSupportedAudioRecordingFormat(): RecordingFormat {
+    if (typeof MediaRecorder === 'undefined') {
+        throw new Error('MediaRecorder is not supported in this browser');
+    }
+
+    const candidates: RecordingFormat[] = [
+        { mimeType: 'audio/webm;codecs=opus', extension: 'webm', blobType: 'audio/webm' },
+        { mimeType: 'audio/webm', extension: 'webm', blobType: 'audio/webm' },
+        { mimeType: 'audio/mp4', extension: 'mp4', blobType: 'audio/mp4' },
+        { mimeType: 'audio/aac', extension: 'm4a', blobType: 'audio/mp4' },
+    ];
+
+    for (const candidate of candidates) {
+        if (candidate.mimeType && MediaRecorder.isTypeSupported(candidate.mimeType)) {
+            return candidate;
+        }
+    }
+
+    // Safari on iOS: use browser default (typically MP4/AAC)
+    return { extension: 'mp4', blobType: 'audio/mp4' };
+}
 
 export const VoiceRecorder: React.FC<VoiceRecorderProps> = memo(function VoiceRecorder({
     onTranscription,
@@ -28,8 +57,24 @@ export const VoiceRecorder: React.FC<VoiceRecorderProps> = memo(function VoiceRe
     const streamRef = useRef<MediaStream | null>(null);
     const recordingStartTimeRef = useRef<number | null>(null);
     const maxTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const recordingFormatRef = useRef<RecordingFormat>({ extension: 'webm', blobType: 'audio/webm' });
+    const isStartingRef = useRef(false);
 
     const transcriptionMutation = useTranscription();
+
+    const cleanupStream = useCallback(() => {
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop());
+            streamRef.current = null;
+        }
+    }, []);
+
+    const stopRecording = useCallback(() => {
+        const recorder = mediaRecorderRef.current;
+        if (recorder && recorder.state === 'recording') {
+            recorder.stop();
+        }
+    }, []);
 
     // Auto-stop recording after 15 minutes
     useEffect(() => {
@@ -51,15 +96,29 @@ export const VoiceRecorder: React.FC<VoiceRecorderProps> = memo(function VoiceRe
                 clearTimeout(maxTimeoutRef.current);
             }
         };
-    }, [state]);
+    }, [state, stopRecording]);
 
     const startRecording = async () => {
+        if (isStartingRef.current || state !== 'idle') {
+            return;
+        }
+
+        isStartingRef.current = true;
+
         try {
+            if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
+                throw new Error('Microphone access is not available in this browser');
+            }
+
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             streamRef.current = stream;
 
-            const options = { mimeType: 'audio/webm' };
-            const mediaRecorder = new MediaRecorder(stream, options);
+            const format = getSupportedAudioRecordingFormat();
+            recordingFormatRef.current = format;
+
+            const mediaRecorder = format.mimeType
+                ? new MediaRecorder(stream, { mimeType: format.mimeType })
+                : new MediaRecorder(stream);
             mediaRecorderRef.current = mediaRecorder;
             chunksRef.current = [];
 
@@ -71,15 +130,15 @@ export const VoiceRecorder: React.FC<VoiceRecorderProps> = memo(function VoiceRe
 
             mediaRecorder.onstop = async () => {
                 if (chunksRef.current.length === 0) {
-                    // Recording was cancelled
                     cleanupStream();
                     setState('idle');
                     return;
                 }
 
                 setState('processing');
-                const audioBlob = new Blob(chunksRef.current, { type: 'audio/webm' });
-                const audioFile = new File([audioBlob], 'recording.webm', { type: 'audio/webm' });
+                const { blobType, extension } = recordingFormatRef.current;
+                const audioBlob = new Blob(chunksRef.current, { type: blobType });
+                const audioFile = new File([audioBlob], `recording.${extension}`, { type: blobType });
 
                 transcriptionMutation.mutate(audioFile, {
                     onSuccess: (data) => {
@@ -95,39 +154,32 @@ export const VoiceRecorder: React.FC<VoiceRecorderProps> = memo(function VoiceRe
                 cleanupStream();
             };
 
-            mediaRecorder.start();
+            // Timeslice required on iOS Safari so dataavailable events fire
+            mediaRecorder.start(IOS_TIMESLICE_MS);
             setState('recording');
         } catch (error) {
             console.error('Error starting recording:', error);
+            cleanupStream();
+            mediaRecorderRef.current = null;
             setState('idle');
-        }
-    };
-
-    const stopRecording = () => {
-        if (mediaRecorderRef.current && state === 'recording') {
-            mediaRecorderRef.current.stop();
+        } finally {
+            isStartingRef.current = false;
         }
     };
 
     const cancelRecording = () => {
-        if (mediaRecorderRef.current && state === 'recording') {
-            chunksRef.current = []; // Clear chunks to signal cancellation
-            mediaRecorderRef.current.stop();
+        const recorder = mediaRecorderRef.current;
+        if (recorder && recorder.state === 'recording') {
+            chunksRef.current = [];
+            recorder.stop();
             cleanupStream();
             setState('idle');
         }
     };
 
-    const cleanupStream = () => {
-        if (streamRef.current) {
-            streamRef.current.getTracks().forEach(track => track.stop());
-            streamRef.current = null;
-        }
-    };
-
     const handleClick = () => {
         if (state === 'idle') {
-            startRecording();
+            void startRecording();
         } else if (state === 'recording') {
             stopRecording();
         }
@@ -189,4 +241,4 @@ export const VoiceRecorder: React.FC<VoiceRecorderProps> = memo(function VoiceRe
             </TooltipContent>
         </Tooltip>
     );
-}); 
+});
