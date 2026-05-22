@@ -25,8 +25,8 @@ import Animated, {
 import { Dimensions, Animated as RNAnimated } from 'react-native';
 import { DobbyLogo } from '@/components/ui/DobbyLogo';
 import { EmailAuthDrawer, type EmailAuthDrawerRef } from '@/components/auth';
-import KortixSymbolBlack from '@/assets/brand/dobby-symbol-scale-effect-black.svg';
-import KortixSymbolWhite from '@/assets/brand/dobby-symbol-scale-effect-white.svg';
+import DobbyBrandmarkBlack from '@/assets/brand/dobby-symbol-scale-effect-black.svg';
+import DobbyBrandmarkWhite from '@/assets/brand/dobby-symbol-scale-effect-white.svg';
 import { log } from '@/lib/logger';
 
 const AnimatedView = Animated.createAnimatedComponent(View);
@@ -157,7 +157,7 @@ function AuthBackgroundLogo() {
   }, []);
 
   const leftOffset = (SCREEN_WIDTH - 393) / 2;
-  const SymbolComponent = colorScheme === 'dark' ? KortixSymbolWhite : KortixSymbolBlack;
+  const SymbolComponent = colorScheme === 'dark' ? DobbyBrandmarkWhite : DobbyBrandmarkBlack;
 
   return (
     <RNAnimated.View

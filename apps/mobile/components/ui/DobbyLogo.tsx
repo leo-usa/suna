@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { View, type ViewProps, type ViewStyle } from 'react-native';
 import { useColorScheme } from 'nativewind';
-import KortixSymbolBlack from '@/assets/brand/dobby-symbol.svg';
-import KortixSymbolWhite from '@/assets/brand/Symbol.svg';
+import DobbySymbolBlack from '@/assets/brand/dobby-symbol.svg';
+import DobbySymbolWhite from '@/assets/brand/dobby-symbol-white.svg';
 import LogomarkBlack from '@/assets/brand/Logomark-Black.svg';
 import LogomarkWhite from '@/assets/brand/Logomark-White.svg';
 
@@ -62,7 +62,7 @@ export function DobbyLogo({
     ...style,
   };
 
-  const SymbolComponent = color === 'dark' ? KortixSymbolWhite : KortixSymbolBlack;
+  const SymbolComponent = color === 'dark' ? DobbySymbolWhite : DobbySymbolBlack;
 
   return (
     <View 

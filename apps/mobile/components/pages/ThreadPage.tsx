@@ -10,7 +10,7 @@ import Animated, {
   withRepeat,
   Easing,
 } from 'react-native-reanimated';
-import LottieView from 'lottie-react-native';
+import { DobbyLoader } from '@/components/ui/dobby-loader';
 import {
   ThreadContent,
   ChatInputSection,
@@ -144,7 +144,6 @@ const DynamicIslandRefresh = React.memo(function DynamicIslandRefresh({
   const opacity = useSharedValue(0);
   const contentOpacity = useSharedValue(0);
   const contentTranslateY = useSharedValue(0);
-  const lottieRef = React.useRef<LottieView>(null);
 
   React.useEffect(() => {
     if (isRefreshing) {
@@ -155,9 +154,6 @@ const DynamicIslandRefresh = React.memo(function DynamicIslandRefresh({
       borderTopRadius.value = 20;
       borderBottomRadius.value = 20;
       contentTranslateY.value = -20;
-
-      // Start Lottie animation
-      lottieRef.current?.play();
 
       width.value = withTiming(160, {
         duration: 450,
@@ -189,9 +185,6 @@ const DynamicIslandRefresh = React.memo(function DynamicIslandRefresh({
 
       contentOpacity.value = withDelay(200, withTiming(1, { duration: 200 }));
     } else if (opacity.value === 1) {
-      // Stop Lottie animation
-      lottieRef.current?.pause();
-
       contentOpacity.value = withTiming(0, { duration: 150 });
       contentTranslateY.value = withTiming(-20, {
         duration: 250,
@@ -266,14 +259,7 @@ const DynamicIslandRefresh = React.memo(function DynamicIslandRefresh({
               },
             ]}>
             <Animated.View style={contentStyle} className="flex-row items-center gap-2">
-              <LottieView
-                ref={lottieRef}
-                source={require('@/components/animations/loading.json')}
-                style={{ width: 20, height: 20 }}
-                autoPlay={false}
-                loop
-                speed={1.5}
-              />
+              <DobbyLoader customSize={20} forceTheme="dark" />
               <Text style={{ color: 'white', fontSize: 13, fontFamily: 'Roobert-Medium' }}>
                 Refreshing
               </Text>
@@ -868,19 +854,7 @@ export function ThreadPage({
         {isLoading ? (
           <View className="flex-1 items-center justify-center">
             <View className="h-20 w-20 items-center justify-center rounded-full">
-              <LottieView
-                source={require('@/components/animations/loading.json')}
-                style={{ width: 40, height: 40 }}
-                autoPlay
-                loop
-                speed={1.2}
-                colorFilters={[
-                  {
-                    keypath: '*',
-                    color: isDark ? '#ffffff' : '#121215',
-                  },
-                ]}
-              />
+              <DobbyLoader customSize={40} forceTheme={isDark ? 'dark' : 'light'} />
             </View>
           </View>
         ) : !hasMessages ? (

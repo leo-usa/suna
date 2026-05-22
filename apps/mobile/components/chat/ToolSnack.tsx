@@ -15,7 +15,7 @@ import Animated, {
   runOnJS,
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import LottieView from 'lottie-react-native';
+import { DobbyLoader } from '@/components/ui/dobby-loader';
 import type { UnifiedMessage } from '@agentpress/shared';
 import * as Haptics from 'expo-haptics';
 import { log } from '@/lib/logger';
@@ -268,19 +268,7 @@ export const ToolSnack = React.memo(function ToolSnack({
               }}
             >
               {isVoiceLoading ? (
-                <LottieView
-                  source={require('@/components/animations/loading.json')}
-                  style={{ width: 24, height: 24 }}
-                  autoPlay
-                  loop
-                  speed={1.2}
-                  colorFilters={[
-                    {
-                      keypath: '*',
-                      color: isDark ? '#a1a1aa' : '#71717a',
-                    },
-                  ]}
-                />
+                <DobbyLoader customSize={24} forceTheme={isDark ? 'dark' : 'light'} />
               ) : (
                 <Icon as={Volume2} size={20} className="text-muted-foreground" />
               )}
@@ -385,19 +373,7 @@ export const ToolSnack = React.memo(function ToolSnack({
             }}
           >
             {isStreaming ? (
-              <LottieView
-                source={require('@/components/animations/loading.json')}
-                style={{ width: 24, height: 24 }}
-                autoPlay
-                loop
-                speed={1.2}
-                colorFilters={[
-                  {
-                    keypath: '*',
-                    color: isDark ? '#a1a1aa' : '#71717a',
-                  },
-                ]}
-              />
+              <DobbyLoader customSize={24} forceTheme={isDark ? 'dark' : 'light'} />
             ) : (
               <Icon as={ToolIcon} size={20} className="text-muted-foreground" />
             )}

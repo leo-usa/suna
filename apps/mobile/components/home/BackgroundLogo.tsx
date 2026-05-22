@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { Dimensions, Animated } from 'react-native';
 import { useColorScheme } from 'nativewind';
-import KortixSymbolBlack from '@/assets/brand/dobby-symbol-scale-effect-black.svg';
-import KortixSymbolWhite from '@/assets/brand/dobby-symbol-scale-effect-white.svg';
+import DobbyBrandmarkBlack from '@/assets/brand/dobby-symbol-scale-effect-black.svg';
+import DobbyBrandmarkWhite from '@/assets/brand/dobby-symbol-scale-effect-white.svg';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -23,7 +23,7 @@ export function BackgroundLogo() {
   }, []);
 
   const leftOffset = (SCREEN_WIDTH - 393) / 2;
-  const SymbolComponent = colorScheme === 'dark' ? KortixSymbolWhite : KortixSymbolBlack;
+  const SymbolComponent = colorScheme === 'dark' ? DobbyBrandmarkWhite : DobbyBrandmarkBlack;
 
   return (
     <Animated.View
