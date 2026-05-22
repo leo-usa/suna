@@ -1,10 +1,10 @@
 export type BillingProvider = 'revenuecat';
 
 /**
- * Always use RevenueCat on mobile app
+ * Web checkout (PlanPage → dobby.now). Set to true when RevenueCat IAP is configured.
  */
 export function shouldUseRevenueCat(): boolean {
-  return true;
+  return false;
 }
 
 // Legacy aliases for backwards compatibility
