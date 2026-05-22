@@ -12,6 +12,7 @@ import { useModelSelection } from '@/hooks/agents';
 import { usePricingModalStore } from '@/stores/pricing-modal-store';
 import { ModelProviderIcon } from '@/lib/model-provider-icons';
 import { Separator } from '@/components/ui/separator';
+import { useTranslations } from 'next-intl';
 
 // Logo component for mode display with theme support
 // Uses CSS to switch between light/dark variants without JS
@@ -22,6 +23,7 @@ const ModeLogo = memo(function ModeLogo({
   mode: 'basic' | 'advanced'; 
   height?: number;
 }) {
+  const t = useTranslations('thread.modeIndicator');
   const darkSrc = mode === 'advanced' ? '/Advanced-Light.svg' : '/Basic-Light.svg';
   const lightSrc = mode === 'advanced' ? '/Advanced-Dark.svg' : '/Basic-Dark.svg';
 
@@ -30,7 +32,7 @@ const ModeLogo = memo(function ModeLogo({
       {/* Light mode image */}
       <img
         src={lightSrc}
-        alt={mode === 'advanced' ? 'Dobby Advanced' : 'Dobby Basic'}
+        alt={mode === 'advanced' ? t('advancedAlt') : t('basicAlt')}
         className="block dark:hidden"
         style={{ height: `${height}px`, width: 'auto' }}
         suppressHydrationWarning
@@ -38,7 +40,7 @@ const ModeLogo = memo(function ModeLogo({
       {/* Dark mode image */}
       <img
         src={darkSrc}
-        alt={mode === 'advanced' ? 'Dobby Advanced' : 'Dobby Basic'}
+        alt={mode === 'advanced' ? t('advancedAlt') : t('basicAlt')}
         className="hidden dark:block"
         style={{ height: `${height}px`, width: 'auto' }}
         suppressHydrationWarning
@@ -48,6 +50,7 @@ const ModeLogo = memo(function ModeLogo({
 });
 
 export const ModeIndicator = memo(function ModeIndicator() {
+  const t = useTranslations('thread.modeIndicator');
   const [isOpen, setIsOpen] = useState(false);
   const {
     selectedModel,
@@ -110,7 +113,7 @@ export const ModeIndicator = memo(function ModeIndicator() {
         setIsOpen(false);
         usePricingModalStore.getState().openPricingModal({
           isAlert: true,
-          alertTitle: 'Upgrade to access Dobby Advanced mode',
+          alertTitle: t('upgradeAdvanced'),
         });
       }
     }
@@ -157,7 +160,7 @@ export const ModeIndicator = memo(function ModeIndicator() {
             <div className="mb-1">
               <ModeLogo mode="basic" height={14} />
             </div>
-            <div className="text-xs text-muted-foreground leading-relaxed">Fast and efficient for quick tasks</div>
+            <div className="text-xs text-muted-foreground leading-relaxed">{t('basicDescription')}</div>
           </div>
           {isBasicSelected && (
             <Check className="h-4 w-4 text-foreground flex-shrink-0 mt-0.5" strokeWidth={2} />
@@ -178,7 +181,7 @@ export const ModeIndicator = memo(function ModeIndicator() {
             <div className="mb-1">
               <ModeLogo mode="advanced" height={14} />
             </div>
-            <div className="text-xs text-muted-foreground leading-relaxed">Maximum intelligence for complex work</div>
+            <div className="text-xs text-muted-foreground leading-relaxed">{t('advancedDescription')}</div>
           </div>
           {isPowerSelected ? (
             <Check className="h-4 w-4 text-foreground flex-shrink-0 mt-0.5" strokeWidth={2} />
@@ -192,7 +195,7 @@ export const ModeIndicator = memo(function ModeIndicator() {
           <>
             <Separator className="my-2" />
             <div className="px-2 py-1 text-xs font-medium text-muted-foreground flex items-center gap-2">
-              <span>All Models</span>
+              <span>{t('allModels')}</span>
             </div>
             <div className="max-h-[200px] overflow-y-auto">
               {otherModels.map((model) => {

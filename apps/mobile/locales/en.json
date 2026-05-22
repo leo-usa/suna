@@ -517,7 +517,9 @@
   "models": {
     "selectModel": "Select Model",
     "chooseModelFor": "Choose a model for worker {{agent}}",
-    "mode": "Mode"
+    "mode": "Mode",
+    "basicDescription": "Fast & efficient",
+    "advancedDescription": "Maximum intelligence"
   },
   "placeholders": {
     "default": "Give Dobby a task...",

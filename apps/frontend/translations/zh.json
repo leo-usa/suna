@@ -711,6 +711,14 @@
       "piecingTogether": "整理答案",
       "workingMagic": "施展魔力",
       "crunchingThoughts": "深度思考"
+    },
+    "modeIndicator": {
+      "basicDescription": "快速高效，适合日常任务",
+      "advancedDescription": "最强智能，适合复杂工作",
+      "allModels": "全部模型",
+      "upgradeAdvanced": "升级以使用 Dobby 高级模式",
+      "basicAlt": "Dobby 基础版",
+      "advancedAlt": "Dobby 高级版"
     }
   },
   "agents": {

@@ -562,7 +562,10 @@
   },
   "models": {
     "selectModel": "选择模型",
-    "chooseModelFor": "为 Worker {{agent}} 选择模型"
+    "chooseModelFor": "为 Worker {{agent}} 选择模型",
+    "mode": "模式",
+    "basicDescription": "快速高效，适合日常任务",
+    "advancedDescription": "最强智能，适合复杂工作"
   },
   "placeholders": {
     "default": "给 Dobby 一个任务...",

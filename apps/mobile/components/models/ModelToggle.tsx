@@ -6,6 +6,7 @@ import { useColorScheme } from 'nativewind';
 import * as Haptics from 'expo-haptics';
 import { ModeLogo } from './ModeLogo';
 import type { Model } from '@/api/types';
+import { useLanguage } from '@/contexts';
 
 interface ModelToggleProps {
   models: Model[];
@@ -22,6 +23,7 @@ export function ModelToggle({
   canAccessModel,
   onUpgradeRequired,
 }: ModelToggleProps) {
+  const { t } = useLanguage();
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === 'dark';
 
@@ -99,7 +101,7 @@ export function ModelToggle({
           <View style={styles.content}>
             <ModeLogo mode="basic" height={15} />
             <Text style={[styles.subtitle, { color: colors.muted }]}>
-              Fast & efficient
+              {t('models.basicDescription', 'Fast & efficient')}
             </Text>
           </View>
           <View
@@ -130,7 +132,7 @@ export function ModelToggle({
           <View style={styles.content}>
             <ModeLogo mode="advanced" height={15} />
             <Text style={[styles.subtitle, { color: colors.muted }]}>
-              Maximum intelligence
+              {t('models.advancedDescription', 'Maximum intelligence')}
             </Text>
           </View>
           <View

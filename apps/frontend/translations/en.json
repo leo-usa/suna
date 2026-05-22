@@ -719,6 +719,14 @@
       "piecingTogether": "Piecing it together",
       "workingMagic": "Working some magic",
       "crunchingThoughts": "Crunching thoughts"
+    },
+    "modeIndicator": {
+      "basicDescription": "Fast and efficient for quick tasks",
+      "advancedDescription": "Maximum intelligence for complex work",
+      "allModels": "All Models",
+      "upgradeAdvanced": "Upgrade to access Dobby Advanced mode",
+      "basicAlt": "Dobby Basic",
+      "advancedAlt": "Dobby Advanced"
     }
   },
   "agents": {
