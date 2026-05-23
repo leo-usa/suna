@@ -33,6 +33,7 @@ import {
   LifeBuoy,
   AlertTriangle,
   Send,
+  Bot,
 } from 'lucide-react';
 import { useAccounts } from '@/hooks/account';
 import { useAccountState } from '@/hooks/billing';
@@ -427,6 +428,12 @@ export function NavUserWithTeams({
                   <Link href="/tutorials" className="gap-2 p-2">
                     <BookOpen className="h-4 w-4" />
                     <span>{t('tutorials')}</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/dashboard/feishu" className="gap-2 p-2">
+                    <Bot className="h-4 w-4" />
+                    <span>{t('feishuBot')}</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>

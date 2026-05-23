@@ -3,11 +3,12 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Unified long-poll workers: Telegram, WeChat iLink → backend API.",
+  "description": "Unified long-poll workers: Telegram, Feishu, WeChat iLink → backend API.",
   "scripts": {
     "start": "node src/index.mjs"
   },
   "dependencies": {
+    "@larksuiteoapi/node-sdk": "^1.65.0",
     "dotenv": "^16.6.1",
     "qrcode-terminal": "^0.11.0"
   }

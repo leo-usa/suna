@@ -1,6 +1,6 @@
 # Feishu / Lark bridge — feasibility for Dobby
 
-> **Status:** Research (May 2026)  
+> **Status:** Phase A implemented (May 2026)  
 > **Context:** WeChat iLink is experimental and not production-ready. Hermes Agent and OpenClaw both ship mature Feishu integrations. This doc maps their approach onto Dobby’s existing `apps/bridges` + backend integration pattern.
 
 ---

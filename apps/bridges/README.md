@@ -7,6 +7,7 @@ One **Node** process runs every enabled outbound bridge (Telegram, WeChat iLink,
 | Bridge | Enabled when |
 |--------|----------------|
 | **Telegram** | `TELEGRAM_BOT_TOKEN` and `TELEGRAM_BRIDGE_SECRET` are both set |
+| **Feishu / Lark** | `FEISHU_APP_ID`, `FEISHU_APP_SECRET`, and `FEISHU_BRIDGE_SECRET` are all set |
 | **WeChat iLink** | `WECHAT_ILINK_BRIDGE_SECRET` is set |
 
 If **none** are configured, the process exits with an error. If only one is configured, only that loop runs.
@@ -36,6 +37,15 @@ WeChat iLink:
 |----------|----------|-------------|
 | `WECHAT_ILINK_BRIDGE_SECRET` | for iLink | Same value as backend `WECHAT_ILINK_BRIDGE_SECRET` |
 | `ILINK_TOKEN_FILE` | no | Bot token JSON path after QR login (default `./bot_token.json`) |
+
+Feishu / Lark:
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `FEISHU_APP_ID` | for Feishu | `cli_xxx` from Feishu Open Platform |
+| `FEISHU_APP_SECRET` | for Feishu | App secret |
+| `FEISHU_BRIDGE_SECRET` | for Feishu | Same value as backend `FEISHU_BRIDGE_SECRET` |
+| `FEISHU_DOMAIN` | no | `feishu` (default) or `lark` for international |
 
 ## Run
 
