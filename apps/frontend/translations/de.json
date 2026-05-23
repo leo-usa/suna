@@ -978,6 +978,7 @@
     "orContinueWithEmail": "oder mit E-Mail fortfahren",
     "signInWithEmail": "Mit E-Mail anmelden",
     "signInWithPassword": "Mit Passwort anmelden oder registrieren",
+    "signInWithMagicLink": "Stattdessen E-Mail-Link verwenden",
     "passwordPageDescriptionSignIn": "Gib E-Mail und Passwort ein, um auf dein Konto zuzugreifen",
     "passwordPageDescriptionSignUp": "Gib E-Mail und Passwort ein, um ein Konto zu erstellen",
     "unexpectedAuthError": "Ein unerwarteter Fehler ist aufgetreten",

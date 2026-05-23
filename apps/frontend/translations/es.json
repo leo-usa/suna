@@ -1060,6 +1060,7 @@
     "orContinueWithEmail": "o continúa con email",
     "signInWithEmail": "Iniciar sesión con email",
     "signInWithPassword": "Usar contraseña para iniciar sesión o registrarse",
+    "signInWithMagicLink": "Usar enlace por correo en su lugar",
     "passwordPageDescriptionSignIn": "Introduce tu correo y contraseña para acceder a tu cuenta",
     "passwordPageDescriptionSignUp": "Introduce tu correo y contraseña para crear tu cuenta",
     "unexpectedAuthError": "Ha ocurrido un error inesperado",

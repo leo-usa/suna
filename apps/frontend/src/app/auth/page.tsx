@@ -7,10 +7,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useMediaQuery } from '@/hooks/utils';
-import { useState, useEffect, useMemo, Suspense, lazy, useRef } from 'react';
-import { signUp, verifyOtp } from './actions';
+import { useState, useEffect, Suspense, lazy, useRef } from 'react';
+import { signUp, signInWithPassword, signUpWithPassword, verifyOtp } from './actions';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Mail, MailCheck, Clock, ExternalLink } from 'lucide-react';
+import { AlertCircle, Mail, MailCheck, Clock, ExternalLink } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { DobbyLoader } from '@/components/ui/dobby-loader';
 import { useAuth } from '@/components/AuthProvider';
 import { useAuthMethodTracking } from '@/stores/auth-tracking';
@@ -33,6 +34,7 @@ function LoginContent() {
   const searchParams = useSearchParams();
   const { user, isLoading } = useAuth();
   const mode = searchParams.get('mode');
+  const authMethodParam = searchParams.get('method');
   const returnUrl = searchParams.get('returnUrl') || searchParams.get('redirect');
   const message = searchParams.get('message');
   const isExpired = searchParams.get('expired') === 'true';
@@ -40,24 +42,16 @@ function LoginContent() {
   const referralCodeParam = searchParams.get('ref') || '';
   const t = useTranslations('auth');
 
-  const isSignUp = mode !== 'signin';
+  const [useMagicLink, setUseMagicLink] = useState(authMethodParam === 'magic');
+  const [isSignUp, setIsSignUp] = useState(mode === 'signup');
+  const [passwordError, setPasswordError] = useState<string | null>(null);
   const [referralCode, setReferralCode] = useState(referralCodeParam);
-  const [showReferralInput, setShowReferralInput] = useState(false);
   const [showReferralDialog, setShowReferralDialog] = useState(false);
   const isMobile = useMediaQuery('(max-width: 768px)');
   const [mounted, setMounted] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false); // GDPR requires explicit opt-in
 
   const { wasLastMethod: wasEmailLastMethod, markAsUsed: markEmailAsUsed } = useAuthMethodTracking('email');
-
-  const passwordAuthHref = useMemo(() => {
-    const params = new URLSearchParams();
-    if (returnUrl) params.set('returnUrl', returnUrl);
-    const ref = referralCodeParam || referralCode;
-    if (ref) params.set('ref', ref);
-    const qs = params.toString();
-    return qs ? `/auth/password?${qs}` : '/auth/password';
-  }, [returnUrl, referralCodeParam, referralCode]);
 
   useEffect(() => {
     // Redirect to dashboard if user is logged in
@@ -136,6 +130,43 @@ function LoginContent() {
 
     autoSendNewCode();
   }, [isExpired, expiredEmail, isLoading, user]);
+
+  const handlePasswordAuth = async (prevState: any, formData: FormData) => {
+    setPasswordError(null);
+
+    const finalReturnUrl = returnUrl || '/dashboard';
+    formData.set('returnUrl', finalReturnUrl);
+    formData.set('origin', typeof window !== 'undefined' ? window.location.origin : '');
+
+    try {
+      const result = isSignUp
+        ? await signUpWithPassword(prevState, formData)
+        : await signInWithPassword(prevState, formData);
+
+      if (result && typeof result === 'object') {
+        if ('message' in result) {
+          setPasswordError(result.message as string);
+          toast.error(result.message as string);
+          return result;
+        }
+
+        if ('success' in result && result.success && 'redirectTo' in result && result.redirectTo) {
+          window.location.assign(result.redirectTo as string);
+          return;
+        }
+      }
+
+      window.location.assign(finalReturnUrl);
+    } catch (error: any) {
+      if (error?.digest?.startsWith('NEXT_REDIRECT')) {
+        return;
+      }
+
+      const errorMsg = error?.message || t('unexpectedAuthError');
+      setPasswordError(errorMsg);
+      toast.error(errorMsg);
+    }
+  };
 
   const handleAuth = async (prevState: any, formData: FormData) => {
     trackSendAuthLink();
@@ -667,6 +698,8 @@ function LoginContent() {
                 </span>
               </div>
             </div>
+
+            {useMagicLink ? (
             <form className="space-y-3 sm:space-y-4">
               <Input
                 id="email"
@@ -744,21 +777,20 @@ function LoginContent() {
                 )}
               </div>
 
-              {/* Magic Link Explanation */}
               <p className="text-[11px] sm:text-xs text-muted-foreground text-center leading-relaxed">
                 {t('magicLinkExplanation')}
               </p>
 
               <p className="text-[11px] sm:text-xs text-center">
-                <Link
-                  href={passwordAuthHref}
+                <button
+                  type="button"
+                  onClick={() => setUseMagicLink(false)}
                   className="text-primary font-medium hover:underline underline-offset-2"
                 >
                   {t('signInWithPassword')}
-                </Link>
+                </button>
               </p>
 
-              {/* Minimal Referral Link */}
               {!referralCodeParam && (
                 <button
                   type="button"
@@ -769,6 +801,171 @@ function LoginContent() {
                 </button>
               )}
             </form>
+            ) : (
+            <form className="space-y-3 sm:space-y-4">
+              <div className="flex items-center gap-1.5 bg-muted/40 rounded-full p-1 w-fit mx-auto">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsSignUp(false);
+                    setPasswordError(null);
+                  }}
+                  className={cn(
+                    'px-4 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all',
+                    !isSignUp
+                      ? 'bg-background text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  {t('signIn')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsSignUp(true);
+                    setPasswordError(null);
+                  }}
+                  className={cn(
+                    'px-4 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all',
+                    isSignUp
+                      ? 'bg-background text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  {t('signUp')}
+                </button>
+              </div>
+
+              {passwordError && (
+                <div className="p-3 rounded-lg flex items-center gap-2 bg-destructive/10 border border-destructive/20 text-destructive">
+                  <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                  <span className="text-xs sm:text-sm">{passwordError}</span>
+                </div>
+              )}
+
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                placeholder={t('emailAddress')}
+                required
+                autoComplete="email"
+                className="h-10 sm:h-11 text-[16px] sm:text-sm"
+              />
+
+              <Input
+                id="password"
+                name="password"
+                type="password"
+                placeholder={t('password')}
+                required
+                autoComplete={isSignUp ? 'new-password' : 'current-password'}
+                className="h-10 sm:h-11 text-[16px] sm:text-sm"
+              />
+
+              {isSignUp && (
+                <Input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type="password"
+                  placeholder={t('confirmPassword')}
+                  required
+                  autoComplete="new-password"
+                  className="h-10 sm:h-11 text-[16px] sm:text-sm"
+                />
+              )}
+
+              {referralCodeParam && (
+                <div className="bg-card border rounded-xl p-2.5 sm:p-3">
+                  <p className="text-xs text-muted-foreground mb-0.5 sm:mb-1">{t('referralCode')}</p>
+                  <p className="text-sm font-semibold">{referralCode}</p>
+                </div>
+              )}
+
+              {!referralCodeParam && <input type="hidden" name="referralCode" value={referralCode} />}
+
+              {isSignUp && (
+                <div className="flex items-start gap-2">
+                  <Checkbox
+                    id="gdprConsentPassword"
+                    checked={acceptedTerms}
+                    onCheckedChange={(checked) => setAcceptedTerms(checked === true)}
+                    required
+                    className="h-5 w-5 mt-0.5"
+                  />
+                  <label
+                    htmlFor="gdprConsentPassword"
+                    className="text-[11px] sm:text-xs text-muted-foreground leading-relaxed cursor-pointer select-none flex-1"
+                  >
+                    {t.rich('acceptPrivacyTerms', {
+                      privacyPolicy: (chunks) => (
+                        <a
+                          href="https://www.dobby.now/legal?tab=privacy"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="hover:underline underline-offset-2 text-primary"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {chunks}
+                        </a>
+                      ),
+                      termsOfService: (chunks) => (
+                        <a
+                          href="https://www.dobby.now/legal?tab=terms"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="hover:underline underline-offset-2 text-primary"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {chunks}
+                        </a>
+                      ),
+                    })}
+                  </label>
+                </div>
+              )}
+
+              <SubmitButton
+                formAction={handlePasswordAuth}
+                className="w-full h-10 sm:h-11 text-sm sm:text-base"
+                pendingText={isSignUp ? t('creatingAccount') : t('signingIn')}
+                disabled={isSignUp && !acceptedTerms}
+              >
+                {isSignUp ? t('createAccount') : t('signIn')}
+              </SubmitButton>
+
+              {!isSignUp && (
+                <p className="text-[11px] sm:text-xs text-center">
+                  <Link
+                    href="/auth/reset-password"
+                    className="text-muted-foreground hover:text-foreground hover:underline underline-offset-2"
+                  >
+                    {t('forgotPassword')}
+                  </Link>
+                </p>
+              )}
+
+              <p className="text-[11px] sm:text-xs text-center">
+                <button
+                  type="button"
+                  onClick={() => setUseMagicLink(true)}
+                  className="text-primary font-medium hover:underline underline-offset-2"
+                >
+                  {t('signInWithMagicLink')}
+                </button>
+              </p>
+
+              {!referralCodeParam && (
+                <button
+                  type="button"
+                  onClick={() => setShowReferralDialog(true)}
+                  className="text-[11px] sm:text-xs text-muted-foreground hover:text-foreground transition-colors w-full text-center mt-1 touch-manipulation"
+                >
+                  {t('haveReferralCode')}
+                </button>
+              )}
+            </form>
+            )}
 
             {/* Referral Code Dialog */}
             <ReferralCodeDialog

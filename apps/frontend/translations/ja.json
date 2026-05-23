@@ -1060,6 +1060,7 @@
     "orContinueWithEmail": "またはメールで続ける",
     "signInWithEmail": "メールでログイン",
     "signInWithPassword": "パスワードでログインまたは登録",
+    "signInWithMagicLink": "メールリンクでログイン",
     "passwordPageDescriptionSignIn": "メールアドレスとパスワードを入力してログイン",
     "passwordPageDescriptionSignUp": "メールアドレスとパスワードを入力してアカウントを作成",
     "unexpectedAuthError": "予期しないエラーが発生しました",

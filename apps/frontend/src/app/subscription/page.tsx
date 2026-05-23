@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, Suspense, lazy } from 'react';
+import { useEffect, useState, Suspense, lazy } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { LogOut } from 'lucide-react';
+import { LogOut, ShoppingCart } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DobbyLogo } from '@/components/sidebar/dobby-logo';
@@ -14,6 +14,7 @@ import { useAdminRole } from '@/hooks/admin';
 import { useAccountState } from '@/hooks/billing';
 import { SUPPORT_MAILTO } from '@/lib/site-config';
 import { useTranslations } from 'next-intl';
+import { CreditPurchaseModal } from '@/components/billing/credit-purchase';
 
 // Lazy load heavy components
 const PricingSection = lazy(() => import('@/components/billing/pricing').then(mod => ({ default: mod.PricingSection })));
@@ -42,8 +43,10 @@ function SubscriptionSkeleton() {
 
 export default function SubscriptionRequiredPage() {
   const t = useTranslations('billing.subscriptionPage');
+  const tBilling = useTranslations('billing');
   const tSidebar = useTranslations('sidebar');
   const router = useRouter();
+  const [showCreditPurchaseModal, setShowCreditPurchaseModal] = useState(false);
   const { data: maintenanceNotice, isLoading: maintenanceLoading } = useMaintenanceNoticeQuery();
   const { data: adminRoleData, isLoading: isCheckingAdminRole } = useAdminRole();
   const { data: accountState, isLoading: isLoadingSubscription, refetch: refetchSubscription } = useAccountState({ enabled: true });
@@ -101,6 +104,8 @@ export default function SubscriptionRequiredPage() {
     (subscriptionData as any)?.trial_status === 'cancelled' ||
     (subscriptionData as any)?.trial_status === 'used';
 
+  const canPurchaseCredits = subscriptionData?.subscription?.can_purchase_credits ?? true;
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 py-12 px-4">
       <div className="max-w-6xl mx-auto space-y-8">
@@ -126,6 +131,17 @@ export default function SubscriptionRequiredPage() {
           <p className="text-md text-muted-foreground max-w-2xl mx-auto">
             {isTrialExpired ? t('descriptionTrialEnded') : t('descriptionRequired')}
           </p>
+          {!isTrialExpired && (
+            <Button
+              onClick={() => setShowCreditPurchaseModal(true)}
+              variant="outline"
+              size="lg"
+              className="gap-2"
+            >
+              <ShoppingCart className="h-5 w-5" />
+              {tBilling('getAdditionalCredits')}
+            </Button>
+          )}
         </div>
         <Suspense fallback={
           <div className="grid md:grid-cols-3 gap-6">
@@ -138,9 +154,16 @@ export default function SubscriptionRequiredPage() {
             returnUrl={`${typeof window !== 'undefined' ? window.location.origin : ''}/dashboard?subscription=activated`}
             showTitleAndTabs={false}
             onSubscriptionUpdate={handleSubscriptionUpdate}
-            showBuyCredits={true}
+            showBuyCredits={false}
           />
         </Suspense>
+        <CreditPurchaseModal
+          open={showCreditPurchaseModal}
+          onOpenChange={setShowCreditPurchaseModal}
+          currentBalance={subscriptionData?.credits.total || 0}
+          canPurchase={canPurchaseCredits}
+          onPurchaseComplete={handleSubscriptionUpdate}
+        />
         <div className="text-center text-sm text-muted-foreground -mt-10">
           <p>
             {t.rich('questionsContact', {

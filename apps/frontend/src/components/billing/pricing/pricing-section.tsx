@@ -287,6 +287,8 @@ function PricingCard({
 }: PricingCardProps) {
   const t = useTranslations('billing');
   const tCommon = useTranslations('common');
+  const { user } = useAuth();
+  const isLoggedIn = !!user;
   const queryClient = useQueryClient();
 
   const { currency, symbol } = useUserCurrency();
@@ -351,7 +353,7 @@ function PricingCard({
   };
 
   const handleSubscribe = async (tierKey: string, isDowngrade = false) => {
-    if (!isAuthenticated) {
+    if (!isLoggedIn) {
       window.location.href = '/auth?mode=signup';
       return;
     }
@@ -527,7 +529,7 @@ function PricingCard({
     );
   const isPlanLoading = isLoading[tier.tierKey];
 
-  let buttonText = isAuthenticated ? t('selectPlan') : tier.buttonText;
+  let buttonText = isLoggedIn ? t('selectPlan') : tCommon('tryFree');
   let buttonDisabled = isPlanLoading;
   let buttonVariant: ButtonVariant = null;
   let ringClass = '';
@@ -894,6 +896,8 @@ function BasicTierCard({
 }) {
   const t = useTranslations('billing');
   const tCommon = useTranslations('common');
+  const { user } = useAuth();
+  const isLoggedIn = !!user;
   const scheduleDowngradeMutation = useScheduleDowngrade();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [isSubscribing, setIsSubscribing] = useState(false);
@@ -934,7 +938,7 @@ function BasicTierCard({
   };
 
   const handleSelectFreePlan = async () => {
-    if (!isAuthenticated) {
+    if (!isLoggedIn) {
       window.location.href = '/auth?mode=signup';
       return;
     }
@@ -984,7 +988,7 @@ function BasicTierCard({
     }
   };
 
-  let buttonText = tCommon('tryFree');
+  let buttonText = isLoggedIn ? t('selectPlan') : tCommon('tryFree');
   let buttonDisabled = false;
   let buttonVariant: 'outline' | 'default' = 'outline';
   let onClickHandler: () => void = handleSelectFreePlan;

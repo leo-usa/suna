@@ -40,6 +40,9 @@ const PUBLIC_ROUTES = [
   '/careers',
   '/pricing', // Pricing page should be public
   '/tutorials', // Tutorials page should be public
+  '/download', // Desktop / mobile download page
+  '/cn/consumer', // Chinese consumer landing
+  '/cn/enterprise', // Chinese enterprise landing
   '/docs', // API / product docs (e.g. /docs/api)
   '/countryerror', // Country restriction error page should be public
   ...locales.flatMap(locale => MARKETING_ROUTES.map(route => `/${locale}${route === '/' ? '' : route}`)),
@@ -94,6 +97,13 @@ export async function middleware(request: NextRequest) {
   // Block access to WIP /thread/new route - redirect to dashboard
   if (pathname.includes('/thread/new')) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
+  }
+
+  if (pathname === '/consumer' || pathname === '/consumers') {
+    return NextResponse.redirect(new URL('/cn/consumer', request.url));
+  }
+  if (pathname === '/enterprise') {
+    return NextResponse.redirect(new URL('/cn/enterprise', request.url));
   }
   
   // Skip middleware for static files and API routes

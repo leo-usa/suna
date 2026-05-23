@@ -1855,6 +1855,7 @@
     "orContinueWithEmail": "or continue with email",
     "signInWithEmail": "Sign in with email",
     "signInWithPassword": "Use password to sign in or register",
+    "signInWithMagicLink": "Use email link instead",
     "passwordPageDescriptionSignIn": "Enter your email and password to access your account",
     "passwordPageDescriptionSignUp": "Enter your email and password to create your account",
     "unexpectedAuthError": "An unexpected error occurred",

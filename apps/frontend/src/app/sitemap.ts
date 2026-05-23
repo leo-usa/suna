@@ -8,6 +8,8 @@ const MARKETING_ROUTES = [
   { path: '/suna', priority: 0.9, changeFrequency: 'monthly' as const },
   { path: '/legal', priority: 0.5, changeFrequency: 'monthly' as const },
   { path: '/support', priority: 0.7, changeFrequency: 'weekly' as const },
+  { path: '/cn/consumer', priority: 0.85, changeFrequency: 'weekly' as const },
+  { path: '/cn/enterprise', priority: 0.85, changeFrequency: 'weekly' as const },
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {
