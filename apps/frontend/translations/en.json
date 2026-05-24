@@ -2632,7 +2632,7 @@
     "step1": "Open the Telegram app, search for Dobby Bot, and confirm the username is @dobby3_telegram_bot. Open the chat and tap Start (or add the bot).",
     "step2": "Tap Generate verification code below. You will get a 6-character code, valid for about 15 minutes.",
     "step3": "In the bot chat, send only that code as a single private message. The bot will confirm when linking succeeds.",
-    "step4": "After linking, message the bot as usual. Send /newchat or /new to start a new conversation thread in the same account.",
+    "step4": "After linking, message the bot as usual. Send /help for commands, /list to see chats, /use <number> to switch, or /new for a new thread.",
     "loadError": "Could not load link status.",
     "codeError": "Could not create a code. Try again.",
     "noAccounts": "No accounts available."
@@ -2653,7 +2653,7 @@
     "step1": "In Feishu, search for Dobby3 in the top search bar and open a private chat with the bot (your admin must have published the app to your organization and included you in its availability scope).",
     "step2": "Tap Generate verification code below. You will get a 6-character code, valid for about 15 minutes.",
     "step3": "In the bot DM, send only that code as a single message. The bot will confirm when linking succeeds.",
-    "step4": "After linking, message the bot as usual. Send /newchat or /new to start a new conversation thread in the same account.",
+    "step4": "After linking, message the bot as usual. Send /help for commands, /list to see chats, /use <number> to switch, or /new for a new thread.",
     "loadError": "Could not load link status.",
     "codeError": "Could not create a code. Try again.",
     "noAccounts": "No accounts available."

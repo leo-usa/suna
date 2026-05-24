@@ -16,9 +16,11 @@ def _sanitize_null_bytes(value: Any) -> Any:
 async def list_user_threads(
     account_id: str,
     limit: int = 100,
-    offset: int = 0
+    offset: int = 0,
+    order_by: str = "created_at",
 ) -> Tuple[List[Dict[str, Any]], int]:
-    sql = """
+    sort_col = "updated_at" if order_by == "updated_at" else "created_at"
+    sql = f"""
     SELECT 
         t.thread_id,
         t.project_id,
@@ -43,7 +45,7 @@ async def list_user_threads(
     LEFT JOIN projects p ON t.project_id = p.project_id
     LEFT JOIN resources r ON p.sandbox_resource_id = r.id
     WHERE t.account_id = :account_id
-    ORDER BY t.created_at DESC
+    ORDER BY t.{sort_col} DESC
     LIMIT :limit OFFSET :offset
     """
     

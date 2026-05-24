@@ -41,10 +41,17 @@ const workers = [];
 
 if (isTelegramBridgeConfigured()) {
   workers.push(
-    runTelegramBridge(ac.signal).catch((e) => {
-      console.error("[telegram] fatal:", e.message);
-      throw e;
-    }),
+    (async () => {
+      try {
+        await runTelegramBridge(ac.signal);
+      } catch (e) {
+        console.error("[telegram] fatal:", e.message);
+        console.error(
+          "[i] Telegram stopped; other bridges keep running. Fix TELEGRAM_BOT_TOKEN in apps/bridges/.env and restart.",
+        );
+        await waitForShutdown(ac.signal);
+      }
+    })(),
   );
 } else {
   console.log("[i] Telegram bridge: disabled (set TELEGRAM_BOT_TOKEN + TELEGRAM_BRIDGE_SECRET)");

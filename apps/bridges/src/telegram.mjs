@@ -199,6 +199,7 @@ function stripThreadBrowserFooter(text, openUrl) {
 
 async function sendReply(chatId, text, options = {}) {
   const openUrl = options.openUrl && String(options.openUrl).trim() ? String(options.openUrl).trim() : "";
+  const extraMarkup = options.replyMarkup || null;
   const chunk = 4096;
   let body = typeof text === "string" ? text : JSON.stringify(text);
   if (openUrl) body = stripThreadBrowserFooter(body, openUrl);
@@ -207,7 +208,10 @@ async function sendReply(chatId, text, options = {}) {
     const part = rest.slice(0, chunk);
     rest = rest.slice(chunk);
     const payload = { chat_id: chatId, text: part };
-    if (openUrl && rest.length === 0) {
+    const isLast = rest.length === 0;
+    if (isLast && extraMarkup) {
+      payload.reply_markup = extraMarkup;
+    } else if (isLast && openUrl) {
       payload.reply_markup = {
         inline_keyboard: [[{ text: "Open in browser", url: openUrl }]],
       };
@@ -287,11 +291,33 @@ export function isTelegramBridgeConfigured() {
   return Boolean(TELEGRAM_BOT_TOKEN && TELEGRAM_BRIDGE_SECRET);
 }
 
+function telegramTokenError(data) {
+  if (data?.error_code === 401) {
+    return (
+      "TELEGRAM_BOT_TOKEN is invalid or revoked (Telegram returned 401). " +
+      "Copy a fresh token from @BotFather into apps/bridges/.env — you do not need to relink your Dobby account."
+    );
+  }
+  return `Telegram API error: ${JSON.stringify(data).slice(0, 300)}`;
+}
+
+async function validateTelegramBotToken() {
+  const res = await fetch(`${TG}/getMe`);
+  const data = await res.json().catch(() => ({}));
+  if (!data.ok) {
+    throw new Error(telegramTokenError(data));
+  }
+  const username = data.result?.username ? `@${data.result.username}` : "(unknown)";
+  console.log(`[telegram] bot verified: ${username}`);
+}
+
 async function handleTelegramChatTurn(chatId, uid, text) {
   const started = await postBridgeChatStart(uid, text);
   if (!started.agent_run_id) {
     const reply = typeof started.reply === "string" ? started.reply : JSON.stringify(started);
-    await sendReply(chatId, reply || "（无回复）", {});
+    const replyMarkup =
+      started.reply_markup && typeof started.reply_markup === "object" ? started.reply_markup : null;
+    await sendReply(chatId, reply || "（无回复）", { replyMarkup });
     return;
   }
 
@@ -378,6 +404,8 @@ export async function runTelegramBridge(signal) {
   console.log("[telegram] bridge");
   console.log(`[telegram] API: ${API_BASE}/integrations/telegram-bot/bridge/chat/start (+ snapshot, finalize)\n`);
 
+  await validateTelegramBotToken();
+
   for (;;) {
     if (signal?.aborted) {
       console.log("[telegram] stopped (signal)");
@@ -391,6 +419,9 @@ export async function runTelegramBridge(signal) {
       const res = await fetch(url.toString());
       const data = await res.json();
       if (!data.ok) {
+        if (data.error_code === 401) {
+          throw new Error(telegramTokenError(data));
+        }
         console.error("[telegram] getUpdates:", JSON.stringify(data).slice(0, 300));
         await new Promise((r) => setTimeout(r, 3000));
         continue;

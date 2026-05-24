@@ -27,6 +27,13 @@ from core.integrations.bridge_reply_format import (
     compose_bridge_turn_plain_text,
     latest_bridge_reply_plain_text_via_poll,
 )
+from core.integrations.bridge_thread_commands import (
+    BRIDGE_MSG_NEW_THREAD,
+    build_help_reply,
+    handle_thread_slash_command,
+    is_help_command,
+    parse_bridge_slash_command,
+)
 from core.agents import repo as agents_repo
 from core.services.db import execute_one, execute_one_read
 from core.threads import repo as threads_repo
@@ -45,12 +52,7 @@ MSG_BIND_OK = "已成功绑定当前工作区。请继续在 Telegram 中与 Dob
 MSG_BIND_INVALID = "验证码无效或已过期。请在本页重新生成验证码，并在 Telegram 中单独发送该 6 位码。"
 MSG_BIND_NEEDED = "请先在 Dobby 网页端：用户菜单 → Telegram，选择工作区并生成验证码，然后在 Telegram 中单独发送该 6 位码完成绑定。"
 MSG_RUN_FAILED = "Dobby 暂时无法完成请求，请稍后再试。"
-MSG_NEW_THREAD = (
-    "已开始新对话。下一条消息会在新的线程里进行（仍属于当前绑定的工作区）。\n"
-    "发送 /newchat 或 /new 可随时再开新线程。\n\n"
-    "New thread started. Your next message opens a fresh conversation in the same workspace.\n"
-    "Use /newchat or /new any time to start another new thread."
-)
+MSG_NEW_THREAD = BRIDGE_MSG_NEW_THREAD
 
 
 def _reraise_if_missing_telegram_tables(exc: Exception) -> None:
@@ -99,6 +101,7 @@ class BridgeChatStartResponse(BaseModel):
     thread_id: Optional[str] = None
     message: str = ""
     paired: bool = False
+    reply_markup: Optional[Dict[str, Any]] = None
 
 
 class BridgeChatSessionRequest(BaseModel):
@@ -320,12 +323,27 @@ async def _bridge_start_agent_for_chat(peer: str, raw: str) -> BridgeChatStartRe
                 return BridgeChatStartResponse(ok=False, reply=MSG_BIND_INVALID)
             await _upsert_link(peer, account_id)
             return BridgeChatStartResponse(ok=True, reply=MSG_BIND_OK, paired=True)
+        cmd, _ = parse_bridge_slash_command(raw)
+        if is_help_command(cmd):
+            return BridgeChatStartResponse(ok=True, reply=build_help_reply(linked=False))
         return BridgeChatStartResponse(ok=False, reply=MSG_BIND_NEEDED)
 
-    cmd = _telegram_slash_command(raw)
-    if cmd in ("newchat", "new"):
-        await _clear_link_thread(peer)
-        return BridgeChatStartResponse(ok=True, reply=MSG_NEW_THREAD, paired=False)
+    handled = await handle_thread_slash_command(
+        raw,
+        account_id=link["account_id"],
+        active_thread_id=link.get("thread_id"),
+        frontend_url=config.FRONTEND_URL,
+        set_active_thread=lambda tid: _update_link_thread(peer, tid),
+        clear_active_thread=lambda: _clear_link_thread(peer),
+    )
+    if handled is not None:
+        return BridgeChatStartResponse(
+            ok=True,
+            reply=handled.reply,
+            paired=False,
+            thread_id=handled.thread_id,
+            reply_markup=handled.reply_markup,
+        )
 
     account_id = link["account_id"]
     thread_id = link.get("thread_id")
