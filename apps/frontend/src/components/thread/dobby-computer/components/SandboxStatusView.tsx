@@ -101,14 +101,14 @@ export function SandboxStatusView({ projectId, className }: SandboxStatusViewPro
         {/* Text */}
         <div className="space-y-2">
           <h3 className="text-xl font-semibold">
-            {isStarting ? 'Starting Computer...' : isFailed ? 'Failed to Start' : 'Computer Not Running'}
+            {isStarting ? t('titleStarting') : isFailed ? t('titleFailed') : t('titleNotRunning')}
           </h3>
           <p className="text-sm text-muted-foreground">
-            {isStarting 
-              ? 'This may take up to a minute.'
-              : isFailed 
-                ? 'Something went wrong. Please try again.'
-                : 'Start the computer to browse and manage files.'}
+            {isStarting
+              ? t('descStarting')
+              : isFailed
+                ? t('descFailed')
+                : t('descOffline')}
           </p>
         </div>
 
@@ -122,7 +122,7 @@ export function SandboxStatusView({ projectId, className }: SandboxStatusViewPro
               className="min-w-[180px]"
             >
               <Power className="h-4 w-4 mr-2" />
-              Start Computer
+              {t('startComputer')}
             </Button>
           </div>
         )}
