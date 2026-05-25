@@ -64,7 +64,7 @@ if (isWechatIlinkBridgeConfigured()) {
         await runWechatIlinkBridge(ac.signal);
       } catch (e) {
         console.error("[wechat-ilink] fatal:", e.message);
-        console.error("[i] WeChat iLink stopped; other bridges keep running. Restart this process after fixing QR or config.");
+        console.error("[i] WeChat iLink stopped; other bridges keep running. Restart after fixing backend sessions or config.");
         await waitForShutdown(ac.signal);
       }
     })(),

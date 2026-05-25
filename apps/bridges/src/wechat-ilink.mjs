@@ -1,18 +1,23 @@
 /**
- * WeChat iLink: QR login, long poll, forward user text to backend bridge API.
+ * WeChat iLink: multi-session long poll → backend bridge (per Dobby account).
+ *
+ * Sessions (bot tokens) are stored encrypted in the backend after dashboard QR scan.
+ * This worker loads active sessions and runs one getupdates loop per account.
  */
 
 import crypto from "node:crypto";
-import { readFileSync, writeFileSync, existsSync } from "node:fs";
 
 const ILINK_BASE = "https://ilinkai.weixin.qq.com";
-const TOKEN_FILE = process.env.ILINK_TOKEN_FILE || "./bot_token.json";
 const CHANNEL_VERSION = "1.0.2";
 const POLL_TIMEOUT_MS = 40_000;
 const API_TIMEOUT_MS = 15_000;
+const SESSIONS_REFRESH_MS = 30_000;
 
 const API_BASE = (process.env.API_BASE || "http://127.0.0.1:8000/v1").replace(/\/$/, "");
 const WECHAT_ILINK_BRIDGE_SECRET = (process.env.WECHAT_ILINK_BRIDGE_SECRET || "").trim();
+
+const STREAM_POLL_MS = 2500;
+const STREAM_MAX_MS = 25 * 60 * 1000;
 
 /** Match backend `append_thread_workspace_link` footer (strip before chunking). */
 const THREAD_BROWSER_FOOTER = "\n\n────────\nOpen in browser (files & full reply):\n";
@@ -49,6 +54,29 @@ function makeHeaders(token, bodyStr) {
   return headers;
 }
 
+function bridgeHeaders() {
+  return {
+    "Content-Type": "application/json",
+    "X-Wechat-Ilink-Bridge-Secret": WECHAT_ILINK_BRIDGE_SECRET,
+  };
+}
+
+async function readBridgeJson(res) {
+  const text = await res.text();
+  let data = {};
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch {
+    data = { ok: false, reply: text || `HTTP ${res.status}` };
+  }
+  if (!res.ok) {
+    const detail =
+      typeof data.detail === "string" ? data.detail : data.detail ? JSON.stringify(data.detail) : "";
+    throw new Error(detail || data.reply || `HTTP ${res.status}: ${text.slice(0, 200)}`);
+  }
+  return data;
+}
+
 async function apiPost(baseUrl, endpoint, payload, token, timeoutMs = API_TIMEOUT_MS) {
   const url = new URL(endpoint, baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`);
   const bodyStr = JSON.stringify(payload);
@@ -71,24 +99,44 @@ async function apiPost(baseUrl, endpoint, payload, token, timeoutMs = API_TIMEOU
   }
 }
 
-function saveToken(data) {
-  writeFileSync(TOKEN_FILE, JSON.stringify(data, null, 2));
-  console.log("[wechat-ilink] [✓] Token saved to", TOKEN_FILE);
-}
-
-function loadToken() {
-  if (!existsSync(TOKEN_FILE)) return null;
-  try {
-    const data = JSON.parse(readFileSync(TOKEN_FILE, "utf-8"));
-    if (data.bot_token) return data;
-  } catch {
-    /* ignore */
-  }
-  return null;
-}
-
 function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
+}
+
+function mergeAbortSignals(...signals) {
+  const controller = new AbortController();
+  for (const sig of signals) {
+    if (!sig) continue;
+    if (sig.aborted) {
+      controller.abort();
+      return controller.signal;
+    }
+    sig.addEventListener("abort", () => controller.abort(), { once: true });
+  }
+  return controller.signal;
+}
+
+async function fetchBridgeSessions() {
+  const url = `${API_BASE}/integrations/wechat-ilink/bridge/sessions`;
+  const res = await fetch(url, { headers: bridgeHeaders() });
+  const data = await readBridgeJson(res);
+  return Array.isArray(data.sessions) ? data.sessions : [];
+}
+
+async function patchSessionCursor(accountId, getUpdatesBuf) {
+  const url = `${API_BASE}/integrations/wechat-ilink/bridge/sessions/${encodeURIComponent(accountId)}/cursor`;
+  const res = await fetch(url, {
+    method: "PATCH",
+    headers: bridgeHeaders(),
+    body: JSON.stringify({ get_updates_buf: getUpdatesBuf || "" }),
+  });
+  await readBridgeJson(res);
+}
+
+async function postSessionExpired(accountId) {
+  const url = `${API_BASE}/integrations/wechat-ilink/bridge/sessions/${encodeURIComponent(accountId)}/expired`;
+  const res = await fetch(url, { method: "POST", headers: bridgeHeaders() });
+  await readBridgeJson(res);
 }
 
 async function getUpdates(baseUrl, token, cursor) {
@@ -165,12 +213,17 @@ async function getConfig(baseUrl, token, ilinkUserId, contextToken) {
 }
 
 async function sendTypingApi(baseUrl, token, ilinkUserId, typingTicket, status = 1) {
-  return apiPost(baseUrl, "ilink/bot/sendtyping", {
-    ilink_user_id: ilinkUserId,
-    typing_ticket: typingTicket,
-    status,
-    base_info: baseInfo(),
-  }, token);
+  return apiPost(
+    baseUrl,
+    "ilink/bot/sendtyping",
+    {
+      ilink_user_id: ilinkUserId,
+      typing_ticket: typingTicket,
+      status,
+      base_info: baseInfo(),
+    },
+    token,
+  );
 }
 
 const typingTicketCache = {};
@@ -197,77 +250,6 @@ async function stopTyping(baseUrl, token, userId) {
   }
 }
 
-/**
- * @param {AbortSignal} [signal]
- */
-async function login(signal) {
-  const saved = loadToken();
-  if (saved) {
-    console.log("[wechat-ilink] [i] Reusing saved token…");
-    return saved;
-  }
-
-  console.log("\n[wechat-ilink] ========== iLink QR login ==========\n");
-  console.log("[wechat-ilink] [1/3] Fetching QR…");
-  const qrRes = await fetch(`${ILINK_BASE}/ilink/bot/get_bot_qrcode?bot_type=3`, { headers: makeHeaders() });
-  const qrData = await qrRes.json();
-
-  if (!qrData.qrcode_img_content) {
-    console.error("[wechat-ilink] [✗] QR failed:", JSON.stringify(qrData, null, 2));
-    throw new Error("WeChat iLink: QR login failed");
-  }
-
-  const qrcodeUrl = qrData.qrcode_img_content;
-  const qrcodeKey = qrData.qrcode;
-
-  console.log("[wechat-ilink] [2/3] Scan with WeChat:\n");
-  try {
-    const qrterm = await import("qrcode-terminal");
-    qrterm.default.generate(qrcodeUrl, { small: true });
-  } catch {
-    console.log("[wechat-ilink] QR URL:", qrcodeUrl);
-  }
-
-  console.log("\n[wechat-ilink] [3/3] Waiting for confirm…");
-  for (;;) {
-    if (signal?.aborted) {
-      throw new Error("WeChat iLink: login aborted");
-    }
-    await sleep(2000);
-    let statusData;
-    try {
-      const statusRes = await fetch(
-        `${ILINK_BASE}/ilink/bot/get_qrcode_status?qrcode=${encodeURIComponent(qrcodeKey)}`,
-        { headers: makeHeaders() },
-      );
-      statusData = await statusRes.json();
-    } catch {
-      continue;
-    }
-
-    if (statusData.status === "confirmed" || statusData.bot_token) {
-      console.log("\n[wechat-ilink] [✓] Logged in");
-      const tokenData = {
-        bot_token: statusData.bot_token,
-        baseurl: statusData.baseurl || ILINK_BASE,
-        bot_id: statusData.bot_id || "",
-        login_time: new Date().toISOString(),
-      };
-      saveToken(tokenData);
-      return tokenData;
-    }
-
-    if (statusData.status === "scanned") {
-      process.stdout.write("\r[wechat-ilink] [...] scanned, confirming…");
-    } else if (statusData.status === "expired") {
-      console.error("\n[wechat-ilink] [✗] QR expired, restart");
-      throw new Error("WeChat iLink: QR expired");
-    } else {
-      process.stdout.write("\r[wechat-ilink] [...] waiting for scan…");
-    }
-  }
-}
-
 const MSG_TYPES = { 1: "text", 2: "image", 3: "voice", 4: "file", 5: "video" };
 
 function extractText(msg) {
@@ -277,46 +259,138 @@ function extractText(msg) {
     .join("");
 }
 
-async function postBridgeChat(ilinkPeerId, message) {
-  if (!WECHAT_ILINK_BRIDGE_SECRET) {
-    throw new Error("WECHAT_ILINK_BRIDGE_SECRET is not set");
-  }
-  const url = `${API_BASE}/integrations/wechat-ilink/bridge/chat`;
+async function postBridgeChatStart(accountId, ilinkPeerId, message) {
+  const url = `${API_BASE}/integrations/wechat-ilink/bridge/chat/start`;
   const res = await fetch(url, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Wechat-Ilink-Bridge-Secret": WECHAT_ILINK_BRIDGE_SECRET,
-    },
-    body: JSON.stringify({ ilink_peer_id: ilinkPeerId, message }),
+    headers: bridgeHeaders(),
+    body: JSON.stringify({ account_id: accountId, ilink_peer_id: ilinkPeerId, message }),
   });
-  const text = await res.text();
-  let data = {};
-  try {
-    data = text ? JSON.parse(text) : {};
-  } catch {
-    data = { ok: false, reply: text || `HTTP ${res.status}` };
-  }
-  if (!res.ok) {
-    throw new Error(data.detail || data.reply || `HTTP ${res.status}: ${text.slice(0, 200)}`);
-  }
-  return data;
+  return readBridgeJson(res);
 }
 
-async function handleMessage(msg, tokenData) {
+async function postBridgeSnapshot(accountId, ilinkPeerId, agentRunId, threadId, message) {
+  const url = `${API_BASE}/integrations/wechat-ilink/bridge/chat/snapshot`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: bridgeHeaders(),
+    body: JSON.stringify({
+      account_id: accountId,
+      ilink_peer_id: ilinkPeerId,
+      agent_run_id: agentRunId,
+      thread_id: threadId,
+      message,
+    }),
+  });
+  return readBridgeJson(res);
+}
+
+async function postBridgeFinalize(accountId, ilinkPeerId, agentRunId, threadId, message) {
+  const url = `${API_BASE}/integrations/wechat-ilink/bridge/chat/finalize`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: bridgeHeaders(),
+    body: JSON.stringify({
+      account_id: accountId,
+      ilink_peer_id: ilinkPeerId,
+      agent_run_id: agentRunId,
+      thread_id: threadId,
+      message,
+    }),
+  });
+  return readBridgeJson(res);
+}
+
+async function handleWechatChatTurn(accountId, ilinkPeerId, text, tokenData) {
   const base = tokenData.baseurl || ILINK_BASE;
+  const token = tokenData.bot_token;
+  const contextToken = tokenData._contextToken;
+  const to = ilinkPeerId;
+
+  const started = await postBridgeChatStart(accountId, ilinkPeerId, text);
+  if (!started.agent_run_id) {
+    const reply = typeof started.reply === "string" ? started.reply : JSON.stringify(started);
+    await sendTextChunked(base, token, to, contextToken, reply || "（无回复）", "");
+    return;
+  }
+
+  const tid = started.thread_id;
+  const rid = started.agent_run_id;
+  const userMsg = typeof started.message === "string" && started.message.trim() ? started.message.trim() : text;
+
+  const t0 = Date.now();
+  let lastShown = "";
+  let sawTerminal = false;
+
+  while (Date.now() - t0 < STREAM_MAX_MS) {
+    let snap;
+    try {
+      snap = await postBridgeSnapshot(accountId, ilinkPeerId, rid, tid, userMsg);
+    } catch (e) {
+      console.error(`[wechat-ilink] [${accountId.slice(0, 8)}] snapshot:`, e.message);
+      await sleep(STREAM_POLL_MS);
+      continue;
+    }
+
+    if (snap.reply && snap.reply !== lastShown) {
+      lastShown = snap.reply;
+      try {
+        await sendTextChunked(base, token, to, contextToken, lastShown || "…", "");
+      } catch (e) {
+        console.error(`[wechat-ilink] [${accountId.slice(0, 8)}] live reply:`, e.message);
+      }
+    }
+
+    if (snap.terminal) {
+      sawTerminal = true;
+      break;
+    }
+    await sleep(STREAM_POLL_MS);
+  }
+
+  let fin;
+  try {
+    fin = await postBridgeFinalize(accountId, ilinkPeerId, rid, tid, userMsg);
+  } catch (e) {
+    console.error(`[wechat-ilink] [${accountId.slice(0, 8)}] finalize:`, e.message);
+    await sendText(base, token, to, contextToken, `服务暂时不可用：${e.message.slice(0, 200)}`);
+    return;
+  }
+
+  const openUrl = typeof fin.thread_browser_url === "string" ? fin.thread_browser_url.trim() : "";
+  const finalReply = typeof fin.reply === "string" ? fin.reply : JSON.stringify(fin);
+  if (sawTerminal && finalReply === lastShown) {
+    if (openUrl) {
+      await sendText(base, token, to, contextToken, `${THREAD_BROWSER_FOOTER}${openUrl}`);
+    }
+    return;
+  }
+  await sendTextChunked(base, token, to, contextToken, finalReply || "（无回复）", openUrl);
+}
+
+async function handleMessage(msg, session, signal) {
+  if (signal?.aborted) return;
+
+  const tokenData = {
+    bot_token: session.bot_token,
+    baseurl: session.baseurl || ILINK_BASE,
+  };
+  const base = tokenData.baseurl;
   const token = tokenData.bot_token;
   const from = msg.from_user_id || "unknown";
   const contextToken = msg.context_token;
   const text = extractText(msg);
   const types = (msg.item_list || []).map((i) => MSG_TYPES[i.type] || `t${i.type}`).join("+");
+  const accountId = session.account_id;
 
-  console.log(`[wechat-ilink] [← ${types}] ${from}: ${(text || "(no text)").slice(0, 100)}`);
+  console.log(`[wechat-ilink] [${accountId.slice(0, 8)}] [← ${types}] ${from}: ${(text || "(no text)").slice(0, 100)}`);
 
   if (!contextToken) {
-    console.log("[wechat-ilink] [!] missing context_token, skip");
+    console.log(`[wechat-ilink] [${accountId.slice(0, 8)}] [!] missing context_token, skip`);
     return;
   }
+
+  tokenData._contextToken = contextToken;
 
   if (!text) {
     await sendText(base, token, from, contextToken, `收到你的非文本消息（${types}），请发文字继续对话。`);
@@ -325,49 +399,54 @@ async function handleMessage(msg, tokenData) {
 
   await startTyping(base, token, from, contextToken);
   try {
-    const data = await postBridgeChat(from, text);
-    const reply = typeof data.reply === "string" ? data.reply : JSON.stringify(data);
-    const openUrl = typeof data.thread_browser_url === "string" ? data.thread_browser_url.trim() : "";
-    await sendTextChunked(base, token, from, contextToken, reply || "（无回复）", openUrl);
+    await handleWechatChatTurn(accountId, from, text, tokenData);
   } catch (err) {
-    console.error("[wechat-ilink] [!] bridge:", err.message);
+    console.error(`[wechat-ilink] [${accountId.slice(0, 8)}] bridge:`, err.message);
     await sendText(base, token, from, contextToken, `服务暂时不可用：${err.message.slice(0, 200)}`);
   } finally {
     await stopTyping(base, token, from);
   }
 }
 
-/**
- * @param {AbortSignal} [signal]
- */
-async function pollLoop(tokenData, onMessage, signal) {
-  const base = tokenData.baseurl || ILINK_BASE;
-  const token = tokenData.bot_token;
-  let cursor = "";
+async function pollSessionLoop(session, signal) {
+  const accountId = session.account_id;
+  const base = session.baseurl || ILINK_BASE;
+  const token = session.bot_token;
+  let cursor = session.get_updates_buf || "";
 
-  console.log("\n[wechat-ilink] ========== Long poll (iLink) ==========");
-  console.log(`[wechat-ilink] API: ${API_BASE}/integrations/wechat-ilink/bridge/chat\n`);
+  console.log(`[wechat-ilink] [${accountId.slice(0, 8)}] poll started`);
 
   for (;;) {
-    if (signal?.aborted) {
-      console.log("[wechat-ilink] stopped (signal)");
+    if (signal.aborted) {
+      console.log(`[wechat-ilink] [${accountId.slice(0, 8)}] poll stopped`);
       return;
     }
+
     try {
       const data = await getUpdates(base, token, cursor);
 
       if (data.ret && data.ret !== 0) {
-        console.error(`[wechat-ilink] [!] getupdates ret=${data.ret} errmsg=${data.errmsg || ""}`);
+        console.error(
+          `[wechat-ilink] [${accountId.slice(0, 8)}] getupdates ret=${data.ret} errmsg=${data.errmsg || ""}`,
+        );
         if (data.errcode === -14) {
-          console.error("[wechat-ilink] [✗] Session expired — delete token file and restart");
-          throw new Error("WeChat iLink: session expired (errcode -14)");
+          console.error(`[wechat-ilink] [${accountId.slice(0, 8)}] session expired (errcode -14)`);
+          try {
+            await postSessionExpired(accountId);
+          } catch (e) {
+            console.error(`[wechat-ilink] mark expired failed: ${e.message}`);
+          }
+          return;
         }
         await sleep(3000);
         continue;
       }
 
-      if (data.get_updates_buf) {
+      if (data.get_updates_buf && data.get_updates_buf !== cursor) {
         cursor = data.get_updates_buf;
+        patchSessionCursor(accountId, cursor).catch((e) => {
+          console.error(`[wechat-ilink] [${accountId.slice(0, 8)}] cursor sync:`, e.message);
+        });
       }
 
       const messages = data.msgs || [];
@@ -375,17 +454,75 @@ async function pollLoop(tokenData, onMessage, signal) {
         if (msg.message_type === 2) continue;
         if (msg.from_user_id?.endsWith("@im.bot")) continue;
         try {
-          await onMessage(msg, tokenData);
+          await handleMessage(msg, session, signal);
         } catch (err) {
-          console.error("[wechat-ilink] [!] handler:", err.message);
+          console.error(`[wechat-ilink] [${accountId.slice(0, 8)}] handler:`, err.message);
         }
       }
     } catch (err) {
-      if (err.name === "AbortError") continue;
-      console.error("[wechat-ilink] [!] poll:", err.message, "— retry in 3s");
+      if (err.name === "AbortError" || signal.aborted) return;
+      console.error(`[wechat-ilink] [${accountId.slice(0, 8)}] poll:`, err.message, "— retry in 3s");
       await sleep(3000);
     }
   }
+}
+
+/**
+ * @param {AbortSignal} rootSignal
+ */
+async function runSessionManager(rootSignal) {
+  /** @type {Map<string, { abort: AbortController, promise: Promise<void> }>} */
+  const loops = new Map();
+
+  const refresh = async () => {
+    if (rootSignal.aborted) return;
+    let sessions;
+    try {
+      sessions = await fetchBridgeSessions();
+    } catch (e) {
+      console.error("[wechat-ilink] fetch sessions:", e.message);
+      return;
+    }
+
+    const activeIds = new Set(sessions.map((s) => s.account_id));
+
+    for (const [id, loop] of loops) {
+      if (!activeIds.has(id)) {
+        loop.abort.abort();
+        loops.delete(id);
+        console.log(`[wechat-ilink] removed session ${id.slice(0, 8)}`);
+      }
+    }
+
+    for (const session of sessions) {
+      if (loops.has(session.account_id)) continue;
+      const abort = new AbortController();
+      const combined = mergeAbortSignals(rootSignal, abort.signal);
+      const promise = pollSessionLoop(session, combined).catch((e) => {
+        if (!combined.aborted) {
+          console.error(`[wechat-ilink] [${session.account_id.slice(0, 8)}] loop fatal:`, e.message);
+        }
+      });
+      loops.set(session.account_id, { abort, promise });
+      console.log(`[wechat-ilink] added session ${session.account_id.slice(0, 8)} (${sessions.length} active)`);
+    }
+  };
+
+  await refresh();
+  const timer = setInterval(refresh, SESSIONS_REFRESH_MS);
+  rootSignal.addEventListener(
+    "abort",
+    () => {
+      clearInterval(timer);
+      for (const loop of loops.values()) loop.abort.abort();
+    },
+    { once: true },
+  );
+
+  await new Promise((resolve) => {
+    if (rootSignal.aborted) resolve();
+    else rootSignal.addEventListener("abort", () => resolve(), { once: true });
+  });
 }
 
 export function isWechatIlinkBridgeConfigured() {
@@ -400,7 +537,7 @@ export async function runWechatIlinkBridge(signal) {
     throw new Error("WeChat iLink: set WECHAT_ILINK_BRIDGE_SECRET (same as backend)");
   }
 
-  console.log("[wechat-ilink] bridge\n");
-  const tokenData = await login(signal);
-  await pollLoop(tokenData, handleMessage, signal);
+  console.log("[wechat-ilink] multi-session bridge");
+  console.log(`[wechat-ilink] API: ${API_BASE}/integrations/wechat-ilink/bridge/sessions\n`);
+  await runSessionManager(signal || new AbortController().signal);
 }

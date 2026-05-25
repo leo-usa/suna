@@ -36,7 +36,8 @@ WeChat iLink:
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `WECHAT_ILINK_BRIDGE_SECRET` | for iLink | Same value as backend `WECHAT_ILINK_BRIDGE_SECRET` |
-| `ILINK_TOKEN_FILE` | no | Bot token JSON path after QR login (default `./bot_token.json`) |
+
+Users connect WeChat via **dashboard QR scan** (`/dashboard/wechat`); the bridge loads active sessions from `GET /integrations/wechat-ilink/bridge/sessions`. Set backend `WECHAT_ILINK_TOKEN_ENCRYPTION_KEY` (Fernet) in production so tokens survive restarts.
 
 Feishu / Lark:
 

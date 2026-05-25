@@ -381,6 +381,9 @@ class Configuration:
     # Shared secret for the WeChat iLink bridge process (server-to-server only).
     WECHAT_ILINK_BRIDGE_SECRET: Optional[str] = None
 
+    # Fernet key for encrypting per-user WeChat iLink bot tokens at rest.
+    WECHAT_ILINK_TOKEN_ENCRYPTION_KEY: Optional[str] = None
+
     # Shared secret for the Feishu bridge process (server-to-server only).
     FEISHU_BRIDGE_SECRET: Optional[str] = None
 
