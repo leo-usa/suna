@@ -15,8 +15,8 @@ import {
   Bot,
   LucideIcon,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useEffect, useMemo, useState } from 'react';
+import { useTranslations, useLocale } from 'next-intl';
 import { cn } from '@/lib/utils';
 import { SUPPORT_MAILTO } from '@/lib/site-config';
 
@@ -26,6 +26,28 @@ interface TutorialEntry {
   duration?: string;
   embedCode: string;
   isPlaceholder?: boolean;
+}
+
+type TutorialLocaleOverride = Pick<TutorialEntry, 'embedCode' | 'isPlaceholder' | 'duration'>;
+
+const SOHU_INTRO_EMBED = `<div style="position: relative; padding-bottom: 56.25%; height: 0; width: 100%;"><iframe src="https://tv.sohu.com/s/sohuplayer/iplay.html?bid=718789706&autoplay=false&disablePlaylist=true" title="Dobby 简介" frameborder="0" loading="lazy" allowfullscreen scrolling="no" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe></div>`;
+
+/** Locale-specific embed overrides; other locales keep the default entry below. */
+const LOCALE_TUTORIAL_OVERRIDES: Record<string, Record<string, TutorialLocaleOverride>> = {
+  zh: {
+    'introduction-to-kortix': {
+      embedCode: SOHU_INTRO_EMBED,
+      isPlaceholder: false,
+    },
+  },
+};
+
+function resolveTutorialEntries(locale: string): TutorialEntry[] {
+  const overrides = LOCALE_TUTORIAL_OVERRIDES[locale] ?? {};
+  return TUTORIAL_ENTRIES.map((entry) => {
+    const override = overrides[entry.id];
+    return override ? { ...entry, ...override } : entry;
+  });
 }
 
 const TUTORIAL_ENTRIES: TutorialEntry[] = [
@@ -203,7 +225,9 @@ function TutorialCard({ entry, index }: { entry: TutorialEntry; index: number })
 
 export default function TutorialsPage() {
   const t = useTranslations('tutorialsPage');
-  const [activeId, setActiveId] = useState(TUTORIAL_ENTRIES[0]?.id || '');
+  const locale = useLocale();
+  const tutorialEntries = useMemo(() => resolveTutorialEntries(locale), [locale]);
+  const [activeId, setActiveId] = useState(tutorialEntries[0]?.id || '');
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -220,7 +244,7 @@ export default function TutorialsPage() {
       },
     );
 
-    TUTORIAL_ENTRIES.forEach((entry) => {
+    tutorialEntries.forEach((entry) => {
       const element = document.getElementById(entry.id);
       if (element) {
         observer.observe(element);
@@ -228,7 +252,7 @@ export default function TutorialsPage() {
     });
 
     return () => observer.disconnect();
-  }, []);
+  }, [tutorialEntries]);
 
   return (
     <main className="min-h-screen bg-background">
@@ -257,7 +281,7 @@ export default function TutorialsPage() {
       <div className="max-w-7xl mx-auto px-6 md:px-10 py-12 md:py-16">
         <div className="flex gap-12 lg:gap-16">
           <div className="flex-1 min-w-0 space-y-16">
-            {TUTORIAL_ENTRIES.map((entry, index) => (
+            {tutorialEntries.map((entry, index) => (
               <TutorialCard key={entry.id} entry={entry} index={index} />
             ))}
 
@@ -277,7 +301,7 @@ export default function TutorialsPage() {
 
           <aside className="hidden lg:block w-64 flex-shrink-0">
             <div className="sticky top-32">
-              <TableOfContents entries={TUTORIAL_ENTRIES} activeId={activeId} />
+              <TableOfContents entries={tutorialEntries} activeId={activeId} />
 
               <div className="mt-8 pt-8 border-t border-border">
                 <h3 className="text-sm font-semibold text-foreground mb-4 uppercase tracking-wider">
