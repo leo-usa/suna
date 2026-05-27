@@ -1645,7 +1645,7 @@
       "title": "Get additional credits",
       "description": "Add prepaid credits to continue using Dobby. Credits do not expire.",
       "currentBalance": "Current balance:",
-      "creditsPackLabel": "Credits",
+      "creditsPackLabel": "{count} Credits",
       "paymentMethod": "Payment method",
       "payCard": "Card",
       "payAlipay": "Alipay",

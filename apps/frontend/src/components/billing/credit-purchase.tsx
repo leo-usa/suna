@@ -17,7 +17,7 @@ import { AlertCircle, CreditCard } from 'lucide-react';
 import { DobbyLoader } from '@/components/ui/dobby-loader';
 import { billingApi } from '@/lib/api/billing';
 import { toast } from '@/lib/toast';
-import { formatCredits } from '@agentpress/shared';
+import { formatCredits, dollarsToCredits } from '@agentpress/shared';
 import { useUserCurrency } from '@/hooks/use-user-currency';
 import { formatPrice } from '@/lib/utils/currency';
 import { useLocale, useTranslations } from 'next-intl';
@@ -178,7 +178,7 @@ export function CreditPurchaseModal({
                                 >
                                     <CardContent className="p-4 text-center">
                                         <div className="text-xl font-medium">{formatPrice(pkg.amount, currency)}</div>
-                                        <div className="text-xs text-muted-foreground mt-1">{t('creditPurchase.creditsPackLabel')}</div>
+                                        <div className="text-xs text-muted-foreground mt-1">{t('creditPurchase.creditsPackLabel', { count: formatCredits(dollarsToCredits(pkg.amount)) })}</div>
                                     </CardContent>
                                 </Card>
                             ))}

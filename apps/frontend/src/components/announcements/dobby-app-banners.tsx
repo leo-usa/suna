@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { isElectron } from '@/lib/utils/is-electron';
 import { featureFlags } from '@/lib/feature-flags';
 import { AppDownloadQR, APP_DOWNLOAD_URL } from '@/components/common/app-download-qr';
+import { DobbyLogo } from '@/components/sidebar/dobby-logo';
 import { useTranslations } from 'next-intl';
 import {
   DESKTOP_DOWNLOAD_LINKS,
@@ -46,21 +47,6 @@ function GooglePlayLogo({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="currentColor">
       <path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 0 1-.61-.92V2.734a1 1 0 0 1 .609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-3.198l2.807 1.626a1 1 0 0 1 0 1.73l-2.808 1.626L15.206 12l2.492-2.491zM5.864 2.658L16.8 8.99l-2.302 2.302-8.634-8.634z"/>
-    </svg>
-  );
-}
-
-// Dobby symbol SVG (inline to avoid loading issues)
-function KortixSymbol({ size = 24, className }: { size?: number; className?: string }) {
-  return (
-    <svg 
-      width={size} 
-      height={size} 
-      viewBox="0 0 30 25" 
-      fill="currentColor" 
-      className={className}
-    >
-      <path d="M25.5614 24.916H29.8268C29.8268 19.6306 26.9378 15.0039 22.6171 12.4587C26.9377 9.91355 29.8267 5.28685 29.8267 0.00146484H25.5613C25.5613 5.00287 21.8906 9.18692 17.0654 10.1679V0.00146484H12.8005V10.1679C7.9526 9.20401 4.3046 5.0186 4.3046 0.00146484H0.0391572C0.0391572 5.28685 2.92822 9.91355 7.24884 12.4587C2.92818 15.0039 0.0390625 19.6306 0.0390625 24.916H4.30451C4.30451 19.8989 7.95259 15.7135 12.8005 14.7496V24.9206H17.0654V14.7496C21.9133 15.7134 25.5614 19.8989 25.5614 24.916Z"/>
     </svg>
   );
 }
@@ -179,7 +165,7 @@ export function KortixAppBanners(props: KortixAppBannersProps) {
                   </p>
                 </div>
                 <div className="w-10 h-10 rounded-xl bg-foreground dark:bg-white flex items-center justify-center shadow-sm">
-                  <KortixSymbol size={20} className="text-background dark:text-black" />
+                  <DobbyLogo size={20} className="invert dark:invert-0" />
                 </div>
               </div>
             </motion.div>
@@ -295,7 +281,7 @@ export function KortixAppBanners(props: KortixAppBannersProps) {
                         </div>
                         
                         <div className="w-8 h-8 bg-foreground dark:bg-[#1a1a1a] rounded-lg flex items-center justify-center">
-                          <KortixSymbol size={16} className="text-background dark:text-white" />
+                          <DobbyLogo size={16} className="invert" />
                         </div>
                         
                         <div className="flex gap-1 absolute bottom-1.5 right-2">

@@ -1733,7 +1733,7 @@
       "title": "购买额外积分",
       "description": "充值预付费积分以继续使用 Dobby。积分不过期。",
       "currentBalance": "当前余额：",
-      "creditsPackLabel": "积分",
+      "creditsPackLabel": "{count} 积分",
       "paymentMethod": "支付方式",
       "payCard": "银行卡",
       "payAlipay": "支付宝",
