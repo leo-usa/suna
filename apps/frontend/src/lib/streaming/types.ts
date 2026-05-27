@@ -71,8 +71,6 @@ export interface AccumulatedToolCall {
     index?: number;
   };
   chunks: Array<{ sequence: number; delta: string }>;
-  mergedArgs: string;
-  seenSequences: Set<number>;
 }
 
 export interface ReconstructedToolCall {
