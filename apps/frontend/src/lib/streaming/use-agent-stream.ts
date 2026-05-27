@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useRef, useEffect, useState, useMemo } from 'react';
+import { useCallback, useRef, useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import type {
   AgentStatus,
@@ -84,7 +84,7 @@ export function useAgentStream(
   const queryClient = useQueryClient();
   
   const [status, setStatus] = useState<AgentStatus>('idle');
-  const [textChunks, setTextChunks] = useState<Array<{ content: string; sequence: number }>>([]);
+  const [textContent, setTextContent] = useState<string>('');
   const [reasoningContent, setReasoningContent] = useState('');
   const [isReasoningComplete, setIsReasoningComplete] = useState(false);
   const [toolCall, setToolCall] = useState<UnifiedMessage | null>(null);
@@ -106,6 +106,7 @@ export function useAgentStream(
   const statusRef = useRef(status);
   
   const pendingChunksRef = useRef<Array<{ content: string; sequence: number }>>([]);
+  const seenSequencesRef = useRef<Set<number>>(new Set());
   const rafIdRef = useRef<number | null>(null);
   
   const toolCallThrottleRef = useRef<{
@@ -151,29 +152,33 @@ export function useAgentStream(
     };
   }, []);
   
-  const textContent = useMemo(() => {
-    if (textChunks.length === 0) return '';
-    const sorted = [...textChunks].sort((a, b) => a.sequence - b.sequence);
-    return sorted.map(chunk => chunk.content).join('');
-  }, [textChunks]);
-  
   const flushPendingChunks = useCallback(() => {
     if (!isMountedRef.current) return;
-    
+
     if (pendingChunksRef.current.length > 0) {
-      const chunksToAdd = [...pendingChunksRef.current];
+      const chunksToAdd = pendingChunksRef.current;
       pendingChunksRef.current = [];
-      
-      setTextChunks(prev => {
-        const combined = [...prev, ...chunksToAdd];
-        const deduplicated = new Map<number, { content: string; sequence: number }>();
-        for (const chunk of combined) {
-          deduplicated.set(chunk.sequence, chunk);
+
+      const seen = seenSequencesRef.current;
+      const uniqueChunks: Array<{ content: string; sequence: number }> = [];
+      for (const chunk of chunksToAdd) {
+        if (seen.has(chunk.sequence)) continue;
+        seen.add(chunk.sequence);
+        uniqueChunks.push(chunk);
+      }
+
+      if (uniqueChunks.length > 0) {
+        uniqueChunks.sort((a, b) => a.sequence - b.sequence);
+        let appended = '';
+        for (const chunk of uniqueChunks) {
+          appended += chunk.content;
         }
-        return Array.from(deduplicated.values()).sort((a, b) => a.sequence - b.sequence);
-      });
+        if (appended.length > 0) {
+          setTextContent(prev => prev + appended);
+        }
+      }
     }
-    
+
     rafIdRef.current = null;
   }, []);
   
@@ -225,13 +230,14 @@ export function useAgentStream(
   }, [queryClient]);
   
   const resetState = useCallback(() => {
-    setTextChunks([]);
+    setTextContent('');
     setReasoningContent('');
     setIsReasoningComplete(false);
     setToolCall(null);
     setError(null);
     clearAccumulator(accumulatorRef.current);
     pendingChunksRef.current = [];
+    seenSequencesRef.current = new Set();
     
     if (rafIdRef.current) {
       cancelAnimationFrame(rafIdRef.current);
