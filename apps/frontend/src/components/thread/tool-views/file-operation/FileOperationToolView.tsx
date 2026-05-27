@@ -293,92 +293,90 @@ export function FileOperationToolView({
   const streamingSource = isStreaming ? throttledStreamingSource : rawStreamingSource;
 
   const rawFileContents = useMemo(() => {
-    if (!streamingSource) return '';
-    if (typeof streamingSource === 'object') {
-      return (streamingSource as Record<string, any>).file_contents || '';
-    }
-    const source = streamingSource as string;
-    const pattern = /"file_contents"\s*:\s*"/;
-    const match = source.match(pattern);
-    if (match && match.index !== undefined) {
-      const startIndex = match.index + match[0].length;
-      let value = '';
-      let i = startIndex;
-      let escaped = false;
-      while (i < source.length) {
-        const char = source[i];
-        if (escaped) {
-          switch (char) {
-            case 'n': value += '\n'; break;
-            case 't': value += '\t'; break;
-            case 'r': value += '\r'; break;
-            case '"': value += '"'; break;
-            case '\\': value += '\\'; break;
-            default: value += char;
-          }
-          escaped = false;
-        } else if (char === '\\') {
-          escaped = true;
-        } else if (char === '"') {
-          return value;
-        } else {
-          value += char;
-        }
-        i++;
-      }
-      return value;
+    if (!rawStreamingSource) return '';
+    if (typeof rawStreamingSource === 'object') {
+      return (rawStreamingSource as Record<string, any>).file_contents || '';
     }
     try {
-      const parsed = JSON.parse(source);
+      const parsed = JSON.parse(rawStreamingSource);
       return parsed.file_contents || '';
     } catch {
+      const pattern = /"file_contents"\s*:\s*"/;
+      const match = rawStreamingSource.match(pattern);
+      if (match && match.index !== undefined) {
+        const startIndex = match.index + match[0].length;
+        let value = '';
+        let i = startIndex;
+        let escaped = false;
+        while (i < rawStreamingSource.length) {
+          const char = rawStreamingSource[i];
+          if (escaped) {
+            switch (char) {
+              case 'n': value += '\n'; break;
+              case 't': value += '\t'; break;
+              case 'r': value += '\r'; break;
+              case '"': value += '"'; break;
+              case '\\': value += '\\'; break;
+              default: value += char;
+            }
+            escaped = false;
+          } else if (char === '\\') {
+            escaped = true;
+          } else if (char === '"') {
+            return value;
+          } else {
+            value += char;
+          }
+          i++;
+        }
+        return value;
+      }
       return '';
     }
-  }, [streamingSource]);
+  }, [rawStreamingSource]);
 
   const rawCodeEdit = useMemo(() => {
-    if (!streamingSource) return '';
-    if (typeof streamingSource === 'object') {
-      return (streamingSource as Record<string, any>).code_edit || '';
-    }
-    const source = streamingSource as string;
-    const pattern = /"code_edit"\s*:\s*"/;
-    const match = source.match(pattern);
-    if (match && match.index !== undefined) {
-      const startIndex = match.index + match[0].length;
-      let value = '';
-      let i = startIndex;
-      let escaped = false;
-      while (i < source.length) {
-        const char = source[i];
-        if (escaped) {
-          switch (char) {
-            case 'n': value += '\n'; break;
-            case 't': value += '\t'; break;
-            case 'r': value += '\r'; break;
-            case '"': value += '"'; break;
-            case '\\': value += '\\'; break;
-            default: value += char;
-          }
-          escaped = false;
-        } else if (char === '\\') {
-          escaped = true;
-        } else if (char === '"') {
-          return value;
-        } else {
-          value += char;
-        }
-        i++;
-      }
-      return value;
+    if (!rawStreamingSource) return '';
+    if (typeof rawStreamingSource === 'object') {
+      return (rawStreamingSource as Record<string, any>).code_edit || '';
     }
     try {
-      const parsed = JSON.parse(source);
+      const parsed = JSON.parse(rawStreamingSource);
       return parsed.code_edit || '';
     } catch {
+      const pattern = /"code_edit"\s*:\s*"/;
+      const match = rawStreamingSource.match(pattern);
+      if (match && match.index !== undefined) {
+        const startIndex = match.index + match[0].length;
+        let value = '';
+        let i = startIndex;
+        let escaped = false;
+        while (i < rawStreamingSource.length) {
+          const char = rawStreamingSource[i];
+          if (escaped) {
+            switch (char) {
+              case 'n': value += '\n'; break;
+              case 't': value += '\t'; break;
+              case 'r': value += '\r'; break;
+              case '"': value += '"'; break;
+              case '\\': value += '\\'; break;
+              default: value += char;
+            }
+            escaped = false;
+          } else if (char === '\\') {
+            escaped = true;
+          } else if (char === '"') {
+            return value;
+          } else {
+            value += char;
+          }
+          i++;
+        }
+        return value;
+      }
       return '';
     }
-  }, [streamingSource]);
+  }, [rawStreamingSource]);
 
   const isFileContentsAnimating = isStreaming && (operation === 'create' || operation === 'rewrite') && !toolResult;
   const isCodeEditAnimating = isStreaming && operation === 'edit' && !toolResult;

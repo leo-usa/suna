@@ -368,16 +368,14 @@ export function useThreadToolCalls(
 
           // Keep raw string for streaming partial JSON parsing, parse to object for completed
           const rawArgs = metadataToolCall.arguments;
-          const isCompleted = (metadataToolCall as any).completed === true;
           const parsedArgs = (() => {
             if (!rawArgs) return {};
             if (typeof rawArgs === 'object' && rawArgs !== null) return rawArgs;
             if (typeof rawArgs === 'string') {
-              if (!isCompleted) return {};
               try {
                 return JSON.parse(rawArgs);
               } catch {
-                return {};
+                return {}; // Partial JSON - will use rawArgs for streaming
               }
             }
             return {};
@@ -385,6 +383,7 @@ export function useThreadToolCalls(
 
           // Check if this tool call has a result (from useAgentStream merging)
           const toolResult = (metadataToolCall as any).tool_result;
+          const isCompleted = (metadataToolCall as any).completed === true;
           
           const newToolCall: ToolCallInput = {
             toolCall: {
@@ -414,13 +413,11 @@ export function useThreadToolCalls(
               if (typeof args === 'object' && args !== null) {
                 normalizedArgs = args;
               } else if (typeof args === 'string') {
-                rawArgsStr = args;
-                if (isCompleted) {
-                  try {
-                    normalizedArgs = JSON.parse(args);
-                  } catch {
-                    normalizedArgs = {};
-                  }
+                rawArgsStr = args; // Keep raw string for streaming
+                try {
+                  normalizedArgs = JSON.parse(args);
+                } catch {
+                  normalizedArgs = {};
                 }
               }
             }
