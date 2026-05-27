@@ -1,7 +1,7 @@
 import asyncio
 import time
 
-from daytona_sdk import AsyncDaytona, DaytonaConfig, CreateSandboxFromSnapshotParams, AsyncSandbox, SessionExecuteRequest, SandboxState, ListSandboxesQuery
+from daytona_sdk import AsyncDaytona, DaytonaConfig, CreateSandboxFromSnapshotParams, AsyncSandbox, SessionExecuteRequest, SandboxState
 from dotenv import load_dotenv
 from core.utils.logger import logger
 from core.utils.config import config
@@ -65,11 +65,15 @@ def _sandbox_lru_sort_key(s: AsyncSandbox) -> float:
 
 
 async def _list_all_sandboxes_paginated() -> tuple[list[AsyncSandbox], int]:
-    """Fetch every sandbox via cursor-based iteration (Daytona SDK >= 0.180)."""
-    items: list[AsyncSandbox] = []
-    async for sandbox in daytona.list(ListSandboxesQuery(limit=SANDBOX_LIST_PAGE_SIZE)):
-        items.append(sandbox)
-    return items, len(items)
+    """Fetch every sandbox (all pages). `daytona.list()` returns AsyncPaginatedSandboxes, not a list."""
+    first = await daytona.list(page=1, limit=SANDBOX_LIST_PAGE_SIZE)
+    items: list[AsyncSandbox] = list(first.items)
+    total = int(first.total) if first.total is not None else len(items)
+    total_pages = max(int(first.total_pages or 1), 1)
+    for page in range(2, total_pages + 1):
+        batch = await daytona.list(page=page, limit=SANDBOX_LIST_PAGE_SIZE)
+        items.extend(batch.items)
+    return items, total
 
 
 async def sync_db_after_evicted_sandbox(sandbox_id: str) -> None:

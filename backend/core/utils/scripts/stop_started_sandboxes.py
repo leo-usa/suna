@@ -96,7 +96,7 @@ def stop_started_sandboxes(dry_run: bool = False, save_json: bool = False, json_
     
     # Get all sandboxes
     try:
-        all_sandboxes = list(daytona.list())
+        all_sandboxes = daytona.list()
         logger.info(f"✓ Found {len(all_sandboxes)} total sandboxes")
         
         # Print sample sandbox data for debugging
