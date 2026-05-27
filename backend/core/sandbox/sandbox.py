@@ -35,8 +35,16 @@ daytona = AsyncDaytona(daytona_config)
 
 
 async def download_sandbox_file_bytes(sandbox: AsyncSandbox, path: str, timeout: int = 30 * 60) -> bytes:
-    """Read file bytes from the sandbox using the Daytona SDK's public download API."""
-    raw = await sandbox.fs.download_file(path, timeout)
+    """
+    Read file bytes from the sandbox.
+
+    ``sandbox.fs.download_file`` uses bulk POST with paths in JSON; the toolbox
+    can mangle non-ASCII segments. GET ``/files/download`` passes the path in
+    the query string so UTF-8 filenames resolve correctly.
+    """
+    fs = sandbox.fs
+    await fs._ensure_toolbox_url()
+    raw = await fs._api_client.download_file(path=path, _request_timeout=timeout)
     return bytes(raw) if raw else b""
 
 
