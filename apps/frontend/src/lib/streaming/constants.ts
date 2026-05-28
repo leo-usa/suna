@@ -9,7 +9,10 @@ export const STREAM_CONFIG = {
   
   STATUS_CHECK_DELAY_MS: 500,
   
-  TOOL_CALL_THROTTLE_MS: 16,
+  /** UI updates for tool-call streaming (large create_file args) */
+  TOOL_CALL_THROTTLE_MS: 250,
+  /** Omit tool arguments from SSE metadata above this size (prevents JSON.stringify freeze) */
+  STREAMING_TOOL_ARGS_MAX_METADATA_CHARS: 2048,
   
   CONTENT_FLUSH_INTERVAL_MS: 16,
   

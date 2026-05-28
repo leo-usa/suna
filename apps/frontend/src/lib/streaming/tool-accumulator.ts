@@ -47,13 +47,19 @@ export function accumulateToolCallDeltas(
       const existingIndex = accumulated.chunks.findIndex(c => c.sequence === sequence);
       if (existingIndex >= 0) {
         accumulated.chunks[existingIndex].delta = tc.arguments_delta;
+        accumulated.mergedArguments = accumulated.chunks
+          .slice()
+          .sort((a, b) => a.sequence - b.sequence)
+          .map(c => c.delta)
+          .join('');
       } else {
         accumulated.chunks.push({ sequence, delta: tc.arguments_delta });
+        accumulated.mergedArguments = (accumulated.mergedArguments || '') + tc.arguments_delta;
       }
-      accumulated.chunks.sort((a, b) => a.sequence - b.sequence);
     } else if (tc.arguments) {
       const argsStr = typeof tc.arguments === 'string' ? tc.arguments : JSON.stringify(tc.arguments);
       accumulated.chunks = [{ sequence, delta: argsStr }];
+      accumulated.mergedArguments = argsStr;
     }
   }
 }
@@ -64,9 +70,11 @@ export function reconstructToolCalls(
   const allReconstructedToolCalls = Array.from(accumulator.accumulatedToolCalls.values())
     .sort((a, b) => (a.metadata.index ?? 0) - (b.metadata.index ?? 0))
     .map(accumulated => {
-      let mergedArgs = '';
-      for (const chunk of accumulated.chunks) {
-        mergedArgs += chunk.delta;
+      let mergedArgs = accumulated.mergedArguments ?? '';
+      if (!mergedArgs && accumulated.chunks.length > 0) {
+        for (const chunk of accumulated.chunks) {
+          mergedArgs += chunk.delta;
+        }
       }
       
       const toolCallId = accumulated.metadata.tool_call_id;
@@ -136,6 +144,9 @@ export function getAccumulatedArgumentsForToolCall(
   const accumulated = accumulator.accumulatedToolCalls.get(toolCallId);
   if (!accumulated) return null;
   
+  if (accumulated.mergedArguments !== undefined) {
+    return accumulated.mergedArguments;
+  }
   let mergedArgs = '';
   for (const chunk of accumulated.chunks) {
     mergedArgs += chunk.delta;

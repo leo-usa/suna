@@ -71,6 +71,8 @@ export interface AccumulatedToolCall {
     index?: number;
   };
   chunks: Array<{ sequence: number; delta: string }>;
+  /** Incrementally merged arguments — avoids O(n²) re-concat on every chunk */
+  mergedArguments?: string;
 }
 
 export interface ReconstructedToolCall {
@@ -82,6 +84,9 @@ export interface ReconstructedToolCall {
   is_delta: boolean;
   completed: boolean;
   tool_result?: unknown;
+  /** Large streaming args stripped from metadata to keep the main thread responsive */
+  arguments_omitted?: boolean;
+  argument_byte_length?: number;
 }
 
 export interface ToolCallAccumulatorState {

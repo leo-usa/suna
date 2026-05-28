@@ -20,6 +20,7 @@ import {
   isCompletionMessage, 
   isBillingError 
 } from './utils';
+import { STREAM_CONFIG } from './constants';
 import {
   accumulateToolCallDeltas,
   reconstructToolCalls,
@@ -368,11 +369,34 @@ function extractReasoningContent(
   return null;
 }
 
+function toolCallsForStreamMetadata(
+  reconstructedToolCalls: ReconstructedToolCall[],
+): ReconstructedToolCall[] {
+  const maxChars = STREAM_CONFIG.STREAMING_TOOL_ARGS_MAX_METADATA_CHARS;
+  return reconstructedToolCalls.map((tc) => {
+    const argsStr =
+      typeof tc.arguments === 'string'
+        ? tc.arguments
+        : JSON.stringify(tc.arguments ?? '');
+    if (argsStr.length <= maxChars) {
+      return tc;
+    }
+    return {
+      ...tc,
+      arguments: '',
+      rawArguments: undefined,
+      arguments_omitted: true,
+      argument_byte_length: argsStr.length,
+    } as ReconstructedToolCall;
+  });
+}
+
 export function createMessageWithToolCalls(
   originalMessage: StreamMessage,
   reconstructedToolCalls: ReconstructedToolCall[]
 ): UnifiedMessage {
   const parsedMetadata = safeJsonParse<ParsedMetadata>(originalMessage.metadata || '', {});
+  const toolCallsForMetadata = toolCallsForStreamMetadata(reconstructedToolCalls);
   
   return {
     message_id: originalMessage.message_id || '',
@@ -381,7 +405,7 @@ export function createMessageWithToolCalls(
     content: originalMessage.content || '',
     metadata: JSON.stringify({
       ...parsedMetadata,
-      tool_calls: reconstructedToolCalls,
+      tool_calls: toolCallsForMetadata,
     }),
     sequence: originalMessage.sequence,
     created_at: originalMessage.created_at || new Date().toISOString(),

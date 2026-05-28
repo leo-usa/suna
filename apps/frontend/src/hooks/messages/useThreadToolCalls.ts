@@ -8,6 +8,7 @@ import { isAskOrCompleteTool } from './utils';
 import { isHiddenTool } from '@agentpress/shared/tools';
 import { useDobbyComputerStore, useIsSidePanelOpen, useSetIsSidePanelOpen } from '@/stores/dobby-computer-store';
 import { getOrAssignToolNumber, getToolNumber } from './tool-tracking';
+import { STREAM_CONFIG } from '@/lib/streaming/constants';
 
 interface UseThreadToolCallsReturn {
   toolCalls: ToolCallInput[];
@@ -326,125 +327,113 @@ export function useThreadToolCalls(
     }
   }, [messages, toolCalls, navigateToToolCall, setIsSidePanelOpen]);
 
-  const handleStreamingToolCall = useCallback(
-    (toolCall: UnifiedMessage | null) => {
-      if (!toolCall) return;
+  const pendingStreamingToolCallRef = useRef<UnifiedMessage | null>(null);
+  const streamingToolCallDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-      // Extract tool calls from UnifiedMessage metadata.tool_calls
+  const applyStreamingToolCall = useCallback(
+    (toolCall: UnifiedMessage) => {
       const metadata = safeJsonParse<ParsedMetadata>(toolCall.metadata, {});
       const toolCallsFromMetadata = metadata.tool_calls || [];
-
       if (toolCallsFromMetadata.length === 0) return;
 
-      // Filter out ask and complete tools, and hidden tools (internal/initialization tools)
       const filteredToolCalls = toolCallsFromMetadata.filter(tc => {
         const toolName = tc.function_name.replace(/_/g, '-').toLowerCase();
         return toolName !== 'ask' && toolName !== 'complete' && !isHiddenTool(toolName);
       });
-
       if (filteredToolCalls.length === 0) return;
-
       if (userClosedPanelRef.current) return;
 
-      // Track if we added any new tool calls using an object (to allow mutation in closure)
       const tracker = { addedNewToolCall: false, newToolCallCount: 0 };
 
-      // Process each tool call from metadata
+      const parseToolArgs = (
+        rawArgs: unknown,
+        argsOmitted: boolean,
+        isCompleted: boolean,
+      ): { parsed: Record<string, unknown>; rawStr?: string } => {
+        if (argsOmitted && !isCompleted) {
+          return { parsed: {} };
+        }
+        if (!rawArgs) return { parsed: {} };
+        if (typeof rawArgs === 'object' && rawArgs !== null) {
+          return { parsed: rawArgs as Record<string, unknown> };
+        }
+        if (typeof rawArgs === 'string') {
+          if (!isCompleted && rawArgs.length > STREAM_CONFIG.STREAMING_TOOL_ARGS_MAX_METADATA_CHARS) {
+            return { parsed: {} };
+          }
+          try {
+            return { parsed: JSON.parse(rawArgs) as Record<string, unknown>, rawStr: rawArgs };
+          } catch {
+            return { parsed: {}, rawStr: isCompleted ? rawArgs : undefined };
+          }
+        }
+        return { parsed: {} };
+      };
+
       setToolCalls((prev) => {
         const updated = [...prev];
-        
-        // Update or add each tool call from metadata
+
         filteredToolCalls.forEach((metadataToolCall) => {
-        const toolCallId = metadataToolCall.tool_call_id;
-        const functionName = metadataToolCall.function_name;
-        
-        // Get or assign tool identifier for verbose logging
-        const existingNumber = getToolNumber(toolCallId);
-        const toolNumber = getOrAssignToolNumber(toolCallId);
-          
+          const toolCallId = metadataToolCall.tool_call_id;
+          getOrAssignToolNumber(toolCallId);
+
           const existingIndex = updated.findIndex(
-            tc => tc.toolCall.tool_call_id === toolCallId
+            tc => tc.toolCall.tool_call_id === toolCallId,
           );
 
-          // Keep raw string for streaming partial JSON parsing, parse to object for completed
-          const rawArgs = metadataToolCall.arguments;
-          const parsedArgs = (() => {
-            if (!rawArgs) return {};
-            if (typeof rawArgs === 'object' && rawArgs !== null) return rawArgs;
-            if (typeof rawArgs === 'string') {
-              try {
-                return JSON.parse(rawArgs);
-              } catch {
-                return {}; // Partial JSON - will use rawArgs for streaming
-              }
-            }
-            return {};
-          })();
+          const toolResult = (metadataToolCall as { tool_result?: { success?: boolean; output?: unknown; error?: string | null } }).tool_result;
+          const isCompleted = (metadataToolCall as { completed?: boolean }).completed === true;
+          const argsOmitted = (metadataToolCall as { arguments_omitted?: boolean }).arguments_omitted === true;
+          const { parsed: parsedArgs, rawStr: rawArgsStr } = parseToolArgs(
+            metadataToolCall.arguments,
+            argsOmitted,
+            isCompleted,
+          );
 
-          // Check if this tool call has a result (from useAgentStream merging)
-          const toolResult = (metadataToolCall as any).tool_result;
-          const isCompleted = (metadataToolCall as any).completed === true;
-          
-          const newToolCall: ToolCallInput = {
+          const mergedToolResult = toolResult
+            ? {
+                success: toolResult.success !== false,
+                output: toolResult.output,
+                error: toolResult.error || null,
+              }
+            : undefined;
+
+          if (existingIndex !== -1) {
+            if (argsOmitted && !isCompleted && !mergedToolResult) {
+              return;
+            }
+
+            const prior = updated[existingIndex];
+            updated[existingIndex] = {
+              ...prior,
+              toolCall: {
+                ...prior.toolCall,
+                function_name: metadataToolCall.function_name,
+                arguments: isCompleted || !argsOmitted ? parsedArgs : prior.toolCall.arguments,
+                rawArguments: rawArgsStr ?? (argsOmitted ? prior.toolCall.rawArguments : undefined),
+              },
+              toolResult: mergedToolResult ?? prior.toolResult,
+              isSuccess: mergedToolResult
+                ? mergedToolResult.success !== false
+                : prior.isSuccess,
+            };
+            return;
+          }
+
+          updated.push({
             toolCall: {
               tool_call_id: metadataToolCall.tool_call_id,
               function_name: metadataToolCall.function_name,
               arguments: parsedArgs,
-              // Store raw string for streaming partial JSON parsing
-              rawArguments: typeof rawArgs === 'string' ? rawArgs : undefined,
+              rawArguments: rawArgsStr,
               source: metadataToolCall.source || 'native',
             },
-            // Merge tool result if available (real-time result from useAgentStream)
-            toolResult: toolResult ? {
-              success: toolResult.success !== false,
-              output: toolResult.output,
-              error: toolResult.error || null,
-            } : undefined,
-            isSuccess: toolResult ? (toolResult.success !== false) : true,
+            toolResult: mergedToolResult,
+            isSuccess: mergedToolResult ? mergedToolResult.success !== false : true,
             assistantTimestamp: toolCall.created_at || new Date().toISOString(),
             messages: messages as any,
-          };
-
-          if (existingIndex !== -1) {
-            const args = metadataToolCall.arguments;
-            let normalizedArgs: Record<string, any> = {};
-            let rawArgsStr: string | undefined = undefined;
-            if (args) {
-              if (typeof args === 'object' && args !== null) {
-                normalizedArgs = args;
-              } else if (typeof args === 'string') {
-                rawArgsStr = args; // Keep raw string for streaming
-                try {
-                  normalizedArgs = JSON.parse(args);
-                } catch {
-                  normalizedArgs = {};
-                }
-              }
-            }
-            
-            // Merge tool result if available (real-time update)
-            const mergedToolResult = toolResult ? {
-              success: toolResult.success !== false,
-              output: toolResult.output,
-              error: toolResult.error || null,
-            } : updated[existingIndex].toolResult;
-            
-            updated[existingIndex] = {
-              ...updated[existingIndex],
-              toolCall: {
-                ...updated[existingIndex].toolCall,
-                arguments: normalizedArgs,
-                rawArguments: rawArgsStr,
-              },
-              // Update tool result if available (real-time merge)
-              toolResult: mergedToolResult,
-              isSuccess: mergedToolResult ? (mergedToolResult.success !== false) : updated[existingIndex].isSuccess,
-              messages: messages as any,
-            };
-          } else {
-            updated.push(newToolCall);
-            tracker.addedNewToolCall = true;
-          }
+          });
+          tracker.addedNewToolCall = true;
         });
 
         tracker.newToolCallCount = updated.length;
@@ -455,9 +444,7 @@ export function useThreadToolCalls(
         setIsSidePanelOpen(true);
       }
 
-      // Auto-navigate to the latest tool call when a new one is added (if user hasn't manually navigated)
       if (tracker.addedNewToolCall && !userNavigatedRef.current) {
-        // Use setTimeout to ensure state has updated
         setTimeout(() => {
           setCurrentToolIndex(tracker.newToolCallCount - 1);
           navigateToToolCall(tracker.newToolCallCount - 1);
@@ -466,6 +453,34 @@ export function useThreadToolCalls(
     },
     [compact, navigateToToolCall, messages, setIsSidePanelOpen],
   );
+
+  const handleStreamingToolCall = useCallback(
+    (toolCall: UnifiedMessage | null) => {
+      if (!toolCall) return;
+      pendingStreamingToolCallRef.current = toolCall;
+
+      if (streamingToolCallDebounceRef.current) {
+        clearTimeout(streamingToolCallDebounceRef.current);
+      }
+
+      streamingToolCallDebounceRef.current = setTimeout(() => {
+        streamingToolCallDebounceRef.current = null;
+        const pending = pendingStreamingToolCallRef.current;
+        if (pending) {
+          applyStreamingToolCall(pending);
+        }
+      }, STREAM_CONFIG.TOOL_CALL_THROTTLE_MS);
+    },
+    [applyStreamingToolCall],
+  );
+
+  useEffect(() => {
+    return () => {
+      if (streamingToolCallDebounceRef.current) {
+        clearTimeout(streamingToolCallDebounceRef.current);
+      }
+    };
+  }, []);
   
   // Update current tool index when toolCalls changes (if user hasn't manually navigated)
   useEffect(() => {

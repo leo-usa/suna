@@ -294,6 +294,13 @@ export function FileOperationToolView({
 
   const rawFileContents = useMemo(() => {
     if (!rawStreamingSource) return '';
+    if (
+      isStreaming &&
+      !toolResult &&
+      (operation === 'create' || operation === 'rewrite' || operation === 'edit')
+    ) {
+      return '';
+    }
     if (typeof rawStreamingSource === 'object') {
       return (rawStreamingSource as Record<string, any>).file_contents || '';
     }
@@ -333,10 +340,13 @@ export function FileOperationToolView({
       }
       return '';
     }
-  }, [rawStreamingSource]);
+  }, [rawStreamingSource, isStreaming, toolResult, operation]);
 
   const rawCodeEdit = useMemo(() => {
     if (!rawStreamingSource) return '';
+    if (isStreaming && !toolResult && operation === 'edit') {
+      return '';
+    }
     if (typeof rawStreamingSource === 'object') {
       return (rawStreamingSource as Record<string, any>).code_edit || '';
     }
@@ -376,7 +386,7 @@ export function FileOperationToolView({
       }
       return '';
     }
-  }, [rawStreamingSource]);
+  }, [rawStreamingSource, isStreaming, toolResult, operation]);
 
   const isFileContentsAnimating = isStreaming && (operation === 'create' || operation === 'rewrite') && !toolResult;
   const isCodeEditAnimating = isStreaming && operation === 'edit' && !toolResult;

@@ -1105,7 +1105,9 @@ export function ThreadComponent({ projectId, threadId, compact = false, configur
     pendingMessageRef.current = null;
   }, [openBillingModal]);
 
-  const handleStreamClose = useCallback(() => { }, []);
+  const handleStreamClose = useCallback(() => {
+    void messagesQuery.refetch();
+  }, [messagesQuery]);
 
   const appendOutput = useToolStreamStore((state) => state.appendOutput);
   const markComplete = useToolStreamStore((state) => state.markComplete);
