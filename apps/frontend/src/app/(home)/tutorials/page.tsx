@@ -32,11 +32,35 @@ type TutorialLocaleOverride = Pick<TutorialEntry, 'embedCode' | 'isPlaceholder' 
 
 const SOHU_INTRO_EMBED = `<div style="position: relative; padding-bottom: 56.25%; height: 0; width: 100%;"><iframe src="https://tv.sohu.com/s/sohuplayer/iplay.html?bid=718789706&autoplay=false&disablePlaylist=true" title="Dobby 简介" frameborder="0" loading="lazy" allowfullscreen scrolling="no" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe></div>`;
 
+const VIMEO_FIRST_TASK_EMBED = `<div style="position: relative; padding-bottom: 56.25%; height: 0; width: 100%;"><iframe src="https://player.vimeo.com/video/1196213790?title=0&byline=0&portrait=0" title="入门：您的第一个任务" frameborder="0" loading="lazy" allow="autoplay; fullscreen; picture-in-picture; clipboard-write" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe></div>`;
+
+const VIMEO_PRESENTATIONS_EMBED = `<div style="position: relative; padding-bottom: 56.25%; height: 0; width: 100%;"><iframe src="https://player.vimeo.com/video/1196558764?title=0&byline=0&portrait=0" title="如何创建与导出演示文稿" frameborder="0" loading="lazy" allow="autoplay; fullscreen; picture-in-picture; clipboard-write" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe></div>`;
+
+const VIMEO_MANAGE_FILES_EMBED = `<div style="position: relative; padding-bottom: 56.25%; height: 0; width: 100%;"><iframe src="https://player.vimeo.com/video/1196868367?title=0&byline=0&portrait=0" title="如何用 Dobby 创建与管理文件" frameborder="0" loading="lazy" allow="autoplay; fullscreen; picture-in-picture; clipboard-write" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe></div>`;
+
+const VIMEO_VIDEOS_IMAGES_EMBED = `<div style="position: relative; padding-bottom: 56.25%; height: 0; width: 100%;"><iframe src="https://player.vimeo.com/video/1196838978?title=0&byline=0&portrait=0" title="创建视频与图像" frameborder="0" loading="lazy" allow="autoplay; fullscreen; picture-in-picture; clipboard-write" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe></div>`;
+
 /** Locale-specific embed overrides; other locales keep the default entry below. */
 const LOCALE_TUTORIAL_OVERRIDES: Record<string, Record<string, TutorialLocaleOverride>> = {
   zh: {
     'introduction-to-kortix': {
       embedCode: SOHU_INTRO_EMBED,
+      isPlaceholder: false,
+    },
+    'getting-started-first-task': {
+      embedCode: VIMEO_FIRST_TASK_EMBED,
+      isPlaceholder: false,
+    },
+    'create-export-presentations': {
+      embedCode: VIMEO_PRESENTATIONS_EMBED,
+      isPlaceholder: false,
+    },
+    'create-manage-files': {
+      embedCode: VIMEO_MANAGE_FILES_EMBED,
+      isPlaceholder: false,
+    },
+    'create-videos-images': {
+      embedCode: VIMEO_VIDEOS_IMAGES_EMBED,
       isPlaceholder: false,
     },
   },
