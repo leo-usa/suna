@@ -26,7 +26,7 @@ import '../../../../../node_modules/@syncfusion/ej2-react-spreadsheet/styles/mat
 import './dobby-spreadsheet-styles.css';
 
 
-const SYNCFUSION_LICENSE = "Ngo9BigBOggjHTQxAR8/V1JGaF1cXmhKYVFxWmFZfVhgdVdMZFtbR3JPIiBoS35RcEVhW3pfcnBdRWFeU0J0VEFf";
+const SYNCFUSION_LICENSE = "Ngo9BigBOggjHTQxAR8/V1JHaF1cXmhPYVF+WmFZfVhgc19DZVZQTWY/P1ZhSXxVdkBhUH5XdXFXRWlfVkF9XEE=";
 const SYNCFUSION_BASE_URL = 'https://ej2services.syncfusion.com/production/web-services/api/spreadsheet';
 
 registerLicense(SYNCFUSION_LICENSE);
