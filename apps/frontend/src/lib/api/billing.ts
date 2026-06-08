@@ -31,6 +31,9 @@ export interface AccountState {
     subscription_id: string | null;
     current_period_end: number | null;
     cancel_at_period_end: boolean;
+    is_prepaid_annual?: boolean;
+    prepaid_plan_expires_at?: string | null;
+    prepaid_payment_method?: 'alipay' | 'wechat_pay' | null;
     is_trial: boolean;
     trial_status: string | null;
     trial_ends_at: string | null;
@@ -214,6 +217,18 @@ export interface PurchaseCreditsRequest {
 }
 
 export interface PurchaseCreditsResponse {
+  checkout_url: string;
+}
+
+export interface PurchaseAnnualPlanRequest {
+  tier_key: 'tier_2_20' | 'tier_6_50' | 'tier_25_200';
+  success_url: string;
+  cancel_url: string;
+  payment_method?: 'alipay' | 'wechat_pay';
+  locale?: string;
+}
+
+export interface PurchaseAnnualPlanResponse {
   checkout_url: string;
 }
 
@@ -516,6 +531,15 @@ export const billingApi = {
     return response.data!;
   },
 
+  async purchaseAnnualPlan(request: PurchaseAnnualPlanRequest) {
+    const response = await backendApi.post<PurchaseAnnualPlanResponse>(
+      '/billing/purchase-annual-plan',
+      request
+    );
+    if (response.error) throw response.error;
+    return response.data!;
+  },
+
   async getTransactions(limit = 50, offset = 0) {
     const response = await backendApi.get<{ transactions: Transaction[]; count: number }>(
       `/billing/transactions?limit=${limit}&offset=${offset}`
@@ -622,8 +646,11 @@ export const createPortalSession = (request: CreatePortalSessionRequest) =>
 export const cancelSubscription = (feedback?: string) => 
   billingApi.cancelSubscription(feedback ? { feedback } : undefined);
 export const reactivateSubscription = () => billingApi.reactivateSubscription();
-export const purchaseCredits = (request: PurchaseCreditsRequest) => 
+export const purchaseCredits = (request: PurchaseCreditsRequest) =>
   billingApi.purchaseCredits(request);
+
+export const purchaseAnnualPlan = (request: PurchaseAnnualPlanRequest) =>
+  billingApi.purchaseAnnualPlan(request);
 export const getTransactions = (limit?: number, offset?: number) => 
   billingApi.getTransactions(limit, offset);
 export const getUsageHistory = (days?: number) => billingApi.getUsageHistory(days);

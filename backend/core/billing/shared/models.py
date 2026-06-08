@@ -19,6 +19,13 @@ class PurchaseCreditsRequest(BaseModel):
     payment_method: Literal["card", "alipay", "wechat_pay"] = "card"
     locale: Optional[str] = None
 
+class PurchaseAnnualPlanRequest(BaseModel):
+    tier_key: Literal["tier_2_20", "tier_6_50", "tier_25_200"]
+    success_url: str
+    cancel_url: str
+    payment_method: Literal["alipay", "wechat_pay"] = "alipay"
+    locale: Optional[str] = None
+
 class TrialStartRequest(BaseModel):
     success_url: str
     cancel_url: str

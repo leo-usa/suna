@@ -424,8 +424,19 @@ async def _build_account_state(account_id: str, skip_cache: bool = False) -> Dic
             billing_period = 'monthly'
     
     stripe_status = credit_account.get('stripe_subscription_status')
+    prepaid_plan_expires_at = credit_account.get('prepaid_plan_expires_at')
+    prepaid_payment_method = credit_account.get('prepaid_payment_method')
+    is_prepaid_annual = (
+        stripe_status == 'prepaid_active'
+        and prepaid_plan_expires_at is not None
+    )
+    if is_prepaid_annual:
+        billing_period = 'yearly'
+
     if is_trial:
         status = 'trialing'
+    elif is_prepaid_annual:
+        status = 'active'
     elif stripe_status and provider == 'stripe':
         status = stripe_status
     elif tier_name not in ['none', 'free']:
@@ -516,7 +527,10 @@ async def _build_account_state(account_id: str, skip_cache: bool = False) -> Dic
             'has_scheduled_change': scheduled_changes.get('has_scheduled_change', False),
             'scheduled_change': scheduled_changes.get('scheduled_change'),
             'commitment': commitment_info,
-            'can_purchase_credits': tier_info.can_purchase_credits
+            'can_purchase_credits': tier_info.can_purchase_credits,
+            'is_prepaid_annual': is_prepaid_annual,
+            'prepaid_plan_expires_at': prepaid_plan_expires_at,
+            'prepaid_payment_method': prepaid_payment_method,
         },
         
         'models': models,

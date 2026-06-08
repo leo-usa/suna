@@ -270,6 +270,11 @@ interface PricingCardProps {
   billingPeriod: 'monthly' | 'yearly' | 'yearly_commitment';
   currentBillingPeriod?: 'monthly' | 'yearly' | 'yearly_commitment' | null;
   isPopularHighlight?: boolean;
+  annualPrepaidMode?: boolean;
+  isPrepaidAnnual?: boolean;
+  prepaidAnnualTierKey?: string | null;
+  selectedAnnualTierKey?: string | null;
+  onAnnualPrepaidSelect?: (tierKey: string) => void;
 }
 
 function PricingCard({
@@ -284,8 +289,14 @@ function PricingCard({
   billingPeriod = 'monthly',
   currentBillingPeriod = null,
   isPopularHighlight = false,
+  annualPrepaidMode = false,
+  isPrepaidAnnual = false,
+  prepaidAnnualTierKey = null,
+  selectedAnnualTierKey = null,
+  onAnnualPrepaidSelect,
 }: PricingCardProps) {
   const t = useTranslations('billing');
+  const tAnnualPrepay = useTranslations('billing.annualPrepay');
   const tCommon = useTranslations('common');
   const { user } = useAuth();
   const isLoggedIn = !!user;
@@ -355,6 +366,11 @@ function PricingCard({
   const handleSubscribe = async (tierKey: string, isDowngrade = false) => {
     if (!isLoggedIn) {
       window.location.href = '/auth?mode=signup';
+      return;
+    }
+
+    if (annualPrepaidMode) {
+      onAnnualPrepaidSelect?.(tierKey);
       return;
     }
 
@@ -532,14 +548,36 @@ function PricingCard({
   let buttonText = isLoggedIn ? t('selectPlan') : tCommon('tryFree');
   let buttonDisabled = isPlanLoading;
   let buttonVariant: ButtonVariant = null;
-  let ringClass = '';
+  let ringClass = annualPrepaidMode && selectedAnnualTierKey === tier.tierKey ? 'ring-2 ring-primary' : '';
   let statusBadge = null;
   let buttonClassName = '';
   let isDowngradeAction = false;
 
   const planChangeValidation = { allowed: true };
 
-  if (isAuthenticated) {
+  if (annualPrepaidMode) {
+    if (isPrepaidAnnual) {
+      if (prepaidAnnualTierKey === tier.tierKey) {
+        buttonText = tAnnualPrepay('currentPlan');
+        buttonDisabled = true;
+        ringClass = 'ring-2 ring-primary';
+      } else {
+        buttonText = t('selectPlan');
+        buttonDisabled = true;
+        buttonClassName = 'opacity-50 cursor-not-allowed';
+      }
+    } else if (selectedAnnualTierKey === tier.tierKey) {
+      buttonText = t('selectPlan');
+      buttonDisabled = false;
+      buttonVariant = 'default';
+      buttonClassName = 'bg-primary hover:bg-primary/90 text-primary-foreground';
+    } else {
+      buttonText = t('selectPlan');
+      buttonDisabled = false;
+      buttonVariant = tier.buttonColor as ButtonVariant;
+      buttonClassName = 'bg-primary hover:bg-primary/90 text-primary-foreground';
+    }
+  } else if (isAuthenticated) {
     const isFreeTierCard = tier.price === '$0' || tier.price === '€0' || tier.price === '0€' || tier.tierKey === 'free';
     const isCurrentPlan = isSameTier && (isSameBillingPeriod || isFreeTierCard);
 
@@ -1066,10 +1104,16 @@ interface PricingSectionProps {
   noPadding?: boolean;
   onSubscriptionUpdate?: () => void;
   customTitle?: string;
+  customSubtitle?: string;
   isAlert?: boolean;
   alertTitle?: string;
   alertSubtitle?: string;
   showBuyCredits?: boolean;
+  annualPrepaidMode?: boolean;
+  isPrepaidAnnual?: boolean;
+  prepaidAnnualTierKey?: string | null;
+  selectedAnnualTierKey?: string | null;
+  onAnnualPrepaidSelect?: (tierKey: string) => void;
 }
 
 export function PricingSection({
@@ -1080,10 +1124,16 @@ export function PricingSection({
   noPadding = false,
   onSubscriptionUpdate,
   customTitle,
+  customSubtitle,
   isAlert = false,
   alertTitle,
   alertSubtitle,
-  showBuyCredits = false
+  showBuyCredits = false,
+  annualPrepaidMode = false,
+  isPrepaidAnnual = false,
+  prepaidAnnualTierKey = null,
+  selectedAnnualTierKey = null,
+  onAnnualPrepaidSelect,
 }: PricingSectionProps) {
   const t = useTranslations('billing');
   const { user } = useAuth();
@@ -1152,7 +1202,9 @@ export function PricingSection({
   }, []);
 
   // Global billing period toggle - starts as 'yearly' (Annual preselected)
-  const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly' | 'yearly_commitment'>('yearly');
+  const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly' | 'yearly_commitment'>(
+    annualPrepaidMode ? 'yearly' : 'yearly',
+  );
 
   // Get paid tiers (Plus, Pro, Ultra)
   const paidTiers = siteConfig.cloudPricingItems.filter(
@@ -1369,10 +1421,18 @@ export function PricingSection({
                 </div>
               ) : (
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                  <h2 className="text-2xl pb-2 sm:pb-0 sm:text-3xl font-semibold tracking-tight">
-                    {customTitle || t('pickPlan')}
-                  </h2>
+                  <div>
+                    <h2 className="text-2xl pb-2 sm:pb-0 sm:text-3xl font-semibold tracking-tight">
+                      {customTitle || t('pickPlan')}
+                    </h2>
+                    {customSubtitle && (
+                      <p className="mt-2 text-sm sm:text-base text-muted-foreground max-w-2xl">
+                        {customSubtitle}
+                      </p>
+                    )}
+                  </div>
                   {/* Monthly/Yearly Toggle */}
+                  {!annualPrepaidMode && (
                   <div className="self-start sm:self-auto inline-flex items-center bg-muted/50 rounded-full pl-4 py-2" style={{ paddingRight: isYearly ? '8px' : '16px', transition: 'padding-right 200ms ease' }}>
                     <span className={cn(
                       "text-sm font-medium transition-colors w-16 text-center",
@@ -1407,13 +1467,14 @@ export function PricingSection({
                       </Badge>
                     </div>
                   </div>
+                  )}
                 </div>
               )}
             </div>
           )}
 
           {/* Standalone Toggle when showTitleAndTabs is false */}
-          {!showTitleAndTabs && (
+          {!showTitleAndTabs && !annualPrepaidMode && (
             <div className="flex items-center justify-center mb-4 sm:mb-6">
               <div className="inline-flex items-center bg-muted/50 rounded-full pl-4 py-2" style={{ paddingRight: isYearly ? '8px' : '16px', transition: 'padding-right 200ms ease' }}>
                 <span className={cn(
@@ -1459,7 +1520,7 @@ export function PricingSection({
               accountState.subscription.tier_key === 'none' ||
               (accountState.tier?.monthly_credits ?? 0) === 0;
 
-            const showPromo = promo?.isActive && isFreeTierUser;
+            const showPromo = promo?.isActive && isFreeTierUser && !annualPrepaidMode;
 
             if (!showPromo) return null;
 
@@ -1501,6 +1562,7 @@ export function PricingSection({
 
         {/* Get Additional Credits — above plan cards (plan modal, out of credits, change plan) */}
         {showBuyCredits &&
+          !annualPrepaidMode &&
           isAuthenticated &&
           currentSubscription?.subscription.can_purchase_credits && (
             <div className="w-full max-w-5xl mx-auto mb-6 sm:mb-8 flex flex-col items-center gap-4">
@@ -1526,8 +1588,24 @@ export function PricingSection({
             </div>
           )}
 
+        {/* Credits explained link for annual prepaid checkout */}
+        {annualPrepaidMode && (
+          <div className="w-full max-w-5xl mx-auto mb-6 sm:mb-8 flex justify-center">
+            <Button
+              variant="link"
+              asChild
+              className="text-muted-foreground hover:text-foreground h-auto p-0"
+            >
+              <Link href="/credits-explained" target="_blank" rel="noopener noreferrer">
+                <Lightbulb className="h-3.5 w-3.5 mr-2" />
+                <span className="text-sm">{t('creditsExplained')}</span>
+              </Link>
+            </Button>
+          </div>
+        )}
+
         {/* Scheduled Downgrade Alert */}
-        {isAuthenticated && hasScheduledChange && scheduledChange && (
+        {isAuthenticated && hasScheduledChange && scheduledChange && !annualPrepaidMode && (
           <div className="w-full max-w-5xl mx-auto mb-6">
             <ScheduledDowngradeCard
               scheduledChange={scheduledChange}
@@ -1554,12 +1632,17 @@ export function PricingSection({
                 billingPeriod={billingPeriod}
                 currentBillingPeriod={currentBillingPeriod}
                 isPopularHighlight={tier.isPopular}
+                annualPrepaidMode={annualPrepaidMode}
+                isPrepaidAnnual={isPrepaidAnnual}
+                prepaidAnnualTierKey={prepaidAnnualTierKey}
+                selectedAnnualTierKey={selectedAnnualTierKey}
+                onAnnualPrepaidSelect={onAnnualPrepaidSelect}
               />
             ))}
           </div>
 
           {/* Basic Tier at Bottom */}
-          {freeTier && !hideFree && (
+          {freeTier && !hideFree && !annualPrepaidMode && (
             <BasicTierCard
               tier={freeTier}
               currentSubscription={currentSubscription}
@@ -1574,7 +1657,7 @@ export function PricingSection({
         </div>
 
         {/* Credits Explained Link (when prepaid purchase not available) */}
-        {(!isAuthenticated || !currentSubscription?.subscription.can_purchase_credits) && (
+        {!annualPrepaidMode && (!isAuthenticated || !currentSubscription?.subscription.can_purchase_credits) && (
           <div className="w-full max-w-5xl mx-auto mt-8 pb-8 flex justify-center">
             <Button
               variant="link"

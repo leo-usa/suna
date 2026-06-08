@@ -6,12 +6,18 @@ import stripe
 from core.utils.logger import logger
 from ..external.stripe import generate_credit_purchase_idempotency_key, StripeAPIWrapper
 from .interfaces import PaymentProcessorInterface
+from ..shared.config import (
+    get_annual_prepaid_price_usd,
+    get_tier_by_name,
+    ANNUAL_PREPAID_TIER_KEYS,
+)
 from core.utils.config import config
 from core.billing import repo as billing_repo
 
 MIN_CREDIT_PURCHASE_AMOUNT = Decimal("1.00")
 MAX_CREDIT_PURCHASE_AMOUNT = Decimal("5000.00")
 SUPPORTED_CREDIT_PAYMENT_METHODS = {"card", "alipay", "wechat_pay"}
+SUPPORTED_ANNUAL_PREPAID_PAYMENT_METHODS = {"alipay", "wechat_pay"}
 
 class PaymentService(PaymentProcessorInterface):
     def __init__(self):
@@ -172,6 +178,150 @@ class PaymentService(PaymentProcessorInterface):
             except Exception as log_error:
                 logger.error(f"[PAYMENT FAILURE] Failed to update purchase record: {log_error}")
             
+            raise HTTPException(status_code=500, detail="Failed to create payment session")
+
+    async def validate_annual_prepaid_eligibility(self, account_id: str) -> None:
+        credit_account = await billing_repo.get_credit_account(account_id) or {}
+        stripe_subscription_id = credit_account.get('stripe_subscription_id')
+        stripe_status = credit_account.get('stripe_subscription_status')
+        provider = credit_account.get('provider', 'stripe')
+
+        if stripe_status == 'prepaid_active':
+            raise HTTPException(
+                status_code=400,
+                detail="You already have an active prepaid annual plan. Upgrades will be available in a future update.",
+            )
+
+        if stripe_subscription_id and stripe_status in ('active', 'trialing', 'past_due'):
+            raise HTTPException(
+                status_code=400,
+                detail="You already have an active card subscription. Cancel it first or manage billing via the subscription portal.",
+            )
+
+        if provider == 'revenuecat' and credit_account.get('revenuecat_subscription_id'):
+            raise HTTPException(
+                status_code=400,
+                detail="You have an active mobile subscription. Manage billing in the mobile app.",
+            )
+
+    async def create_annual_prepaid_checkout(
+        self,
+        account_id: str,
+        tier_key: str,
+        success_url: str,
+        cancel_url: str,
+        payment_method: str = "alipay",
+        locale: Optional[str] = None,
+    ) -> Dict:
+        if tier_key not in ANNUAL_PREPAID_TIER_KEYS:
+            raise HTTPException(status_code=400, detail="Invalid annual plan tier")
+        if payment_method not in SUPPORTED_ANNUAL_PREPAID_PAYMENT_METHODS:
+            raise HTTPException(status_code=400, detail="Annual prepaid plans support Alipay and WeChat Pay only")
+        if not config.STRIPE_SECRET_KEY:
+            raise HTTPException(status_code=500, detail="Stripe is not configured")
+
+        amount = get_annual_prepaid_price_usd(tier_key)
+        if not amount:
+            raise HTTPException(status_code=400, detail="Unknown annual plan price")
+
+        tier_info = get_tier_by_name(tier_key)
+        if not tier_info:
+            raise HTTPException(status_code=400, detail="Invalid tier")
+
+        await self.validate_annual_prepaid_eligibility(account_id)
+
+        from ..subscriptions.handlers.customer import CustomerHandler
+
+        customer_id = await CustomerHandler.get_or_create_stripe_customer(account_id)
+
+        purchase_metadata = {
+            'purchase_kind': 'annual_prepaid',
+            'tier_key': tier_key,
+            'payment_method': payment_method,
+            'amount': float(amount),
+        }
+        purchase_record = await billing_repo.create_credit_purchase(
+            account_id=account_id,
+            amount_dollars=float(amount),
+            status='pending',
+            stripe_payment_intent_id=None,
+            metadata=purchase_metadata,
+        )
+        if not purchase_record:
+            raise HTTPException(status_code=500, detail="Failed to initialize payment")
+
+        purchase_id = purchase_record['id']
+
+        import hashlib
+        idempotency_key = hashlib.sha256(
+            f"annual_{account_id}_{purchase_id}_{tier_key}_{amount}".encode()
+        ).hexdigest()[:40]
+
+        payment_method_params = self._build_payment_method_params(payment_method)
+        metadata = {
+            'type': 'annual_prepaid',
+            'account_id': account_id,
+            'tier_key': tier_key,
+            'purchase_id': str(purchase_id),
+            'payment_method': payment_method,
+            'amount_usd': str(amount),
+        }
+
+        try:
+            session_params = {
+                'customer': customer_id,
+                **payment_method_params,
+                'line_items': [{
+                    'price_data': {
+                        'currency': 'usd',
+                        'product_data': {
+                            'name': f'{tier_info.display_name} — 1 Year (Annual Prepaid)',
+                        },
+                        'unit_amount': int(amount * 100),
+                    },
+                    'quantity': 1,
+                }],
+                'mode': 'payment',
+                'success_url': success_url,
+                'cancel_url': cancel_url,
+                'metadata': metadata,
+                'idempotency_key': idempotency_key,
+            }
+            if locale:
+                session_params['locale'] = locale
+
+            session = await StripeAPIWrapper.create_checkout_session(**session_params)
+
+            payment_intent_id = session.payment_intent if session.payment_intent else None
+            await billing_repo.update_purchase_by_id(
+                purchase_id=purchase_id,
+                status='pending',
+                stripe_payment_intent_id=payment_intent_id,
+                metadata={
+                    **purchase_metadata,
+                    'session_id': session.id,
+                    'purchase_id': str(purchase_id),
+                },
+            )
+
+            logger.info(
+                f"[PREPAID ANNUAL] Created checkout session {session.id} for "
+                f"{account_id[:8]}... tier={tier_key} amount=${amount}"
+            )
+            return {'checkout_url': session.url}
+        except Exception as e:
+            logger.critical(
+                f"[PREPAID ANNUAL FAILURE] Stripe checkout failed account_id={account_id} "
+                f"purchase_id={purchase_id} error={e}"
+            )
+            try:
+                await billing_repo.update_purchase_by_id(
+                    purchase_id=purchase_id,
+                    status='failed',
+                    metadata={'error': str(e), 'failed_at': datetime.now(timezone.utc).isoformat()},
+                )
+            except Exception as log_error:
+                logger.error(f"[PREPAID ANNUAL] Failed to update purchase record: {log_error}")
             raise HTTPException(status_code=500, detail="Failed to create payment session")
 
     @staticmethod

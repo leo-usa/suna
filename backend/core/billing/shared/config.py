@@ -43,6 +43,17 @@ class Tier:
 # When Basic/none users have prepaid (non-expiring) balance, limits/models match this tier.
 PREPAID_UNLOCK_TIER_NAME = 'tier_2_20'
 
+# One-time annual prepay via Alipay/WeChat (USD, matches yearly card pricing).
+ANNUAL_PREPAID_TIER_KEYS = ('tier_2_20', 'tier_6_50', 'tier_25_200')
+ANNUAL_PREPAID_TIER_PRICES_USD: Dict[str, Decimal] = {
+    'tier_2_20': Decimal('204'),
+    'tier_6_50': Decimal('510'),
+    'tier_25_200': Decimal('2040'),
+}
+
+def get_annual_prepaid_price_usd(tier_key: str) -> Optional[Decimal]:
+    return ANNUAL_PREPAID_TIER_PRICES_USD.get(tier_key)
+
 TIERS: Dict[str, Tier] = {
     'none': Tier(
         name='none',

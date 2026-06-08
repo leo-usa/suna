@@ -26,6 +26,11 @@ class CheckoutHandler:
             if not stripe_event_id and hasattr(event, 'get'):
                 stripe_event_id = event.get('id')
             await CheckoutHandler._handle_credit_purchase(session, stripe_event_id=stripe_event_id)
+        elif session.get('metadata', {}).get('type') == 'annual_prepaid':
+            stripe_event_id = getattr(event, 'id', None)
+            if not stripe_event_id and hasattr(event, 'get'):
+                stripe_event_id = event.get('id')
+            await CheckoutHandler._handle_annual_prepaid(session, stripe_event_id=stripe_event_id)
         elif session.get('metadata', {}).get('type') == 'yearly_upgrade':
             await CheckoutHandler._handle_yearly_upgrade_payment(session)
         elif session.get('subscription'):
@@ -125,6 +130,77 @@ class CheckoutHandler:
             
             expected_total = float(before['balance']) + float(credit_amount)
             actual_total = float(after['balance'])
+
+    @staticmethod
+    async def _handle_annual_prepaid(session, stripe_event_id: str = None):
+        metadata = session.get('metadata', {})
+        account_id = metadata.get('account_id')
+        tier_key = metadata.get('tier_key')
+        payment_method = metadata.get('payment_method', 'alipay')
+
+        if not account_id or not tier_key:
+            logger.error(f"[PREPAID ANNUAL] Missing metadata in session {session.get('id')}")
+            return
+
+        if session.get('payment_status') and session.get('payment_status') != 'paid':
+            logger.warning(
+                f"[PREPAID ANNUAL] Checkout {session.get('id')} payment_status="
+                f"{session.get('payment_status')}; skipping activation"
+            )
+            return
+
+        purchase_id = metadata.get('purchase_id')
+        try:
+            if session.payment_intent:
+                await billing_repo.update_purchase_by_payment_intent(
+                    payment_intent_id=session.payment_intent,
+                    status='completed',
+                    completed_at=datetime.now(timezone.utc).isoformat(),
+                )
+            if purchase_id:
+                await billing_repo.update_purchase_by_id(
+                    purchase_id=purchase_id,
+                    status='completed',
+                    completed_at=datetime.now(timezone.utc).isoformat(),
+                    stripe_payment_intent_id=session.payment_intent,
+                )
+
+            from ....subscriptions.handlers.billing_period import BillingPeriodHandler
+
+            result = await BillingPeriodHandler.activate_prepaid_annual_plan(
+                account_id=account_id,
+                tier_key=tier_key,
+                payment_method=payment_method,
+            )
+
+            if not result.get('success'):
+                if purchase_id:
+                    await billing_repo.update_purchase_by_id(
+                        purchase_id=purchase_id,
+                        status='failed',
+                        error_message=result.get('error', 'Activation failed'),
+                    )
+                logger.error(f"[PREPAID ANNUAL] Activation failed for {account_id}: {result}")
+                return
+
+            from core.billing.shared.cache_utils import invalidate_account_state_cache
+            await invalidate_account_state_cache(account_id)
+
+            logger.info(
+                f"[PREPAID ANNUAL] ✅ Activated {tier_key} for {account_id[:8]}... "
+                f"session={session.get('id')}"
+            )
+        except Exception as e:
+            logger.error(f"[PREPAID ANNUAL] Error processing checkout: {e}")
+            if purchase_id:
+                try:
+                    await billing_repo.update_purchase_by_id(
+                        purchase_id=purchase_id,
+                        status='failed',
+                        error_message=str(e),
+                    )
+                except Exception:
+                    pass
 
     @staticmethod
     async def _handle_yearly_upgrade_payment(session):

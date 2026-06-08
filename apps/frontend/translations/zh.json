@@ -259,7 +259,11 @@
       "insufficientCreditsMessage": "账单检查失败：积分不足。您的余额为 {balance}。请添加积分以继续。",
       "creditsExhausted": "您的积分已用完。立即升级。",
       "billingCheckFailed": "账单检查失败。请升级以继续。",
-      "failedToStartAgent": "启动智能体 {agentName} 失败：{message}"
+      "failedToStartAgent": "启动智能体 {agentName} 失败：{message}",
+      "prepaidAnnualActive": "年付套餐有效期至 {date}",
+      "prepaidAnnualLink": "支付宝 / 微信年付",
+      "prepaidAnnualPaymentAlipay": "支付宝支付",
+      "prepaidAnnualPaymentWeChat": "微信支付"
     },
     "usage": {
       "title": "使用情况"
@@ -1750,6 +1754,26 @@
       "noCheckoutUrl": "未收到结账链接",
       "creditBalanceTitle": "积分余额",
       "addCredits": "充值积分"
+    },
+    "annualPrepay": {
+      "title": "年付套餐 — 支付宝 / 微信支付",
+      "subtitle": "一次性预付 Plus、Pro 或 Ultra 全年费用，享有与银行卡年付相同的功能。不会自动续费。",
+      "backToDashboard": "返回工作台",
+      "perYear": "每年",
+      "fullYearAccess": "12 个月套餐权益与每月积分",
+      "currentPlan": "当前套餐",
+      "paymentMethod": "支付方式",
+      "payAlipay": "支付宝",
+      "payWeChatPay": "微信支付",
+      "continueToPayment": "前往支付",
+      "processing": "处理中…",
+      "selectPlan": "请选择套餐",
+      "checkoutFailed": "无法创建结账会话",
+      "noCheckoutUrl": "未收到结账链接",
+      "disclaimer": "您现有的预付费积分余额不会被抵扣，仍作为不过期积分保留。套餐在到期日前有效，不支持中途取消或降级。",
+      "activePlanNotice": "您当前的 {tier} 年付套餐有效期至 {date}。",
+      "upgradeComingSoon": "通过支付宝 / 微信升级套餐的功能即将推出。当前套餐将持续至到期日。",
+      "settingsLink": "支付宝 / 微信年付"
     }
   },
   "auth": {

@@ -4,7 +4,7 @@ from decimal import Decimal
 from datetime import datetime, timezone, timedelta
 from core.utils.auth_utils import verify_and_get_user_id_from_jwt
 from core.utils.logger import logger
-from ..shared.models import PurchaseCreditsRequest
+from ..shared.models import PurchaseCreditsRequest, PurchaseAnnualPlanRequest
 from ..shared.config import CREDITS_PER_DOLLAR
 from ..payments import payment_service
 
@@ -31,6 +31,27 @@ async def purchase_credits_checkout(
         raise
     except Exception as e:
         logger.error(f"[BILLING] Error creating credit purchase checkout: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/purchase-annual-plan")
+async def purchase_annual_plan_checkout(
+    request: PurchaseAnnualPlanRequest,
+    account_id: str = Depends(verify_and_get_user_id_from_jwt)
+) -> Dict:
+    try:
+        result = await payment_service.create_annual_prepaid_checkout(
+            account_id=account_id,
+            tier_key=request.tier_key,
+            success_url=request.success_url,
+            cancel_url=request.cancel_url,
+            payment_method=request.payment_method,
+            locale=request.locale,
+        )
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[BILLING] Error creating annual prepaid checkout: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/transactions")

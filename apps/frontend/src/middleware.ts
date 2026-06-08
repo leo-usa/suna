@@ -53,6 +53,7 @@ const BILLING_ROUTES = [
   '/activate-trial',
   '/subscription',
   '/setting-up',
+  '/billing/annual-prepay',
 ];
 
 // Routes that require authentication and active subscription

@@ -318,7 +318,11 @@
       "insufficientCreditsMessage": "Billing check failed: Insufficient credits. Your balance is {balance}. Please add credits to continue.",
       "creditsExhausted": "You ran out of credits. Upgrade now.",
       "billingCheckFailed": "Billing check failed. Please upgrade to continue.",
-      "failedToStartAgent": "Failed to start worker {agentName}: {message}"
+      "failedToStartAgent": "Failed to start worker {agentName}: {message}",
+      "prepaidAnnualActive": "Annual prepaid plan active until {date}",
+      "prepaidAnnualLink": "Pay annually with Alipay / WeChat Pay",
+      "prepaidAnnualPaymentAlipay": "Paid with Alipay",
+      "prepaidAnnualPaymentWeChat": "Paid with WeChat Pay"
     },
     "usage": {
       "title": "Usage"
@@ -1662,6 +1666,26 @@
       "noCheckoutUrl": "No checkout URL received",
       "creditBalanceTitle": "Credit Balance",
       "addCredits": "Add Credits"
+    },
+    "annualPrepay": {
+      "title": "Annual plan — Alipay / WeChat Pay",
+      "subtitle": "Prepay for one full year of Plus, Pro, or Ultra. Same features as card annual billing. No auto-renewal.",
+      "backToDashboard": "Back to dashboard",
+      "perYear": "per year",
+      "fullYearAccess": "12 months of plan features and monthly credits",
+      "currentPlan": "Your current plan",
+      "paymentMethod": "Payment method",
+      "payAlipay": "Alipay",
+      "payWeChatPay": "WeChat Pay",
+      "continueToPayment": "Continue to payment",
+      "processing": "Processing...",
+      "selectPlan": "Please select a plan",
+      "checkoutFailed": "Failed to create checkout session",
+      "noCheckoutUrl": "No checkout URL received",
+      "disclaimer": "Your existing prepaid credit balance is not consumed — it stays as non-expiring credits. The plan runs until the expiry date with no mid-term cancel or downgrade.",
+      "activePlanNotice": "You are on {tier} (annual prepaid) until {date}.",
+      "upgradeComingSoon": "Plan upgrades via Alipay / WeChat Pay will be available in a future update. Your plan continues until the expiry date.",
+      "settingsLink": "Pay annually with Alipay / WeChat Pay"
     },
     "error": "Error",
     "totalUsage": "Total Usage",

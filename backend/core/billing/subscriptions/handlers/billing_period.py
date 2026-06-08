@@ -6,9 +6,11 @@ from dateutil.relativedelta import relativedelta # type: ignore
 from core.utils.logger import logger
 from core.utils.cache import Cache
 from core.billing.shared.config import (
-    get_tier_by_price_id, 
+    get_tier_by_price_id,
     get_plan_type,
-    get_price_type
+    get_price_type,
+    get_tier_by_name,
+    ANNUAL_PREPAID_TIER_KEYS,
 )
 from core.billing.credits.manager import credit_manager
 from core.billing import repo as billing_repo
@@ -109,6 +111,59 @@ class BillingPeriodHandler:
         )
         
         logger.info(f"[BILLING PERIOD] ✅ Granted ${credits_amount} credits for {plan_type} subscription")
+
+    @staticmethod
+    async def activate_prepaid_annual_plan(
+        account_id: str,
+        tier_key: str,
+        payment_method: str,
+        anchor: Optional[datetime] = None,
+    ) -> Dict:
+        if tier_key not in ANNUAL_PREPAID_TIER_KEYS:
+            return {'success': False, 'error': 'Invalid prepaid annual tier'}
+
+        tier_info = get_tier_by_name(tier_key)
+        if not tier_info:
+            return {'success': False, 'error': 'Unknown tier'}
+
+        anchor = anchor or datetime.now(timezone.utc)
+        next_credit_grant = anchor + relativedelta(months=1)
+        expires_at = anchor + relativedelta(years=1)
+
+        await BillingPeriodHandler._grant_initial_credits_for_billing_period(
+            account_id, tier_info, 'yearly', anchor, next_credit_grant
+        )
+
+        update_data = {
+            'tier': tier_info.name,
+            'plan_type': 'yearly',
+            'stripe_subscription_id': None,
+            'stripe_subscription_status': 'prepaid_active',
+            'billing_cycle_anchor': anchor.isoformat(),
+            'next_credit_grant': next_credit_grant.isoformat(),
+            'prepaid_plan_expires_at': expires_at.isoformat(),
+            'prepaid_payment_method': payment_method,
+            'last_grant_date': anchor.isoformat(),
+            'provider': 'stripe',
+        }
+
+        await billing_repo.update_credit_account(account_id, update_data)
+
+        await Cache.invalidate(f"subscription_tier:{account_id}")
+        await Cache.invalidate(f"credit_balance:{account_id}")
+        await Cache.invalidate(f"credit_summary:{account_id}")
+
+        logger.info(
+            f"[PREPAID ANNUAL] Activated {tier_key} for {account_id[:8]}... "
+            f"expires {expires_at.isoformat()} via {payment_method}"
+        )
+
+        return {
+            'success': True,
+            'tier': tier_info.name,
+            'plan_type': 'yearly',
+            'prepaid_plan_expires_at': expires_at.isoformat(),
+        }
     
     @staticmethod
     def is_billing_period_change(current_tier: str, new_tier: str, old_plan_type: str, new_plan_type: str) -> bool:

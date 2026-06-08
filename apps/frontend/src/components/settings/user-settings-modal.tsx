@@ -1039,6 +1039,8 @@ function BillingTab({ returnUrl, onOpenPlanModal, isActive }: { returnUrl: strin
     const isSubscribed = subStatus === 'active' || subStatus === 'trialing';
     const isFreeTier = subscription?.tier_key === 'free' || subscription?.tier_key === 'none';
     const isCancelled = subscription?.is_cancelled || subscription?.cancel_at_period_end;
+    const isPrepaidAnnual = subscription?.is_prepaid_annual;
+    const prepaidExpiresAt = subscription?.prepaid_plan_expires_at;
     const canPurchaseCredits = subscription?.can_purchase_credits || false;
 
     return (
@@ -1064,7 +1066,14 @@ function BillingTab({ returnUrl, onOpenPlanModal, isActive }: { returnUrl: strin
                                     />
                                 </div>
                             )}
-                            {accountState?.subscription.current_period_end && !hasScheduledChange && (
+                            {isPrepaidAnnual && prepaidExpiresAt && (
+                                <span className="text-xs text-muted-foreground">
+                                    {t('prepaidAnnualActive', {
+                                        date: formatDate(prepaidExpiresAt),
+                                    })}
+                                </span>
+                            )}
+                            {!isPrepaidAnnual && accountState?.subscription.current_period_end && !hasScheduledChange && (
                                 <span className="text-xs text-muted-foreground">
                                     {t('renews', {
                                         date: formatDateFlexible(accountState.subscription.current_period_end),
@@ -1170,14 +1179,16 @@ function BillingTab({ returnUrl, onOpenPlanModal, isActive }: { returnUrl: strin
 
             {/* Action Buttons - Clean Layout */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
-                <Button
-                    onClick={handleManageSubscription}
-                    disabled={createPortalSessionMutation.isPending}
-                    variant="outline"
-                    className="h-10 w-full sm:w-auto"
-                >
-                    {createPortalSessionMutation.isPending ? tCommon('loading') : t('manageSubscription')}
-                </Button>
+                {!isPrepaidAnnual && (
+                    <Button
+                        onClick={handleManageSubscription}
+                        disabled={createPortalSessionMutation.isPending}
+                        variant="outline"
+                        className="h-10 w-full sm:w-auto"
+                    >
+                        {createPortalSessionMutation.isPending ? tCommon('loading') : t('manageSubscription')}
+                    </Button>
+                )}
                 {canPurchaseCredits && (
                     <Button
                         onClick={() => setShowCreditPurchaseModal(true)}
@@ -1188,7 +1199,16 @@ function BillingTab({ returnUrl, onOpenPlanModal, isActive }: { returnUrl: strin
                         {t('getAdditionalCredits')}
                     </Button>
                 )}
-                {planName && (
+                {!isPrepaidAnnual && (
+                    <Button
+                        variant="outline"
+                        className="h-10 w-full sm:w-auto"
+                        asChild
+                    >
+                        <a href="/billing/annual-prepay">{t('prepaidAnnualLink')}</a>
+                    </Button>
+                )}
+                {planName && !isPrepaidAnnual && (
                     hasScheduledChange ? (
                         <Button
                             variant="outline"
@@ -1209,6 +1229,20 @@ function BillingTab({ returnUrl, onOpenPlanModal, isActive }: { returnUrl: strin
                     )
                 )}
             </div>
+
+            {isPrepaidAnnual && prepaidExpiresAt && (
+                <Alert className="border-primary/20 bg-primary/5 rounded-[18px]">
+                    <Shield className="h-4 w-4 text-primary" />
+                    <AlertDescription>
+                        <strong className="text-sm">{t('prepaidAnnualActive', { date: formatDate(prepaidExpiresAt) })}</strong>
+                        <p className="text-sm text-muted-foreground mt-1">
+                            {subscription?.prepaid_payment_method === 'wechat_pay'
+                                ? t('prepaidAnnualPaymentWeChat')
+                                : t('prepaidAnnualPaymentAlipay')}
+                        </p>
+                    </AlertDescription>
+                </Alert>
+            )}
 
             {/* Commitment or Cancellation Alerts */}
             {commitmentInfo?.has_commitment && (
