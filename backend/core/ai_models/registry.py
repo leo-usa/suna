@@ -112,6 +112,13 @@ class PricingPresets:
         cache_write_5m_cost_per_million_tokens=6.25,
     )
 
+    CLAUDE_FABLE_5 = ModelPricing(
+        input_cost_per_million_tokens=10.00,
+        output_cost_per_million_tokens=50.00,
+        cached_read_cost_per_million_tokens=1.00,
+        cache_write_5m_cost_per_million_tokens=12.50,
+    )
+
     GEMINI_2_5_PRO = ModelPricing(
         input_cost_per_million_tokens=1.25,
         output_cost_per_million_tokens=10.00,
@@ -811,6 +818,29 @@ class ModelFactory:
         )
 
     @staticmethod
+    def create_claude_fable_5() -> Model:
+        return Model(
+            id="dobby/claude-fable-5",
+            name="Claude Fable 5",
+            litellm_model_id="openrouter/anthropic/claude-fable-5",
+            provider=ModelProvider.OPENROUTER,
+            aliases=["claude-fable-5", "anthropic/claude-fable-5"],
+            context_window=1_000_000,
+            capabilities=[
+                ModelCapability.CHAT,
+                ModelCapability.FUNCTION_CALLING,
+                ModelCapability.VISION,
+                ModelCapability.THINKING,
+                ModelCapability.PROMPT_CACHING,
+            ],
+            pricing=PricingPresets.CLAUDE_FABLE_5,
+            tier_availability=["paid"],
+            priority=105,
+            recommended=False,
+            enabled=True,
+        )
+
+    @staticmethod
     def create_gemini_2_5_pro() -> Model:
         return Model(
             id="dobby/gemini-2.5-pro",
@@ -1093,6 +1123,7 @@ class ModelRegistry:
         self.register(ModelFactory.create_deepseek_v4_pro())
         self.register(ModelFactory.create_claude_sonnet_4_6())
         self.register(ModelFactory.create_claude_opus_4_7())
+        self.register(ModelFactory.create_claude_fable_5())
         self.register(ModelFactory.create_gemini_2_5_pro())
         self.register(ModelFactory.create_gemini_3_1_pro())
         self.register(ModelFactory.create_gemma_4_31b())
@@ -1119,6 +1150,7 @@ class ModelRegistry:
         self._litellm_id_to_pricing["openrouter/deepseek/deepseek-v4-pro"] = PricingPresets.DEEPSEEK_V4_PRO
         self._litellm_id_to_pricing["openrouter/anthropic/claude-sonnet-4.6"] = PricingPresets.CLAUDE_SONNET_4_6
         self._litellm_id_to_pricing["openrouter/anthropic/claude-opus-4.7"] = PricingPresets.CLAUDE_OPUS_4_7
+        self._litellm_id_to_pricing["openrouter/anthropic/claude-fable-5"] = PricingPresets.CLAUDE_FABLE_5
         self._litellm_id_to_pricing["openrouter/google/gemini-2.5-pro"] = PricingPresets.GEMINI_2_5_PRO
         self._litellm_id_to_pricing["openrouter/google/gemini-3.1-pro-preview"] = PricingPresets.GEMINI_3_1_PRO
         self._litellm_id_to_pricing["openrouter/google/gemma-4-31b-it"] = PricingPresets.GEMMA_4_31B
