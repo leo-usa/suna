@@ -146,9 +146,9 @@ class PricingPresets:
         output_cost_per_million_tokens=2.50,
     )
 
-    GLM_5_TURBO = ModelPricing(
-        input_cost_per_million_tokens=1.20,
-        output_cost_per_million_tokens=4.00,
+    GLM_5_2 = ModelPricing(
+        input_cost_per_million_tokens=1.40,
+        output_cost_per_million_tokens=4.40,
     )
 
     MINIMAX_M2_7 = ModelPricing(
@@ -930,20 +930,27 @@ class ModelFactory:
         )
 
     @staticmethod
-    def create_glm_5_turbo() -> Model:
+    def create_glm_5_2() -> Model:
         return Model(
-            id="dobby/glm-5-turbo",
-            name="GLM 5 Turbo",
-            litellm_model_id="openrouter/z-ai/glm-5-turbo",
+            id="dobby/glm-5.2",
+            name="GLM 5.2",
+            litellm_model_id="openrouter/z-ai/glm-5.2",
             provider=ModelProvider.OPENROUTER,
-            aliases=["glm-5-turbo", "z-ai/glm-5-turbo", "z-ai/glm-5"],
-            context_window=128_000,
+            aliases=[
+                "glm-5.2",
+                "z-ai/glm-5.2",
+                "dobby/glm-5-turbo",
+                "glm-5-turbo",
+                "z-ai/glm-5-turbo",
+                "z-ai/glm-5",
+            ],
+            context_window=1_000_000,
             capabilities=[
                 ModelCapability.CHAT,
                 ModelCapability.FUNCTION_CALLING,
                 ModelCapability.THINKING,
             ],
-            pricing=PricingPresets.GLM_5_TURBO,
+            pricing=PricingPresets.GLM_5_2,
             tier_availability=["free", "paid"],
             priority=88,
             recommended=False,
@@ -1127,7 +1134,7 @@ class ModelRegistry:
         self.register(ModelFactory.create_gemini_2_5_pro())
         self.register(ModelFactory.create_gemini_3_1_pro())
         self.register(ModelFactory.create_gemma_4_31b())
-        self.register(ModelFactory.create_glm_5_turbo())
+        self.register(ModelFactory.create_glm_5_2())
         self.register(ModelFactory.create_gpt_5_5())
         self.register(ModelFactory.create_gpt_5_5_pro())
 
@@ -1155,7 +1162,7 @@ class ModelRegistry:
         self._litellm_id_to_pricing["openrouter/google/gemini-3.1-pro-preview"] = PricingPresets.GEMINI_3_1_PRO
         self._litellm_id_to_pricing["openrouter/google/gemma-4-31b-it"] = PricingPresets.GEMMA_4_31B
         self._litellm_id_to_pricing["openrouter/x-ai/grok-4"] = PricingPresets.GROK_4
-        self._litellm_id_to_pricing["openrouter/z-ai/glm-5-turbo"] = PricingPresets.GLM_5_TURBO
+        self._litellm_id_to_pricing["openrouter/z-ai/glm-5.2"] = PricingPresets.GLM_5_2
         self._litellm_id_to_pricing["openrouter/minimax/minimax-m2.7"] = PricingPresets.MINIMAX_M2_7
         self._litellm_id_to_pricing["openrouter/openai/gpt-5.5"] = PricingPresets.GPT_5_5
         self._litellm_id_to_pricing["openrouter/openai/gpt-5.5-pro"] = PricingPresets.GPT_5_5_PRO
