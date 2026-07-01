@@ -98,11 +98,11 @@ class PricingPresets:
         output_cost_per_million_tokens=0.87,
     )
 
-    CLAUDE_SONNET_4_6 = ModelPricing(
-        input_cost_per_million_tokens=3.00,
-        output_cost_per_million_tokens=15.00,
-        cached_read_cost_per_million_tokens=0.30,
-        cache_write_5m_cost_per_million_tokens=3.75,
+    CLAUDE_SONNET_5 = ModelPricing(
+        input_cost_per_million_tokens=2.00,
+        output_cost_per_million_tokens=10.00,
+        cached_read_cost_per_million_tokens=0.20,
+        cache_write_5m_cost_per_million_tokens=2.50,
     )
 
     CLAUDE_OPUS_4_7 = ModelPricing(
@@ -271,7 +271,7 @@ class ModelFactory:
         # Default models per provider
         default_models = {
             "bedrock": BedrockConfig.get_haiku_arn(),
-            "anthropic": "openrouter/anthropic/claude-sonnet-4.6",
+            "anthropic": "openrouter/anthropic/claude-sonnet-5",
             "grok": "openrouter/x-ai/grok-4.1-fast",
             "openai": "openrouter/openai/gpt-4o-mini",
             "minimax": "openrouter/minimax/minimax-m2.1",
@@ -427,7 +427,7 @@ class ModelFactory:
         # Default models per provider (same as basic for now)
         default_models = {
             "bedrock": BedrockConfig.get_haiku_arn(),
-            "anthropic": "openrouter/anthropic/claude-sonnet-4.6",
+            "anthropic": "openrouter/anthropic/claude-sonnet-5",
             "grok": "openrouter/x-ai/grok-4.1-fast",
             "openai": "openrouter/openai/gpt-4o-mini",
             "minimax": "openrouter/minimax/minimax-m2.1",
@@ -772,13 +772,20 @@ class ModelFactory:
         )
 
     @staticmethod
-    def create_claude_sonnet_4_6() -> Model:
+    def create_claude_sonnet_5() -> Model:
         return Model(
-            id="dobby/claude-sonnet-4.6",
-            name="Claude Sonnet 4.6",
-            litellm_model_id="openrouter/anthropic/claude-sonnet-4.6",
+            id="dobby/claude-sonnet-5",
+            name="Claude Sonnet 5",
+            litellm_model_id="openrouter/anthropic/claude-sonnet-5",
             provider=ModelProvider.OPENROUTER,
-            aliases=["claude-sonnet-4.6", "claude-sonnet-4-6", "anthropic/claude-sonnet-4.6"],
+            aliases=[
+                "claude-sonnet-5",
+                "anthropic/claude-sonnet-5",
+                "dobby/claude-sonnet-4.6",
+                "claude-sonnet-4.6",
+                "claude-sonnet-4-6",
+                "anthropic/claude-sonnet-4.6",
+            ],
             context_window=1_000_000,
             capabilities=[
                 ModelCapability.CHAT,
@@ -787,7 +794,7 @@ class ModelFactory:
                 ModelCapability.THINKING,
                 ModelCapability.PROMPT_CACHING,
             ],
-            pricing=PricingPresets.CLAUDE_SONNET_4_6,
+            pricing=PricingPresets.CLAUDE_SONNET_5,
             tier_availability=["free", "paid"],
             priority=103,
             recommended=False,
@@ -1128,7 +1135,7 @@ class ModelRegistry:
         self.register(ModelFactory.create_deepseek_v3())
         self.register(ModelFactory.create_deepseek_v4_flash())
         self.register(ModelFactory.create_deepseek_v4_pro())
-        self.register(ModelFactory.create_claude_sonnet_4_6())
+        self.register(ModelFactory.create_claude_sonnet_5())
         self.register(ModelFactory.create_claude_opus_4_7())
         self.register(ModelFactory.create_claude_fable_5())
         self.register(ModelFactory.create_gemini_2_5_pro())
@@ -1155,7 +1162,7 @@ class ModelRegistry:
         self._litellm_id_to_pricing["openrouter/deepseek/deepseek-chat-v3-0324"] = PricingPresets.DEEPSEEK_V3
         self._litellm_id_to_pricing["openrouter/deepseek/deepseek-v4-flash"] = PricingPresets.DEEPSEEK_V4_FLASH
         self._litellm_id_to_pricing["openrouter/deepseek/deepseek-v4-pro"] = PricingPresets.DEEPSEEK_V4_PRO
-        self._litellm_id_to_pricing["openrouter/anthropic/claude-sonnet-4.6"] = PricingPresets.CLAUDE_SONNET_4_6
+        self._litellm_id_to_pricing["openrouter/anthropic/claude-sonnet-5"] = PricingPresets.CLAUDE_SONNET_5
         self._litellm_id_to_pricing["openrouter/anthropic/claude-opus-4.7"] = PricingPresets.CLAUDE_OPUS_4_7
         self._litellm_id_to_pricing["openrouter/anthropic/claude-fable-5"] = PricingPresets.CLAUDE_FABLE_5
         self._litellm_id_to_pricing["openrouter/google/gemini-2.5-pro"] = PricingPresets.GEMINI_2_5_PRO
