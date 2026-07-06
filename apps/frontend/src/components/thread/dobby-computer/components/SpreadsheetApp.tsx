@@ -42,7 +42,7 @@ import '../../../../../node_modules/@syncfusion/ej2-grids/styles/material.css';
 import '../../../../../node_modules/@syncfusion/ej2-react-spreadsheet/styles/material.css';
 import '../../tool-views/spreadsheet/dobby-spreadsheet-styles.css';
 
-const SYNCFUSION_LICENSE = "Ngo9BigBOggjHTQxAR8/V1JHaF1cXmhPYVF+WmFZfVhgc19DZVZQTWY/P1ZhSXxVdkBhUH5XdXFXRWlfVkF9XEE=";
+const SYNCFUSION_LICENSE = "Ngo9BigBOggjHTQxAR8/V1JAaF5cX2pCdkxzWmFZfVhgcF9HZ1ZQTWY/P1ZhSXxVdkJjX35YcXNXQWRbUkR9XEY=";
 const SYNCFUSION_BASE_URL = 'https://ej2services.syncfusion.com/production/web-services/api/spreadsheet';
 
 registerLicense(SYNCFUSION_LICENSE);
