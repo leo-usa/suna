@@ -2,7 +2,7 @@
 
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { SpreadsheetComponent } from '@syncfusion/ej2-react-spreadsheet';
-import { registerLicense } from '@syncfusion/ej2-base';
+import { registerSyncfusionLicense, SYNCFUSION_SPREADSHEET_SERVICE_URL } from '@/lib/syncfusion';
 import { FileSpreadsheet, Download, RefreshCw, Cloud, CloudOff, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSpreadsheetSync } from './useSpreadsheetSync';
@@ -26,10 +26,7 @@ import '../../../../../node_modules/@syncfusion/ej2-react-spreadsheet/styles/mat
 import './dobby-spreadsheet-styles.css';
 
 
-const SYNCFUSION_LICENSE = "Ngo9BigBOggjHTQxAR8/V1JAaF5cX2pCdkxzWmFZfVhgcF9HZ1ZQTWY/P1ZhSXxVdkJjX35YcXNXQWRbUkR9XEY=";
-const SYNCFUSION_BASE_URL = 'https://ej2services.syncfusion.com/production/web-services/api/spreadsheet';
-
-registerLicense(SYNCFUSION_LICENSE);
+registerSyncfusionLicense();
 
 export type SyncStatus = 'idle' | 'syncing' | 'synced' | 'error' | 'offline' | 'conflict';
 
@@ -304,8 +301,8 @@ export function SpreadsheetViewer({
       <div className="flex-1 relative">
         <SpreadsheetComponent
           ref={ssRef}
-          openUrl={`${SYNCFUSION_BASE_URL}/open`}
-          saveUrl={`${SYNCFUSION_BASE_URL}/save`}
+          openUrl={`${SYNCFUSION_SPREADSHEET_SERVICE_URL}/open`}
+          saveUrl={`${SYNCFUSION_SPREADSHEET_SERVICE_URL}/save`}
           showRibbon={!compact && allowEditing}
           showFormulaBar={!compact && allowEditing}
           showSheetTabs={true}

@@ -3,7 +3,7 @@
 import { memo, useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SpreadsheetComponent } from '@syncfusion/ej2-react-spreadsheet';
-import { registerLicense } from '@syncfusion/ej2-base';
+import { registerSyncfusionLicense, SYNCFUSION_SPREADSHEET_SERVICE_URL } from '@/lib/syncfusion';
 import { 
   Table, 
   Plus, 
@@ -42,10 +42,7 @@ import '../../../../../node_modules/@syncfusion/ej2-grids/styles/material.css';
 import '../../../../../node_modules/@syncfusion/ej2-react-spreadsheet/styles/material.css';
 import '../../tool-views/spreadsheet/dobby-spreadsheet-styles.css';
 
-const SYNCFUSION_LICENSE = "Ngo9BigBOggjHTQxAR8/V1JAaF5cX2pCdkxzWmFZfVhgcF9HZ1ZQTWY/P1ZhSXxVdkJjX35YcXNXQWRbUkR9XEY=";
-const SYNCFUSION_BASE_URL = 'https://ej2services.syncfusion.com/production/web-services/api/spreadsheet';
-
-registerLicense(SYNCFUSION_LICENSE);
+registerSyncfusionLicense();
 
 interface SpreadsheetTab {
   id: string;
@@ -197,8 +194,8 @@ const SpreadsheetEditor = memo(function SpreadsheetEditor({
       <div className="flex-1 relative">
         <SpreadsheetComponent
           ref={ssRef}
-          openUrl={`${SYNCFUSION_BASE_URL}/open`}
-          saveUrl={`${SYNCFUSION_BASE_URL}/save`}
+          openUrl={`${SYNCFUSION_SPREADSHEET_SERVICE_URL}/open`}
+          saveUrl={`${SYNCFUSION_SPREADSHEET_SERVICE_URL}/save`}
           showRibbon={true}
           showFormulaBar={true}
           showSheetTabs={true}
