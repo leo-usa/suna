@@ -141,6 +141,11 @@ class PricingPresets:
         output_cost_per_million_tokens=15.00,
     )
 
+    GROK_4_5 = ModelPricing(
+        input_cost_per_million_tokens=2.00,
+        output_cost_per_million_tokens=6.00,
+    )
+
     KIMI_K2_6 = ModelPricing(
         input_cost_per_million_tokens=0.55,
         output_cost_per_million_tokens=2.50,
@@ -164,6 +169,21 @@ class PricingPresets:
     GPT_5_5_PRO = ModelPricing(
         input_cost_per_million_tokens=30.00,
         output_cost_per_million_tokens=180.00,
+    )
+
+    GPT_5_6_LUNA = ModelPricing(
+        input_cost_per_million_tokens=1.00,
+        output_cost_per_million_tokens=6.00,
+    )
+
+    GPT_5_6_TERRA = ModelPricing(
+        input_cost_per_million_tokens=2.50,
+        output_cost_per_million_tokens=15.00,
+    )
+
+    GPT_5_6_SOL = ModelPricing(
+        input_cost_per_million_tokens=5.00,
+        output_cost_per_million_tokens=30.00,
     )
 
 
@@ -646,6 +666,27 @@ class ModelFactory:
             recommended=False,
             enabled=True,
         )
+
+    @staticmethod
+    def create_grok_4_5() -> Model:
+        return Model(
+            id="dobby/grok-4.5",
+            name="Grok 4.5",
+            litellm_model_id="openrouter/x-ai/grok-4.5",
+            provider=ModelProvider.OPENROUTER,
+            aliases=["grok-4.5", "grok-4-5", "x-ai/grok-4.5"],
+            context_window=500_000,
+            capabilities=[
+                ModelCapability.CHAT,
+                ModelCapability.FUNCTION_CALLING,
+                ModelCapability.VISION,
+            ],
+            pricing=PricingPresets.GROK_4_5,
+            tier_availability=["free", "paid"],
+            priority=92,
+            recommended=False,
+            enabled=True,
+        )
     
     @staticmethod
     def create_gpt4o_mini() -> Model:
@@ -1028,6 +1069,129 @@ class ModelFactory:
         )
 
     @staticmethod
+    def create_gpt_5_6_luna() -> Model:
+        return Model(
+            id="dobby/gpt-5.6-luna",
+            name="GPT-5.6 Luna",
+            litellm_model_id="openrouter/openai/gpt-5.6-luna",
+            provider=ModelProvider.OPENROUTER,
+            aliases=["gpt-5.6-luna", "openai/gpt-5.6-luna"],
+            context_window=1_000_000,
+            capabilities=[
+                ModelCapability.CHAT,
+                ModelCapability.FUNCTION_CALLING,
+            ],
+            pricing=PricingPresets.GPT_5_6_LUNA,
+            tier_availability=["free", "paid"],
+            priority=110,
+            recommended=False,
+            enabled=True,
+        )
+
+    @staticmethod
+    def create_gpt_5_6_luna_pro() -> Model:
+        return Model(
+            id="dobby/gpt-5.6-luna-pro",
+            name="GPT-5.6 Luna Pro",
+            litellm_model_id="openrouter/openai/gpt-5.6-luna-pro",
+            provider=ModelProvider.OPENROUTER,
+            aliases=["gpt-5.6-luna-pro", "openai/gpt-5.6-luna-pro"],
+            context_window=1_000_000,
+            capabilities=[
+                ModelCapability.CHAT,
+                ModelCapability.FUNCTION_CALLING,
+                ModelCapability.THINKING,
+            ],
+            pricing=PricingPresets.GPT_5_6_LUNA,
+            tier_availability=["free", "paid"],
+            priority=111,
+            recommended=False,
+            enabled=True,
+        )
+
+    @staticmethod
+    def create_gpt_5_6_terra() -> Model:
+        return Model(
+            id="dobby/gpt-5.6-terra",
+            name="GPT-5.6 Terra",
+            litellm_model_id="openrouter/openai/gpt-5.6-terra",
+            provider=ModelProvider.OPENROUTER,
+            aliases=["gpt-5.6-terra", "openai/gpt-5.6-terra"],
+            context_window=1_000_000,
+            capabilities=[
+                ModelCapability.CHAT,
+                ModelCapability.FUNCTION_CALLING,
+            ],
+            pricing=PricingPresets.GPT_5_6_TERRA,
+            tier_availability=["free", "paid"],
+            priority=112,
+            recommended=False,
+            enabled=True,
+        )
+
+    @staticmethod
+    def create_gpt_5_6_terra_pro() -> Model:
+        return Model(
+            id="dobby/gpt-5.6-terra-pro",
+            name="GPT-5.6 Terra Pro",
+            litellm_model_id="openrouter/openai/gpt-5.6-terra-pro",
+            provider=ModelProvider.OPENROUTER,
+            aliases=["gpt-5.6-terra-pro", "openai/gpt-5.6-terra-pro"],
+            context_window=1_000_000,
+            capabilities=[
+                ModelCapability.CHAT,
+                ModelCapability.FUNCTION_CALLING,
+                ModelCapability.THINKING,
+            ],
+            pricing=PricingPresets.GPT_5_6_TERRA,
+            tier_availability=["free", "paid"],
+            priority=113,
+            recommended=False,
+            enabled=True,
+        )
+
+    @staticmethod
+    def create_gpt_5_6_sol() -> Model:
+        return Model(
+            id="dobby/gpt-5.6-sol",
+            name="GPT-5.6 Sol",
+            litellm_model_id="openrouter/openai/gpt-5.6-sol",
+            provider=ModelProvider.OPENROUTER,
+            aliases=["gpt-5.6-sol", "openai/gpt-5.6-sol"],
+            context_window=1_000_000,
+            capabilities=[
+                ModelCapability.CHAT,
+                ModelCapability.FUNCTION_CALLING,
+            ],
+            pricing=PricingPresets.GPT_5_6_SOL,
+            tier_availability=["paid"],
+            priority=114,
+            recommended=False,
+            enabled=True,
+        )
+
+    @staticmethod
+    def create_gpt_5_6_sol_pro() -> Model:
+        return Model(
+            id="dobby/gpt-5.6-sol-pro",
+            name="GPT-5.6 Sol Pro",
+            litellm_model_id="openrouter/openai/gpt-5.6-sol-pro",
+            provider=ModelProvider.OPENROUTER,
+            aliases=["gpt-5.6-sol-pro", "openai/gpt-5.6-sol-pro"],
+            context_window=1_000_000,
+            capabilities=[
+                ModelCapability.CHAT,
+                ModelCapability.FUNCTION_CALLING,
+                ModelCapability.THINKING,
+            ],
+            pricing=PricingPresets.GPT_5_6_SOL,
+            tier_availability=["paid"],
+            priority=115,
+            recommended=False,
+            enabled=True,
+        )
+
+    @staticmethod
     def create_haiku_3_5() -> Model:
         return Model(
             id="dobby/haiku-3.5",
@@ -1124,6 +1288,7 @@ class ModelRegistry:
         self.register(ModelFactory.create_anthropic_haiku(use_bedrock))
         self.register(ModelFactory.create_grok_4_1_fast())
         self.register(ModelFactory.create_grok_4())
+        self.register(ModelFactory.create_grok_4_5())
         self.register(ModelFactory.create_gpt4o_mini())
         self.register(ModelFactory.create_mimo_v2_flash())
         self.register(ModelFactory.create_kimi_k2())
@@ -1144,6 +1309,12 @@ class ModelRegistry:
         self.register(ModelFactory.create_glm_5_2())
         self.register(ModelFactory.create_gpt_5_5())
         self.register(ModelFactory.create_gpt_5_5_pro())
+        self.register(ModelFactory.create_gpt_5_6_luna())
+        self.register(ModelFactory.create_gpt_5_6_luna_pro())
+        self.register(ModelFactory.create_gpt_5_6_terra())
+        self.register(ModelFactory.create_gpt_5_6_terra_pro())
+        self.register(ModelFactory.create_gpt_5_6_sol())
+        self.register(ModelFactory.create_gpt_5_6_sol_pro())
 
         if config.ENV_MODE != EnvMode.PRODUCTION:
             self.register(ModelFactory.create_test_model())
@@ -1169,10 +1340,17 @@ class ModelRegistry:
         self._litellm_id_to_pricing["openrouter/google/gemini-3.1-pro-preview"] = PricingPresets.GEMINI_3_1_PRO
         self._litellm_id_to_pricing["openrouter/google/gemma-4-31b-it"] = PricingPresets.GEMMA_4_31B
         self._litellm_id_to_pricing["openrouter/x-ai/grok-4"] = PricingPresets.GROK_4
+        self._litellm_id_to_pricing["openrouter/x-ai/grok-4.5"] = PricingPresets.GROK_4_5
         self._litellm_id_to_pricing["openrouter/z-ai/glm-5.2"] = PricingPresets.GLM_5_2
         self._litellm_id_to_pricing["openrouter/minimax/minimax-m2.7"] = PricingPresets.MINIMAX_M2_7
         self._litellm_id_to_pricing["openrouter/openai/gpt-5.5"] = PricingPresets.GPT_5_5
         self._litellm_id_to_pricing["openrouter/openai/gpt-5.5-pro"] = PricingPresets.GPT_5_5_PRO
+        self._litellm_id_to_pricing["openrouter/openai/gpt-5.6-luna"] = PricingPresets.GPT_5_6_LUNA
+        self._litellm_id_to_pricing["openrouter/openai/gpt-5.6-luna-pro"] = PricingPresets.GPT_5_6_LUNA
+        self._litellm_id_to_pricing["openrouter/openai/gpt-5.6-terra"] = PricingPresets.GPT_5_6_TERRA
+        self._litellm_id_to_pricing["openrouter/openai/gpt-5.6-terra-pro"] = PricingPresets.GPT_5_6_TERRA
+        self._litellm_id_to_pricing["openrouter/openai/gpt-5.6-sol"] = PricingPresets.GPT_5_6_SOL
+        self._litellm_id_to_pricing["openrouter/openai/gpt-5.6-sol-pro"] = PricingPresets.GPT_5_6_SOL
     
     def register(self, model: Model) -> None:
         self._models[model.id] = model
