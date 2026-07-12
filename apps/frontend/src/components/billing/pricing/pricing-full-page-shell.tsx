@@ -37,7 +37,7 @@ export function PricingFullPageShell({
     <div
       className={cn(
         asPage && 'fixed inset-0 z-50 flex flex-col bg-background',
-        !asPage && 'relative flex h-full w-full flex-col bg-background',
+        !asPage && 'relative flex h-full min-h-0 w-full flex-col bg-background',
         className,
       )}
     >
@@ -61,8 +61,13 @@ export function PricingFullPageShell({
         </div>
       </div>
 
-      <div className="w-full h-full overflow-y-auto overflow-x-hidden bg-background pt-[60px] sm:pt-[67px] lg:flex lg:justify-center">
-        <div className="lg:scale-90 xl:scale-100 lg:origin-top w-full max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 pt-4 sm:pt-8 lg:pt-0 pb-6 sm:pb-8 lg:pb-0 min-h-full lg:min-h-0 lg:my-auto flex items-center justify-center">
+      {/*
+        flex-1 min-h-0 + overflow-y-auto on the scrollport, and my-auto on the
+        content: centers short content, but still allows scrolling when the
+        plan cards are taller than the viewport (flex items-center clips the top).
+      */}
+      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden bg-background flex flex-col pt-[60px] sm:pt-[67px]">
+        <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-8 my-auto lg:scale-90 xl:scale-100 lg:origin-top">
           {children}
         </div>
       </div>
