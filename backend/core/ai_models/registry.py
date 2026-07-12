@@ -1612,6 +1612,7 @@ class ModelRegistry:
             "id": model.id,
             "name": model.name,
             "aliases": model.aliases,
+            "litellm_model_id": model.litellm_model_id,
             "context_window": model.context_window,
             "capabilities": [cap.value for cap in model.capabilities],
             "enabled": model.enabled,

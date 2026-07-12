@@ -731,7 +731,9 @@
       "allModels": "All Models",
       "upgradeAdvanced": "Upgrade to access Dobby Advanced mode",
       "basicAlt": "Dobby Basic",
-      "advancedAlt": "Dobby Advanced"
+      "advancedAlt": "Dobby Advanced",
+      "selectModel": "Select model",
+      "poweredBy": "Uses {model}"
     }
   },
   "agents": {

@@ -72,6 +72,7 @@ export interface AccountState {
     capabilities: string[];
     priority: number;
     recommended: boolean;
+    litellm_model_id?: string;
   }>;
   limits: {
     projects: {

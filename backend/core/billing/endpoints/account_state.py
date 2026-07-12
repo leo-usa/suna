@@ -483,7 +483,8 @@ async def _build_account_state(account_id: str, skip_cache: bool = False) -> Dic
             'context_window': model.get('context_window', 128000),
             'capabilities': model.get('capabilities', []),
             'priority': model.get('priority', 0),
-            'recommended': model.get('recommended', False)
+            'recommended': model.get('recommended', False),
+            'litellm_model_id': model.get('litellm_model_id'),
         })
     
     # all_limits already fetched above in parallel with Stripe
@@ -723,7 +724,8 @@ async def get_account_state(
                     'context_window': model.get('context_window', 128000),
                     'capabilities': model.get('capabilities', []),
                     'priority': model.get('priority', 0),
-                    'recommended': model.get('recommended', False)
+                    'recommended': model.get('recommended', False),
+                    'litellm_model_id': model.get('litellm_model_id'),
                 }
                 for model in all_models
             ],

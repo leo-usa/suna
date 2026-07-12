@@ -14,6 +14,7 @@ export interface ModelOption {
   recommended?: boolean;
   capabilities?: string[];
   contextWindow?: number;
+  litellmModelId?: string;
 }
 
 // Helper to check if user has a PAID subscription (not free tier)
@@ -69,6 +70,7 @@ export const useModelSelection = () => {
       recommended: model.recommended || false,
       capabilities: model.capabilities || [],
       contextWindow: model.context_window || 128000,
+      litellmModelId: model.litellm_model_id,
     })).sort((a, b) => {
       // Sort accessible models first, then by priority
       if (a.requiresSubscription !== b.requiresSubscription) {

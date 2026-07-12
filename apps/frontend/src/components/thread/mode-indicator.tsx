@@ -8,11 +8,41 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Check, Lock, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useModelSelection } from '@/hooks/agents';
+import { useModelSelection, type ModelOption } from '@/hooks/agents';
 import { usePricingModalStore } from '@/stores/pricing-modal-store';
 import { ModelProviderIcon } from '@/lib/model-provider-icons';
 import { Separator } from '@/components/ui/separator';
 import { useTranslations } from 'next-intl';
+
+function formatLitellmModelName(litellmModelId: string): string {
+  const slug = litellmModelId.split('/').pop() || litellmModelId;
+  return slug
+    .split('-')
+    .map((part) => {
+      if (/^\d+(\.\d+)*$/.test(part)) return part;
+      if (part.toLowerCase() === 'gpt') return 'GPT';
+      return part.charAt(0).toUpperCase() + part.slice(1);
+    })
+    .join(' ');
+}
+
+function resolveUnderlyingModelLabel(
+  modeModel: ModelOption | undefined,
+  allModels: ModelOption[],
+): string | null {
+  if (!modeModel?.litellmModelId) return null;
+
+  const match = allModels.find(
+    (m) =>
+      m.id !== modeModel.id &&
+      m.id !== 'dobby/basic' &&
+      m.id !== 'dobby/power' &&
+      m.litellmModelId === modeModel.litellmModelId,
+  );
+  if (match?.label) return match.label;
+
+  return formatLitellmModelName(modeModel.litellmModelId);
+}
 
 // Logo component for mode display with theme support
 // Uses CSS to switch between light/dark variants without JS
@@ -97,6 +127,20 @@ export const ModeIndicator = memo(function ModeIndicator() {
   const isPowerSelected = powerModel && selectedModel === powerModel.id;
   const isBasicSelected = basicModel && selectedModel === basicModel.id;
 
+  const basicUnderlyingLabel = useMemo(
+    () => resolveUnderlyingModelLabel(basicModel, modelOptions),
+    [basicModel, modelOptions],
+  );
+  const advancedUnderlyingLabel = useMemo(
+    () => resolveUnderlyingModelLabel(powerModel, modelOptions),
+    [powerModel, modelOptions],
+  );
+  const selectedUnderlyingLabel = isPowerSelected
+    ? advancedUnderlyingLabel
+    : isBasicSelected
+      ? basicUnderlyingLabel
+      : null;
+
   const handleBasicClick = useCallback(() => {
     if (basicModel) {
       handleModelChange(basicModel.id);
@@ -117,7 +161,7 @@ export const ModeIndicator = memo(function ModeIndicator() {
         });
       }
     }
-  }, [powerModel, canAccessPower, handleModelChange]);
+  }, [powerModel, canAccessPower, handleModelChange, t]);
 
   const handleOtherModelClick = useCallback((modelId: string) => {
     handleModelChange(modelId);
@@ -129,13 +173,30 @@ export const ModeIndicator = memo(function ModeIndicator() {
       <DropdownMenuTrigger asChild>
         <button
           className={cn(
-            'flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 h-9 rounded-lg transition-all duration-150 cursor-pointer touch-manipulation',
+            'flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 min-h-9 py-1 rounded-lg transition-all duration-150 cursor-pointer touch-manipulation',
             'hover:bg-accent/50 active:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
           )}
+          aria-label={t('selectModel')}
         >
-          <ModeLogo mode={isPowerSelected ? 'advanced' : 'basic'} height={13} />
+          {isOtherModelSelected && selectedOtherModel ? (
+            <>
+              <ModelProviderIcon modelId={selectedOtherModel.id} size={18} />
+              <span className="text-sm font-medium truncate max-w-[140px] sm:max-w-[180px]">
+                {selectedOtherModel.label}
+              </span>
+            </>
+          ) : (
+            <span className="flex flex-col items-start min-w-0 leading-none">
+              <ModeLogo mode={isPowerSelected ? 'advanced' : 'basic'} height={13} />
+              {selectedUnderlyingLabel && (
+                <span className="text-[10px] sm:text-[11px] text-muted-foreground truncate max-w-[140px] sm:max-w-[180px] mt-0.5">
+                  {selectedUnderlyingLabel}
+                </span>
+              )}
+            </span>
+          )}
           <ChevronDown className={cn(
-            "h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground transition-transform duration-200",
+            "h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground transition-transform duration-200 flex-shrink-0",
             isOpen && "rotate-180"
           )} strokeWidth={2} />
         </button>
@@ -161,6 +222,11 @@ export const ModeIndicator = memo(function ModeIndicator() {
               <ModeLogo mode="basic" height={14} />
             </div>
             <div className="text-xs text-muted-foreground leading-relaxed">{t('basicDescription')}</div>
+            {basicUnderlyingLabel && (
+              <div className="text-[11px] text-muted-foreground/80 mt-1 truncate">
+                {t('poweredBy', { model: basicUnderlyingLabel })}
+              </div>
+            )}
           </div>
           {isBasicSelected && (
             <Check className="h-4 w-4 text-foreground flex-shrink-0 mt-0.5" strokeWidth={2} />
@@ -182,6 +248,11 @@ export const ModeIndicator = memo(function ModeIndicator() {
               <ModeLogo mode="advanced" height={14} />
             </div>
             <div className="text-xs text-muted-foreground leading-relaxed">{t('advancedDescription')}</div>
+            {advancedUnderlyingLabel && (
+              <div className="text-[11px] text-muted-foreground/80 mt-1 truncate">
+                {t('poweredBy', { model: advancedUnderlyingLabel })}
+              </div>
+            )}
           </div>
           {isPowerSelected ? (
             <Check className="h-4 w-4 text-foreground flex-shrink-0 mt-0.5" strokeWidth={2} />
@@ -231,4 +302,3 @@ export const ModeIndicator = memo(function ModeIndicator() {
 });
 
 export default ModeIndicator;
-
