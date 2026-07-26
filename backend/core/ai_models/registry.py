@@ -112,6 +112,13 @@ class PricingPresets:
         cache_write_5m_cost_per_million_tokens=6.25,
     )
 
+    CLAUDE_OPUS_5 = ModelPricing(
+        input_cost_per_million_tokens=5.00,
+        output_cost_per_million_tokens=25.00,
+        cached_read_cost_per_million_tokens=0.50,
+        cache_write_5m_cost_per_million_tokens=6.25,
+    )
+
     CLAUDE_FABLE_5 = ModelPricing(
         input_cost_per_million_tokens=10.00,
         output_cost_per_million_tokens=50.00,
@@ -129,6 +136,18 @@ class PricingPresets:
         output_cost_per_million_tokens=12.00,
         cached_read_cost_per_million_tokens=0.20,
         cache_write_5m_cost_per_million_tokens=0.375,
+    )
+
+    GEMINI_3_5_FLASH_LITE = ModelPricing(
+        input_cost_per_million_tokens=0.30,
+        output_cost_per_million_tokens=2.50,
+        cached_read_cost_per_million_tokens=0.03,
+    )
+
+    GEMINI_3_6_FLASH = ModelPricing(
+        input_cost_per_million_tokens=1.50,
+        output_cost_per_million_tokens=7.50,
+        cached_read_cost_per_million_tokens=0.15,
     )
 
     GEMMA_4_31B = ModelPricing(
@@ -866,6 +885,29 @@ class ModelFactory:
         )
 
     @staticmethod
+    def create_claude_opus_5() -> Model:
+        return Model(
+            id="dobby/claude-opus-5",
+            name="Claude Opus 5",
+            litellm_model_id="openrouter/anthropic/claude-opus-5",
+            provider=ModelProvider.OPENROUTER,
+            aliases=["claude-opus-5", "anthropic/claude-opus-5"],
+            context_window=1_000_000,
+            capabilities=[
+                ModelCapability.CHAT,
+                ModelCapability.FUNCTION_CALLING,
+                ModelCapability.VISION,
+                ModelCapability.THINKING,
+                ModelCapability.PROMPT_CACHING,
+            ],
+            pricing=PricingPresets.CLAUDE_OPUS_5,
+            tier_availability=["paid"],
+            priority=104,
+            recommended=False,
+            enabled=True,
+        )
+
+    @staticmethod
     def create_claude_fable_5() -> Model:
         return Model(
             id="dobby/claude-fable-5",
@@ -929,6 +971,51 @@ class ModelFactory:
             pricing=PricingPresets.GEMINI_3_1_PRO,
             tier_availability=["free", "paid"],
             priority=92,
+            recommended=False,
+            enabled=True,
+        )
+
+    @staticmethod
+    def create_gemini_3_5_flash_lite() -> Model:
+        return Model(
+            id="dobby/gemini-3.5-flash-lite",
+            name="Gemini 3.5 Flash Lite",
+            litellm_model_id="openrouter/google/gemini-3.5-flash-lite",
+            provider=ModelProvider.OPENROUTER,
+            aliases=["gemini-3.5-flash-lite", "google/gemini-3.5-flash-lite"],
+            context_window=1_000_000,
+            capabilities=[
+                ModelCapability.CHAT,
+                ModelCapability.FUNCTION_CALLING,
+                ModelCapability.VISION,
+                ModelCapability.PROMPT_CACHING,
+            ],
+            pricing=PricingPresets.GEMINI_3_5_FLASH_LITE,
+            tier_availability=["free", "paid"],
+            priority=94,
+            recommended=False,
+            enabled=True,
+        )
+
+    @staticmethod
+    def create_gemini_3_6_flash() -> Model:
+        return Model(
+            id="dobby/gemini-3.6-flash",
+            name="Gemini 3.6 Flash",
+            litellm_model_id="openrouter/google/gemini-3.6-flash",
+            provider=ModelProvider.OPENROUTER,
+            aliases=["gemini-3.6-flash", "google/gemini-3.6-flash"],
+            context_window=1_000_000,
+            capabilities=[
+                ModelCapability.CHAT,
+                ModelCapability.FUNCTION_CALLING,
+                ModelCapability.VISION,
+                ModelCapability.THINKING,
+                ModelCapability.PROMPT_CACHING,
+            ],
+            pricing=PricingPresets.GEMINI_3_6_FLASH,
+            tier_availability=["free", "paid"],
+            priority=93,
             recommended=False,
             enabled=True,
         )
@@ -1302,9 +1389,12 @@ class ModelRegistry:
         self.register(ModelFactory.create_deepseek_v4_pro())
         self.register(ModelFactory.create_claude_sonnet_5())
         self.register(ModelFactory.create_claude_opus_4_7())
+        self.register(ModelFactory.create_claude_opus_5())
         self.register(ModelFactory.create_claude_fable_5())
         self.register(ModelFactory.create_gemini_2_5_pro())
         self.register(ModelFactory.create_gemini_3_1_pro())
+        self.register(ModelFactory.create_gemini_3_5_flash_lite())
+        self.register(ModelFactory.create_gemini_3_6_flash())
         self.register(ModelFactory.create_gemma_4_31b())
         self.register(ModelFactory.create_glm_5_2())
         self.register(ModelFactory.create_gpt_5_5())
@@ -1335,9 +1425,12 @@ class ModelRegistry:
         self._litellm_id_to_pricing["openrouter/deepseek/deepseek-v4-pro"] = PricingPresets.DEEPSEEK_V4_PRO
         self._litellm_id_to_pricing["openrouter/anthropic/claude-sonnet-5"] = PricingPresets.CLAUDE_SONNET_5
         self._litellm_id_to_pricing["openrouter/anthropic/claude-opus-4.7"] = PricingPresets.CLAUDE_OPUS_4_7
+        self._litellm_id_to_pricing["openrouter/anthropic/claude-opus-5"] = PricingPresets.CLAUDE_OPUS_5
         self._litellm_id_to_pricing["openrouter/anthropic/claude-fable-5"] = PricingPresets.CLAUDE_FABLE_5
         self._litellm_id_to_pricing["openrouter/google/gemini-2.5-pro"] = PricingPresets.GEMINI_2_5_PRO
         self._litellm_id_to_pricing["openrouter/google/gemini-3.1-pro-preview"] = PricingPresets.GEMINI_3_1_PRO
+        self._litellm_id_to_pricing["openrouter/google/gemini-3.5-flash-lite"] = PricingPresets.GEMINI_3_5_FLASH_LITE
+        self._litellm_id_to_pricing["openrouter/google/gemini-3.6-flash"] = PricingPresets.GEMINI_3_6_FLASH
         self._litellm_id_to_pricing["openrouter/google/gemma-4-31b-it"] = PricingPresets.GEMMA_4_31B
         self._litellm_id_to_pricing["openrouter/x-ai/grok-4"] = PricingPresets.GROK_4
         self._litellm_id_to_pricing["openrouter/x-ai/grok-4.5"] = PricingPresets.GROK_4_5
