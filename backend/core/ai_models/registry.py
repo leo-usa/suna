@@ -73,7 +73,7 @@ class PricingPresets:
     KIMI_K2_5 = ModelPricing(
         input_cost_per_million_tokens=0.60,
         output_cost_per_million_tokens=3.00,
-        cached_read_cost_per_million_tokens=0.10,
+        cached_read_cost_per_million_tokens=0.095,
     )
 
     HAIKU_3_5 = ModelPricing(
@@ -91,11 +91,13 @@ class PricingPresets:
     DEEPSEEK_V4_FLASH = ModelPricing(
         input_cost_per_million_tokens=0.14,
         output_cost_per_million_tokens=0.28,
+        cached_read_cost_per_million_tokens=0.028,
     )
 
     DEEPSEEK_V4_PRO = ModelPricing(
         input_cost_per_million_tokens=0.435,
         output_cost_per_million_tokens=0.87,
+        cached_read_cost_per_million_tokens=0.003625,
     )
 
     CLAUDE_SONNET_5 = ModelPricing(
@@ -129,6 +131,8 @@ class PricingPresets:
     GEMINI_2_5_PRO = ModelPricing(
         input_cost_per_million_tokens=1.25,
         output_cost_per_million_tokens=10.00,
+        cached_read_cost_per_million_tokens=0.125,
+        cache_write_5m_cost_per_million_tokens=0.375,
     )
 
     GEMINI_3_1_PRO = ModelPricing(
@@ -142,12 +146,14 @@ class PricingPresets:
         input_cost_per_million_tokens=0.30,
         output_cost_per_million_tokens=2.50,
         cached_read_cost_per_million_tokens=0.03,
+        cache_write_5m_cost_per_million_tokens=0.0833,
     )
 
     GEMINI_3_6_FLASH = ModelPricing(
         input_cost_per_million_tokens=1.50,
         output_cost_per_million_tokens=7.50,
         cached_read_cost_per_million_tokens=0.15,
+        cache_write_5m_cost_per_million_tokens=0.0833,
     )
 
     GEMMA_4_31B = ModelPricing(
@@ -163,11 +169,13 @@ class PricingPresets:
     GROK_4_5 = ModelPricing(
         input_cost_per_million_tokens=2.00,
         output_cost_per_million_tokens=6.00,
+        cached_read_cost_per_million_tokens=0.30,
     )
 
     KIMI_K2_6 = ModelPricing(
         input_cost_per_million_tokens=0.55,
         output_cost_per_million_tokens=2.50,
+        cached_read_cost_per_million_tokens=0.11,
     )
 
     KIMI_K3 = ModelPricing(
@@ -179,16 +187,19 @@ class PricingPresets:
     GLM_5_2 = ModelPricing(
         input_cost_per_million_tokens=1.40,
         output_cost_per_million_tokens=4.40,
+        cached_read_cost_per_million_tokens=0.13,
     )
 
     MINIMAX_M2_7 = ModelPricing(
         input_cost_per_million_tokens=0.30,
         output_cost_per_million_tokens=1.20,
+        cached_read_cost_per_million_tokens=0.05,
     )
 
     GPT_5_5 = ModelPricing(
         input_cost_per_million_tokens=5.00,
         output_cost_per_million_tokens=30.00,
+        cached_read_cost_per_million_tokens=0.50,
     )
 
     GPT_5_5_PRO = ModelPricing(
@@ -199,16 +210,22 @@ class PricingPresets:
     GPT_5_6_LUNA = ModelPricing(
         input_cost_per_million_tokens=1.00,
         output_cost_per_million_tokens=6.00,
+        cached_read_cost_per_million_tokens=0.10,
+        cache_write_5m_cost_per_million_tokens=1.25,
     )
 
     GPT_5_6_TERRA = ModelPricing(
         input_cost_per_million_tokens=2.50,
         output_cost_per_million_tokens=15.00,
+        cached_read_cost_per_million_tokens=0.25,
+        cache_write_5m_cost_per_million_tokens=3.125,
     )
 
     GPT_5_6_SOL = ModelPricing(
         input_cost_per_million_tokens=5.00,
         output_cost_per_million_tokens=30.00,
+        cached_read_cost_per_million_tokens=0.50,
+        cache_write_5m_cost_per_million_tokens=6.25,
     )
 
 
