@@ -170,6 +170,12 @@ class PricingPresets:
         output_cost_per_million_tokens=2.50,
     )
 
+    KIMI_K3 = ModelPricing(
+        input_cost_per_million_tokens=3.00,
+        output_cost_per_million_tokens=15.00,
+        cached_read_cost_per_million_tokens=0.30,
+    )
+
     GLM_5_2 = ModelPricing(
         input_cost_per_million_tokens=1.40,
         output_cost_per_million_tokens=4.40,
@@ -1065,6 +1071,30 @@ class ModelFactory:
         )
 
     @staticmethod
+    def create_kimi_k3() -> Model:
+        return Model(
+            id="dobby/kimi-k3",
+            name="Kimi K3",
+            litellm_model_id="openrouter/moonshotai/kimi-k3",
+            provider=ModelProvider.OPENROUTER,
+            aliases=["kimi-k3", "moonshotai/kimi-k3"],
+            context_window=1_000_000,
+            capabilities=[
+                ModelCapability.CHAT,
+                ModelCapability.FUNCTION_CALLING,
+                ModelCapability.VISION,
+                ModelCapability.PROMPT_CACHING,
+                ModelCapability.THINKING,
+            ],
+            pricing=PricingPresets.KIMI_K3,
+            tier_availability=["free", "paid"],
+            priority=108,
+            recommended=False,
+            enabled=True,
+            config=_create_kimi_model_config(),
+        )
+
+    @staticmethod
     def create_glm_5_2() -> Model:
         return Model(
             id="dobby/glm-5.2",
@@ -1381,6 +1411,7 @@ class ModelRegistry:
         self.register(ModelFactory.create_kimi_k2())
         self.register(ModelFactory.create_kimi_k2_5())
         self.register(ModelFactory.create_kimi_k2_6())
+        self.register(ModelFactory.create_kimi_k3())
         self.register(ModelFactory.create_minimax_m2())
         self.register(ModelFactory.create_minimax_m2_7())
         self.register(ModelFactory.create_haiku_3_5())
@@ -1419,6 +1450,7 @@ class ModelRegistry:
         self._litellm_id_to_pricing["openrouter/moonshotai/kimi-k2"] = PricingPresets.KIMI_K2
         self._litellm_id_to_pricing["openrouter/moonshotai/kimi-k2.5"] = PricingPresets.KIMI_K2_5
         self._litellm_id_to_pricing["openrouter/moonshotai/kimi-k2.6"] = PricingPresets.KIMI_K2_6
+        self._litellm_id_to_pricing["openrouter/moonshotai/kimi-k3"] = PricingPresets.KIMI_K3
         self._litellm_id_to_pricing["bedrock/anthropic.claude-3-5-haiku-20241022-v1:0"] = PricingPresets.HAIKU_3_5
         self._litellm_id_to_pricing["openrouter/deepseek/deepseek-chat-v3-0324"] = PricingPresets.DEEPSEEK_V3
         self._litellm_id_to_pricing["openrouter/deepseek/deepseek-v4-flash"] = PricingPresets.DEEPSEEK_V4_FLASH
