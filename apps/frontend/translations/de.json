@@ -232,7 +232,8 @@
       "insufficientCreditsMessage": "Abrechnungsprüfung fehlgeschlagen: Unzureichende Credits. Dein Guthaben beträgt {balance}. Bitte füge Credits hinzu, um fortzufahren.",
       "creditsExhausted": "Dir sind die Credits ausgegangen. Jetzt upgraden.",
       "billingCheckFailed": "Abrechnungsprüfung fehlgeschlagen. Bitte upgraden, um fortzufahren.",
-      "failedToStartAgent": "Agent {agentName} konnte nicht gestartet werden: {message}"
+      "failedToStartAgent": "Agent {agentName} konnte nicht gestartet werden: {message}",
+      "modelPricing": "Modellpreise"
     },
     "usage": {
       "title": "Nutzung"
@@ -919,6 +920,23 @@
       "noCheckoutUrl": "No checkout URL received",
       "creditBalanceTitle": "Credit Balance",
       "addCredits": "Add Credits"
+    },
+    "modelPricing": {
+      "title": "Modell-Token-Preise",
+      "subtitle": "Sehen Sie, was jedes KI-Modell pro Million Tokens kostet. Preise enthalten den Plattformaufschlag und entsprechen Ihrer Credit-Abrechnung.",
+      "description": "Die Nutzung wird aus Eingabe-, Ausgabe- und Cache-Read-Tokens berechnet. Cache-Reads sind günstiger, wenn der Anbieter Prompt-Caching unterstützt.",
+      "model": "Modell",
+      "inputCost": "Eingabe",
+      "outputCost": "Ausgabe",
+      "cacheReadCost": "Cache-Lesen",
+      "per1MTokens": "pro 1M Tokens",
+      "paid": "Kostenpflichtig",
+      "free": "Kostenlos & Kostenpflichtig",
+      "loading": "Modellpreise werden geladen...",
+      "error": "Modellpreise konnten nicht geladen werden. Bitte erneut versuchen.",
+      "tryAgain": "Erneut versuchen",
+      "viewLink": "Modellpreise",
+      "footnote": "Angezeigte Preise enthalten einen Plattformaufschlag von 50 % über den Anbieterpreisen. 1.000 Credits = 1,00 $ abgerechnete Nutzung."
     }
   },
   "auth": {

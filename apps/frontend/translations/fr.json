@@ -232,7 +232,8 @@
       "insufficientCreditsMessage": "Vérification de facturation échouée : Crédits insuffisants. Votre solde est {balance}. Veuillez ajouter des crédits pour continuer.",
       "creditsExhausted": "Vous avez épuisé vos crédits. Mettez à niveau maintenant.",
       "billingCheckFailed": "Vérification de facturation échouée. Veuillez mettre à niveau pour continuer.",
-      "failedToStartAgent": "Échec du démarrage de l'agent {agentName} : {message}"
+      "failedToStartAgent": "Échec du démarrage de l'agent {agentName} : {message}",
+      "modelPricing": "Tarifs des modèles"
     },
     "usage": {
       "title": "Utilisation"
@@ -1001,6 +1002,23 @@
         "title": "Parallel Runs Limit Reached",
         "subtitle": "Upgrade to run more workers in parallel."
       }
+    },
+    "modelPricing": {
+      "title": "Tarifs des tokens par modèle",
+      "subtitle": "Découvrez le coût de chaque modèle d'IA par million de tokens. Les prix incluent la marge de la plateforme et correspondent à vos crédits facturés.",
+      "description": "L'usage est calculé à partir des tokens d'entrée, de sortie et de lecture du cache. Les lectures du cache sont moins chères lorsque le fournisseur prend en charge le prompt caching.",
+      "model": "Modèle",
+      "inputCost": "Entrée",
+      "outputCost": "Sortie",
+      "cacheReadCost": "Lecture cache",
+      "per1MTokens": "par 1M de tokens",
+      "paid": "Payant",
+      "free": "Gratuit et payant",
+      "loading": "Chargement des tarifs...",
+      "error": "Impossible de charger les tarifs. Veuillez réessayer.",
+      "tryAgain": "Réessayer",
+      "viewLink": "Tarifs des modèles",
+      "footnote": "Les prix affichés incluent une marge de 50 % sur les tarifs des fournisseurs. 1 000 crédits = 1,00 $ d'usage facturé."
     }
   },
   "auth": {

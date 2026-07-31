@@ -232,7 +232,8 @@
       "insufficientCreditsMessage": "Verificação de cobrança falhou: Créditos insuficientes. Seu saldo é {balance}. Por favor, adicione créditos para continuar.",
       "creditsExhausted": "Você ficou sem créditos. Atualize agora.",
       "billingCheckFailed": "Verificação de cobrança falhou. Por favor, atualize para continuar.",
-      "failedToStartAgent": "Falha ao iniciar o agente {agentName}: {message}"
+      "failedToStartAgent": "Falha ao iniciar o agente {agentName}: {message}",
+      "modelPricing": "Preços dos modelos"
     },
     "usage": {
       "title": "Uso"
@@ -1001,6 +1002,23 @@
         "title": "Parallel Runs Limit Reached",
         "subtitle": "Upgrade to run more workers in parallel."
       }
+    },
+    "modelPricing": {
+      "title": "Preços de tokens por modelo",
+      "subtitle": "Veja quanto cada modelo de IA custa por milhão de tokens. Os preços incluem a margem da plataforma e correspondem aos créditos cobrados.",
+      "description": "O uso é calculado com tokens de entrada, saída e leitura de cache. Leituras de cache são mais baratas quando o provedor oferece prompt caching.",
+      "model": "Modelo",
+      "inputCost": "Entrada",
+      "outputCost": "Saída",
+      "cacheReadCost": "Leitura de cache",
+      "per1MTokens": "por 1M de tokens",
+      "paid": "Pago",
+      "free": "Grátis e pago",
+      "loading": "Carregando preços dos modelos...",
+      "error": "Não foi possível carregar os preços. Tente novamente.",
+      "tryAgain": "Tentar novamente",
+      "viewLink": "Preços dos modelos",
+      "footnote": "Os preços exibidos incluem uma margem de 50% sobre as tarifas do provedor. 1.000 créditos = US$ 1,00 de uso cobrado."
     }
   },
   "auth": {

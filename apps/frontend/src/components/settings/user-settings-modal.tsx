@@ -61,6 +61,7 @@ import { AccountState } from '@/lib/api/billing';
 import { useAuth } from '@/components/AuthProvider';
 import { PlanSelectionModal, PricingSection } from '@/components/billing/pricing';
 import { CreditBalanceDisplay, CreditPurchaseModal } from '@/components/billing/credit-purchase';
+import { ModelPricingModal } from '@/components/billing/model-pricing-modal';
 import { ScheduledDowngradeCard } from '@/components/billing/scheduled-downgrade-card';
 import { 
     useAccountState,
@@ -85,7 +86,8 @@ import {
     ShoppingCart,
     Lightbulb,
     CalendarClock,
-    ArrowRight
+    ArrowRight,
+    Cpu,
 } from 'lucide-react';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle } from '../ui/alert-dialog';
 import { getPlanName, getPlanIcon } from '../billing/plan-utils';
@@ -840,6 +842,7 @@ function BillingTab({ returnUrl, onOpenPlanModal, isActive }: { returnUrl: strin
     const tCommon = useTranslations('common');
     const locale = useLocale();
     const [showCreditPurchaseModal, setShowCreditPurchaseModal] = useState(false);
+    const [showModelPricingModal, setShowModelPricingModal] = useState(false);
     const [showCancelDialog, setShowCancelDialog] = useState(false);
     const queryClient = useQueryClient();
 
@@ -1287,8 +1290,8 @@ function BillingTab({ returnUrl, onOpenPlanModal, isActive }: { returnUrl: strin
                 </Alert>
             )}
 
-            {/* Help Link - Subtle */}
-            <div className="flex items-center justify-center pt-6 border-t border-border/50">
+            {/* Help Links - Subtle */}
+            <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 pt-6 border-t border-border/50">
                 <Button
                     variant="link"
                     onClick={() => window.open('/credits-explained', '_blank')}
@@ -1297,7 +1300,20 @@ function BillingTab({ returnUrl, onOpenPlanModal, isActive }: { returnUrl: strin
                     <Lightbulb className="h-3.5 w-3.5 mr-2" />
                     <span className="text-sm">{t('creditsExplained')}</span>
                 </Button>
+                <Button
+                    variant="link"
+                    onClick={() => setShowModelPricingModal(true)}
+                    className="text-muted-foreground hover:text-foreground h-auto p-0"
+                >
+                    <Cpu className="h-3.5 w-3.5 mr-2" />
+                    <span className="text-sm">{t('modelPricing')}</span>
+                </Button>
             </div>
+
+            <ModelPricingModal
+                open={showModelPricingModal}
+                onOpenChange={setShowModelPricingModal}
+            />
 
             {/* Cancel Plan Button - Subtle Placement */}
             {!isFreeTier && !isCancelled && (

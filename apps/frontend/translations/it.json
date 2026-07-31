@@ -232,7 +232,8 @@
       "insufficientCreditsMessage": "Controllo fatturazione fallito: Crediti insufficienti. Il tuo saldo è {balance}. Aggiungi crediti per continuare.",
       "creditsExhausted": "Hai esaurito i crediti. Aggiorna ora.",
       "billingCheckFailed": "Controllo fatturazione fallito. Aggiorna per continuare.",
-      "failedToStartAgent": "Impossibile avviare l'agente {agentName}: {message}"
+      "failedToStartAgent": "Impossibile avviare l'agente {agentName}: {message}",
+      "modelPricing": "Prezzi modelli"
     },
     "usage": {
       "title": "Utilizzo"
@@ -1003,6 +1004,23 @@
         "title": "Parallel Runs Limit Reached",
         "subtitle": "Upgrade to run more workers in parallel."
       }
+    },
+    "modelPricing": {
+      "title": "Prezzi token per modello",
+      "subtitle": "Scopri quanto costa ogni modello di IA per milione di token. I prezzi includono il ricarico della piattaforma e corrispondono ai crediti addebitati.",
+      "description": "L'utilizzo è calcolato dai token di input, output e lettura della cache. Le letture della cache costano meno quando il provider supporta il prompt caching.",
+      "model": "Modello",
+      "inputCost": "Input",
+      "outputCost": "Output",
+      "cacheReadCost": "Lettura cache",
+      "per1MTokens": "per 1M di token",
+      "paid": "A pagamento",
+      "free": "Gratis e a pagamento",
+      "loading": "Caricamento prezzi modelli...",
+      "error": "Impossibile caricare i prezzi. Riprova.",
+      "tryAgain": "Riprova",
+      "viewLink": "Prezzi modelli",
+      "footnote": "I prezzi mostrati includono un ricarico del 50% rispetto alle tariffe del provider. 1.000 crediti = 1,00 $ di utilizzo fatturato."
     }
   },
   "auth": {

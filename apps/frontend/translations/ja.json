@@ -232,7 +232,8 @@
       "insufficientCreditsMessage": "請求チェックに失敗しました：クレジット不足。残高は {balance} です。続行するにはクレジットを追加してください。",
       "creditsExhausted": "クレジットがなくなりました。今すぐアップグレードしてください。",
       "billingCheckFailed": "請求チェックに失敗しました。続行するにはアップグレードしてください。",
-      "failedToStartAgent": "エージェント {agentName} の起動に失敗しました：{message}"
+      "failedToStartAgent": "エージェント {agentName} の起動に失敗しました：{message}",
+      "modelPricing": "モデル料金"
     },
     "usage": {
       "title": "使用状況"
@@ -1001,6 +1002,23 @@
         "title": "Parallel Runs Limit Reached",
         "subtitle": "Upgrade to run more workers in parallel."
       }
+    },
+    "modelPricing": {
+      "title": "モデル別トークン料金",
+      "subtitle": "各AIモデルの100万トークンあたりの料金を確認できます。表示価格にはプラットフォーム手数料が含まれ、クレジット課金と一致します。",
+      "description": "利用量は入力・出力・キャッシュ読み取りトークンから計算されます。プロバイダーがプロンプトキャッシュに対応している場合、キャッシュ読み取りは安くなります。",
+      "model": "モデル",
+      "inputCost": "入力",
+      "outputCost": "出力",
+      "cacheReadCost": "キャッシュ読取",
+      "per1MTokens": "100万トークンあたり",
+      "paid": "有料",
+      "free": "無料・有料",
+      "loading": "モデル料金を読み込み中...",
+      "error": "モデル料金を読み込めませんでした。再試行してください。",
+      "tryAgain": "再試行",
+      "viewLink": "モデル料金",
+      "footnote": "表示価格にはプロバイダー料金に対する50%のプラットフォーム手数料が含まれます。1,000クレジット = $1.00 の課金利用量です。"
     }
   },
   "auth": {

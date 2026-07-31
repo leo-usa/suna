@@ -85,6 +85,72 @@ async def get_tier_configurations() -> Dict:
         raise HTTPException(status_code=500, detail="Failed to get tier configurations")
 
 
+# Mode wrappers / test models — not useful in the public pricing table
+_MODEL_PRICING_EXCLUDED_IDS = frozenset({
+    'dobby/basic',
+    'dobby/power',
+    'dobby/test',
+})
+
+
+@router.get("/model-pricing")
+async def get_model_pricing() -> Dict:
+    """Public list of billed model token prices (provider cost × platform markup)."""
+    try:
+        from core.ai_models import model_manager
+
+        models_out = []
+        for model_info in model_manager.list_available_models(include_disabled=False):
+            model_id = model_info.get('id')
+            if not model_id or model_id in _MODEL_PRICING_EXCLUDED_IDS:
+                continue
+
+            model = model_manager.get(model_id)
+            if not model or not model.pricing:
+                continue
+
+            pricing = model.pricing
+            multiplier = float(TOKEN_PRICE_MULTIPLIER)
+
+            input_cost = float(pricing.input_cost_per_million_tokens) * multiplier
+            output_cost = float(pricing.output_cost_per_million_tokens) * multiplier
+
+            if pricing.cached_read_cost_per_million_tokens is not None:
+                cache_read_cost = float(pricing.cached_read_cost_per_million_tokens) * multiplier
+            else:
+                # Matches calculator fallback: cache read billed at input rate
+                cache_read_cost = input_cost
+
+            models_out.append({
+                'id': model.id,
+                'name': model.name,
+                'priority': model.priority,
+                'requires_subscription': not model.is_free_tier,
+                'input_cost_per_million_tokens': round(input_cost, 4),
+                'output_cost_per_million_tokens': round(output_cost, 4),
+                'cached_read_cost_per_million_tokens': round(cache_read_cost, 4),
+            })
+
+        models_out.sort(
+            key=lambda m: (
+                not m['requires_subscription'],  # paid first
+                -m['priority'],
+                m['name'].lower(),
+            )
+        )
+
+        return {
+            'success': True,
+            'models': models_out,
+            'markup_multiplier': float(TOKEN_PRICE_MULTIPLIER),
+            'credits_per_dollar': float(CREDITS_PER_DOLLAR),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
+        }
+    except Exception as e:
+        logger.error(f"Error getting model pricing: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get model pricing")
+
+
 @router.get("/credit-breakdown")
 async def get_credit_breakdown(
     account_id: str = Depends(verify_and_get_user_id_from_jwt)

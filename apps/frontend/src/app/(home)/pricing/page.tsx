@@ -6,6 +6,7 @@ import { SimpleFooter } from '@/components/home/simple-footer';
 import { PricingSection } from '@/components/billing/pricing';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CreditsExplainedModal } from '@/components/billing/credits-explained-modal';
+import { ModelPricingSection } from '@/components/billing/model-pricing-section';
 
 function PricingSkeleton() {
   return (
@@ -62,6 +63,15 @@ export default function PricingPage() {
               showBuyCredits={true}
             />
           </Suspense>
+        </motion.div>
+
+        {/* Model token pricing — after credits explained links in PricingSection */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          <ModelPricingSection />
         </motion.div>
 
         {/* Credits Explained Modal */}

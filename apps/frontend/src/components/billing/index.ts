@@ -7,3 +7,7 @@ export { CreditsDisplay } from './credits-display';
 export { TierBadge } from './tier-badge';
 export { getPlanName, getPlanIcon } from './plan-utils';
 export { UpgradeCelebration } from './upgrade-celebration';
+export { ModelPricingTable } from './model-pricing-table';
+export { ModelPricingModal } from './model-pricing-modal';
+export { ModelPricingSection } from './model-pricing-section';
+export { CreditsExplainedModal } from './credits-explained-modal';

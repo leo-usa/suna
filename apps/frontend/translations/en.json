@@ -322,7 +322,8 @@
       "prepaidAnnualActive": "Annual prepaid plan active until {date}",
       "prepaidAnnualLink": "Pay annually with Alipay / WeChat Pay",
       "prepaidAnnualPaymentAlipay": "Paid with Alipay",
-      "prepaidAnnualPaymentWeChat": "Paid with WeChat Pay"
+      "prepaidAnnualPaymentWeChat": "Paid with WeChat Pay",
+      "modelPricing": "Model pricing"
     },
     "usage": {
       "title": "Usage"
@@ -1823,6 +1824,23 @@
         "resultsNotGood": "The results didn't meet my expectations",
         "other": "Other reason"
       }
+    },
+    "modelPricing": {
+      "title": "Model Token Pricing",
+      "subtitle": "See how much each AI model costs per million tokens. Prices include platform markup and match what you are billed in credits.",
+      "description": "Usage is calculated from input, output, and cache-read tokens. Cache reads are cheaper when the provider supports prompt caching.",
+      "model": "Model",
+      "inputCost": "Input",
+      "outputCost": "Output",
+      "cacheReadCost": "Cache Read",
+      "per1MTokens": "per 1M tokens",
+      "paid": "Paid",
+      "free": "Free & Paid",
+      "loading": "Loading model pricing...",
+      "error": "Unable to load model pricing. Please try again.",
+      "tryAgain": "Try again",
+      "viewLink": "Model pricing",
+      "footnote": "Displayed prices include a 50% platform markup over provider rates. 1,000 credits = $1.00 of billed usage."
     }
   },
   "auth": {

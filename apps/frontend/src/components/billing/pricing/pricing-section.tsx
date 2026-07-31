@@ -30,6 +30,7 @@ import { AnimatedBg } from '@/components/ui/animated-bg';
 import { TierBadge } from '@/components/billing/tier-badge';
 import { DobbyLogo } from '@/components/sidebar/dobby-logo';
 import { CreditPurchaseModal } from '@/components/billing/credit-purchase';
+import { ModelPricingModal } from '@/components/billing/model-pricing-modal';
 import { BorderBeam } from '@/components/ui/border-beam';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
@@ -39,6 +40,7 @@ import { useLanguage } from '@/hooks/use-language';
 import { convertPriceString, parsePriceAmount, formatPrice } from '@/lib/utils/currency';
 import { usePromo } from '@/hooks/utils/use-promo';
 import { backendApi } from '@/lib/api-client';
+import { Cpu } from 'lucide-react';
 
 function getWeeklyCreditsFromTier(tier: PricingTier): number {
   const weekly = tier.features.find((f) => f.kind === 'weekly_credits');
@@ -1192,6 +1194,7 @@ export function PricingSection({
 
   const [planLoadingStates, setPlanLoadingStates] = useState<Record<string, boolean>>({});
   const [showCreditPurchaseModal, setShowCreditPurchaseModal] = useState(false);
+  const [showModelPricingModal, setShowModelPricingModal] = useState(false);
 
   useEffect(() => {
     return () => {
@@ -1560,37 +1563,59 @@ export function PricingSection({
           })()}
         </div>
 
-        {/* Get Additional Credits — above plan cards (plan modal, out of credits, change plan) */}
-        {showBuyCredits &&
-          !annualPrepaidMode &&
-          isAuthenticated &&
-          currentSubscription?.subscription.can_purchase_credits && (
-            <div className="w-full max-w-5xl mx-auto mb-6 sm:mb-8 flex flex-col items-center gap-4">
-              <Button
-                onClick={() => setShowCreditPurchaseModal(true)}
-                variant="outline"
-                size="lg"
-                className="gap-2"
-              >
-                <ShoppingCart className="h-5 w-5" />
-                {t('getAdditionalCredits')}
-              </Button>
-              <Button
-                variant="link"
-                asChild
-                className="text-muted-foreground hover:text-foreground h-auto p-0"
-              >
-                <Link href="/credits-explained" target="_blank" rel="noopener noreferrer">
-                  <Lightbulb className="h-3.5 w-3.5 mr-2" />
-                  <span className="text-sm">{t('creditsExplained')}</span>
-                </Link>
-              </Button>
+        {/* Extra credits + Alipay/WeChat annual — above plan cards */}
+        {!annualPrepaidMode && (
+          <div className="w-full max-w-5xl mx-auto mb-6 sm:mb-8 flex flex-col items-center gap-4">
+            <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center gap-3">
+              {showBuyCredits &&
+                isAuthenticated &&
+                currentSubscription?.subscription.can_purchase_credits && (
+                  <Button
+                    onClick={() => setShowCreditPurchaseModal(true)}
+                    variant="outline"
+                    size="lg"
+                    className="gap-2"
+                  >
+                    <ShoppingCart className="h-5 w-5" />
+                    {t('getAdditionalCredits')}
+                  </Button>
+                )}
+              {!(currentSubscription?.subscription.is_prepaid_annual || isPrepaidAnnual) && (
+                <Button variant="outline" size="lg" asChild>
+                  <Link href="/billing/annual-prepay">
+                    {t('annualPrepay.settingsLink')}
+                  </Link>
+                </Button>
+              )}
             </div>
-          )}
+            {(showBuyCredits || showTitleAndTabs) && (
+              <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+                <Button
+                  variant="link"
+                  asChild
+                  className="text-muted-foreground hover:text-foreground h-auto p-0"
+                >
+                  <Link href="/credits-explained" target="_blank" rel="noopener noreferrer">
+                    <Lightbulb className="h-3.5 w-3.5 mr-2" />
+                    <span className="text-sm">{t('creditsExplained')}</span>
+                  </Link>
+                </Button>
+                <Button
+                  variant="link"
+                  onClick={() => setShowModelPricingModal(true)}
+                  className="text-muted-foreground hover:text-foreground h-auto p-0"
+                >
+                  <Cpu className="h-3.5 w-3.5 mr-2" />
+                  <span className="text-sm">{t('modelPricing.viewLink')}</span>
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Credits explained link for annual prepaid checkout */}
         {annualPrepaidMode && (
-          <div className="w-full max-w-5xl mx-auto mb-6 sm:mb-8 flex justify-center">
+          <div className="w-full max-w-5xl mx-auto mb-6 sm:mb-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
             <Button
               variant="link"
               asChild
@@ -1600,6 +1625,14 @@ export function PricingSection({
                 <Lightbulb className="h-3.5 w-3.5 mr-2" />
                 <span className="text-sm">{t('creditsExplained')}</span>
               </Link>
+            </Button>
+            <Button
+              variant="link"
+              onClick={() => setShowModelPricingModal(true)}
+              className="text-muted-foreground hover:text-foreground h-auto p-0"
+            >
+              <Cpu className="h-3.5 w-3.5 mr-2" />
+              <span className="text-sm">{t('modelPricing.viewLink')}</span>
             </Button>
           </div>
         )}
@@ -1656,21 +1689,6 @@ export function PricingSection({
           )}
         </div>
 
-        {/* Credits Explained Link (when prepaid purchase not available) */}
-        {!annualPrepaidMode && (!isAuthenticated || !currentSubscription?.subscription.can_purchase_credits) && (
-          <div className="w-full max-w-5xl mx-auto mt-8 pb-8 flex justify-center">
-            <Button
-              variant="link"
-              asChild
-              className="text-muted-foreground hover:text-foreground h-auto p-0"
-            >
-              <Link href="/credits-explained" target="_blank" rel="noopener noreferrer">
-                <Lightbulb className="h-3.5 w-3.5 mr-2" />
-                <span className="text-sm">{t('creditsExplained')}</span>
-              </Link>
-            </Button>
-          </div>
-        )}
       </div>
 
       {/* Credit Purchase Modal */}
@@ -1680,6 +1698,11 @@ export function PricingSection({
         currentBalance={currentSubscription?.credits.total || 0}
         canPurchase={currentSubscription?.subscription.can_purchase_credits || false}
         onPurchaseComplete={handleSubscriptionUpdate}
+      />
+
+      <ModelPricingModal
+        open={showModelPricingModal}
+        onOpenChange={setShowModelPricingModal}
       />
     </section>
   );

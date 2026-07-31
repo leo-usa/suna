@@ -263,7 +263,8 @@
       "prepaidAnnualActive": "年付套餐有效期至 {date}",
       "prepaidAnnualLink": "支付宝 / 微信年付",
       "prepaidAnnualPaymentAlipay": "支付宝支付",
-      "prepaidAnnualPaymentWeChat": "微信支付"
+      "prepaidAnnualPaymentWeChat": "微信支付",
+      "modelPricing": "模型定价"
     },
     "usage": {
       "title": "使用情况"
@@ -1776,6 +1777,23 @@
       "activePlanNotice": "您当前的 {tier} 年付套餐有效期至 {date}。",
       "upgradeComingSoon": "通过支付宝 / 微信升级套餐的功能即将推出。当前套餐将持续至到期日。",
       "settingsLink": "支付宝 / 微信年付"
+    },
+    "modelPricing": {
+      "title": "模型代币定价",
+      "subtitle": "查看各 AI 模型每百万代币的费用。价格已含平台加价，并与积分扣费一致。",
+      "description": "用量按输入、输出与缓存读取代币计算。当模型支持提示缓存时，缓存读取更便宜。",
+      "model": "模型",
+      "inputCost": "输入",
+      "outputCost": "输出",
+      "cacheReadCost": "缓存读取",
+      "per1MTokens": "每百万代币",
+      "paid": "付费",
+      "free": "免费与付费",
+      "loading": "正在加载模型定价...",
+      "error": "无法加载模型定价，请重试。",
+      "tryAgain": "重试",
+      "viewLink": "模型定价",
+      "footnote": "显示价格已包含相对供应商费率 50% 的平台加价。1,000 积分 = $1.00 计费用量。"
     }
   },
   "auth": {

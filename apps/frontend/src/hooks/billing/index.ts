@@ -73,6 +73,12 @@ export {
   type TierConfigurationsResponse,
 } from './use-tier-configurations';
 
+export {
+  useModelPricing,
+  type ModelPricingItem,
+  type ModelPricingResponse,
+} from './use-model-pricing';
+
 // =============================================================================
 // ADMIN HOOKS - For admin dashboard
 // =============================================================================
