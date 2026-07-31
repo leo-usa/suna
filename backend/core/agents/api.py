@@ -27,7 +27,7 @@ from core.utils.logger import logger, structlog
 from core.billing.credits.integration import billing_integration
 from core.utils.config import config, EnvMode
 from core.services import redis
-from core.ai_models import model_manager
+from core.ai_models import model_manager, FREE_MODEL_ID
 from core.api_models import UnifiedAgentStartResponse
 from core.services.supabase import DBConnection
 
@@ -779,8 +779,8 @@ async def unified_agent_start(
         from core.cache.runtime_cache import get_cached_tier_info
         tier_info = await get_cached_tier_info(account_id) or await subscription_service.get_user_subscription_tier(account_id)
         if tier_info.get('name') in ('free', 'none'):
-            logger.info(f"⚡ [MODEL_OVERRIDE] Free tier user {account_id} - using minimax instead of basic")
-            model_name = "dobby/minimax"
+            logger.info(f"⚡ [MODEL_OVERRIDE] Free tier user {account_id} - using {FREE_MODEL_ID} instead of basic")
+            model_name = FREE_MODEL_ID
 
     memory_enabled_bool = memory_enabled.lower() == 'true' if memory_enabled else None
     

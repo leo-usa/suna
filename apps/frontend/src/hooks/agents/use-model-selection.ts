@@ -24,13 +24,16 @@ const isPaidTier = (tierKey: string | undefined): boolean => {
 };
 
 const getDefaultModel = (accessibleModels: ModelOption[]): string => {
-  // Pick the first accessible model (sorted by priority)
-  // dobby/basic should be first for free users since power is not accessible
-  const basicModel = accessibleModels.find(m => m.id === 'dobby/basic');
-  if (basicModel) return basicModel.id;
-
+  // Paid users: prefer Advanced mode when available
   const powerModel = accessibleModels.find(m => m.id === 'dobby/power');
   if (powerModel) return powerModel.id;
+
+  // Free users: GPT-5.6 Luna is the default free model
+  const lunaModel = accessibleModels.find(m => m.id === 'dobby/gpt-5.6-luna');
+  if (lunaModel) return lunaModel.id;
+
+  const basicModel = accessibleModels.find(m => m.id === 'dobby/basic');
+  if (basicModel) return basicModel.id;
 
   // Fallback: pick from accessible models sorted by priority
   if (accessibleModels.length > 0) {
