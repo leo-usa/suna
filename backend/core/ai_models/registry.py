@@ -208,10 +208,10 @@ class PricingPresets:
     )
 
     GPT_5_6_LUNA = ModelPricing(
-        input_cost_per_million_tokens=1.00,
-        output_cost_per_million_tokens=6.00,
-        cached_read_cost_per_million_tokens=0.10,
-        cache_write_5m_cost_per_million_tokens=1.25,
+        input_cost_per_million_tokens=0.20,
+        output_cost_per_million_tokens=1.20,
+        cached_read_cost_per_million_tokens=0.02,
+        cache_write_5m_cost_per_million_tokens=0.25,
     )
 
     GPT_5_6_TERRA = ModelPricing(
