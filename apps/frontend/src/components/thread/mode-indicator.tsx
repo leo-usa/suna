@@ -10,6 +10,7 @@ import { Check, Lock, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useModelSelection, type ModelOption } from '@/hooks/agents';
 import { usePricingModalStore } from '@/stores/pricing-modal-store';
+import { useModelPricing, type ModelPricingItem } from '@/hooks/billing/use-model-pricing';
 import { ModelProviderIcon } from '@/lib/model-provider-icons';
 import { Separator } from '@/components/ui/separator';
 import { useTranslations } from 'next-intl';
@@ -24,6 +25,38 @@ function formatLitellmModelName(litellmModelId: string): string {
       return part.charAt(0).toUpperCase() + part.slice(1);
     })
     .join(' ');
+}
+
+function formatUsdPerMillion(value: number): string {
+  if (value >= 1) return `$${Number(value.toFixed(2))}`;
+  return `$${Number(value.toFixed(3))}`;
+}
+
+function formatInputOutputPrice(input: number, output: number): string {
+  return `${formatUsdPerMillion(input)}/${formatUsdPerMillion(output)}`;
+}
+
+function resolvePriceLabel(
+  modelId: string | undefined,
+  litellmModelId: string | undefined,
+  pricingById: Map<string, string>,
+  pricingModels: ModelPricingItem[] | undefined,
+  allModels: ModelOption[],
+): string | null {
+  if (modelId) {
+    const direct = pricingById.get(modelId);
+    if (direct) return direct;
+  }
+  if (!litellmModelId || !pricingModels?.length) return null;
+  const byLite = pricingModels.find((p) => {
+    const opt = allModels.find((m) => m.id === p.id);
+    return opt?.litellmModelId === litellmModelId;
+  });
+  if (!byLite) return null;
+  return formatInputOutputPrice(
+    byLite.input_cost_per_million_tokens,
+    byLite.output_cost_per_million_tokens,
+  );
 }
 
 function resolveUnderlyingModelLabel(
@@ -88,10 +121,25 @@ export const ModeIndicator = memo(function ModeIndicator() {
     canAccessModel,
     handleModelChange,
   } = useModelSelection();
+  const { data: pricingData } = useModelPricing();
 
   // Allow users to see/select the full model list in production.
   // Access is still enforced by the backend (allowed models only are actionable).
   const showAllModelsOption = true;
+
+  const pricingById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const model of pricingData?.models ?? []) {
+      map.set(
+        model.id,
+        formatInputOutputPrice(
+          model.input_cost_per_million_tokens,
+          model.output_cost_per_million_tokens,
+        ),
+      );
+    }
+    return map;
+  }, [pricingData?.models]);
 
   const basicModel = useMemo(
     () => modelOptions.find((m) => m.id === 'dobby/basic' || m.label === 'Dobby Basic'),
@@ -103,12 +151,17 @@ export const ModeIndicator = memo(function ModeIndicator() {
     [modelOptions]
   );
 
-  // Get other models (not basic or power) for the staging section
+  // Get other models (not basic or power); accessible first, then by priority
   const otherModels = useMemo(() => {
     return modelOptions.filter(
       (m) => m.id !== 'dobby/basic' && m.id !== 'dobby/power' && 
              m.label !== 'Dobby Basic' && m.label !== 'Dobby Advanced Mode'
-    ).sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0));
+    ).sort((a, b) => {
+      if (a.requiresSubscription !== b.requiresSubscription) {
+        return a.requiresSubscription ? 1 : -1;
+      }
+      return (b.priority ?? 0) - (a.priority ?? 0);
+    });
   }, [modelOptions]);
 
   // Check if a non-standard model is selected
@@ -141,6 +194,29 @@ export const ModeIndicator = memo(function ModeIndicator() {
       ? basicUnderlyingLabel
       : null;
 
+  const basicPriceLabel = useMemo(
+    () =>
+      resolvePriceLabel(
+        basicModel?.id,
+        basicModel?.litellmModelId,
+        pricingById,
+        pricingData?.models,
+        modelOptions,
+      ),
+    [basicModel, pricingById, pricingData?.models, modelOptions],
+  );
+  const advancedPriceLabel = useMemo(
+    () =>
+      resolvePriceLabel(
+        powerModel?.id,
+        powerModel?.litellmModelId,
+        pricingById,
+        pricingData?.models,
+        modelOptions,
+      ),
+    [powerModel, pricingById, pricingData?.models, modelOptions],
+  );
+
   const handleBasicClick = useCallback(() => {
     if (basicModel) {
       handleModelChange(basicModel.id);
@@ -163,10 +239,18 @@ export const ModeIndicator = memo(function ModeIndicator() {
     }
   }, [powerModel, canAccessPower, handleModelChange, t]);
 
-  const handleOtherModelClick = useCallback((modelId: string) => {
-    handleModelChange(modelId);
+  const handleOtherModelClick = useCallback((model: ModelOption) => {
+    if (model.requiresSubscription || !canAccessModel(model.id)) {
+      setIsOpen(false);
+      usePricingModalStore.getState().openPricingModal({
+        isAlert: true,
+        alertTitle: t('upgradePaidModel', { model: model.label }),
+      });
+      return;
+    }
+    handleModelChange(model.id);
     setIsOpen(false);
-  }, [handleModelChange]);
+  }, [canAccessModel, handleModelChange, t]);
 
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
@@ -204,7 +288,7 @@ export const ModeIndicator = memo(function ModeIndicator() {
 
       <DropdownMenuContent 
         align="start" 
-        className="w-[280px] sm:w-[320px] p-1.5 sm:p-2 rounded-xl border border-border/50 shadow-lg"
+        className="w-[300px] sm:w-[360px] p-1.5 sm:p-2 rounded-xl border border-border/50 shadow-lg"
         sideOffset={6}
       >
         {/* Basic Mode */}
@@ -225,6 +309,9 @@ export const ModeIndicator = memo(function ModeIndicator() {
             {basicUnderlyingLabel && (
               <div className="text-[11px] text-muted-foreground/80 mt-1 truncate">
                 {t('poweredBy', { model: basicUnderlyingLabel })}
+                {basicPriceLabel && (
+                  <span className="ml-1.5 tabular-nums">{basicPriceLabel}</span>
+                )}
               </div>
             )}
           </div>
@@ -251,6 +338,9 @@ export const ModeIndicator = memo(function ModeIndicator() {
             {advancedUnderlyingLabel && (
               <div className="text-[11px] text-muted-foreground/80 mt-1 truncate">
                 {t('poweredBy', { model: advancedUnderlyingLabel })}
+                {advancedPriceLabel && (
+                  <span className="ml-1.5 tabular-nums">{advancedPriceLabel}</span>
+                )}
               </div>
             )}
           </div>
@@ -265,13 +355,24 @@ export const ModeIndicator = memo(function ModeIndicator() {
         {showAllModelsOption && otherModels.length > 0 && (
           <>
             <Separator className="my-2" />
-            <div className="px-2 py-1 text-xs font-medium text-muted-foreground flex items-center gap-2">
+            <div className="px-2 py-1 text-xs font-medium text-muted-foreground flex items-center justify-between gap-2">
               <span>{t('allModels')}</span>
+              <span className="text-[10px] font-normal text-muted-foreground/70">
+                {t('pricePerMillion')}
+              </span>
             </div>
-            <div className="max-h-[200px] overflow-y-auto">
+            <div className="max-h-[240px] overflow-y-auto">
               {otherModels.map((model) => {
                 const isSelected = selectedModel === model.id;
-                
+                const isLocked = model.requiresSubscription || !canAccessModel(model.id);
+                const priceLabel = resolvePriceLabel(
+                  model.id,
+                  model.litellmModelId,
+                  pricingById,
+                  pricingData?.models,
+                  modelOptions,
+                );
+
                 return (
                   <div
                     key={model.id}
@@ -279,17 +380,32 @@ export const ModeIndicator = memo(function ModeIndicator() {
                       'flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg transition-all duration-150 my-0.5',
                       isSelected 
                         ? 'bg-accent' 
-                        : 'hover:bg-accent/50 active:bg-accent/70'
+                        : 'hover:bg-accent/50 active:bg-accent/70',
+                      isLocked && 'opacity-55'
                     )}
-                    onClick={() => handleOtherModelClick(model.id)}
+                    onClick={() => handleOtherModelClick(model)}
                   >
-                    <ModelProviderIcon modelId={model.id} size={20} />
+                    <ModelProviderIcon modelId={model.id} size={20} className={cn(isLocked && 'opacity-70')} />
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium truncate">{model.label}</div>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className={cn(
+                          'text-sm font-medium truncate',
+                          isLocked && 'text-muted-foreground'
+                        )}>
+                          {model.label}
+                        </div>
+                        {priceLabel && (
+                          <span className="text-[11px] text-muted-foreground tabular-nums whitespace-nowrap flex-shrink-0">
+                            {priceLabel}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    {isSelected && (
+                    {isSelected ? (
                       <Check className="h-4 w-4 text-foreground flex-shrink-0" strokeWidth={2} />
-                    )}
+                    ) : isLocked ? (
+                      <Lock className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" strokeWidth={2} />
+                    ) : null}
                   </div>
                 );
               })}

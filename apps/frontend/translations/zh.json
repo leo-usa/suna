@@ -726,7 +726,9 @@
       "basicAlt": "Dobby 基础版",
       "advancedAlt": "Dobby 高级版",
       "selectModel": "选择模型",
-      "poweredBy": "使用 {model}"
+      "poweredBy": "使用 {model}",
+      "upgradePaidModel": "升级后可使用 {model}",
+      "pricePerMillion": "输入/输出·每百万"
     }
   },
   "agents": {

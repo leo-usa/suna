@@ -734,7 +734,9 @@
       "basicAlt": "Dobby Basic",
       "advancedAlt": "Dobby Advanced",
       "selectModel": "Select model",
-      "poweredBy": "Uses {model}"
+      "poweredBy": "Uses {model}",
+      "upgradePaidModel": "Upgrade to use {model}",
+      "pricePerMillion": "in/out per 1M"
     }
   },
   "agents": {
