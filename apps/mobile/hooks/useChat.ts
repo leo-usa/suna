@@ -262,16 +262,14 @@ export function useChat(): UseChatReturn {
   const accessibleModelsLength = accessibleModels.length;
   
   // Helper to get default model - matching frontend logic
-  // Paid: dobby/power; free: GPT-5.6 Luna; then basic / first accessible
+  // Prefer mode wrappers (Basic / Advanced); backend remaps free Basic at run time
   const getDefaultModelId = useCallback((models: typeof accessibleModels): string | undefined => {
-    const powerModel = models.find(m => m.id === 'dobby/power');
-    if (powerModel) return powerModel.id;
-
-    const lunaModel = models.find(m => m.id === 'dobby/gpt-5.6-luna');
-    if (lunaModel) return lunaModel.id;
-
+    // dobby/basic should be first for free users since power is not accessible
     const basicModel = models.find(m => m.id === 'dobby/basic');
     if (basicModel) return basicModel.id;
+
+    const powerModel = models.find(m => m.id === 'dobby/power');
+    if (powerModel) return powerModel.id;
 
     // Fallback: pick from accessible models sorted by priority
     if (models.length > 0) {
@@ -282,10 +280,7 @@ export function useChat(): UseChatReturn {
   }, []);
 
   // Valid model IDs that mobile app should use (matching frontend)
-  const VALID_MODEL_IDS = useMemo(
-    () => new Set(['dobby/basic', 'dobby/power', 'dobby/gpt-5.6-luna']),
-    [],
-  );
+  const VALID_MODEL_IDS = useMemo(() => new Set(['dobby/basic', 'dobby/power']), []);
 
   // Auto-select model when models first load and none is selected
   useEffect(() => {
@@ -327,7 +322,7 @@ export function useChat(): UseChatReturn {
       return undefined;
     }
 
-    // CRITICAL: Only use allowed default models (basic / power / Luna)
+    // CRITICAL: Only use dobby/basic or dobby/power
     // Never use other models like dobby/kimi-k2.5 (internal/legacy)
     if (selectedModelId && VALID_MODEL_IDS.has(selectedModelId)) {
       const model = accessibleModels.find(m => m.id === selectedModelId);
@@ -336,9 +331,16 @@ export function useChat(): UseChatReturn {
       }
     }
 
-    // Fallback: same priority as getDefaultModelId
-    return getDefaultModelId(accessibleModels) ?? accessibleModels[0]?.id;
-  }, [selectedModelId, accessibleModels, modelsLoading, VALID_MODEL_IDS, getDefaultModelId]);
+    // Fallback: prioritize dobby/basic, then dobby/power
+    const basicModel = accessibleModels.find(m => m.id === 'dobby/basic');
+    if (basicModel) return basicModel.id;
+
+    const powerModel = accessibleModels.find(m => m.id === 'dobby/power');
+    if (powerModel) return powerModel.id;
+
+    // Last resort fallback to first accessible model
+    return accessibleModels[0]?.id;
+  }, [selectedModelId, accessibleModels, modelsLoading, VALID_MODEL_IDS]);
   
   // Log model selection only when it actually changes
   const prevModelSelectionRef = useRef<string>('');

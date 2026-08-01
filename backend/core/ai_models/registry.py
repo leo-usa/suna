@@ -1456,6 +1456,23 @@ class ModelRegistry:
 
         if config.ENV_MODE != EnvMode.PRODUCTION:
             self.register(ModelFactory.create_test_model())
+
+        # Keep Basic mode wrapper aligned with the free-tier engine so the
+        # mode picker "powered by" subtitle matches what free users actually run.
+        self._align_basic_with_free_model()
+
+    def _align_basic_with_free_model(self) -> None:
+        free_model = self.get(FREE_MODEL_ID)
+        basic_model = self.get("dobby/basic")
+        if not free_model or not basic_model or free_model.id == basic_model.id:
+            return
+
+        basic_model.litellm_model_id = free_model.litellm_model_id
+        basic_model.provider = free_model.provider
+        basic_model.pricing = free_model.pricing
+        basic_model.context_window = free_model.context_window
+        basic_model.capabilities = list(free_model.capabilities)
+        basic_model.config = free_model.config
     
     def _register_pricing_mappings(self):
         self._litellm_id_to_pricing[BedrockConfig.get_haiku_arn()] = PricingPresets.HAIKU_4_5
