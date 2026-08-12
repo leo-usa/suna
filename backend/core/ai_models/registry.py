@@ -172,6 +172,12 @@ class PricingPresets:
         cached_read_cost_per_million_tokens=0.30,
     )
 
+    GROK_4_6 = ModelPricing(
+        input_cost_per_million_tokens=2.00,
+        output_cost_per_million_tokens=6.00,
+        cached_read_cost_per_million_tokens=0.50,
+    )
+
     KIMI_K2_6 = ModelPricing(
         input_cost_per_million_tokens=0.55,
         output_cost_per_million_tokens=2.50,
@@ -733,6 +739,28 @@ class ModelFactory:
             pricing=PricingPresets.GROK_4_5,
             tier_availability=["free", "paid"],
             priority=92,
+            recommended=False,
+            enabled=True,
+        )
+
+    @staticmethod
+    def create_grok_4_6() -> Model:
+        return Model(
+            id="dobby/grok-4.6",
+            name="Grok 4.6",
+            litellm_model_id="openrouter/x-ai/grok-4.6",
+            provider=ModelProvider.OPENROUTER,
+            aliases=["grok-4.6", "grok-4-6", "x-ai/grok-4.6"],
+            context_window=500_000,
+            capabilities=[
+                ModelCapability.CHAT,
+                ModelCapability.FUNCTION_CALLING,
+                ModelCapability.VISION,
+                ModelCapability.PROMPT_CACHING,
+            ],
+            pricing=PricingPresets.GROK_4_6,
+            tier_availability=["paid"],
+            priority=93,
             recommended=False,
             enabled=True,
         )
@@ -1453,6 +1481,7 @@ class ModelRegistry:
         self.register(ModelFactory.create_grok_4_1_fast())
         self.register(ModelFactory.create_grok_4())
         self.register(ModelFactory.create_grok_4_5())
+        self.register(ModelFactory.create_grok_4_6())
         self.register(ModelFactory.create_gpt4o_mini())
         self.register(ModelFactory.create_mimo_v2_flash())
         self.register(ModelFactory.create_kimi_k2())
@@ -1531,6 +1560,7 @@ class ModelRegistry:
         self._litellm_id_to_pricing["openrouter/google/gemma-4-31b-it"] = PricingPresets.GEMMA_4_31B
         self._litellm_id_to_pricing["openrouter/x-ai/grok-4"] = PricingPresets.GROK_4
         self._litellm_id_to_pricing["openrouter/x-ai/grok-4.5"] = PricingPresets.GROK_4_5
+        self._litellm_id_to_pricing["openrouter/x-ai/grok-4.6"] = PricingPresets.GROK_4_6
         self._litellm_id_to_pricing["openrouter/z-ai/glm-5.2"] = PricingPresets.GLM_5_2
         self._litellm_id_to_pricing["openrouter/qwen/qwen3.8-max"] = PricingPresets.QWEN_3_8_MAX
         self._litellm_id_to_pricing["openrouter/minimax/minimax-m2.7"] = PricingPresets.MINIMAX_M2_7
