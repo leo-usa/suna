@@ -13,6 +13,7 @@ import { safeJsonParse } from '@/components/thread/utils';
 import Link from 'next/link';
 import { HIDE_STREAMING_XML_TAGS } from '@/components/thread/utils';
 import { DobbyLogo } from '@/components/sidebar/dobby-logo';
+import { useTranslations } from 'next-intl';
 
 export interface PlaybackControlsProps {
   messages: UnifiedMessage[];
@@ -54,6 +55,7 @@ export const PlaybackControls = ({
   onFileViewerOpen,
   projectName = 'Shared Conversation',
 }: PlaybackControlsProps): PlaybackController => {
+  const t = useTranslations('thread.playback');
   const [playbackState, setPlaybackState] = useState<PlaybackState>({
     isPlaying: false,
     currentMessageIndex: 0,
@@ -473,7 +475,7 @@ export const PlaybackControls = ({
         size="icon"
         onClick={togglePlayback}
         className="h-8 w-8"
-        aria-label={isPlaying ? 'Pause Replay' : 'Play Replay'}
+        aria-label={isPlaying ? t('pauseReplay') : t('playReplay')}
       >
         {isPlaying ? (
           <Pause className="h-4 w-4" />
@@ -482,7 +484,7 @@ export const PlaybackControls = ({
         )}
       </Button>
     ),
-    [isPlaying, togglePlayback, currentMessageIndex, messages],
+    [isPlaying, togglePlayback, currentMessageIndex, messages, t],
   );
 
   const ForwardButton = useCallback(
@@ -585,7 +587,7 @@ export const PlaybackControls = ({
                 onClick={skipToEnd}
                 className="text-xs"
               >
-                Skip to end
+                {t('skipToEnd')}
               </Button>
             </div>
           </div>
@@ -600,6 +602,7 @@ export const PlaybackControls = ({
       PlayButton,
       ResetButton,
       ForwardButton,
+      t,
     ],
   );
 

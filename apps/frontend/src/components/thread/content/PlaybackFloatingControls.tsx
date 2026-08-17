@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import {
     Play,
@@ -30,6 +31,7 @@ export function PlaybackFloatingControls({
     onForwardOne,
     onBackwardOne,
 }: PlaybackFloatingControlsProps) {
+    const t = useTranslations('thread.playback');
     const controlsPositionClass = isSidePanelOpen
         ? 'left-1/2 -translate-x-1/4 sm:left-[calc(50%-225px)] md:left-[calc(50%-250px)] lg:left-[calc(50%-275px)] xl:left-[calc(50%-325px)]'
         : 'left-1/2 -translate-x-1/2';
@@ -46,7 +48,7 @@ export function PlaybackFloatingControls({
                     size="icon"
                     onClick={onTogglePlayback}
                     className="h-8 w-8"
-                    aria-label={isPlaying ? 'Pause Replay' : 'Play Replay'}
+                    aria-label={isPlaying ? t('pauseReplay') : t('playReplay')}
                 >
                     {isPlaying ? (
                         <Pause className="h-4 w-4" />
@@ -69,7 +71,7 @@ export function PlaybackFloatingControls({
                     disabled={currentMessageIndex === 0}
                     onClick={onBackwardOne}
                     className="h-8 w-8"
-                    aria-label="Previous Message"
+                    aria-label={t('previousMessage')}
                 >
                     <ArrowDown className="h-4 w-4 rotate-90" />
                 </Button>
@@ -81,7 +83,7 @@ export function PlaybackFloatingControls({
                     onClick={onForwardOne}
                     disabled={currentMessageIndex >= messageCount}
                     className="h-8 w-8"
-                    aria-label="Next Message"
+                    aria-label={t('nextMessage')}
                 >
                     <ArrowUp className="h-4 w-4 rotate-90" />
                 </Button>
@@ -93,7 +95,7 @@ export function PlaybackFloatingControls({
                     onClick={onSkipToEnd}
                     className="text-xs"
                 >
-                    Skip to end
+                    {t('skipToEnd')}
                 </Button>
             </div>
         </div>

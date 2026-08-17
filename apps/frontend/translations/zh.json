@@ -730,6 +730,13 @@
       "poweredBy": "使用 {model}",
       "upgradePaidModel": "升级后可使用 {model}",
       "pricePerMillion": "输入/输出·每百万"
+    },
+    "playback": {
+      "skipToEnd": "跳到结尾",
+      "playReplay": "播放回放",
+      "pauseReplay": "暂停回放",
+      "previousMessage": "上一条消息",
+      "nextMessage": "下一条消息"
     }
   },
   "agents": {
@@ -2586,6 +2593,14 @@
       "home": "主页",
       "item": "项",
       "items": "项"
+    },
+    "nav": {
+      "latestTool": "最新工具",
+      "jumpToLatest": "跳到最新",
+      "jumpToLive": "跳到实时",
+      "liveUpdates": "实时更新",
+      "prev": "上一步",
+      "next": "下一步"
     }
   },
   "docs": {

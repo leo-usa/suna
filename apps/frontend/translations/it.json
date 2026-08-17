@@ -572,6 +572,13 @@
       "piecingTogether": "Piecing it together",
       "workingMagic": "Working some magic",
       "crunchingThoughts": "Crunching thoughts"
+    },
+    "playback": {
+      "skipToEnd": "Vai alla fine",
+      "playReplay": "Riproduci",
+      "pauseReplay": "Pausa",
+      "previousMessage": "Messaggio precedente",
+      "nextMessage": "Messaggio successivo"
     }
   },
   "agents": {
@@ -1811,6 +1818,14 @@
       "home": "Home",
       "item": "item",
       "items": "items"
+    },
+    "nav": {
+      "latestTool": "Ultimo strumento",
+      "jumpToLatest": "Vai all'ultimo",
+      "jumpToLive": "Vai al live",
+      "liveUpdates": "Aggiornamenti live",
+      "prev": "Prec.",
+      "next": "Succ."
     }
   },
   "agentConfig": {

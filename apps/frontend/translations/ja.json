@@ -572,6 +572,13 @@
       "piecingTogether": "Piecing it together",
       "workingMagic": "Working some magic",
       "crunchingThoughts": "Crunching thoughts"
+    },
+    "playback": {
+      "skipToEnd": "最後までスキップ",
+      "playReplay": "再生",
+      "pauseReplay": "一時停止",
+      "previousMessage": "前のメッセージ",
+      "nextMessage": "次のメッセージ"
     }
   },
   "agents": {
@@ -1809,6 +1816,14 @@
       "home": "ホーム",
       "item": "item",
       "items": "items"
+    },
+    "nav": {
+      "latestTool": "最新ツール",
+      "jumpToLatest": "最新へ",
+      "jumpToLive": "ライブへ",
+      "liveUpdates": "ライブ更新",
+      "prev": "前へ",
+      "next": "次へ"
     }
   },
   "agentConfig": {

@@ -1,6 +1,7 @@
 'use client';
 
 import { memo, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
@@ -34,6 +35,7 @@ export const NavigationControls = memo(function NavigationControls({
   onJumpToLatest,
   isMobile = false,
 }: NavigationControlsProps) {
+  const t = useTranslations('dobbyComputer.nav');
   const renderStatusButton = useCallback(() => {
     const baseClasses = "flex items-center justify-center gap-1.5 px-2.5 py-0.5 rounded-full whitespace-nowrap";
     const dotClasses = "w-1.5 h-1.5 rounded-full flex-shrink-0";
@@ -47,14 +49,14 @@ export const NavigationControls = memo(function NavigationControls({
             onClick={onJumpToLive}
           >
             <div className={`${dotClasses} bg-blue-500 animate-pulse`} />
-            <span className={`${textClasses} text-zinc-700 dark:text-zinc-400`}>Live Updates</span>
+            <span className={`${textClasses} text-zinc-700 dark:text-zinc-400`}>{t('liveUpdates')}</span>
           </div>
         );
       } else {
         return (
           <div className={`${baseClasses} bg-neutral-50 dark:bg-neutral-900/20 border border-neutral-200 dark:border-neutral-800`}>
             <div className={`${dotClasses} bg-neutral-500`} />
-            <span className={`${textClasses} text-neutral-700 dark:text-neutral-400`}>Latest Tool</span>
+            <span className={`${textClasses} text-neutral-700 dark:text-neutral-400`}>{t('latestTool')}</span>
           </div>
         );
       }
@@ -66,7 +68,7 @@ export const NavigationControls = memo(function NavigationControls({
             onClick={onJumpToLive}
           >
             <div className={`${dotClasses} bg-blue-500 animate-pulse`} />
-            <span className={`${textClasses} text-zinc-700 dark:text-zinc-400`}>Jump to Live</span>
+            <span className={`${textClasses} text-zinc-700 dark:text-zinc-400`}>{t('jumpToLive')}</span>
           </div>
         );
       } else {
@@ -76,12 +78,12 @@ export const NavigationControls = memo(function NavigationControls({
             onClick={onJumpToLatest}
           >
             <div className={`${dotClasses} bg-zinc-500`} />
-            <span className={`${textClasses} text-zinc-700 dark:text-zinc-300`}>Jump to Latest</span>
+            <span className={`${textClasses} text-zinc-700 dark:text-zinc-300`}>{t('jumpToLatest')}</span>
           </div>
         );
       }
     }
-  }, [isLiveMode, agentStatus, onJumpToLive, onJumpToLatest]);
+  }, [isLiveMode, agentStatus, onJumpToLive, onJumpToLatest, t]);
 
   if (isMobile) {
     return (
@@ -95,7 +97,7 @@ export const NavigationControls = memo(function NavigationControls({
             className="h-8 px-2.5 text-xs"
           >
             <ChevronLeft className="h-3.5 w-3.5 mr-1" />
-            <span>Prev</span>
+            <span>{t('prev')}</span>
           </Button>
 
           <div className="flex items-center gap-1.5">
@@ -112,7 +114,7 @@ export const NavigationControls = memo(function NavigationControls({
             disabled={displayIndex >= displayTotalCalls - 1}
             className="h-8 px-2.5 text-xs"
           >
-            <span>Next</span>
+            <span>{t('next')}</span>
             <ChevronRight className="h-3.5 w-3.5 ml-1" />
           </Button>
         </div>

@@ -738,6 +738,13 @@
       "poweredBy": "Uses {model}",
       "upgradePaidModel": "Upgrade to use {model}",
       "pricePerMillion": "in/out per 1M"
+    },
+    "playback": {
+      "skipToEnd": "Skip to end",
+      "playReplay": "Play Replay",
+      "pauseReplay": "Pause Replay",
+      "previousMessage": "Previous Message",
+      "nextMessage": "Next Message"
     }
   },
   "agents": {
@@ -1450,6 +1457,14 @@
       "home": "Home",
       "item": "item",
       "items": "items"
+    },
+    "nav": {
+      "latestTool": "Latest Tool",
+      "jumpToLatest": "Jump to Latest",
+      "jumpToLive": "Jump to Live",
+      "liveUpdates": "Live Updates",
+      "prev": "Prev",
+      "next": "Next"
     }
   },
   "billing": {

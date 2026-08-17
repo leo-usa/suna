@@ -228,6 +228,7 @@ export const AppDock = memo(function AppDock({
   isSpreadsheetWindowOpen = false,
 }: AppDockProps) {
   const tFiles = useTranslations('dobbyComputer.fileBrowser');
+  const tNav = useTranslations('dobbyComputer.nav');
   const [scrollOffset, setScrollOffset] = useState(0);
   const maxVisibleIcons = 12;
   
@@ -397,7 +398,7 @@ export const AppDock = memo(function AppDock({
                     "w-1.5 h-1.5 rounded-full flex-shrink-0",
                     agentStatus === 'running' ? "bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.6)]" : "bg-zinc-400 shadow-[0_0_8px_rgba(161,161,170,0.6)]"
                   )} />
-                  <span>{agentStatus === 'running' ? 'Jump to Live' : 'Jump to Latest'}</span>
+                  <span>{agentStatus === 'running' ? tNav('jumpToLive') : tNav('jumpToLatest')}</span>
                 </button>
               </div>
             </motion.div>
