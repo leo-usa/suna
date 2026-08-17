@@ -14,8 +14,9 @@ export const siteConfig = {
       { id: 2, href: '/about', i18nKey: 'about' as const },
       { id: 3, href: '/pricing', i18nKey: 'pricing' as const },
       { id: 4, href: '/tutorials', i18nKey: 'tutorials' as const },
-      { id: 5, href: '/download', i18nKey: 'download' as const },
-      { id: 6, href: 'https://api.dobby.now', i18nKey: 'api' as const },
+      { id: 5, href: '/works', i18nKey: 'works' as const },
+      { id: 6, href: '/download', i18nKey: 'download' as const },
+      { id: 7, href: 'https://api.dobby.now', i18nKey: 'api' as const },
     ],
   },
   hero: {

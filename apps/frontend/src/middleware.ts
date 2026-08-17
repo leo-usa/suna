@@ -41,6 +41,8 @@ const PUBLIC_ROUTES = [
   '/pricing', // Pricing page should be public
   '/tutorials', // Tutorials page should be public
   '/download', // Desktop / mobile download page
+  '/works', // Published works gallery
+  '/community', // Legacy community viewer redirects to /works
   '/cn/consumer', // Chinese consumer landing
   '/cn/enterprise', // Chinese enterprise landing
   '/docs', // API / product docs (e.g. /docs/api)

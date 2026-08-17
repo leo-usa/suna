@@ -41,7 +41,8 @@
       "scanToDownload": "扫码下载",
       "openMenu": "打开菜单",
       "closeMenu": "关闭菜单",
-      "api": "API"
+      "api": "API",
+      "works": "作品"
     },
     "previous": "上一页"
   },
@@ -1394,7 +1395,14 @@
       "open": "打开",
       "shareOnX": "分享到 X",
       "shareOnLinkedIn": "分享到 LinkedIn",
-      "shareXText": "看看这段对话"
+      "shareXText": "看看这段对话",
+      "publish": "发布",
+      "publishing": "发布中...",
+      "publishHint": "将当前项目文件发布到作品",
+      "publishSuccess": "已发布到作品",
+      "publishFailed": "发布失败",
+      "publishNeedProject": "打开项目后才能发布",
+      "openWork": "打开作品"
     }
   },
   "billing": {
@@ -2708,5 +2716,30 @@
     "loadError": "无法加载绑定状态。",
     "codeError": "无法生成验证码，请重试。",
     "noAccounts": "没有可用账户。"
+  },
+  "works": {
+    "eyebrow": "画廊",
+    "heading": "作品",
+    "description": "来自 Dobby 项目的已发布网站、幻灯片、图片、视频和文档。",
+    "empty": "还没有已发布的作品。",
+    "loadError": "无法加载作品。",
+    "loadMore": "加载更多",
+    "loadingMore": "加载中...",
+    "pagination": "分页",
+    "publishedBy": "{name}",
+    "like": "喜欢",
+    "liked": "已喜欢",
+    "share": "分享",
+    "linkCopied": "链接已复制",
+    "enjoyedThis": "喜欢这个作品？",
+    "backToWorks": "返回作品",
+    "notFound": "未找到该作品。",
+    "typeSite": "网站",
+    "typeSlides": "幻灯片",
+    "typeImages": "图片",
+    "typeVideo": "视频",
+    "typeSheet": "表格",
+    "typeDocs": "文档",
+    "typeMixed": "混合"
   }
 }

@@ -41,7 +41,8 @@
       "scanToDownload": "スキャンしてダウンロード",
       "openMenu": "メニューを開く",
       "closeMenu": "メニューを閉じる",
-      "api": "API"
+      "api": "API",
+      "works": "作品"
     }
   },
   "aboutPage": {
@@ -695,7 +696,14 @@
       "open": "Open",
       "shareOnX": "Share on X",
       "shareOnLinkedIn": "Share on LinkedIn",
-      "shareXText": "Check out this conversation"
+      "shareXText": "Check out this conversation",
+      "publish": "公開",
+      "publishing": "公開中...",
+      "publishHint": "このプロジェクトのファイルを作品に公開します",
+      "publishSuccess": "作品に公開しました",
+      "publishFailed": "公開に失敗しました",
+      "publishNeedProject": "公開するにはプロジェクトを開いてください",
+      "openWork": "作品を開く"
     }
   },
   "billing": {
@@ -2438,5 +2446,30 @@
     "loadError": "Could not load link status.",
     "codeError": "Could not create a code. Try again.",
     "noAccounts": "No accounts available."
+  },
+  "works": {
+    "eyebrow": "ギャラリー",
+    "heading": "作品",
+    "description": "Dobby プロジェクトから公開されたサイト、スライド、画像、動画、ドキュメント。",
+    "empty": "公開された作品はまだありません。",
+    "loadError": "作品を読み込めませんでした。",
+    "loadMore": "さらに読み込む",
+    "loadingMore": "読み込み中...",
+    "pagination": "ページ",
+    "publishedBy": "{name}",
+    "like": "いいね",
+    "liked": "いいね済み",
+    "share": "シェア",
+    "linkCopied": "リンクをコピーしました",
+    "enjoyedThis": "この作品はいかがでしたか？",
+    "backToWorks": "作品一覧へ",
+    "notFound": "この作品は見つかりませんでした。",
+    "typeSite": "サイト",
+    "typeSlides": "スライド",
+    "typeImages": "画像",
+    "typeVideo": "動画",
+    "typeSheet": "シート",
+    "typeDocs": "ドキュメント",
+    "typeMixed": "ミックス"
   }
 }

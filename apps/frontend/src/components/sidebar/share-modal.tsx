@@ -3,12 +3,13 @@
 import { useState, useEffect } from "react"
 import { Popover, PopoverContent, PopoverTrigger, PopoverAnchor } from "@/components/ui/popover"
 import { Switch } from "@/components/ui/switch"
-import { Copy, Check, Globe, ExternalLink, Lock } from "lucide-react"
+import { Copy, Check, Globe, ExternalLink, Lock, Upload } from "lucide-react"
 import { toast } from "@/lib/toast"
 import { useThreadQuery, useUpdateThreadMutation } from "@/hooks/threads/use-threads"
 import { Skeleton } from "../ui/skeleton"
 import { cn } from "@/lib/utils"
 import { useTranslations } from "next-intl"
+import { publishWork } from "@/lib/api/works"
 
 interface SharePopoverProps {
   threadId?: string
@@ -48,13 +49,17 @@ const LinkedInIcon = () => (
 
 // Shared content component
 function SharePopoverContent({ 
-  threadId, 
+  threadId,
+  projectId,
   isOpen 
 }: { 
   threadId?: string
+  projectId?: string
   isOpen: boolean 
 }) {
   const [copied, setCopied] = useState(false)
+  const [publishing, setPublishing] = useState(false)
+  const [publishedUrl, setPublishedUrl] = useState("")
   const t = useTranslations("threads.sharePopover")
 
   const updateThreadMutation = useUpdateThreadMutation()
@@ -109,6 +114,28 @@ function SharePopoverContent({
   const handleShareLinkedIn = () => {
     const url = encodeURIComponent(shareLink)
     window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${url}`, "_blank")
+  }
+
+  const resolvedProjectId = projectId || threadData?.project_id || undefined
+
+  const handlePublish = async () => {
+    if (!resolvedProjectId || publishing) return
+    setPublishing(true)
+    try {
+      const result = await publishWork({
+        projectId: resolvedProjectId,
+        threadId,
+      })
+      const origin = typeof window !== "undefined" ? window.location.origin : ""
+      const url = `${origin}${result.url}`
+      setPublishedUrl(url)
+      toast.success(t("publishSuccess"))
+      window.open(result.url, "_blank", "noopener,noreferrer")
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t("publishFailed"))
+    } finally {
+      setPublishing(false)
+    }
   }
 
   if (isLoading) {
@@ -201,6 +228,33 @@ function SharePopoverContent({
           </div>
         </div>
       )}
+
+      <div className="border-t border-border/60 pt-2.5 space-y-2">
+        <button
+          onClick={handlePublish}
+          disabled={!resolvedProjectId || publishing}
+          className={cn(
+            "w-full flex items-center justify-center gap-1.5 h-8 rounded-lg text-[12px] font-medium",
+            "bg-foreground text-background hover:bg-foreground/90 active:scale-[0.98] transition-all",
+            (!resolvedProjectId || publishing) && "opacity-50"
+          )}
+        >
+          <Upload className="h-3 w-3" />
+          {publishing ? t("publishing") : t("publish")}
+        </button>
+        <p className="text-[11px] text-muted-foreground leading-snug">
+          {resolvedProjectId ? t("publishHint") : t("publishNeedProject")}
+        </p>
+        {publishedUrl && (
+          <button
+            onClick={() => window.open(publishedUrl, "_blank", "noopener,noreferrer")}
+            className="w-full flex items-center justify-center gap-1.5 h-7 rounded-lg text-[11px] font-medium border border-border/60 hover:bg-muted"
+          >
+            <ExternalLink className="h-3 w-3" />
+            {t("openWork")}
+          </button>
+        )}
+      </div>
     </div>
   )
 }
@@ -236,7 +290,7 @@ export function SharePopover({
         className="w-[280px] p-0 overflow-hidden"
         sideOffset={8}
       >
-        <SharePopoverContent threadId={threadId} isOpen={isOpen} />
+        <SharePopoverContent threadId={threadId} projectId={projectId} isOpen={isOpen} />
       </PopoverContent>
     </Popover>
   )

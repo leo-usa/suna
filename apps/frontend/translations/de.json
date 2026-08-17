@@ -41,7 +41,8 @@
       "scanToDownload": "Zum Herunterladen scannen",
       "openMenu": "Menü öffnen",
       "closeMenu": "Menü schließen",
-      "api": "API"
+      "api": "API",
+      "works": "Works"
     }
   },
   "aboutPage": {
@@ -613,7 +614,14 @@
       "open": "Open",
       "shareOnX": "Share on X",
       "shareOnLinkedIn": "Share on LinkedIn",
-      "shareXText": "Check out this conversation"
+      "shareXText": "Check out this conversation",
+      "publish": "Publish",
+      "publishing": "Publishing...",
+      "publishHint": "Snapshot this project's files to Works",
+      "publishSuccess": "Published to Works",
+      "publishFailed": "Publish failed",
+      "publishNeedProject": "Open a project to publish",
+      "openWork": "Open work"
     }
   },
   "billing": {
@@ -2438,5 +2446,30 @@
     "loadError": "Could not load link status.",
     "codeError": "Could not create a code. Try again.",
     "noAccounts": "No accounts available."
+  },
+  "works": {
+    "eyebrow": "Gallery",
+    "heading": "Works",
+    "description": "Published sites, slides, images, videos, and documents from Dobby projects.",
+    "empty": "No published works yet.",
+    "loadError": "Could not load works.",
+    "loadMore": "Load more",
+    "loadingMore": "Loading...",
+    "pagination": "Pagination",
+    "publishedBy": "By {name}",
+    "like": "Like",
+    "liked": "Liked",
+    "share": "Share",
+    "linkCopied": "Link copied",
+    "enjoyedThis": "Enjoyed this work?",
+    "backToWorks": "Back to Works",
+    "notFound": "This work was not found.",
+    "typeSite": "Site",
+    "typeSlides": "Slides",
+    "typeImages": "Images",
+    "typeVideo": "Video",
+    "typeSheet": "Sheet",
+    "typeDocs": "Docs",
+    "typeMixed": "Mixed"
   }
 }
