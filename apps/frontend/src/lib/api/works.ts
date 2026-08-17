@@ -91,6 +91,19 @@ export async function getWork(postId: string): Promise<WorkPost> {
   return response.data;
 }
 
+export async function fetchPublicWork(postId: string): Promise<WorkPost | null> {
+  const api = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000/v1';
+  const response = await fetch(`${api}/community/post/${encodeURIComponent(postId)}`, {
+    next: { revalidate: 300 },
+  });
+  if (!response.ok) return null;
+  return response.json();
+}
+
+export function workOgImagePath(postId: string): string {
+  return `/api/works/og-image/${encodeURIComponent(postId)}`;
+}
+
 export async function likeWork(postId: string): Promise<number> {
   const response = await backendApi.post<{ like_count: number }>('/community/like', {
     post_id: postId,

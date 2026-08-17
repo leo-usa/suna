@@ -165,23 +165,6 @@ export default function RootLayout({
           }}
         />
         
-        {/* Static SEO meta tags - rendered in initial HTML */}
-        <title>Dobby: Your Autonomous AI Worker</title>
-        <meta name="description" content="Built for complex tasks, designed for everything. The ultimate AI assistant that handles it all—from simple requests to mega-complex projects." />
-        <meta name="keywords" content="Dobby, AI Worker, Agentic AI, Autonomous AI Worker, AI Automation, AI Workflow Automation, AI Assistant, Task Automation" />
-        <meta property="og:title" content="Dobby: Your Autonomous AI Worker" />
-        <meta property="og:description" content="Built for complex tasks, designed for everything. The ultimate AI assistant that handles it all—from simple requests to mega-complex projects." />
-        <meta property="og:image" content="https://dobby.now/banner.png" />
-        <meta property="og:url" content="https://dobby.now" />
-        <meta property="og:type" content="website" />
-        <meta property="og:site_name" content="Dobby" />
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Dobby: Your Autonomous AI Worker" />
-        <meta name="twitter:description" content="Built for complex tasks, designed for everything. The ultimate AI assistant that handles it all—from simple requests to mega-complex projects." />
-        <meta name="twitter:image" content="https://dobby.now/banner.png" />
-        <meta name="twitter:site" content="@dobby" />
-        <link rel="canonical" href="https://dobby.now" />
-        
         {/* iOS Smart App Banner - shows native install banner in Safari */}
         {!featureFlags.disableMobileAdvertising ? (
           <meta name="apple-itunes-app" content="app-id=6754448524, app-argument=dobby://" />
