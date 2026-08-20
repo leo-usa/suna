@@ -512,7 +512,7 @@ async def atomic_use_credits(
     sql = """
     SELECT atomic_use_credits(
         CAST(:p_account_id AS uuid),
-        CAST(:p_amount AS numeric(10,2)),
+        CAST(:p_amount AS numeric(12,4)),
         :p_description,
         :p_thread_id,
         :p_message_id
@@ -520,7 +520,7 @@ async def atomic_use_credits(
     """
     row = await execute_one(sql, {
         "p_account_id": account_id,
-        "p_amount": amount,
+        "p_amount": str(amount),
         "p_description": description,
         "p_thread_id": thread_id,
         "p_message_id": message_id

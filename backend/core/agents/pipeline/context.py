@@ -17,6 +17,8 @@ class PipelineContext:
     stream_key: str = field(default="")
     start_time: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     user_message: Optional[str] = None
+    execution_target: Optional[str] = None
+    local_device_id: Optional[str] = None
     
     def __post_init__(self):
         if not self.stream_key:

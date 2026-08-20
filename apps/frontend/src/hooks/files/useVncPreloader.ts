@@ -18,7 +18,7 @@ interface VncPreloaderResult {
 }
 
 export function useVncPreloader(
-  sandbox: { vnc_preview?: string; pass?: string } | null, 
+  sandbox: { vnc_preview?: string; pass?: string; id?: string } | null, 
   options: VncPreloaderOptions = {}
 ): VncPreloaderResult {
   const { maxRetries = 5, initialDelay = 1000, timeoutMs = 5000 } = options;
@@ -124,7 +124,7 @@ export function useVncPreloader(
 
   useEffect(() => {
     // Reset status when sandbox changes
-    if (!sandbox?.vnc_preview || !sandbox?.pass) {
+    if (!sandbox?.vnc_preview || !sandbox?.pass || sandbox?.id?.startsWith('local:')) {
       setStatus('idle');
       setRetryCount(0);
       return;

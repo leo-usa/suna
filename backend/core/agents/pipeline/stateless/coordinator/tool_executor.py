@@ -13,6 +13,20 @@ from .message_builder import _transform_mcp_tool_call
 
 TERMINATING_TOOLS = {"ask", "complete"}
 
+
+def _split_image_context_output(output: Any) -> Tuple[Any, Any]:
+    """Keep _image_context_data for persistence, strip it from the tool result the model sees."""
+    if not isinstance(output, str):
+        return output, output
+    try:
+        parsed = json.loads(output)
+    except (json.JSONDecodeError, TypeError, ValueError):
+        return output, output
+    if not isinstance(parsed, dict) or "_image_context_data" not in parsed:
+        return output, output
+    parsed.pop("_image_context_data", None)
+    return json.dumps(parsed), output
+
 @dataclass
 class PendingToolExecution:
     task: asyncio.Task
@@ -88,6 +102,7 @@ class ToolExecutor:
         
         exec_time = (time.time() - execution.start_time) * 1000
         execution.saved = True
+        stripped_output, image_context_output = _split_image_context_output(output)
         
         logger.debug(f"[ToolExecutor] Tool {execution.function_name} completed in {exec_time:.1f}ms, success={success}")
         
@@ -96,7 +111,7 @@ class ToolExecutor:
                 tool_call_id=execution.tool_call_id,
                 tool_name=execution.function_name,
                 success=success,
-                output=output,
+                output=stripped_output,
                 error=error,
                 execution_time_ms=exec_time,
             ),
@@ -107,7 +122,7 @@ class ToolExecutor:
         tool_result_msg = self._message_builder.build_tool_result(
             execution.tool_call_id,
             execution.display_name,
-            output,
+            stripped_output,
             success,
             error,
             execution.tool_index,
@@ -143,8 +158,8 @@ class ToolExecutor:
             is_terminating
         )
         
-        if success and output:
-            async for msg in self._handle_deferred_image_context(output, stream_start):
+        if success and image_context_output:
+            async for msg in self._handle_deferred_image_context(image_context_output, stream_start):
                 yield msg
         
         if is_terminating and success:
@@ -213,6 +228,7 @@ class ToolExecutor:
             start = time.time()
             output, success, error = await self._execute_single_tool(name, args, available_functions)
             exec_time = (time.time() - start) * 1000
+            stripped_output, image_context_output = _split_image_context_output(output)
             
             logger.debug(f"[ToolExecutor] Tool {name} completed in {exec_time:.1f}ms, success={success}")
 
@@ -221,7 +237,7 @@ class ToolExecutor:
                     tool_call_id=tc_id,
                     tool_name=name,
                     success=success,
-                    output=output,
+                    output=stripped_output,
                     error=error,
                     execution_time_ms=exec_time,
                 ),
@@ -229,7 +245,7 @@ class ToolExecutor:
             )
 
             tool_result_msg = self._message_builder.build_tool_result(
-                tc_id, display_name, output, success, error, tool_index, stream_start, assistant_message_id
+                tc_id, display_name, stripped_output, success, error, tool_index, stream_start, assistant_message_id
             )
             tool_result_message_id = tool_result_msg.get("message_id")
             logger.debug(f"[ToolExecutor] Yielding tool result: {tc_id}, message_id={tool_result_message_id}")
@@ -251,8 +267,8 @@ class ToolExecutor:
                 tc_id, display_name, success, tool_index, stream_start, tool_result_message_id, is_terminating
             )
 
-            if success and output:
-                async for msg in self._handle_deferred_image_context(output, stream_start):
+            if success and image_context_output:
+                async for msg in self._handle_deferred_image_context(image_context_output, stream_start):
                     yield msg
 
             if is_terminating and success:
@@ -281,7 +297,13 @@ class ToolExecutor:
                 return json.dumps(error_response), False, access_result.reason
 
         try:
-            parsed = json.loads(args) if isinstance(args, str) else args
+            try:
+                parsed = json.loads(args) if isinstance(args, str) else args
+            except (json.JSONDecodeError, ValueError) as e:
+                reason = f"Invalid JSON in arguments for '{name}': {e}. Retry the call with valid JSON."
+                logger.warning(f"[ToolExecutor] {reason} Raw arguments: {str(args)[:200]}")
+                return json.dumps({"success": False, "message": reason}), False, reason
+
             tool_fn = available_functions.get(name)
             
             if name == "create_slide":
@@ -337,16 +359,26 @@ class ToolExecutor:
                 return
             
             message_content = image_context_data.get('message_content')
+            persist_content = image_context_data.get('persist_message_content')
+            persist = image_context_data.get('persist', True)
             metadata = image_context_data.get('metadata', {})
-            
+
             if not message_content:
                 logger.warning("_image_context_data missing message_content, skipping")
                 return
-            
-            self._state.add_message(message_content, {
-                "type": "image_context",
-                **metadata
-            })
+
+            if metadata.get("kind") == "computer_screenshot":
+                self._state.drop_computer_screen_observations()
+
+            self._state.add_message(
+                message_content,
+                {
+                    "type": "image_context",
+                    **metadata
+                },
+                persist_content=persist_content,
+                persist=bool(persist),
+            )
             logger.info(f"[DeferredImageContext] Added image_context to state messages")
             
             try:
@@ -356,6 +388,17 @@ class ToolExecutor:
                 logger.info(f"[DeferredImageContext] Set has_images flag on thread {thread_id}")
             except Exception as flag_error:
                 logger.warning(f"[DeferredImageContext] Failed to set has_images flag: {flag_error}")
+
+            image_parts = message_content.get("content") if isinstance(message_content, dict) else None
+            image_url = ""
+            if isinstance(image_parts, list):
+                for part in image_parts:
+                    if isinstance(part, dict) and part.get("type") == "image_url":
+                        image_url = str((part.get("image_url") or {}).get("url") or "")
+                        break
+            if image_url.startswith("data:") or metadata.get("kind") == "computer_screenshot":
+                logger.info("[DeferredImageContext] Skipping stream persist for computer screenshot")
+                return
             
             message_id = str(uuid.uuid4())
             seq = self._message_builder._increment_sequence()

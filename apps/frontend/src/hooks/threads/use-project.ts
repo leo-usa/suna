@@ -55,6 +55,8 @@ export const useProjectQuery = (projectId: string | undefined, options?) => {
       },
       icon_name: projectData.icon_name,
       dedicated_at: projectData.dedicated_at ?? null,
+      execution_target: projectData.execution_target || 'cloud',
+      local_device_id: projectData.local_device_id ?? null,
     } as Project;
   }, [projectId, cachedThreads]);
   

@@ -146,7 +146,9 @@ async def prep_prompt(
     tool_registry,
     mcp_loader=None,
     client=None,
-    disabled_tools: Optional[List[str]] = None
+    disabled_tools: Optional[List[str]] = None,
+    execution_target: Optional[str] = None,
+    local_device_id: Optional[str] = None,
 ) -> PromptResult:
     start = time.time()
 
@@ -163,7 +165,9 @@ async def prep_prompt(
             xml_tool_calling=config.AGENT_XML_TOOL_CALLING,
             user_id=account_id,
             mcp_loader=mcp_loader,
-            disabled_tools=disabled_tools
+            disabled_tools=disabled_tools,
+            execution_target=execution_target,
+            local_device_id=local_device_id,
         )
         
         elapsed_ms = (time.time() - start) * 1000

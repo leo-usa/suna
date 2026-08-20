@@ -19,6 +19,7 @@ import { NotificationDropdown } from '../notifications/notification-dropdown';
 import { useAgentStartInput } from '@/hooks/dashboard';
 import { ChatInput } from '@/components/thread/chat-input/chat-input';
 import { DynamicGreeting } from '@/components/ui/dynamic-greeting';
+import { LocalExecutionToggle } from '@/components/thread/local-execution-toggle';
 import { Menu } from 'lucide-react';
 
 // Lazy load heavy components that aren't immediately visible
@@ -318,6 +319,7 @@ export function DashboardContent() {
           <Suspense fallback={<div className="h-9 w-28 bg-muted/30 rounded-lg animate-pulse" />}>
             <ModeIndicator />
           </Suspense>
+          <LocalExecutionToggle />
         </div>
 
         {/* Right side - Notifications & Credits - ABSOLUTE positioned */}

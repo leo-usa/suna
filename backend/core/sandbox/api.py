@@ -180,8 +180,41 @@ async def get_sandbox_by_id_safely(client, sandbox_id: str) -> AsyncSandbox:
         HTTPException: If the sandbox doesn't exist or can't be retrieved after retries
     """
     from core.resources import ResourceService, ResourceType
-    
-    # Find the resource that owns this sandbox
+    from core.local_runner.service import is_local_sandbox_id
+
+    if is_local_sandbox_id(sandbox_id):
+        from core.local_runner.client import LocalSandbox
+        from core.local_runner.registry import get_online_info, is_online
+
+        resource_service = ResourceService(client)
+        resource = await resource_service.get_resource_by_external_id(sandbox_id, ResourceType.SANDBOX)
+        config = (resource or {}).get("config") or {}
+        project_id = sandbox_id.split(":", 1)[1]
+        device_id = config.get("device_id")
+        project = (
+            await client.table("projects")
+            .select("local_device_id, name")
+            .eq("project_id", project_id)
+            .maybe_single()
+            .execute()
+        )
+        project_data = (project.data or {}) if project else {}
+        if not device_id:
+            device_id = project_data.get("local_device_id")
+        project_name = project_data.get("name")
+        if not device_id:
+            raise HTTPException(status_code=503, detail="This computer is not paired")
+        if not await is_online(device_id):
+            raise HTTPException(status_code=503, detail="This computer is not connected. Open the Dobby desktop app and try again.")
+        info = await get_online_info(device_id)
+        preview_port = int((info or {}).get("preview_port") or 18080)
+        return LocalSandbox(
+            device_id,
+            project_id=project_id,
+            preview_port=preview_port,
+            project_name=project_name,
+        )
+
     resource_service = ResourceService(client)
     resource = await resource_service.get_resource_by_external_id(sandbox_id, ResourceType.SANDBOX)
     
@@ -630,7 +663,18 @@ async def ensure_project_sandbox_active(
             raise HTTPException(status_code=404, detail="No sandbox found for this project")
             
         sandbox_id = sandbox_resource.get('external_id')
-        
+        from core.local_runner.service import is_local_sandbox_id
+        if is_local_sandbox_id(sandbox_id):
+            from core.local_runner.registry import is_online
+            device_id = (sandbox_resource.get("config") or {}).get("device_id")
+            if not device_id or not await is_online(device_id):
+                raise HTTPException(status_code=503, detail="This computer is not connected. Open the Dobby desktop app and try again.")
+            return {
+                "status": "success",
+                "sandbox_id": sandbox_id,
+                "message": "Local runner is active",
+            }
+
         logger.debug(f"Ensuring sandbox is active for project {project_id}")
         sandbox = await get_or_start_sandbox(sandbox_id)
         
@@ -692,12 +736,36 @@ async def get_project_sandbox_details(
         
         resource_service = ResourceService(client)
         sandbox_resource = await resource_service.get_project_sandbox_resource(project_id)
-        
+
+        from core.local_runner.service import describe_local_runtime, is_local_sandbox_id
+        local_runtime = await describe_local_runtime(
+            project_id,
+            client=client,
+            execution_target=project_data.get("execution_target"),
+            local_device_id=project_data.get("local_device_id"),
+            sandbox_id=(sandbox_resource or {}).get("external_id"),
+            sandbox_config=(sandbox_resource or {}).get("config") or {},
+        )
+        if local_runtime:
+            return {
+                "status": "success",
+                "sandbox": {
+                    "sandbox_id": local_runtime["sandbox_id"],
+                    "state": local_runtime["daytona_state"],
+                    "project_id": project_id,
+                    "vnc_preview": None,
+                    "sandbox_url": local_runtime["sandbox_url"],
+                    "target": "local",
+                },
+            }
+
         if not sandbox_resource:
             raise HTTPException(status_code=404, detail="No sandbox found for this project")
             
         sandbox_id = sandbox_resource.get('external_id')
         config = sandbox_resource.get('config', {})
+        if is_local_sandbox_id(sandbox_id):
+            raise HTTPException(status_code=503, detail="This computer is not connected. Open the Dobby desktop app and try again.")
         
         logger.debug(f"Fetching sandbox details for sandbox {sandbox_id} (project {project_id})")
         sandbox = await daytona.get(sandbox_id)
@@ -908,6 +976,17 @@ async def get_project_sandbox_status(
             if not (account_user_result.data and len(account_user_result.data) > 0):
                 raise HTTPException(status_code=403, detail="Not authorized")
 
+    from core.local_runner.service import describe_local_runtime
+
+    local_runtime = await describe_local_runtime(
+        project_id,
+        client=client,
+        execution_target=project_data.get("execution_target"),
+        local_device_id=project_data.get("local_device_id"),
+    )
+    if local_runtime:
+        return SandboxStatusResponse(**local_runtime)
+
     try:
         from core.resources import ResourceService
 
@@ -1033,6 +1112,21 @@ async def start_project_sandbox(
         sandbox_resource = await resource_service.get_project_sandbox_resource(project_id)
 
         if not sandbox_resource:
+            from core.local_runner.service import describe_local_runtime
+            local_runtime = await describe_local_runtime(
+                project_id,
+                client=client,
+                execution_target=project_data.get("execution_target"),
+                local_device_id=project_data.get("local_device_id"),
+            )
+            if local_runtime:
+                if local_runtime["status"] != "LIVE":
+                    raise HTTPException(status_code=503, detail=local_runtime.get("error") or "This computer is not connected. Open the Dobby desktop app and try again.")
+                return {
+                    "status": "success",
+                    "sandbox_id": local_runtime["sandbox_id"],
+                    "message": "Local runner is active",
+                }
             # No sandbox exists - create one using resolve_sandbox
             logger.info(f"No sandbox found for project {project_id}, creating one...")
             
@@ -1061,6 +1155,26 @@ async def start_project_sandbox(
             }
 
         sandbox_id = sandbox_resource.get('external_id')
+
+        from core.local_runner.service import describe_local_runtime, is_local_sandbox_id
+        local_runtime = await describe_local_runtime(
+            project_id,
+            client=client,
+            execution_target=project_data.get("execution_target"),
+            local_device_id=project_data.get("local_device_id"),
+            sandbox_id=sandbox_id,
+            sandbox_config=sandbox_resource.get("config") or {},
+        )
+        if local_runtime:
+            if local_runtime["status"] != "LIVE":
+                raise HTTPException(status_code=503, detail=local_runtime.get("error") or "This computer is not connected. Open the Dobby desktop app and try again.")
+            return {
+                "status": "success",
+                "sandbox_id": local_runtime["sandbox_id"],
+                "message": "Local runner is active",
+            }
+        if is_local_sandbox_id(sandbox_id):
+            raise HTTPException(status_code=503, detail="This computer is not connected. Open the Dobby desktop app and try again.")
 
         # Check current state
         try:
@@ -1144,6 +1258,22 @@ async def get_sandbox_status_by_id(
     Returns the same unified status as /project/{project_id}/sandbox/status.
     """
     logger.debug(f"Received sandbox status request for sandbox_id {sandbox_id}, user_id: {user_id}")
+
+    from core.local_runner.service import describe_local_runtime, is_local_sandbox_id
+    if is_local_sandbox_id(sandbox_id):
+        client = await db.client
+        project_id = sandbox_id.split(":", 1)[1]
+        local_runtime = await describe_local_runtime(project_id, client=client, sandbox_id=sandbox_id)
+        if local_runtime:
+            return SandboxStatusResponse(**local_runtime)
+        return SandboxStatusResponse(
+            status=UnifiedSandboxStatus.OFFLINE.value,
+            sandbox_id=sandbox_id,
+            project_id=project_id,
+            daytona_state="stopped",
+            last_checked=datetime.now(timezone.utc).isoformat(),
+            error="This computer is not connected. Open the Dobby desktop app and try again.",
+        )
 
     try:
         # Get Daytona state
@@ -1299,6 +1429,14 @@ async def stop_project_sandbox(
             raise HTTPException(status_code=404, detail="No sandbox found for this project")
 
         sandbox_id = sandbox_resource.get('external_id')
+
+        from core.local_runner.service import describe_local_runtime, is_local_sandbox_id
+        if (project_data.get("execution_target") or "").lower() == "local" or is_local_sandbox_id(sandbox_id):
+            return {
+                "status": "success",
+                "sandbox_id": sandbox_id,
+                "message": "Local runner stays running on this computer",
+            }
 
         # Get sandbox and stop it
         sandbox = await daytona.get(sandbox_id)

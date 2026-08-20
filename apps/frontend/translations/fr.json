@@ -690,6 +690,15 @@
     "failedCopyLink": "Échec de la copie du lien",
     "openDobbyComputerTooltip": "Ouvrir l’ordinateur Dobby",
     "closeDobbyComputerTooltip": "Fermer l’ordinateur Dobby",
+    "runOnThisComputer": "Exécuter sur cet ordinateur",
+    "runOnThisComputerTooltip": "Le terminal et les fichiers s’exécutent sur ce Mac, pas dans le cloud",
+    "localRunnerEnabled": "Exécution sur cet ordinateur",
+    "localRunnerDisabled": "Exécution dans le cloud",
+    "localRunnerConnectFailed": "Impossible de connecter cet ordinateur",
+    "saveComputerScreenshots": "Enregistrer les captures",
+    "saveComputerScreenshotsTooltip": "Désactivé par défaut. Dobby voit toujours l’écran pour travailler, mais rien n’est envoyé ni conservé.",
+    "saveComputerScreenshotsOn": "Les captures d’écran seront enregistrées",
+    "saveComputerScreenshotsOff": "Les captures restent sur ce Mac",
     "sharePopover": {
       "titlePublicEnabled": "Public link enabled",
       "titleEnablePublic": "Enable public link",
@@ -1234,6 +1243,31 @@
         "full-file-rewrite": "Réécrire le fichier",
         "str-replace": "Remplacement de texte",
         "edit-file": "Modifier le fichier"
+      }
+    },
+    "computerToolView": {
+      "thisComputer": "Cet ordinateur",
+      "showScreenshot": "Afficher la capture",
+      "showContext": "Afficher ENTRÉE/SORTIE",
+      "loadFailed": "Échec du chargement de la capture",
+      "working": "Action en cours sur ce Mac",
+      "failed": "L'action sur l'ordinateur a échoué",
+      "completed": "Action sur l'ordinateur terminée",
+      "watching": "Regarde ce Mac. Les captures d'écran ne sont pas enregistrées.",
+      "screenshotCaptured": "Capture d'écran effectuée.",
+      "typedText": "Texte saisi.",
+      "typedAndSubmitted": "Saisi et envoyé.",
+      "scrolled": "Défilé.",
+      "clicked": "Clic ({x}, {y}).",
+      "pressed": "{key} pressé.",
+      "opened": "{target} ouvert.",
+      "toolTitle": {
+        "computer-screenshot": "Capture d'écran",
+        "computer-click": "Clic",
+        "computer-type": "Saisie",
+        "computer-key": "Touche",
+        "computer-scroll": "Défilement",
+        "computer-open": "Ouvrir"
       }
     },
     "tool": "Outil"

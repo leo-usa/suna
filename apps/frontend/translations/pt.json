@@ -690,6 +690,15 @@
     "failedCopyLink": "Falha ao copiar o link",
     "openDobbyComputerTooltip": "Abrir Dobby Computer",
     "closeDobbyComputerTooltip": "Fechar Dobby Computer",
+    "runOnThisComputer": "Executar neste computador",
+    "runOnThisComputerTooltip": "O terminal e os arquivos rodam neste Mac, não na nuvem",
+    "localRunnerEnabled": "Executando neste computador",
+    "localRunnerDisabled": "Executando na nuvem",
+    "localRunnerConnectFailed": "Não foi possível conectar este computador",
+    "saveComputerScreenshots": "Salvar capturas",
+    "saveComputerScreenshotsTooltip": "Desligado por padrão. O Dobby ainda vê a tela para trabalhar, mas nada é enviado nem guardado.",
+    "saveComputerScreenshotsOn": "As capturas serão salvas",
+    "saveComputerScreenshotsOff": "As capturas ficam neste Mac",
     "sharePopover": {
       "titlePublicEnabled": "Public link enabled",
       "titleEnablePublic": "Enable public link",
@@ -1234,6 +1243,31 @@
         "full-file-rewrite": "Reescrever arquivo",
         "str-replace": "Substituição de texto",
         "edit-file": "Editar arquivo"
+      }
+    },
+    "computerToolView": {
+      "thisComputer": "Este computador",
+      "showScreenshot": "Mostrar captura",
+      "showContext": "Mostrar ENTRADA/SAÍDA",
+      "loadFailed": "Falha ao carregar a captura",
+      "working": "A trabalhar neste Mac",
+      "failed": "A ação no computador falhou",
+      "completed": "Ação no computador concluída",
+      "watching": "A observar este Mac. As capturas de ecrã não estão a ser guardadas.",
+      "screenshotCaptured": "Captura de ecrã feita.",
+      "typedText": "Texto escrito.",
+      "typedAndSubmitted": "Escrito e enviado.",
+      "scrolled": "Deslocado.",
+      "clicked": "Clique em ({x}, {y}).",
+      "pressed": "Premido {key}.",
+      "opened": "Aberto {target}.",
+      "toolTitle": {
+        "computer-screenshot": "Captura de ecrã",
+        "computer-click": "Clique",
+        "computer-type": "Escrever",
+        "computer-key": "Tecla",
+        "computer-scroll": "Deslocar",
+        "computer-open": "Abrir"
       }
     },
     "tool": "Ferramenta"

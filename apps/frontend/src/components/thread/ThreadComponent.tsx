@@ -14,6 +14,7 @@ import {
   BillingError 
 } from '@/lib/api/errors';
 import { optimisticAgentStart } from '@/lib/api/agents';
+import { ensureLocalRunnerReady, getPreferredExecutionTarget } from '@/lib/api/local-runner';
 import { toast } from '@/lib/toast';
 import { ChatInput, ChatInputHandles } from '@/components/thread/chat-input/chat-input';
 import { SidebarContext } from '@/components/ui/sidebar';
@@ -1257,6 +1258,9 @@ export function ThreadComponent({ projectId, threadId, compact = false, configur
       const uploadedFiles = chatInputRef.current?.getUploadedFiles() || [];
 
       try {
+        if (getPreferredExecutionTarget() === 'local' || project?.execution_target === 'local') {
+          await ensureLocalRunnerReady();
+        }
         const result = await startAgentMutation.mutateAsync({
           threadId,
           prompt: message,
@@ -1320,6 +1324,7 @@ export function ThreadComponent({ projectId, threadId, compact = false, configur
     [
       threadId,
       project?.account_id,
+      project?.execution_target,
       startAgentMutation,
       setMessages,
       openBillingModal,

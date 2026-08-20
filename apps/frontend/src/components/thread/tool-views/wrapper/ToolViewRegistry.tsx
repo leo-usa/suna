@@ -2,6 +2,7 @@ import React, { useMemo, useEffect } from 'react';
 import { ToolViewProps } from '../types';
 import { GenericToolView } from '../GenericToolView';
 import { BrowserToolView } from '../BrowserToolView';
+import { ComputerToolView } from '../computer-tool/ComputerToolView';
 import { CommandToolView } from '../command-tool/CommandToolView';
 import { CheckCommandOutputToolView } from '../command-tool/CheckCommandOutputToolView';
 import { TerminateCommandToolView } from '../command-tool/TerminateCommandToolView';
@@ -102,6 +103,19 @@ const defaultRegistry: ToolViewRegistryType = {
   'browser-act': BrowserToolView,
   'browser-extract-content': BrowserToolView,
   'browser-screenshot': BrowserToolView,
+
+  'computer-screenshot': ComputerToolView,
+  'computer_screenshot': ComputerToolView,
+  'computer-click': ComputerToolView,
+  'computer_click': ComputerToolView,
+  'computer-type': ComputerToolView,
+  'computer_type': ComputerToolView,
+  'computer-key': ComputerToolView,
+  'computer_key': ComputerToolView,
+  'computer-scroll': ComputerToolView,
+  'computer_scroll': ComputerToolView,
+  'computer-open': ComputerToolView,
+  'computer_open': ComputerToolView,
 
   'execute-command': CommandToolView,
   'check-command-output': CheckCommandOutputToolView,

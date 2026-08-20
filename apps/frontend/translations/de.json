@@ -608,6 +608,15 @@
     "failedCopyLink": "Link konnte nicht kopiert werden",
     "openDobbyComputerTooltip": "Dobby Computer öffnen",
     "closeDobbyComputerTooltip": "Dobby Computer schließen",
+    "runOnThisComputer": "Auf diesem Computer ausführen",
+    "runOnThisComputerTooltip": "Terminal und Dateien laufen auf diesem Mac, nicht in der Cloud",
+    "localRunnerEnabled": "Läuft auf diesem Computer",
+    "localRunnerDisabled": "Läuft in der Cloud",
+    "localRunnerConnectFailed": "Dieser Computer konnte nicht verbunden werden",
+    "saveComputerScreenshots": "Screenshots speichern",
+    "saveComputerScreenshotsTooltip": "Standardmäßig aus. Dobby sieht den Bildschirm trotzdem, aber es wird nichts hochgeladen oder gespeichert.",
+    "saveComputerScreenshotsOn": "Screenshots werden gespeichert",
+    "saveComputerScreenshotsOff": "Screenshots bleiben auf diesem Mac",
     "sharePopover": {
       "titlePublicEnabled": "Public link enabled",
       "titleEnablePublic": "Enable public link",
@@ -1152,6 +1161,31 @@
         "full-file-rewrite": "Datei neu schreiben",
         "str-replace": "Textersetzung",
         "edit-file": "Datei bearbeiten"
+      }
+    },
+    "computerToolView": {
+      "thisComputer": "Dieser Computer",
+      "showScreenshot": "Screenshot anzeigen",
+      "showContext": "EIN-/AUSGABE anzeigen",
+      "loadFailed": "Screenshot konnte nicht geladen werden",
+      "working": "Arbeitet auf diesem Mac",
+      "failed": "Computeraktion fehlgeschlagen",
+      "completed": "Computeraktion abgeschlossen",
+      "watching": "Beobachte diesen Mac. Screenshots werden nicht gespeichert.",
+      "screenshotCaptured": "Screenshot aufgenommen.",
+      "typedText": "Text eingegeben.",
+      "typedAndSubmitted": "Eingegeben und gesendet.",
+      "scrolled": "Gescrollt.",
+      "clicked": "Geklickt ({x}, {y}).",
+      "pressed": "{key} gedrückt.",
+      "opened": "{target} geöffnet.",
+      "toolTitle": {
+        "computer-screenshot": "Bildschirmaufnahme",
+        "computer-click": "Klick",
+        "computer-type": "Tippen",
+        "computer-key": "Taste",
+        "computer-scroll": "Scrollen",
+        "computer-open": "Öffnen"
       }
     },
     "tool": "Tool"

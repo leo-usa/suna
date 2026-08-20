@@ -394,6 +394,7 @@ export const optimisticAgentStart = async (options: {
   memory_enabled?: boolean;
   mode?: string;  // Mode: slides, sheets, docs, canvas, video, research
   files?: File[];  // Files to upload with the agent start
+  execution_target?: 'cloud' | 'local';
 }): Promise<OptimisticAgentStartResponse> => {
   try {
     if (!API_URL) {
@@ -425,6 +426,10 @@ export const optimisticAgentStart = async (options: {
     
     if (options.mode) {
       formData.append('mode', options.mode);
+    }
+
+    if (options.execution_target) {
+      formData.append('execution_target', options.execution_target);
     }
     
     // Append files if present

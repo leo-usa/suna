@@ -19,7 +19,9 @@ class PromptManager:
                                   xml_tool_calling: bool = False,
                                   user_id: Optional[str] = None,
                                   mcp_loader=None,
-                                  disabled_tools: Optional[List[str]] = None) -> Tuple[dict, Optional[dict]]:
+                                  disabled_tools: Optional[List[str]] = None,
+                                  execution_target: Optional[str] = None,
+                                  local_device_id: Optional[str] = None) -> Tuple[dict, Optional[dict]]:
         
         build_start = time.time()
         
@@ -67,6 +69,8 @@ class PromptManager:
         
         system_content = PromptManager._append_xml_tool_calling_instructions(system_content, xml_tool_calling, tool_registry)
         system_content = PromptManager._append_datetime_info(system_content)
+        if (execution_target or "").lower() == "local":
+            system_content = await PromptManager._append_local_runtime(system_content, local_device_id)
         
         t5 = time.time()
         kb_data, user_context_data, memory_data, file_data = await asyncio.gather(kb_task, user_context_task, memory_task, file_task)
@@ -546,6 +550,20 @@ Multiple parallel tool calls:
         datetime_info += "</current_datetime>"
         
         return system_content + datetime_info
+
+    @staticmethod
+    async def _append_local_runtime(system_content: str, local_device_id: Optional[str]) -> str:
+        host_tools = None
+        if local_device_id:
+            try:
+                from core.local_runner.registry import get_online_info
+                info = await get_online_info(local_device_id)
+                if info:
+                    host_tools = info.get("host_tools")
+            except Exception as e:
+                logger.debug(f"Could not load host tools for {local_device_id}: {e}")
+        from core.local_runner.runtime_prompt import local_runtime_prompt
+        return system_content + local_runtime_prompt(host_tools)
     
     @staticmethod
     async def _fetch_user_context_data(user_id: Optional[str], client) -> Optional[str]:

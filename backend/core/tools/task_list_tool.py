@@ -9,8 +9,46 @@ import uuid
 
 class TaskStatus(str, Enum):
     PENDING = "pending"
+    IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
     CANCELLED = "cancelled"
+
+_STATUS_ALIASES = {
+    "pending": TaskStatus.PENDING,
+    "todo": TaskStatus.PENDING,
+    "in_progress": TaskStatus.IN_PROGRESS,
+    "in-progress": TaskStatus.IN_PROGRESS,
+    "inprogress": TaskStatus.IN_PROGRESS,
+    "working": TaskStatus.IN_PROGRESS,
+    "completed": TaskStatus.COMPLETED,
+    "complete": TaskStatus.COMPLETED,
+    "done": TaskStatus.COMPLETED,
+    "cancelled": TaskStatus.CANCELLED,
+    "canceled": TaskStatus.CANCELLED,
+}
+
+
+def _parse_status(status: Optional[str]) -> Optional[TaskStatus]:
+    if status is None:
+        return None
+    mapped = _STATUS_ALIASES.get(str(status).strip().lower())
+    if mapped is None:
+        raise ValueError(f"Invalid status '{status}'. Use pending, in_progress, completed, or cancelled.")
+    return mapped
+
+
+def _normalize_id_list(value) -> List[str]:
+    if value is None:
+        return []
+    if isinstance(value, str):
+        try:
+            parsed = json.loads(value)
+            value = parsed if isinstance(parsed, list) else [value]
+        except (json.JSONDecodeError, ValueError):
+            value = [part.strip() for part in value.split(",") if part.strip()] or [value]
+    elif not isinstance(value, list):
+        value = [value]
+    return [str(item).strip() for item in value if item is not None and str(item).strip()]
 
 class Section(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -116,15 +154,46 @@ class TaskListTool(SandboxToolsBase):
     
     def __init__(self, project_id: str, thread_manager, thread_id: str):
         super().__init__(project_id, thread_manager)
-        self.thread_id = thread_id
+        self.thread_id = thread_id or getattr(thread_manager, "thread_id", None)
         self.task_list_message_type = "task_list"
+        self._sections: List[Section] = []
+        self._tasks: List[Task] = []
+        self._loaded = False
+
+    def _thread_key(self) -> Optional[str]:
+        return self.thread_id or getattr(self.thread_manager, "thread_id", None)
+
+    def _dump(self, sections: List[Section], tasks: List[Task]) -> Dict[str, Any]:
+        return {
+            "sections": [section.model_dump(mode="json") for section in sections],
+            "tasks": [task.model_dump(mode="json") for task in tasks],
+        }
+
+    def _resolve_task(self, token: str, tasks: List[Task]) -> Optional[Task]:
+        task_map = {t.id: t for t in tasks}
+        if token in task_map:
+            return task_map[token]
+        lowered = token.lower()
+        content_matches = [t for t in tasks if t.content.lower() == lowered]
+        if len(content_matches) == 1:
+            return content_matches[0]
+        if token.isdigit():
+            index = int(token) - 1
+            if 0 <= index < len(tasks):
+                return tasks[index]
+        return None
     
     async def _load_data(self) -> tuple[List[Section], List[Task]]:
         """Load sections and tasks from storage"""
+        if self._loaded:
+            return self._sections, self._tasks
+        thread_id = self._thread_key()
+        if not thread_id:
+            raise ValueError("Task list is missing thread_id")
         try:
             client = await self.thread_manager.db.client
             result = await client.table('messages').select('*')\
-                .eq('thread_id', self.thread_id)\
+                .eq('thread_id', thread_id)\
                 .eq('type', self.task_list_message_type)\
                 .order('created_at', desc=True).limit(1).execute()
             
@@ -152,26 +221,29 @@ class TaskListTool(SandboxToolsBase):
                                 task.id = old_task['id']
                             tasks.append(task)
                 
+                self._sections, self._tasks = sections, tasks
+                self._loaded = True
                 return sections, tasks
             
+            self._sections, self._tasks = [], []
+            self._loaded = True
             return [], []
             
         except Exception as e:
             logger.error(f"Error loading data: {e}")
-            return [], []
+            raise
     
     async def _save_data(self, sections: List[Section], tasks: List[Task]):
         """Save sections and tasks to storage"""
+        thread_id = self._thread_key()
+        if not thread_id:
+            raise ValueError("Task list is missing thread_id")
         try:
             client = await self.thread_manager.db.client
-            
-            content = {
-                'sections': [section.model_dump() for section in sections],
-                'tasks': [task.model_dump() for task in tasks]
-            }
+            content = self._dump(sections, tasks)
             
             result = await client.table('messages').select('message_id')\
-                .eq('thread_id', self.thread_id)\
+                .eq('thread_id', thread_id)\
                 .eq('type', self.task_list_message_type)\
                 .order('created_at', desc=True).limit(1).execute()
             
@@ -180,12 +252,14 @@ class TaskListTool(SandboxToolsBase):
                     .eq('message_id', result.data[0]['message_id']).execute()
             else:
                 await client.table('messages').insert({
-                    'thread_id': self.thread_id,
+                    'thread_id': thread_id,
                     'type': self.task_list_message_type,
                     'content': content,
                     'is_llm_message': False,
                     'metadata': {}
                 }).execute()
+            self._sections, self._tasks = sections, tasks
+            self._loaded = True
             
         except Exception as e:
             logger.error(f"Error saving data: {e}")
@@ -214,7 +288,7 @@ class TaskListTool(SandboxToolsBase):
         
         # Calculate progress
         completed = sum(1 for t in tasks if t.status == TaskStatus.COMPLETED)
-        pending = sum(1 for t in tasks if t.status == TaskStatus.PENDING)
+        pending = sum(1 for t in tasks if t.status in (TaskStatus.PENDING, TaskStatus.IN_PROGRESS))
         
         return {
             "sections": formatted_sections,
@@ -294,7 +368,7 @@ class TaskListTool(SandboxToolsBase):
     })
     async def create_tasks(self, sections: Optional[List[Dict[str, Any]]] = None,
                           section_title: Optional[str] = None, section_id: Optional[str] = None,
-                          task_contents: Optional[List[str]] = None) -> ToolResult:
+                          task_contents: Optional[List[str]] = None, **kwargs) -> ToolResult:
         """Create tasks - supports batch multi-section and single section creation"""
         try:
             # Parse JSON strings if needed
@@ -421,8 +495,8 @@ class TaskListTool(SandboxToolsBase):
                     },
                     "status": {
                         "type": "string",
-                        "enum": ["pending", "completed", "cancelled"],
-                        "description": "New status. Use 'completed' when task is done."
+                        "enum": ["pending", "in_progress", "completed", "cancelled"],
+                        "description": "New status. Use 'in_progress' while working and 'completed' when the task is done."
                     },
                     "section_id": {
                         "type": "string",
@@ -434,42 +508,43 @@ class TaskListTool(SandboxToolsBase):
             }
         }
     })
-    async def update_tasks(self, task_ids, content: Optional[str] = None,
-                          status: Optional[str] = None, section_id: Optional[str] = None) -> ToolResult:
+    async def update_tasks(self, task_ids=None, content: Optional[str] = None,
+                          status: Optional[str] = None, section_id: Optional[str] = None,
+                          task_id=None, ids=None, **kwargs) -> ToolResult:
         """Update one or more tasks"""
         try:
-            # Parse task_ids
-            if task_ids is not None:
-                if isinstance(task_ids, str):
-                    try:
-                        parsed = json.loads(task_ids)
-                        target_task_ids = parsed if isinstance(parsed, list) else [task_ids]
-                    except (json.JSONDecodeError, ValueError):
-                        target_task_ids = [task_ids]
-                elif isinstance(task_ids, list):
-                    target_task_ids = task_ids
-                else:
-                    target_task_ids = [task_ids]
-            else:
+            target_task_ids = _normalize_id_list(task_ids or task_id or ids or kwargs.get("id"))
+            if not target_task_ids:
                 return ToolResult(success=False, output="❌ Task IDs required")
             
             sections, tasks = await self._load_data()
             section_map = {s.id: s for s in sections}
-            task_map = {t.id: t for t in tasks}
-            
-            missing_tasks = [tid for tid in target_task_ids if tid not in task_map]
+            resolved: List[Task] = []
+            missing_tasks: List[str] = []
+            for token in target_task_ids:
+                task = self._resolve_task(token, tasks)
+                if task is None:
+                    missing_tasks.append(token)
+                else:
+                    resolved.append(task)
             if missing_tasks:
-                return ToolResult(success=False, output=f"❌ Task IDs not found: {missing_tasks}")
+                known = [f"{i + 1}. {t.id} ({t.content})" for i, t in enumerate(tasks)]
+                return ToolResult(
+                    success=False,
+                    output="❌ Task IDs not found: "
+                    + str(missing_tasks)
+                    + (". Known tasks:\n" + "\n".join(known) if known else ". No task list is stored for this thread yet."),
+                )
             
             if section_id and section_id not in section_map:
                 return ToolResult(success=False, output=f"❌ Section ID '{section_id}' not found")
             
-            for tid in target_task_ids:
-                task = task_map[tid]
+            parsed_status = _parse_status(status)
+            for task in resolved:
                 if content is not None:
                     task.content = content
-                if status is not None:
-                    task.status = TaskStatus(status)
+                if parsed_status is not None:
+                    task.status = parsed_status
                 if section_id is not None:
                     task.section_id = section_id
             

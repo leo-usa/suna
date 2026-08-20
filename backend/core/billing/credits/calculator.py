@@ -116,3 +116,31 @@ def calculate_cache_write_cost(cache_creation_tokens: int, model: str, cache_ttl
     except Exception as e:
         logger.error(f"[COST_CALC] Error calculating cache write cost for model '{model}': {e}")
         return calculate_token_cost(cache_creation_tokens, 0, model)
+
+
+def cached_tokens_from_usage(usage) -> int:
+    if not usage:
+        return 0
+    direct = getattr(usage, "cache_read_input_tokens", None)
+    if direct:
+        return int(direct)
+    details = getattr(usage, "prompt_tokens_details", None)
+    if isinstance(details, dict):
+        return int(details.get("cached_tokens") or details.get("cache_read_input_tokens") or 0)
+    if details is not None:
+        return int(getattr(details, "cached_tokens", 0) or 0)
+    if isinstance(usage, dict):
+        nested = usage.get("prompt_tokens_details") or {}
+        return int(nested.get("cached_tokens") or usage.get("cache_read_input_tokens") or 0)
+    return 0
+
+
+def estimate_cached_prompt_tokens(prompt_tokens: int, previous_prompt_tokens: int) -> int:
+    """When the provider omits cache stats on the stream, reuse the prior prompt prefix.
+
+    Subtract a small allowance for the new screenshot and tool result so we do not
+    treat those fresh tokens as cached.
+    """
+    if prompt_tokens <= 0 or previous_prompt_tokens <= 0:
+        return 0
+    return max(0, min(prompt_tokens, previous_prompt_tokens - 2000))

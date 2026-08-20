@@ -175,6 +175,17 @@ async def get_project(
                 'id': project.get('sandbox_external_id'),
                 **(project.get('sandbox_config') or {})
             }
+
+        from core.local_runner.service import describe_local_runtime, local_sandbox_public_info
+        local_runtime = await describe_local_runtime(
+            project_id,
+            execution_target=project.get("execution_target"),
+            local_device_id=project.get("local_device_id"),
+            sandbox_id=project.get("sandbox_external_id"),
+            sandbox_config=project.get("sandbox_config") or {},
+        )
+        if local_runtime:
+            sandbox_info = local_sandbox_public_info(local_runtime)
         
         project_data = {
             "project_id": project['project_id'],
@@ -184,6 +195,8 @@ async def get_project(
             "is_public": project.get('is_public', False),
             "icon_name": project.get('icon_name'),
             "dedicated_at": project.get('dedicated_at'),
+            "execution_target": project.get('execution_target') or 'cloud',
+            "local_device_id": project.get('local_device_id'),
             "created_at": project['created_at'],
             "updated_at": project.get('updated_at')
         }
@@ -289,6 +302,66 @@ async def undedicate_project(
         await sync_sandbox_dedicated_label(sandbox_id, False)
 
     return {"project_id": project_id, "dedicated_at": None}
+
+
+@router.post(
+    "/projects/{project_id}/execution-target",
+    summary="Run this project on the cloud or this computer",
+    operation_id="set_project_execution_target",
+)
+async def set_project_execution_target(
+    project_id: str,
+    body: dict = Body(...),
+    user_id: str = Depends(verify_and_get_user_id_from_jwt),
+):
+    from core.local_runner.service import disable_local_execution, enable_local_execution, enable_local_execution_for_user
+
+    project = await _authorize_project_access(project_id, user_id)
+    target = (body or {}).get("target")
+    if target not in {"local", "cloud"}:
+        raise HTTPException(status_code=400, detail="target must be local or cloud")
+
+    client = await db.client
+    try:
+        if target == "cloud":
+            return await disable_local_execution(client, project_id)
+
+        device_id = (body or {}).get("device_id")
+        if device_id:
+            return await enable_local_execution(
+                client,
+                project_id,
+                account_id=project["account_id"],
+                device_id=device_id,
+                user_id=user_id,
+            )
+        return await enable_local_execution_for_user(
+            client, project_id, project["account_id"], user_id
+        )
+    except HTTPException:
+        raise
+    except ValueError as e:
+        message = str(e)
+        status = 503 if "not connected" in message.lower() or "not paired" in message.lower() else 400
+        raise HTTPException(status_code=status, detail=message)
+
+
+@router.post(
+    "/projects/{project_id}/computer-screenshots",
+    summary="Save or discard local computer screenshots",
+    operation_id="set_project_computer_screenshots",
+)
+async def set_project_computer_screenshots(
+    project_id: str,
+    body: dict = Body(...),
+    user_id: str = Depends(verify_and_get_user_id_from_jwt),
+):
+    from core.local_runner.screenshots import set_save_computer_screenshots
+
+    await _authorize_project_access(project_id, user_id)
+    enabled = bool((body or {}).get("enabled"))
+    await set_save_computer_screenshots(project_id, enabled)
+    return {"project_id": project_id, "save_computer_screenshots": enabled}
 
 
 @router.get("/projects/{project_id}/threads", summary="List Project Threads", operation_id="list_project_threads")
@@ -447,15 +520,33 @@ async def delete_project(
         from core.resources import ResourceService
         resource_service = ResourceService(client)
         sandbox_resource = await resource_service.get_project_sandbox_resource(project_id)
-        if sandbox_resource:
-            sandbox_id = sandbox_resource.get('external_id')
-            if sandbox_id:
-                try:
-                    logger.debug(f"Deleting sandbox {sandbox_id} for project {project_id}")
-                    await delete_sandbox(sandbox_id)
-                    logger.debug(f"Successfully deleted sandbox {sandbox_id}")
-                except Exception as e:
-                    logger.error(f"Error deleting sandbox {sandbox_id}: {str(e)}")
+        sandbox_id = sandbox_resource.get('external_id') if sandbox_resource else None
+        if sandbox_id:
+            try:
+                logger.debug(f"Deleting sandbox {sandbox_id} for project {project_id}")
+                await delete_sandbox(sandbox_id)
+                logger.debug(f"Successfully deleted sandbox {sandbox_id}")
+            except Exception as e:
+                logger.error(f"Error deleting sandbox {sandbox_id}: {str(e)}")
+        else:
+            try:
+                local_row = (
+                    await client.table("projects")
+                    .select("local_device_id, execution_target")
+                    .eq("project_id", project_id)
+                    .maybe_single()
+                    .execute()
+                )
+                local_data = (local_row.data if local_row else None) or {}
+                if local_data.get("local_device_id") or (local_data.get("execution_target") or "").lower() == "local":
+                    from core.local_runner.service import delete_local_workspace
+                    await delete_local_workspace(
+                        project_id,
+                        device_id=local_data.get("local_device_id"),
+                        client=client,
+                    )
+            except Exception as e:
+                logger.error(f"Error deleting local workspace for {project_id}: {str(e)}")
         
         if thread_ids:
             logger.debug(f"Deleting agent runs for {len(thread_ids)} threads")
@@ -581,17 +672,19 @@ async def get_thread(
             
             if sandbox_info and sandbox_info.get('id'):
                 sandbox_id = sandbox_info.get('id')
-                logger.info(f"Thread {thread_id} has existing sandbox {sandbox_id}, starting it in background...")
-                
-                async def start_sandbox_background():
-                    try:
-                        from core.sandbox.sandbox import get_or_start_sandbox
-                        await get_or_start_sandbox(sandbox_id)
-                        logger.info(f"Successfully started sandbox {sandbox_id} for thread {thread_id}")
-                    except Exception as e:
-                        logger.warning(f"Failed to start sandbox {sandbox_id} for thread {thread_id}: {str(e)}")
-                
-                asyncio.create_task(start_sandbox_background())
+                from core.local_runner.service import is_local_sandbox_id
+                if not is_local_sandbox_id(sandbox_id):
+                    logger.info(f"Thread {thread_id} has existing sandbox {sandbox_id}, starting it in background...")
+                    
+                    async def start_sandbox_background():
+                        try:
+                            from core.sandbox.sandbox import get_or_start_sandbox
+                            await get_or_start_sandbox(sandbox_id)
+                            logger.info(f"Successfully started sandbox {sandbox_id} for thread {thread_id}")
+                        except Exception as e:
+                            logger.warning(f"Failed to start sandbox {sandbox_id} for thread {thread_id}: {str(e)}")
+                    
+                    asyncio.create_task(start_sandbox_background())
         
         agent_runs_data = await threads_repo.get_thread_agent_runs(thread_id)
         

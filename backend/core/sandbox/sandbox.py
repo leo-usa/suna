@@ -278,8 +278,19 @@ async def create_sandbox(password: str, project_id: str = None) -> AsyncSandbox:
     return sandbox
 
 async def delete_sandbox(sandbox_id: str) -> bool:
-    """Delete a sandbox by its ID."""
+    """Delete a Daytona VM, or the local project folder when the sandbox is local:."""
     logger.info(f"Deleting sandbox with ID: {sandbox_id}")
+
+    from core.local_runner.service import delete_local_sandbox, is_local_sandbox_id
+
+    if is_local_sandbox_id(sandbox_id):
+        try:
+            await delete_local_sandbox(sandbox_id)
+            logger.info(f"Successfully deleted local workspace for {sandbox_id}")
+            return True
+        except Exception as e:
+            logger.error(f"Error deleting local workspace {sandbox_id}: {str(e)}")
+            raise e
 
     try:
         # Get the sandbox

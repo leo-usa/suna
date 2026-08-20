@@ -84,7 +84,7 @@ class ResponseProcessor:
                     yield chunk
                 continue
 
-            if hasattr(chunk, 'usage') and chunk.usage and final_llm_response is None:
+            if hasattr(chunk, 'usage') and chunk.usage:
                 final_llm_response = chunk
                 logger.debug(f"📊 [ResponseProcessor] Captured usage: prompt={getattr(chunk.usage, 'prompt_tokens', 0)}, completion={getattr(chunk.usage, 'completion_tokens', 0)}")
             
@@ -369,9 +369,29 @@ class ResponseProcessor:
                 response_data["usage"]["cache_creation_input_tokens"] = getattr(usage, 'cache_creation_input_tokens', 0)
             if hasattr(usage, 'prompt_tokens_details'):
                 details = usage.prompt_tokens_details
+                cached_tokens = 0
+                if isinstance(details, dict):
+                    cached_tokens = int(details.get('cached_tokens') or 0)
+                else:
+                    cached_tokens = int(getattr(details, 'cached_tokens', 0) or 0)
                 response_data["usage"]["prompt_tokens_details"] = {
-                    "cached_tokens": getattr(details, 'cached_tokens', 0),
+                    "cached_tokens": cached_tokens,
                 }
+
+            from core.billing.credits.calculator import cached_tokens_from_usage, estimate_cached_prompt_tokens
+            prompt_tokens = int(response_data["usage"].get("prompt_tokens") or 0)
+            cached_tokens = int((response_data["usage"].get("prompt_tokens_details") or {}).get("cached_tokens") or 0)
+            if cached_tokens <= 0:
+                cached_tokens = cached_tokens_from_usage(usage)
+            if cached_tokens <= 0:
+                cached_tokens = estimate_cached_prompt_tokens(
+                    prompt_tokens, getattr(self._state, "last_prompt_tokens", 0) or 0
+                )
+            if cached_tokens > 0:
+                response_data["usage"].setdefault("prompt_tokens_details", {})
+                response_data["usage"]["prompt_tokens_details"]["cached_tokens"] = cached_tokens
+                response_data["usage"]["cache_read_input_tokens"] = cached_tokens
+            self._state.last_prompt_tokens = prompt_tokens
             
             if hasattr(final_llm_response, 'model'):
                 response_data["model"] = final_llm_response.model

@@ -71,6 +71,8 @@ export type Project = {
   is_public?: boolean;
   icon_name?: string | null;
   dedicated_at?: string | null;
+  execution_target?: 'cloud' | 'local';
+  local_device_id?: string | null;
   [key: string]: any;
 };
 
@@ -86,6 +88,8 @@ export const getProject = async (projectId: string): Promise<Project> => {
     is_public?: boolean;
     icon_name?: string | null;
     dedicated_at?: string | null;
+    execution_target?: 'cloud' | 'local';
+    local_device_id?: string | null;
   }>(`/projects/${projectId}`, {
     showErrors: true
   });
@@ -117,6 +121,8 @@ export const getProject = async (projectId: string): Promise<Project> => {
     },
     icon_name: projectData.icon_name,
     dedicated_at: projectData.dedicated_at ?? null,
+    execution_target: projectData.execution_target || 'cloud',
+    local_device_id: projectData.local_device_id ?? null,
   };
 };
 

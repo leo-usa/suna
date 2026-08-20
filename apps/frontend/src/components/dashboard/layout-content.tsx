@@ -12,6 +12,7 @@ import { useAdminRole } from '@/hooks/admin';
 import { usePresence } from '@/hooks/use-presence';
 import { featureFlags } from '@/lib/feature-flags';
 import { usePrefetchComposioIcons } from '@/hooks/composio/use-composio';
+import { useLocalRunnerPairing } from '@/hooks/use-local-runner';
 
 import { useProjects } from '@/hooks/sidebar/use-sidebar';
 import { useIsMobile } from '@/hooks/utils';
@@ -105,6 +106,7 @@ export default function DashboardLayoutContent({
   const threadId = params?.threadId as string | undefined;
   
   usePresence(threadId);
+  useLocalRunnerPairing(!!user);
   
   const { data: accounts } = useAccounts({ enabled: !!user });
   const personalAccount = accounts?.find((account) => account.personal_account);

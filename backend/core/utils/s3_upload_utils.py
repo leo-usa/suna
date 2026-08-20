@@ -8,12 +8,15 @@ from datetime import datetime
 from core.utils.logger import logger
 from core.services.supabase import DBConnection
 
-async def upload_base64_image(base64_data: str, bucket_name: str = "image-uploads") -> str:
+async def upload_base64_image(base64_data: str, bucket_name: str = "image-uploads", content_type: str = "image/png", filename: str = None) -> str:
     """Upload a base64 encoded image to Supabase storage and return the URL.
     
     Args:
         base64_data (str): Base64 encoded image data (with or without data URL prefix)
         bucket_name (str): Name of the storage bucket to upload to
+        content_type (str): MIME type stored with the object
+        filename (str): Object name to write. Pass this when the caller needs the
+            public URL before the upload finishes; otherwise one is generated.
         
     Returns:
         str: Public URL of the uploaded image
@@ -27,9 +30,11 @@ async def upload_base64_image(base64_data: str, bucket_name: str = "image-upload
         image_data = base64.b64decode(base64_data)
         
         # Generate unique filename
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        unique_id = str(uuid.uuid4())[:8]
-        filename = f"image_{timestamp}_{unique_id}.png"
+        if not filename:
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            unique_id = str(uuid.uuid4())[:8]
+            ext = "jpg" if content_type in ("image/jpeg", "image/jpg") else "png"
+            filename = f"image_{timestamp}_{unique_id}.{ext}"
         
         # Upload to Supabase storage - use singleton, already initialized
         db = DBConnection()
@@ -37,7 +42,7 @@ async def upload_base64_image(base64_data: str, bucket_name: str = "image-upload
         storage_response = await client.storage.from_(bucket_name).upload(
             filename,
             image_data,
-            {"content-type": "image/png"}
+            {"content-type": content_type}
         )
         
         # Get public URL
@@ -77,4 +82,4 @@ async def upload_image_bytes(image_bytes: bytes, content_type: str = "image/png"
         return public_url
     except Exception as e:
         logger.error(f"Error uploading image bytes: {e}")
-        raise RuntimeError(f"Failed to upload image: {str(e)}") 
+        raise RuntimeError(f"Failed to upload image: {str(e)}")

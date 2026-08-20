@@ -138,31 +138,30 @@ function CheckoutContent() {
         }}
       />
       
-      <div className="min-h-screen bg-white flex items-center justify-center p-4">
+      <div className="min-h-screen w-full bg-white" style={{ colorScheme: 'light' }}>
         {error ? (
-          <Card className="w-full max-w-md bg-white">
-            <CardHeader className="text-center">
-              <CardTitle className="text-gray-900">Checkout Error</CardTitle>
-              <CardDescription className="text-gray-600">Unable to load checkout</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Alert variant="destructive">
-                <AlertDescription className="text-center">
-                  {error}
-                </AlertDescription>
-              </Alert>
-            </CardContent>
-          </Card>
+          <div className="min-h-screen flex items-center justify-center p-4">
+            <Card className="w-full max-w-md bg-white">
+              <CardHeader className="text-center">
+                <CardTitle className="text-gray-900">Checkout Error</CardTitle>
+                <CardDescription className="text-gray-600">Unable to load checkout</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Alert variant="destructive">
+                  <AlertDescription className="text-center">
+                    {error}
+                  </AlertDescription>
+                </Alert>
+              </CardContent>
+            </Card>
+          </div>
         ) : isLoading ? (
-          <div className="flex flex-col items-center gap-4">
+          <div className="min-h-screen flex flex-col items-center justify-center gap-4">
             <DobbyLoader size="xlarge" />
             <p className="text-gray-600 text-sm">Loading secure checkout...</p>
           </div>
         ) : (
-          // Embedded checkout container
-          <div className="w-full max-w-4xl">
-            <div id="checkout-container"></div>
-          </div>
+          <div id="checkout-container" className="w-full min-h-screen bg-white" />
         )}
       </div>
     </>

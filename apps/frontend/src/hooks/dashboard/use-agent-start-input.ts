@@ -9,6 +9,9 @@ import { useSunaModePersistence } from '@/stores/suna-modes-store';
 import { useAgents } from '@/hooks/agents/use-agents';
 import { useAuth } from '@/components/AuthProvider';
 import type { ChatInputHandles } from '@/components/thread/chat-input/chat-input';
+import { toast } from '@/lib/toast';
+import { useTranslations } from 'next-intl';
+import { ensureLocalRunnerReady, getPreferredExecutionTarget } from '@/lib/api/local-runner';
 
 const PENDING_PROMPT_KEY = 'pendingAgentPrompt';
 
@@ -95,6 +98,7 @@ export function useAgentStartInput(options: UseAgentStartInputOptions = {}): Use
   
   const router = useRouter();
   const { user, isLoading: isAuthLoading } = useAuth();
+  const t = useTranslations('threads');
   
   // Input state
   const [inputValue, setInputValue] = useState('');
@@ -277,11 +281,24 @@ export function useAgentStartInput(options: UseAgentStartInputOptions = {}): Use
       filesCount: pendingFiles.length,
     });
 
+    const executionTarget = getPreferredExecutionTarget();
+    if (executionTarget === 'local') {
+      try {
+        await ensureLocalRunnerReady();
+      } catch (error: any) {
+        toast.error(error?.message || t('localRunnerConnectFailed'));
+        setIsSubmitting(false);
+        setIsRedirecting(false);
+        return;
+      }
+    }
+
     const result = await startAgent({
       message,
       files: pendingFiles.length > 0 ? pendingFiles : undefined,
       modelName: options?.model_name,
       agentId: selectedAgentId || undefined,
+      executionTarget,
     });
 
     if (!result) {

@@ -33,6 +33,7 @@ export interface OptimisticAgentStartOptions {
   mode?: string;
   /** Files to upload with the agent start */
   files?: File[];
+  executionTarget?: 'cloud' | 'local';
 }
 
 export interface OptimisticAgentStartResult {
@@ -130,7 +131,7 @@ export function useOptimisticAgentStart(
   const startAgent = useCallback(async (
     options: OptimisticAgentStartOptions
   ): Promise<OptimisticAgentStartResult | null> => {
-    const { message, modelName, agentId, modeStarter, mode, files } = options;
+    const { message, modelName, agentId, modeStarter, mode, files, executionTarget } = options;
     
     const trimmedMessage = message.trim();
     if (!trimmedMessage) {
@@ -184,6 +185,7 @@ export function useOptimisticAgentStart(
         agent_id: agentId || undefined,
         mode: mode,
         files: files,
+        execution_target: executionTarget,
       }).then(async (response) => {
         console.log('[OptimisticAgentStart] API succeeded, response:', response);
         

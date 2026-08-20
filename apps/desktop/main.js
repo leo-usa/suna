@@ -1,11 +1,21 @@
-const { app, BrowserWindow, clipboard, nativeImage, Menu } = require('electron');
+const { app, BrowserWindow, clipboard, nativeImage, Menu, nativeTheme } = require('electron');
 const path = require('path');
+const localRunner = require('./local-runner-host');
 
 // Custom protocol scheme for deep linking
 const PROTOCOL_SCHEME = 'dobby';
 
-// Get URL from environment variable or default to production
-const APP_URL = process.env.APP_URL || 'https://dobby.now/';
+function resolveAppUrl() {
+  if (process.env.APP_URL) return process.env.APP_URL;
+  try {
+    const pkg = require('./package.json');
+    if (pkg.dobbyAppUrl) return pkg.dobbyAppUrl;
+  } catch (_) {}
+  return 'https://dobby.now/';
+}
+
+// Get URL from environment, packaged build metadata, or production
+const APP_URL = resolveAppUrl();
 
 // Simple dev check without ES module dependency
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
@@ -25,6 +35,35 @@ function isLocalhost(url) {
 
 const normalizedUrl = normalizeUrl(APP_URL);
 const isLocal = isLocalhost(normalizedUrl);
+
+const DEFAULT_WINDOW_BG = '#000000';
+const CHECKOUT_WINDOW_BG = '#ffffff';
+const STRIPE_CHECKOUT_CSS = `
+  :root { color-scheme: light only !important; }
+  html, body { background: #ffffff !important; color-scheme: light only !important; }
+`;
+
+function isCheckoutUrl(url) {
+  if (!url || url.startsWith('data:')) return false;
+  try {
+    const parsed = new URL(url);
+    const host = parsed.hostname;
+    if (host === 'checkout.stripe.com' || host === 'pay.stripe.com') return true;
+    if (host.endsWith('.stripe.com') && (parsed.pathname.includes('/c/pay') || parsed.pathname.includes('/checkout'))) {
+      return true;
+    }
+    return parsed.pathname === '/checkout' || parsed.pathname.startsWith('/checkout/');
+  } catch (_) {
+    return false;
+  }
+}
+
+function syncCheckoutPresentation(win, url) {
+  if (!win || win.isDestroyed()) return;
+  const checkout = isCheckoutUrl(url);
+  nativeTheme.themeSource = checkout ? 'light' : 'system';
+  win.setBackgroundColor(checkout ? CHECKOUT_WINDOW_BG : DEFAULT_WINDOW_BG);
+}
 
 // Set app name for macOS menu bar
 if (process.platform === 'darwin') {
@@ -116,6 +155,12 @@ if (isLocal) {
   app.commandLine.appendSwitch('ignore-ssl-errors');
 }
 
+// Allow the web UI to fetch the runner preview server on 127.0.0.1
+app.commandLine.appendSwitch(
+  'disable-features',
+  'BlockInsecurePrivateNetworkRequests,PrivateNetworkAccessSendPreflights'
+);
+
 // Circular loading animation HTML
 const loadingHTML = `
 <!DOCTYPE html>
@@ -189,13 +234,14 @@ function createWindow() {
     minWidth: 800,
     minHeight: 600,
     icon: iconPath,
-    backgroundColor: '#000000',
+    backgroundColor: DEFAULT_WINDOW_BG,
     // Use default frame with native controls
     titleBarStyle: 'default',
     frame: true,
     transparent: false,
     show: false, // Don't show until ready
     webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
       contextIsolation: true,
       webSecurity: !isLocal,
@@ -203,6 +249,28 @@ function createWindow() {
   });
 
   const { webContents } = mainWindow;
+
+  const applyCheckoutPresentation = () => {
+    const url = webContents.getURL();
+    syncCheckoutPresentation(mainWindow, url);
+    if (isCheckoutUrl(url)) {
+      webContents.insertCSS(STRIPE_CHECKOUT_CSS).catch(() => {});
+    }
+  };
+
+  webContents.on('did-start-navigation', (_event, url, _isInPlace, isMainFrame) => {
+    if (isMainFrame) syncCheckoutPresentation(mainWindow, url);
+  });
+  webContents.on('did-navigate', (_event, url) => {
+    syncCheckoutPresentation(mainWindow, url);
+  });
+  webContents.on('did-navigate-in-page', (_event, url) => {
+    syncCheckoutPresentation(mainWindow, url);
+  });
+  webContents.on('will-redirect', (_event, url) => {
+    syncCheckoutPresentation(mainWindow, url);
+  });
+  webContents.on('did-finish-load', applyCheckoutPresentation);
 
   // Show loading animation immediately
   mainWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(loadingHTML)}`);
@@ -290,8 +358,7 @@ function createWindow() {
     }
   ];
 
-  const menu = Menu.buildFromTemplate(template);
-  Menu.setApplicationMenu(menu);
+  localRunner.rebuildMenu(template);
 
   // Handle certificate errors for localhost
   if (isLocal) {
@@ -438,6 +505,23 @@ function createWindow() {
         },
       };
     }
+
+    const isLocalPreview = /^https?:\/\/(127\.0\.0\.1|localhost)(:\d+)?\//.test(url);
+    if (isLocalPreview) {
+      return {
+        action: 'allow',
+        overrideBrowserWindowOptions: {
+          width: 1100,
+          height: 800,
+          autoHideMenuBar: true,
+          title: 'Preview',
+          webPreferences: {
+            nodeIntegration: false,
+            contextIsolation: true,
+          },
+        },
+      };
+    }
     
     console.log('🌐 Opening in system browser');
     // External links open in system browser
@@ -488,6 +572,8 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+  localRunner.registerIpc();
+
   if (process.platform === 'darwin') {
     // Use .icns for macOS dock icon - ensures proper styling with rounded corners
     const iconPath = path.resolve(__dirname, 'assets', 'icon.icns');
@@ -507,6 +593,7 @@ app.whenReady().then(() => {
   }
 
   createWindow();
+  localRunner.autoStartIfPaired();
 
   // Handle pending deep link (received before window was ready)
   if (pendingDeepLinkUrl) {

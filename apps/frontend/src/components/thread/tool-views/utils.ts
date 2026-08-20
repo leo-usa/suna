@@ -49,6 +49,18 @@ export function getToolTitle(toolName: string): string {
     'browser-act': 'Browser Action',
     'browser-extract-content': 'Browser Extract',
     'browser-screenshot': 'Browser Screenshot',
+    'computer-screenshot': 'Screen Capture',
+    'computer_screenshot': 'Screen Capture',
+    'computer-click': 'Click',
+    'computer_click': 'Click',
+    'computer-type': 'Type',
+    'computer_type': 'Type',
+    'computer-key': 'Key',
+    'computer_key': 'Key',
+    'computer-scroll': 'Scroll',
+    'computer_scroll': 'Scroll',
+    'computer-open': 'Open',
+    'computer_open': 'Open',
     'load-image': 'Load Image',
 
 

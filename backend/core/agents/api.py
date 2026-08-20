@@ -319,6 +319,7 @@ async def start_agent_run(
     emit_timing: bool = False,
     mode: Optional[str] = None,
     files_data: Optional[List[Tuple[str, bytes, str, Optional[str]]]] = None,
+    execution_target: Optional[str] = None,
 ) -> Dict[str, Any]:
     from core.agents.config import load_agent_config_fast
     from core.agents.pipeline.slot_manager import (
@@ -392,6 +393,20 @@ async def start_agent_run(
     client = await db.client
     
     has_files = files_data and len(files_data) > 0
+    want_local = (execution_target or "").lower() == "local"
+
+    if is_new_thread:
+        placeholder_name = f"{prompt[:30]}..." if len(prompt) > 30 else prompt if prompt else "Untitled"
+        try:
+            await threads_repo.create_project(project_id, account_id, placeholder_name)
+        except Exception as e:
+            logger.debug(f"Project creation skipped (may already exist): {e}")
+        if want_local:
+            from core.local_runner.service import enable_local_execution_for_user
+            try:
+                await enable_local_execution_for_user(client, project_id, account_id, account_id)
+            except ValueError as e:
+                raise HTTPException(status_code=503, detail=str(e))
     
     if has_files:
         # WITH FILES: Create sandbox (blocking) and upload files immediately
@@ -749,6 +764,7 @@ async def unified_agent_start(
     memory_enabled: Optional[str] = Form(None),
     mode: Optional[str] = Form(None),
     files: List[UploadFile] = File(default=[]),
+    execution_target: Optional[str] = Form(None),
     user_id: str = Depends(verify_and_get_user_id_from_jwt)
 ):
     client = await db.client
@@ -824,6 +840,7 @@ async def unified_agent_start(
             emit_timing=emit_timing,
             mode=mode,
             files_data=files_data if files_data else None,
+            execution_target=execution_target,
         )
         
         response = {

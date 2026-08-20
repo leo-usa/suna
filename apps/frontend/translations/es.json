@@ -690,6 +690,15 @@
     "failedCopyLink": "No se pudo copiar el enlace",
     "openDobbyComputerTooltip": "Abrir Dobby Computer",
     "closeDobbyComputerTooltip": "Cerrar Dobby Computer",
+    "runOnThisComputer": "Ejecutar en este ordenador",
+    "runOnThisComputerTooltip": "La terminal y los archivos se ejecutan en este Mac, no en la nube",
+    "localRunnerEnabled": "Ejecutándose en este ordenador",
+    "localRunnerDisabled": "Ejecutándose en la nube",
+    "localRunnerConnectFailed": "No se pudo conectar este ordenador",
+    "saveComputerScreenshots": "Guardar capturas",
+    "saveComputerScreenshotsTooltip": "Desactivado por defecto. Dobby sigue viendo la pantalla para trabajar, pero no se sube ni se guarda nada.",
+    "saveComputerScreenshotsOn": "Las capturas se guardarán",
+    "saveComputerScreenshotsOff": "Las capturas se quedan en este Mac",
     "sharePopover": {
       "titlePublicEnabled": "Public link enabled",
       "titleEnablePublic": "Enable public link",
@@ -1234,6 +1243,31 @@
         "full-file-rewrite": "Reescribir archivo",
         "str-replace": "Reemplazo de texto",
         "edit-file": "Editar archivo"
+      }
+    },
+    "computerToolView": {
+      "thisComputer": "Este ordenador",
+      "showScreenshot": "Mostrar captura",
+      "showContext": "Mostrar ENTRADA/SALIDA",
+      "loadFailed": "No se pudo cargar la captura",
+      "working": "Trabajando en este Mac",
+      "failed": "La acción del ordenador falló",
+      "completed": "Acción del ordenador completada",
+      "watching": "Observa este Mac. No se están guardando capturas.",
+      "screenshotCaptured": "Captura de pantalla realizada.",
+      "typedText": "Texto escrito.",
+      "typedAndSubmitted": "Escrito y enviado.",
+      "scrolled": "Desplazado.",
+      "clicked": "Clic en ({x}, {y}).",
+      "pressed": "Pulsado {key}.",
+      "opened": "Abierto {target}.",
+      "toolTitle": {
+        "computer-screenshot": "Captura de pantalla",
+        "computer-click": "Clic",
+        "computer-type": "Escribir",
+        "computer-key": "Tecla",
+        "computer-scroll": "Desplazar",
+        "computer-open": "Abrir"
       }
     },
     "tool": "Herramienta"

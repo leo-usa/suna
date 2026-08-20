@@ -13,7 +13,7 @@ from core.cache.runtime_cache import get_cached_project_metadata, set_cached_pro
 @dataclass
 class SandboxInfo:
     sandbox_id: str
-    sandbox: AsyncSandbox
+    sandbox: Any
     password: str
     sandbox_url: Optional[str] = None
     vnc_preview: Optional[str] = None
@@ -62,11 +62,20 @@ class SandboxResolver:
         require_started: bool
     ) -> Optional[SandboxInfo]:
         start_time = time.time()
-        
+
+        local_info = await self._resolve_local(project_id, db_client)
+        if local_info:
+            elapsed = (time.time() - start_time) * 1000
+            logger.debug(f"[RESOLVER] Local runner for {project_id}: {local_info.sandbox_id} in {elapsed:.0f}ms")
+            return local_info
+
         cached = await get_cached_project_metadata(project_id)
         sandbox_data = cached.get('sandbox', {}) if cached else {}
         sandbox_id = sandbox_data.get('sandbox_id') or sandbox_data.get('id')
         
+        if sandbox_id and str(sandbox_id).startswith("local:"):
+            sandbox_id = None
+
         if sandbox_id:
             try:
                 sandbox = await get_or_start_sandbox(sandbox_id)
@@ -96,7 +105,52 @@ class SandboxResolver:
             logger.info(f"[RESOLVER] New sandbox for {project_id}: {sandbox_info.sandbox_id} in {elapsed:.0f}ms")
         
         return sandbox_info
-    
+
+    async def _resolve_local(self, project_id: str, db_client) -> Optional[SandboxInfo]:
+        if not db_client:
+            return None
+        try:
+            result = (
+                await db_client.table("projects")
+                .select("execution_target, local_device_id, name")
+                .eq("project_id", project_id)
+                .maybe_single()
+                .execute()
+            )
+            if not result or not result.data or result.data.get("execution_target") != "local":
+                return None
+            device_id = result.data.get("local_device_id")
+            project_name = result.data.get("name")
+            if not device_id:
+                logger.warning(f"[RESOLVER] Project {project_id} is local but has no device")
+                return None
+            from core.local_runner.client import LocalSandbox
+            from core.local_runner.registry import LocalRunnerOffline, get_online_info, is_online
+
+            if not await is_online(device_id):
+                raise LocalRunnerOffline("This computer is not connected. Open the Dobby desktop app and try again.")
+            info = await get_online_info(device_id)
+            preview_port = int((info or {}).get("preview_port") or 18080)
+            sandbox = LocalSandbox(
+                device_id,
+                project_id=project_id,
+                preview_port=preview_port,
+                project_name=project_name,
+            )
+            return SandboxInfo(
+                sandbox_id=f"local:{project_id}",
+                sandbox=sandbox,
+                password="",
+                sandbox_url=f"http://127.0.0.1:{preview_port}/{project_id}",
+                vnc_preview=None,
+            )
+        except Exception as e:
+            from core.local_runner.registry import LocalRunnerOffline
+            if isinstance(e, LocalRunnerOffline):
+                raise
+            logger.warning(f"[RESOLVER] Local resolution failed for {project_id}: {e}")
+            return None
+
     async def _resolve_from_db(
         self,
         project_id: str,
@@ -122,6 +176,8 @@ class SandboxResolver:
             
             sandbox_id = resource.get('external_id')
             config = resource.get('config', {})
+            if sandbox_id and str(sandbox_id).startswith("local:"):
+                return None
             
             sandbox = await get_or_start_sandbox(sandbox_id)
             

@@ -150,8 +150,13 @@ Usage notes:
             # Set up working directory
             cwd = self.workspace_path
             if folder:
-                folder = folder.strip('/')
-                cwd = f"{self.workspace_path}/{folder}"
+                folder = folder.strip().strip('/')
+                if folder in ("workspace", "/workspace"):
+                    folder = ""
+                elif folder.startswith("workspace/"):
+                    folder = folder[len("workspace/"):]
+                if folder:
+                    cwd = f"{self.workspace_path}/{folder}"
             
             # Use PTY for real-time streaming
             tool_output_ctx = get_tool_output_streaming_context()

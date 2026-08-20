@@ -223,13 +223,31 @@ class ExpandMessageTool(Tool):
         
         registry = get_tool_guide_registry()
         not_found = []
+        already_active = []
+        
+        # Some tools (such as local computer control) are registered directly on the
+        # thread instead of through the JIT registry, so they need no activation.
+        try:
+            active_functions = set(self.thread_manager.tool_registry.get_available_functions().keys())
+        except Exception:
+            active_functions = set()
+        
+        def is_already_active(name: str) -> bool:
+            if name in active_functions:
+                return True
+            # Models ask for either the toolkit ("computer_tool") or the individual
+            # functions ("computer_click"), so accept both spellings.
+            base = name.removeprefix("sb_").removesuffix("_tool")
+            return bool(base) and any(fn.startswith(f"{base}_") for fn in active_functions)
         
         valid_tool_names = []
         for tool_name in tool_names:
-            if not registry.has_tool(tool_name):
-                not_found.append(tool_name)
-            else:
+            if registry.has_tool(tool_name):
                 valid_tool_names.append(tool_name)
+            elif is_already_active(tool_name):
+                already_active.append(tool_name)
+            else:
+                not_found.append(tool_name)
         
         if not_found:
             available = ", ".join(registry.get_all_tool_names())
@@ -312,9 +330,13 @@ class ExpandMessageTool(Tool):
         logger.info(f"✅ [INIT TOOLS] Returned {len(guides)} guide(s) in {total_time:.1f}ms, total size: {total_guide_size:,} chars")
         logger.info(f"🎯 [INIT TOOLS] Tools now available for use: {[t for t in valid_tool_names if t not in activation_failures]}")
         
+        message = f"Loaded {len(guides)} tool guide(s). Tools are now available for use."
+        if already_active:
+            message += f" Already ready without initialization: {', '.join(already_active)}."
+        
         result = self.success_response({
             "status": "success",
-            "message": f"Loaded {len(guides)} tool guide(s). Tools are now available for use.",
+            "message": message,
             "guides": "\n\n---\n\n".join(guides),
             "activated_tools": [t for t in tool_names if t not in activation_failures],
             "_internal": True

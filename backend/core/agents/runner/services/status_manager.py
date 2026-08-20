@@ -65,6 +65,12 @@ async def update_agent_run_status(
                     except Exception as e:
                         logger.warning(f"Failed to release slot for {agent_run_id}: {e}")
 
+                try:
+                    from core.cache.runtime_cache import delete_agent_run_stream_data
+                    await delete_agent_run_stream_data(agent_run_id)
+                except Exception as e:
+                    logger.warning(f"Failed to clear stream cache for {agent_run_id}: {e}")
+
             if account_id:
                 try:
                     from core.cache.runtime_cache import invalidate_running_runs_cache

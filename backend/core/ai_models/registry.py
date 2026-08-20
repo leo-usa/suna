@@ -244,7 +244,7 @@ class PricingPresets:
 
 FREE_MODEL_ID = "dobby/gpt-5.6-luna"
 PREMIUM_MODEL_ID = "dobby/power"
-IMAGE_MODEL_ID = "dobby/haiku"
+IMAGE_MODEL_ID = "dobby/gpt-5.6-luna"
 
 
 def _create_anthropic_model_config() -> ModelConfig:
@@ -1232,6 +1232,7 @@ class ModelFactory:
             capabilities=[
                 ModelCapability.CHAT,
                 ModelCapability.FUNCTION_CALLING,
+                ModelCapability.VISION,
             ],
             pricing=PricingPresets.GPT_5_5,
             tier_availability=["paid"],
@@ -1272,6 +1273,7 @@ class ModelFactory:
             capabilities=[
                 ModelCapability.CHAT,
                 ModelCapability.FUNCTION_CALLING,
+                ModelCapability.VISION,
             ],
             pricing=PricingPresets.GPT_5_6_LUNA,
             tier_availability=["free", "paid"],
@@ -1293,6 +1295,7 @@ class ModelFactory:
                 ModelCapability.CHAT,
                 ModelCapability.FUNCTION_CALLING,
                 ModelCapability.THINKING,
+                ModelCapability.VISION,
             ],
             pricing=PricingPresets.GPT_5_6_LUNA,
             tier_availability=["free", "paid"],
@@ -1313,6 +1316,7 @@ class ModelFactory:
             capabilities=[
                 ModelCapability.CHAT,
                 ModelCapability.FUNCTION_CALLING,
+                ModelCapability.VISION,
             ],
             pricing=PricingPresets.GPT_5_6_TERRA,
             tier_availability=["free", "paid"],
@@ -1334,6 +1338,7 @@ class ModelFactory:
                 ModelCapability.CHAT,
                 ModelCapability.FUNCTION_CALLING,
                 ModelCapability.THINKING,
+                ModelCapability.VISION,
             ],
             pricing=PricingPresets.GPT_5_6_TERRA,
             tier_availability=["free", "paid"],

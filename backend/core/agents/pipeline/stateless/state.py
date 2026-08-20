@@ -13,6 +13,44 @@ from core.agents.pipeline.stateless.config import config as stateless_config
 if TYPE_CHECKING:
     from core.agents.pipeline.context import PipelineContext
 
+
+def _is_computer_screen_observation(msg: Dict[str, Any]) -> bool:
+    content = msg.get("content")
+    if not isinstance(content, list):
+        return False
+    has_image = False
+    is_computer_screen = False
+    for part in content:
+        if not isinstance(part, dict):
+            continue
+        if part.get("type") == "image_url":
+            has_image = True
+        if part.get("type") == "text":
+            text = str(part.get("text") or "")
+            if text.startswith("Current Mac screen (observation only") or text.strip() == "[Screenshot of this computer]":
+                is_computer_screen = True
+    return has_image and is_computer_screen
+
+
+def _sanitize_tool_call_arguments(tool_call: Dict[str, Any]) -> Dict[str, Any]:
+    func = tool_call.get("function") or {}
+    args = func.get("arguments")
+    if not isinstance(args, str):
+        return tool_call
+    try:
+        json.loads(args)
+        return tool_call
+    except (json.JSONDecodeError, ValueError):
+        # Providers reject the whole request when a replayed tool call carries
+        # unparseable arguments, so persist a valid placeholder instead.
+        logger.warning(
+            f"Tool call {tool_call.get('id')} for '{func.get('name')}' had invalid JSON arguments: {args[:200]}"
+        )
+        sanitized = dict(tool_call)
+        sanitized["function"] = {**func, "arguments": "{}"}
+        return sanitized
+
+
 @dataclass
 class ToolResult:
     tool_call_id: str
@@ -57,6 +95,7 @@ class RunState:
         self.agent_version_id: Optional[str] = None
         self.system_prompt: Optional[Dict[str, Any]] = None
         self.tool_schemas: Optional[List[Dict[str, Any]]] = None
+        self.last_prompt_tokens: int = 0
 
         self._messages: Deque[Dict[str, Any]] = deque()
         self._tool_results: OrderedDict[str, ToolResult] = OrderedDict()
@@ -248,7 +287,21 @@ class RunState:
             self._accumulated_reasoning += reasoning
         self._last_activity = time.time()
 
-    def add_message(self, msg: Dict[str, Any], metadata: Optional[Dict[str, Any]] = None) -> str:
+    def drop_computer_screen_observations(self) -> None:
+        kept: Deque[Dict[str, Any]] = deque()
+        for msg in self._messages:
+            if _is_computer_screen_observation(msg):
+                continue
+            kept.append(msg)
+        self._messages = kept
+
+    def add_message(
+        self,
+        msg: Dict[str, Any],
+        metadata: Optional[Dict[str, Any]] = None,
+        persist_content: Optional[Dict[str, Any]] = None,
+        persist: bool = True,
+    ) -> str:
         self._message_counter += 1
         message_id = str(uuid.uuid4())
 
@@ -259,13 +312,19 @@ class RunState:
 
         self._last_activity = time.time()
 
+        if not persist:
+            self._check_flush_threshold()
+            return message_id
+
+        # persist_content lets a caller keep a heavy payload (an inlined image) in memory
+        # for the model while storing a compact equivalent in the thread history.
         self._pending_writes.append(PendingWrite(
             write_type="message",
             data={
                 "message_id": message_id,
                 "thread_id": self.thread_id,
                 "type": msg.get("_db_type") or msg.get("role", "assistant"),
-                "content": msg,
+                "content": persist_content or msg,
                 "metadata": metadata or {},
                 "is_llm_message": True,
                 "agent_id": self.agent_id,
@@ -287,6 +346,7 @@ class RunState:
     ) -> str:
         msg = {"role": "assistant", "content": self._accumulated_content or None}
         if tool_calls:
+            tool_calls = [_sanitize_tool_call_arguments(tc) for tc in tool_calls]
             msg["tool_calls"] = tool_calls
 
         metadata = {}

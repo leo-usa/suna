@@ -55,11 +55,12 @@ class ToolManager:
     }
     """
 
-    def __init__(self, thread_manager: ThreadManager, project_id: str, thread_id: str, agent_config: Optional[dict] = None):
+    def __init__(self, thread_manager: ThreadManager, project_id: str, thread_id: str, agent_config: Optional[dict] = None, execution_target: Optional[str] = None):
         self.thread_manager = thread_manager
         self.project_id = project_id
         self.thread_id = thread_id
         self.agent_config = agent_config
+        self.execution_target = (execution_target or "").lower()
         self.disabled_tools = self._get_disabled_tools()
 
     def _get_disabled_tools(self) -> Set[str]:
@@ -134,6 +135,16 @@ class ToolManager:
             )
         elif self._is_tool_enabled('browser_tool'):
             logger.debug("Skipping browser_tool: GEMINI_API_KEY is not configured")
+        
+        if self.execution_target == 'local':
+            from core.tools.sb_computer_tool import SandboxComputerTool
+            self.thread_manager.add_tool(
+                SandboxComputerTool,
+                project_id=self.project_id,
+                thread_manager=self.thread_manager,
+                thread_id=self.thread_id,
+            )
+            logger.info("Registered local computer-use tools")
         
         # Core sandbox tools - only register if enabled
         core_sandbox_tools = [

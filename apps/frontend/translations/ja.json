@@ -690,6 +690,15 @@
     "failedCopyLink": "コピーに失敗しました",
     "openDobbyComputerTooltip": "Dobby Computer を開く",
     "closeDobbyComputerTooltip": "Dobby Computer を閉じる",
+    "runOnThisComputer": "このコンピュータで実行",
+    "runOnThisComputerTooltip": "シェルとファイルはこの Mac 上で実行され、クラウドでは実行されません",
+    "localRunnerEnabled": "このコンピュータで実行中",
+    "localRunnerDisabled": "クラウドで実行中",
+    "localRunnerConnectFailed": "このコンピュータに接続できませんでした",
+    "saveComputerScreenshots": "スクリーンショットを保存",
+    "saveComputerScreenshotsTooltip": "既定はオフです。Dobby は操作のために画面を見ますが、アップロードも保存もしません。",
+    "saveComputerScreenshotsOn": "スクリーンショットを保存します",
+    "saveComputerScreenshotsOff": "スクリーンショットはこの Mac に残します",
     "sharePopover": {
       "titlePublicEnabled": "Public link enabled",
       "titleEnablePublic": "Enable public link",
@@ -1234,6 +1243,31 @@
         "full-file-rewrite": "ファイルを書き換え",
         "str-replace": "文字列の置換",
         "edit-file": "ファイルを編集"
+      }
+    },
+    "computerToolView": {
+      "thisComputer": "このコンピュータ",
+      "showScreenshot": "スクリーンショットを表示",
+      "showContext": "入力/出力を表示",
+      "loadFailed": "スクリーンショットを読み込めませんでした",
+      "working": "この Mac を操作中",
+      "failed": "コンピュータ操作に失敗しました",
+      "completed": "コンピュータ操作が完了しました",
+      "watching": "この Mac を表示しています。スクリーンショットは保存されません。",
+      "screenshotCaptured": "画面をキャプチャしました。",
+      "typedText": "テキストを入力しました。",
+      "typedAndSubmitted": "入力して送信しました。",
+      "scrolled": "スクロールしました。",
+      "clicked": "({x}, {y}) をクリックしました。",
+      "pressed": "{key} を押しました。",
+      "opened": "{target} を開きました。",
+      "toolTitle": {
+        "computer-screenshot": "画面キャプチャ",
+        "computer-click": "クリック",
+        "computer-type": "入力",
+        "computer-key": "キー",
+        "computer-scroll": "スクロール",
+        "computer-open": "開く"
       }
     },
     "tool": "ツール"

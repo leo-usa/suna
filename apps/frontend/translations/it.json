@@ -692,6 +692,15 @@
     "failedCopyLink": "Impossibile copiare il link",
     "openDobbyComputerTooltip": "Apri Dobby Computer",
     "closeDobbyComputerTooltip": "Chiudi Dobby Computer",
+    "runOnThisComputer": "Esegui su questo computer",
+    "runOnThisComputerTooltip": "Terminale e file vengono eseguiti su questo Mac, non nel cloud",
+    "localRunnerEnabled": "In esecuzione su questo computer",
+    "localRunnerDisabled": "In esecuzione nel cloud",
+    "localRunnerConnectFailed": "Impossibile collegare questo computer",
+    "saveComputerScreenshots": "Salva screenshot",
+    "saveComputerScreenshotsTooltip": "Disattivato di default. Dobby vede comunque lo schermo per lavorare, ma nulla viene caricato o conservato.",
+    "saveComputerScreenshotsOn": "Gli screenshot verranno salvati",
+    "saveComputerScreenshotsOff": "Gli screenshot restano su questo Mac",
     "sharePopover": {
       "titlePublicEnabled": "Public link enabled",
       "titleEnablePublic": "Enable public link",
@@ -1236,6 +1245,31 @@
         "full-file-rewrite": "Riscrivi file",
         "str-replace": "Sostituzione testo",
         "edit-file": "Modifica file"
+      }
+    },
+    "computerToolView": {
+      "thisComputer": "Questo computer",
+      "showScreenshot": "Mostra screenshot",
+      "showContext": "Mostra INPUT/OUTPUT",
+      "loadFailed": "Impossibile caricare lo screenshot",
+      "working": "In esecuzione su questo Mac",
+      "failed": "Azione sul computer non riuscita",
+      "completed": "Azione sul computer completata",
+      "watching": "Guarda questo Mac. Gli screenshot non vengono salvati.",
+      "screenshotCaptured": "Screenshot acquisito.",
+      "typedText": "Testo digitato.",
+      "typedAndSubmitted": "Digitato e inviato.",
+      "scrolled": "Scorrimento eseguito.",
+      "clicked": "Clic su ({x}, {y}).",
+      "pressed": "Premuto {key}.",
+      "opened": "Aperto {target}.",
+      "toolTitle": {
+        "computer-screenshot": "Cattura schermo",
+        "computer-click": "Clic",
+        "computer-type": "Digitazione",
+        "computer-key": "Tasto",
+        "computer-scroll": "Scorrimento",
+        "computer-open": "Apri"
       }
     },
     "tool": "Strumento"

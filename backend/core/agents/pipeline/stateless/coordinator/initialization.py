@@ -38,12 +38,27 @@ class ManagerInitializer:
         tool_registry = thread_manager.tool_registry
 
         from core.agents.runner.tool_manager import ToolManager
+        execution_target = None
+        try:
+            client = await thread_manager.db.client
+            project = await client.table('projects')\
+                .select('execution_target, local_device_id')\
+                .eq('project_id', ctx.project_id)\
+                .maybe_single()\
+                .execute()
+            if project and project.data:
+                execution_target = project.data.get('execution_target')
+                ctx.execution_target = execution_target
+                ctx.local_device_id = project.data.get('local_device_id')
+        except Exception as e:
+            logger.debug(f"Could not load execution_target for {ctx.project_id}: {e}")
+
         tool_manager = ToolManager(
             thread_manager,
             ctx.project_id,
             ctx.thread_id,
-            ctx.agent_config
-            # tier_disabled_tools removed - blocking handled at execution time
+            ctx.agent_config,
+            execution_target=execution_target,
         )
         tool_manager.register_core_tools()
 
@@ -128,7 +143,9 @@ class ManagerInitializer:
             tool_registry=tool_registry,
             mcp_loader=getattr(thread_manager, 'mcp_loader', None),
             client=await thread_manager.db.client if thread_manager else None,
-            disabled_tools=[]  # Empty - blocking handled at execution time
+            disabled_tools=[],  # Empty - blocking handled at execution time
+            execution_target=getattr(ctx, 'execution_target', None),
+            local_device_id=getattr(ctx, 'local_device_id', None),
         )
         if prompt:
             state.system_prompt = prompt.system_prompt

@@ -14,6 +14,7 @@ import { useState, useContext } from "react"
 import { useIsMobile } from "@/hooks/utils"
 import { SharePopover } from "@/components/sidebar/share-modal"
 import { ModeIndicator } from "@/components/thread/mode-indicator"
+import { LocalExecutionToggle } from "@/components/thread/local-execution-toggle"
 import { SidebarContext } from "@/components/ui/sidebar"
 
 interface ThreadSiteHeaderProps {
@@ -91,6 +92,7 @@ export function SiteHeader({
 
         {/* Right side - Actions */}
         <div className="flex items-center gap-1 flex-shrink-0">
+          {variant !== 'shared' && <LocalExecutionToggle projectId={projectId} />}
           <TooltipProvider delayDuration={300}>
             {variant === 'shared' ? (
               <Tooltip>

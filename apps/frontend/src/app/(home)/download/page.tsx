@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Monitor, Bell, Keyboard, Zap } from 'lucide-react';
+import { Monitor, Bell, Keyboard, Zap, MousePointerClick, ShieldAlert, Settings2, MessageCircle, Terminal } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { SimpleFooter } from '@/components/home/simple-footer';
@@ -17,13 +17,19 @@ function AppleLogo({ className }: { className?: string }) {
   );
 }
 
-const FEATURE_KEYS = ['handoff', 'native', 'shortcuts', 'fast'] as const;
+const FEATURE_KEYS = ['local', 'handoff', 'native', 'shortcuts', 'fast'] as const;
 const FEATURE_ICONS = {
+  local: MousePointerClick,
   handoff: Monitor,
   native: Bell,
   shortcuts: Keyboard,
   fast: Zap,
 } as const;
+
+const OPEN_STEPS = ['1', '2', '3'] as const;
+const LOCAL_STEPS = ['1', '2', '3', '4'] as const;
+const PERMISSION_KEYS = ['screen', 'accessibility', 'automation'] as const;
+const HOST_TOOL_KEYS = ['python', 'packages', 'cloud'] as const;
 
 function DownloadButton({
   href,
@@ -182,6 +188,95 @@ export default function DesktopDownloadPage() {
                 </motion.div>
               );
             })}
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.45, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          className="w-full mt-20 md:mt-24"
+        >
+          <h2 className="text-2xl md:text-3xl font-medium text-foreground mb-12">{t('setupTitle')}</h2>
+
+          <div className="space-y-14">
+            <section>
+              <div className="w-10 h-10 bg-foreground/10 dark:bg-foreground/5 rounded-xl flex items-center justify-center mb-4">
+                <ShieldAlert className="h-5 w-5 text-foreground" />
+              </div>
+              <h3 className="text-base font-semibold text-foreground mb-3">{t('openUnsigned.title')}</h3>
+              <p className="text-muted-foreground text-base leading-relaxed mb-6">{t('openUnsigned.intro')}</p>
+              <ol className="space-y-4">
+                {OPEN_STEPS.map((step) => (
+                  <li key={step} className="flex gap-4">
+                    <span className="flex-shrink-0 w-7 h-7 rounded-full bg-foreground/10 text-sm font-medium flex items-center justify-center text-foreground">
+                      {step}
+                    </span>
+                    <p className="text-muted-foreground text-base leading-relaxed pt-0.5">
+                      {t(`openUnsigned.steps.${step}`)}
+                    </p>
+                  </li>
+                ))}
+              </ol>
+            </section>
+
+            <section>
+              <div className="w-10 h-10 bg-foreground/10 dark:bg-foreground/5 rounded-xl flex items-center justify-center mb-4">
+                <MousePointerClick className="h-5 w-5 text-foreground" />
+              </div>
+              <h3 className="text-base font-semibold text-foreground mb-3">{t('localSetup.title')}</h3>
+              <p className="text-muted-foreground text-base leading-relaxed mb-6">{t('localSetup.intro')}</p>
+              <ol className="space-y-4">
+                {LOCAL_STEPS.map((step) => (
+                  <li key={step} className="flex gap-4">
+                    <span className="flex-shrink-0 w-7 h-7 rounded-full bg-foreground/10 text-sm font-medium flex items-center justify-center text-foreground">
+                      {step}
+                    </span>
+                    <p className="text-muted-foreground text-base leading-relaxed pt-0.5">
+                      {t(`localSetup.steps.${step}`)}
+                    </p>
+                  </li>
+                ))}
+              </ol>
+            </section>
+
+            <section>
+              <div className="w-10 h-10 bg-foreground/10 dark:bg-foreground/5 rounded-xl flex items-center justify-center mb-4">
+                <Settings2 className="h-5 w-5 text-foreground" />
+              </div>
+              <h3 className="text-base font-semibold text-foreground mb-3">{t('permissions.title')}</h3>
+              <p className="text-muted-foreground text-base leading-relaxed mb-6">{t('permissions.intro')}</p>
+              <ul className="space-y-3">
+                {PERMISSION_KEYS.map((key) => (
+                  <li key={key} className="text-muted-foreground text-base leading-relaxed pl-4 border-l-2 border-border">
+                    {t(`permissions.${key}`)}
+                  </li>
+                ))}
+              </ul>
+            </section>
+
+            <section>
+              <div className="w-10 h-10 bg-foreground/10 dark:bg-foreground/5 rounded-xl flex items-center justify-center mb-4">
+                <MessageCircle className="h-5 w-5 text-foreground" />
+              </div>
+              <h3 className="text-base font-semibold text-foreground mb-3">{t('otherApps.title')}</h3>
+              <p className="text-muted-foreground text-base leading-relaxed">{t('otherApps.body')}</p>
+            </section>
+
+            <section>
+              <div className="w-10 h-10 bg-foreground/10 dark:bg-foreground/5 rounded-xl flex items-center justify-center mb-4">
+                <Terminal className="h-5 w-5 text-foreground" />
+              </div>
+              <h3 className="text-base font-semibold text-foreground mb-3">{t('hostTools.title')}</h3>
+              <p className="text-muted-foreground text-base leading-relaxed mb-6">{t('hostTools.intro')}</p>
+              <ul className="space-y-3">
+                {HOST_TOOL_KEYS.map((key) => (
+                  <li key={key} className="text-muted-foreground text-base leading-relaxed pl-4 border-l-2 border-border">
+                    {t(`hostTools.${key}`)}
+                  </li>
+                ))}
+              </ul>
+            </section>
           </div>
         </motion.div>
       </motion.div>

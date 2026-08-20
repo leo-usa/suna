@@ -48,10 +48,10 @@
   },
   "downloadPage": {
     "title": "Dobby 桌面版",
-    "subtitleMac": "把任务交给 Dobby，在 Mac 上随时随地继续。",
+    "subtitleMac": "把任务交给 Dobby，也可以直接操作这台 Mac：截屏、点击、输入，以及微信等应用。",
     "subtitleDesktop": "把任务交给 Dobby，在电脑上随时随地继续。",
     "downloadHeading": "下载桌面应用",
-    "downloadHint": "版本 1.0.0 · macOS（Apple 芯片）",
+    "downloadHint": "版本 2.0.0 · macOS（Apple 芯片）· 未经过 Apple 签名",
     "featuresTitle": "你会喜欢的理由",
     "features": {
       "handoff": {
@@ -69,7 +69,49 @@
       "fast": {
         "title": "专注工作流",
         "description": "为 AI 助手准备的独立窗口，告别浏览器标签页干扰。"
+      },
+      "local": {
+        "title": "用这台 Mac",
+        "description": "打开「在此电脑运行」后，Dobby 可以看屏幕、点击、输入，并在微信等应用里操作——在你自己的电脑上，而不是云端沙箱。"
       }
+    },
+    "setupTitle": "Mac 设置",
+    "openUnsigned": {
+      "title": "打开未签名的应用",
+      "intro": "当前安装包尚未使用 Apple 开发者证书签名或公证，首次打开时系统会拦截，这是正常现象。",
+      "steps": {
+        "1": "打开下载的 DMG，把 Dobby 拖进「应用程序」。",
+        "2": "在访达中按住 Control 键点击（或右键点击）Dobby，选择「打开」，再在弹窗中点「打开」。",
+        "3": "如果仍然提示无法打开：打开「系统设置」→「隐私与安全性」，在「安全性」一栏找到 Dobby，点「仍要打开」，再确认打开。"
+      }
+    },
+    "localSetup": {
+      "title": "开启本地电脑模式",
+      "intro": "云端模式和以前一样可用。本地模式会让 Dobby 控制这台 Mac，而不是云端沙箱。",
+      "steps": {
+        "1": "在桌面应用中登录。",
+        "2": "打开一个对话，在顶部打开「在此电脑运行」。",
+        "3": "系统弹窗时，为 Dobby（不是 Electron）打开「屏幕录制」和「辅助功能」。",
+        "4": "用 Cmd+Q 完全退出后再打开，权限才会生效。"
+      }
+    },
+    "permissions": {
+      "title": "macOS 权限",
+      "intro": "「系统设置」→「隐私与安全性」。在下面每一项里打开 Dobby，然后 Cmd+Q 退出再打开。",
+      "screen": "屏幕与系统音频录制 — 让 Dobby 能看到屏幕。",
+      "accessibility": "辅助功能 — 让 Dobby 能点击和输入。",
+      "automation": "自动化 → Dobby → 系统事件 — 第一次输入时如果系统询问，请允许。"
+    },
+    "otherApps": {
+      "title": "微信和其他应用",
+      "body": "把微信（或你希望 Dobby 操作的应用）放到前台，并先点一下输入框。Dobby 通过粘贴输入，包括中文。微信本身不需要单独开屏幕录制，Dobby 的辅助功能权限即可。如果没有字出现，再点一次聊天输入框后重试。"
+    },
+    "hostTools": {
+      "title": "这台 Mac 上的 Python 和其他工具",
+      "intro": "本地模式使用你电脑上已有的程序。云端沙箱有完整的 Linux 镜像，这台 Mac 没有。",
+      "python": "Python 3.11+ — 从 python.org 安装，或运行 `brew install python`，然后 Cmd+Q 退出并重新打开 Dobby。",
+      "packages": "项目依赖 — Dobby 可以在该对话的文件夹里 `pip install`。不会预装 pandas 等库。",
+      "cloud": "需要 Playwright、OCR 或完整沙箱镜像时，关掉「在此电脑运行」，改用云端。"
     }
   },
   "aboutPage": {
@@ -1389,6 +1431,15 @@
     "failedCopyLink": "复制失败",
     "openDobbyComputerTooltip": "打开 Dobby 计算机",
     "closeDobbyComputerTooltip": "关闭 Dobby 计算机",
+    "runOnThisComputer": "在这台电脑上运行",
+    "runOnThisComputerTooltip": "命令和文件在本机执行，使用这台电脑已安装的 Python 等工具。",
+    "localRunnerEnabled": "已在这台电脑上运行",
+    "localRunnerDisabled": "已在云端运行",
+    "localRunnerConnectFailed": "无法连接这台电脑",
+    "saveComputerScreenshots": "保存截图",
+    "saveComputerScreenshotsTooltip": "默认关闭。Dobby 仍会看屏幕来操作，但不会上传或保存截图。",
+    "saveComputerScreenshotsOn": "将保存电脑截图",
+    "saveComputerScreenshotsOff": "截图留在这台电脑上",
     "sharePopover": {
       "titlePublicEnabled": "已启用公开链接",
       "titleEnablePublic": "启用公开链接",
@@ -2011,6 +2062,31 @@
         "full-file-rewrite": "重写文件",
         "str-replace": "字符串替换",
         "edit-file": "编辑文件"
+      }
+    },
+    "computerToolView": {
+      "thisComputer": "这台电脑",
+      "showScreenshot": "显示截图",
+      "showContext": "显示输入/输出",
+      "loadFailed": "截图加载失败",
+      "working": "正在操作这台 Mac",
+      "failed": "电脑操作失败",
+      "completed": "电脑操作完成",
+      "watching": "正在查看这台 Mac。截图不会被保存。",
+      "screenshotCaptured": "已截取屏幕。",
+      "typedText": "已输入文字。",
+      "typedAndSubmitted": "已输入并发送。",
+      "scrolled": "已滚动。",
+      "clicked": "已点击 ({x}, {y})。",
+      "pressed": "已按下 {key}。",
+      "opened": "已打开 {target}。",
+      "toolTitle": {
+        "computer-screenshot": "屏幕截图",
+        "computer-click": "点击",
+        "computer-type": "输入",
+        "computer-key": "按键",
+        "computer-scroll": "滚动",
+        "computer-open": "打开"
       }
     },
     "tool": "工具"

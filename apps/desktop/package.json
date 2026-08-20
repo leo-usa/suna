@@ -16,7 +16,9 @@
     "build:win": "electron-builder --win",
     "build:linux": "electron-builder --linux"
   },
-  "dependencies": {},
+  "dependencies": {
+    "ws": "^8.21.3"
+  },
   "devDependencies": {
     "@electron/notarize": "^2.3.2",
     "dotenv": "^16.4.5",
@@ -28,7 +30,9 @@
     "productName": "Dobby",
     "protocols": {
       "name": "Dobby",
-      "schemes": ["dobby"]
+      "schemes": [
+        "dobby"
+      ]
     },
     "mac": {
       "target": "dmg",
@@ -51,6 +55,20 @@
     "linux": {
       "target": "AppImage",
       "icon": "assets/icon.png"
-    }
+    },
+    "extraResources": [
+      {
+        "from": "runner",
+        "to": "runner",
+        "filter": [
+          "**/*",
+          "!**/*.test.js"
+        ]
+      },
+      {
+        "from": "node_modules/ws",
+        "to": "runner/node_modules/ws"
+      }
+    ]
   }
 }

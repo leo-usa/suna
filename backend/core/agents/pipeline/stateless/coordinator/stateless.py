@@ -179,7 +179,7 @@ class StatelessCoordinator(BaseCoordinator):
 
     async def _determine_effective_model(self, ctx: PipelineContext) -> None:
         from core.ai_models import model_manager
-        from core.ai_models.registry import BedrockConfig
+        from core.ai_models.registry import IMAGE_MODEL_ID
         from core.agentpress.thread_manager.services.state.thread_state import ThreadState
         
         if model_manager.supports_vision(self._state.model_name):
@@ -189,7 +189,7 @@ class StatelessCoordinator(BaseCoordinator):
         has_images = await ThreadState.check_has_images(ctx.thread_id)
         
         if has_images:
-            new_model = BedrockConfig.get_haiku_arn()
+            new_model = model_manager.get_litellm_model_id(IMAGE_MODEL_ID)
             logger.info(f"🖼️ Thread has images - switching from {self._state.model_name} to image model: {new_model}")
             self._state.model_name = new_model
 

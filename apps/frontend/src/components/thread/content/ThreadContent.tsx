@@ -1376,6 +1376,11 @@ export const ThreadContent: React.FC<ThreadContentProps> = memo(
       
       const isInternalImageContextUserMessage = (msg: UnifiedMessage): boolean => {
         if (msg.type !== "user") return false;
+
+        const rawMeta = (msg as any).metadata;
+        const meta = typeof rawMeta === "string" ? safeJsonParse<any>(rawMeta, {}) : rawMeta;
+        if (meta?.kind === "computer_screenshot") return true;
+
         const raw = (msg as any).content;
         
         let parsed: any = raw;
@@ -1405,7 +1410,7 @@ export const ThreadContent: React.FC<ThreadContentProps> = memo(
         if (!hasImageUrl) return false;
         if (textBlocks.length !== 1) return false;
         const t = textBlocks[0].trim();
-        return /^\[(Image loaded from|Image:)\s/.test(t);
+        return /^\[(Image loaded from|Image:)\s/.test(t) || t.startsWith("Current Mac screen (observation only");
       };
 
       displayMessages.forEach((message, index) => {

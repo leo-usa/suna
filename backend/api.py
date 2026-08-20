@@ -33,6 +33,7 @@ from core.categorization.api import router as categorization_router
 from core.endpoints import router as endpoints_router
 
 from core.sandbox import api as sandbox_api
+from core.local_runner import api as local_runner_api
 from core.billing.api import router as billing_router
 from core.setup import router as setup_router, webhook_router
 from core.admin.admin_api import router as admin_router
@@ -105,6 +106,7 @@ async def lifespan(app: FastAPI):
         load_static_suna_config()
         
         sandbox_api.initialize(db)
+        local_runner_api.initialize(db)
         
         from core.services import redis
         try:
@@ -396,6 +398,7 @@ api_router.include_router(threads_router)
 api_router.include_router(categorization_router)
 api_router.include_router(endpoints_router)
 api_router.include_router(sandbox_api.router)
+api_router.include_router(local_runner_api.router)
 api_router.include_router(billing_router)
 api_router.include_router(setup_router)
 api_router.include_router(webhook_router)  # Webhooks at /api/webhooks/*
