@@ -78,12 +78,14 @@
     "setupTitle": "Set up on Mac",
     "openUnsigned": {
       "title": "Open the unsigned app",
-      "intro": "This build is not signed or notarized by Apple, so macOS Gatekeeper will block it the first time. That is expected.",
+      "intro": "This build is not signed or notarized by Apple, so macOS Gatekeeper will block it the first time. A “Dobby is damaged” warning is also expected — the app is not actually damaged.",
       "steps": {
         "1": "Open the DMG and drag Dobby into Applications.",
         "2": "In Finder, Control-click (or right-click) Dobby and choose Open. In the dialog, click Open again.",
-        "3": "If macOS still says it can't be opened: System Settings → Privacy & Security. Under Security, click Open Anyway next to Dobby, then Open."
-      }
+        "3": "If macOS still says it can't be opened: System Settings → Privacy & Security. Under Security, click Open Anyway next to Dobby, then Open.",
+        "4": "If macOS says Dobby is damaged and should be moved to Trash, do not trash it. Open Terminal and run:"
+      },
+      "command": "/usr/bin/xattr -cr /Applications/Dobby.app\nopen /Applications/Dobby.app"
     },
     "localSetup": {
       "title": "Turn on local computer",

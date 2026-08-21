@@ -26,7 +26,7 @@ const FEATURE_ICONS = {
   fast: Zap,
 } as const;
 
-const OPEN_STEPS = ['1', '2', '3'] as const;
+const OPEN_STEPS = ['1', '2', '3', '4'] as const;
 const LOCAL_STEPS = ['1', '2', '3', '4'] as const;
 const PERMISSION_KEYS = ['screen', 'accessibility', 'automation'] as const;
 const HOST_TOOL_KEYS = ['python', 'packages', 'cloud'] as const;
@@ -212,9 +212,16 @@ export default function DesktopDownloadPage() {
                     <span className="flex-shrink-0 w-7 h-7 rounded-full bg-foreground/10 text-sm font-medium flex items-center justify-center text-foreground">
                       {step}
                     </span>
-                    <p className="text-muted-foreground text-base leading-relaxed pt-0.5">
-                      {t(`openUnsigned.steps.${step}`)}
-                    </p>
+                    <div className="min-w-0 flex-1 pt-0.5">
+                      <p className="text-muted-foreground text-base leading-relaxed">
+                        {t(`openUnsigned.steps.${step}`)}
+                      </p>
+                      {step === '4' && (
+                        <pre className="mt-3 overflow-x-auto rounded-lg bg-foreground/5 px-4 py-3 font-mono text-sm text-foreground whitespace-pre-wrap">
+                          {t('openUnsigned.command')}
+                        </pre>
+                      )}
+                    </div>
                   </li>
                 ))}
               </ol>
