@@ -51,7 +51,7 @@
     "subtitleMac": "Hand it off to Dobby — including on this Mac. Screenshots, clicks, typing, and apps like WeChat.",
     "subtitleDesktop": "Hand it off to Dobby. From anywhere on your computer.",
     "downloadHeading": "Download the desktop app",
-    "downloadHint": "Version 2.0.0 · macOS (Apple Silicon) · not Apple-signed",
+    "downloadHint": "Version 2.0.1 · macOS (Apple Silicon) · not Apple-signed",
     "featuresTitle": "Why you'll love it",
     "features": {
       "handoff": {
@@ -78,41 +78,42 @@
     "setupTitle": "Set up on Mac",
     "openUnsigned": {
       "title": "Open the unsigned app",
-      "intro": "This build is not signed or notarized by Apple, so macOS Gatekeeper will block it the first time. A “Dobby is damaged” warning is also expected — the app is not actually damaged.",
+      "intro": "This build is not signed or notarized by Apple. A “Dobby is damaged” warning is Gatekeeper, not a broken file. Keep only one copy: Applications/Dobby.app. Quit extras with Cmd+Q — leftover helpers from a second copy will hang local mode.",
       "steps": {
-        "1": "Open the DMG and drag Dobby into Applications.",
-        "2": "In Finder, Control-click (or right-click) Dobby and choose Open. In the dialog, click Open again.",
-        "3": "If macOS still says it can't be opened: System Settings → Privacy & Security. Under Security, click Open Anyway next to Dobby, then Open.",
-        "4": "If macOS says Dobby is damaged and should be moved to Trash, do not trash it. Open Terminal and run:"
+        "1": "Cmd+Q any running Dobby. If an older Dobby is already in Applications, replace it with this build. Do not also run a copy from Downloads, the DMG, or another folder.",
+        "2": "macOS tags downloaded files as quarantined. Remove that flag from the DMG before you open it, then mount it. In Terminal:",
+        "3": "Drag Dobby into Applications, then open it from Applications — not from the DMG or Downloads.",
+        "4": "If macOS still blocks it: Control-click Dobby → Open, or System Settings → Privacy & Security → Open Anyway."
       },
-      "command": "/usr/bin/xattr -cr /Applications/Dobby.app\nopen /Applications/Dobby.app"
+      "command": "xattr -d com.apple.quarantine ~/Downloads/Dobby-2.0.1-arm64.dmg\nopen ~/Downloads/Dobby-2.0.1-arm64.dmg"
     },
     "localSetup": {
       "title": "Turn on local computer",
-      "intro": "Cloud mode still works as before. Local mode lets Dobby control this Mac instead of a cloud sandbox.",
+      "intro": "Cloud mode still works as before. Local mode runs shell, files, and computer control on this Mac. Project files are saved in Documents/Dobby.",
       "steps": {
-        "1": "Sign in to the desktop app.",
-        "2": "Open a conversation and turn on Run on this computer in the header.",
-        "3": "When macOS asks, allow Screen Recording and Accessibility for Dobby (not Electron).",
-        "4": "Fully quit with Cmd+Q and reopen so the new permissions apply."
+        "1": "Sign in to the desktop app from Applications/Dobby.app.",
+        "2": "On the home screen, turn on Run on this computer before the first message. You can also toggle it later in a conversation header.",
+        "3": "When macOS asks, allow Screen Recording, Accessibility, and Files and Folders (Documents) for Dobby — not Electron.",
+        "4": "Fully quit with Cmd+Q and reopen so the new permissions apply, then send a message."
       }
     },
     "permissions": {
       "title": "macOS permissions",
-      "intro": "System Settings → Privacy & Security. Enable Dobby in each of these, then Cmd+Q and reopen.",
+      "intro": "System Settings → Privacy & Security. Enable Dobby in each of these, then Cmd+Q and reopen. After replacing an older build, grant Documents again if macOS asks.",
       "screen": "Screen & System Audio Recording — so Dobby can see the screen.",
       "accessibility": "Accessibility — so Dobby can click and type.",
+      "files": "Files and Folders → Documents — local projects live in Documents/Dobby. Allow Desktop and Downloads if asked.",
       "automation": "Automation → Dobby → System Events — allow this if macOS asks the first time you type."
     },
     "otherApps": {
       "title": "WeChat and other apps",
-      "body": "Keep WeChat (or the app you want Dobby to use) in the foreground, with the input box focused. Dobby types by pasting, including Chinese. WeChat does not need its own Screen Recording toggle — Dobby's Accessibility permission is enough. If nothing appears, click the chat input once and try again."
+      "body": "Keep only one Dobby running. Put WeChat (or the app you want Dobby to use) in the foreground, with the input box focused. Dobby types by pasting, including Chinese. WeChat does not need its own Screen Recording toggle — Dobby's Accessibility permission is enough. If nothing appears, click the chat input once and try again."
     },
     "hostTools": {
       "title": "Python and other tools on this Mac",
-      "intro": "Local mode uses programs already on your computer. The cloud sandbox has its own Linux image; this Mac does not.",
+      "intro": "Local mode uses programs already on your computer. Files for each project are under Documents/Dobby. The cloud sandbox has its own Linux image; this Mac does not.",
       "python": "Python 3.11+ — install from python.org or `brew install python`, then Cmd+Q and reopen Dobby.",
-      "packages": "Project libraries — Dobby can `pip install` packages into that conversation's folder. They are not preinstalled.",
+      "packages": "Project libraries — Dobby can `pip install` into that conversation's folder under Documents/Dobby. They are not preinstalled.",
       "cloud": "Need Playwright, OCR, or the full sandbox image? Turn off Run on this computer and use cloud."
     }
   },

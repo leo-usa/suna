@@ -28,7 +28,7 @@ const FEATURE_ICONS = {
 
 const OPEN_STEPS = ['1', '2', '3', '4'] as const;
 const LOCAL_STEPS = ['1', '2', '3', '4'] as const;
-const PERMISSION_KEYS = ['screen', 'accessibility', 'automation'] as const;
+const PERMISSION_KEYS = ['screen', 'accessibility', 'files', 'automation'] as const;
 const HOST_TOOL_KEYS = ['python', 'packages', 'cloud'] as const;
 
 function DownloadButton({
@@ -216,7 +216,7 @@ export default function DesktopDownloadPage() {
                       <p className="text-muted-foreground text-base leading-relaxed">
                         {t(`openUnsigned.steps.${step}`)}
                       </p>
-                      {step === '4' && (
+                      {step === '2' && (
                         <pre className="mt-3 overflow-x-auto rounded-lg bg-foreground/5 px-4 py-3 font-mono text-sm text-foreground whitespace-pre-wrap">
                           {t('openUnsigned.command')}
                         </pre>
