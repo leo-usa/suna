@@ -47,10 +47,22 @@ function jsonrpcError(id, message, code = -32000) {
   return { jsonrpc: '2.0', id, error: { code, message } };
 }
 
+function accessMessage(err, target) {
+  const code = err && err.code;
+  if (code === 'EPERM' || code === 'EACCES') {
+    return `macOS blocked access to ${target}. In System Settings → Privacy & Security → Files and Folders, enable Documents for Dobby, then fully quit (Cmd+Q) and reopen.`;
+  }
+  return err && err.message ? err.message : String(err);
+}
+
 function requireProject(params) {
   const projectId = params && params.project_id;
   if (!projectId) throw new Error('Missing project_id');
-  ensureWorkspace(HOME, projectId, params.project_name);
+  try {
+    ensureWorkspace(HOME, projectId, params.project_name);
+  } catch (err) {
+    throw new Error(accessMessage(err, path.join(HOME, 'Documents', 'Dobby')));
+  }
   return projectId;
 }
 
@@ -137,7 +149,17 @@ function existingDir(candidate, fallback) {
 
 function execCommand(command, cwd, env, timeoutMs, projectRoot, onChild) {
   const root = projectRoot || cwd;
-  fs.mkdirSync(root, { recursive: true });
+  try {
+    fs.mkdirSync(root, { recursive: true });
+  } catch (err) {
+    const message = accessMessage(err, root);
+    return Promise.resolve({
+      exit_code: 1,
+      stdout: '',
+      stderr: message,
+      result: '',
+    });
+  }
   const workdir = existingDir(cwd, root);
   const tmpDir = path.join(root, 'tmp');
   fs.mkdirSync(tmpDir, { recursive: true });
@@ -273,7 +295,13 @@ async function handleRpc(method, params) {
     }
     case 'fs.list_files': {
       const target = localPath(params, params.path);
-      const names = fs.readdirSync(target);
+      let names;
+      try {
+        fs.mkdirSync(target, { recursive: true });
+        names = fs.readdirSync(target);
+      } catch (err) {
+        throw new Error(accessMessage(err, target));
+      }
       return {
         files: names.map((name) => fileInfo(path.join(target, name))),
       };

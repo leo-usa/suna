@@ -41,6 +41,65 @@ def local_sandbox_public_info(runtime: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+async def find_online_device_id(client, account_ids: list[str]) -> Optional[str]:
+    ids = [value for value in dict.fromkeys(account_ids) if value]
+    if not ids:
+        return None
+    devices = (
+        await client.table("local_runner_devices")
+        .select("device_id")
+        .in_("account_id", ids)
+        .is_("revoked_at", "null")
+        .order("last_seen_at", desc=True)
+        .execute()
+    )
+    for row in devices.data or []:
+        if await is_online(row["device_id"]):
+            return row["device_id"]
+    return None
+
+
+async def ensure_project_device_online(
+    client,
+    project_id: str,
+    *,
+    account_id: Optional[str] = None,
+    device_id: Optional[str] = None,
+) -> Optional[str]:
+    """Use the stored device if it is online; otherwise rebind to this account's live runner."""
+    if device_id and await is_online(device_id):
+        return device_id
+
+    if client is None:
+        return None
+
+    if not account_id or not device_id:
+        result = (
+            await client.table("projects")
+            .select("account_id, local_device_id")
+            .eq("project_id", project_id)
+            .maybe_single()
+            .execute()
+        )
+        row = result.data if result else None
+        if row:
+            account_id = account_id or row.get("account_id")
+            device_id = device_id or row.get("local_device_id")
+        if device_id and await is_online(device_id):
+            return device_id
+
+    if not account_id:
+        return None
+
+    online_id = await find_online_device_id(client, [account_id])
+    if not online_id:
+        return None
+    if online_id != device_id:
+        await enable_local_execution(client, project_id, account_id, online_id, user_id=account_id)
+        logger.info(f"[LOCAL_RUNNER] Rebound project {project_id} to online device {online_id}")
+    return online_id
+
+
 async def describe_local_runtime(
     project_id: str,
     *,
@@ -52,10 +111,11 @@ async def describe_local_runtime(
 ) -> Optional[dict[str, Any]]:
     """Return LIVE/OFFLINE status for a local project, or None if this is a cloud sandbox."""
     config = dict(sandbox_config or {})
+    account_id = None
     if client is not None and (execution_target is None or not local_device_id or not sandbox_id):
         result = (
             await client.table("projects")
-            .select("execution_target, local_device_id, sandbox_resource_id")
+            .select("execution_target, local_device_id, sandbox_resource_id, account_id")
             .eq("project_id", project_id)
             .maybe_single()
             .execute()
@@ -65,6 +125,7 @@ async def describe_local_runtime(
             if execution_target is None:
                 execution_target = row.get("execution_target")
             local_device_id = local_device_id or row.get("local_device_id")
+            account_id = row.get("account_id")
             if not sandbox_id and row.get("sandbox_resource_id"):
                 resource = await ResourceService(client).get_resource_by_id(row["sandbox_resource_id"])
                 if resource:
@@ -75,6 +136,13 @@ async def describe_local_runtime(
         return None
 
     device_id = local_device_id or config.get("device_id")
+    if client is not None:
+        device_id = await ensure_project_device_online(
+            client,
+            project_id,
+            account_id=account_id,
+            device_id=device_id,
+        )
     online = bool(device_id) and await is_online(device_id)
     info = await get_online_info(device_id) if device_id else None
     preview_port = int((info or {}).get("preview_port") or config.get("preview_port") or proto.DEFAULT_PREVIEW_PORT)
@@ -186,17 +254,9 @@ async def enable_local_execution_for_user(client, project_id: str, account_id: s
     last_error = "This computer is not connected. Open the Dobby desktop app and try again."
     account_ids = [value for value in dict.fromkeys([user_id, account_id]) if value]
     for attempt in range(8):
-        devices = (
-            await client.table("local_runner_devices")
-            .select("device_id")
-            .in_("account_id", account_ids)
-            .is_("revoked_at", "null")
-            .order("last_seen_at", desc=True)
-            .execute()
-        )
-        for row in devices.data or []:
-            if await is_online(row["device_id"]):
-                return await enable_local_execution(client, project_id, account_id, row["device_id"], user_id=user_id)
+        device_id = await find_online_device_id(client, account_ids)
+        if device_id:
+            return await enable_local_execution(client, project_id, account_id, device_id, user_id=user_id)
         if attempt < 7:
             await asyncio.sleep(0.4)
     raise ValueError(last_error)

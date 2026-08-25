@@ -1,6 +1,6 @@
 const { describe, it } = require('node:test');
 const assert = require('node:assert/strict');
-const { KEY_CODES, mapToScreen, keyScript, pngSize, openCandidates, typeScript, utf8Env } = require('./computer');
+const { KEY_CODES, mapToScreen, keyScript, pngSize, openCandidates, activateAppScript, typeScript, utf8Env } = require('./computer');
 
 describe('computer coordinate mapping', () => {
   it('maps screenshot pixels onto logical screen points', () => {
@@ -34,9 +34,9 @@ describe('computer key mapping', () => {
     assert.match(script, /keyCode\(36\)/);
   });
 
-  it('maps cmd+c to a command-down keystroke', () => {
-    const script = keyScript('cmd+c');
-    assert.match(script, /keystroke\("c"/);
+  it('maps cmd+a to select-all', () => {
+    const script = keyScript('cmd+a');
+    assert.match(script, /keystroke\("a"/);
     assert.match(script, /command down/);
   });
 
@@ -77,5 +77,12 @@ describe('computer app open aliases', () => {
 
   it('passes through unknown app names', () => {
     assert.deepEqual(openCandidates('Calendar'), ['Calendar']);
+  });
+
+  it('activates an already-running app by process name', () => {
+    const script = activateAppScript(['WeChat', '微信']);
+    assert.match(script, /frontmost = true/);
+    assert.match(script, /WeChat/);
+    assert.match(script, /\.activate\(\)/);
   });
 });

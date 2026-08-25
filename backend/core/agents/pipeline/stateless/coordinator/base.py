@@ -17,7 +17,7 @@ class BaseCoordinator(ABC):
 
     @abstractmethod
     async def execute(
-        self, ctx: PipelineContext, max_steps: int = 25
+        self, ctx: PipelineContext, max_steps: int | None = None
     ) -> AsyncGenerator[Dict[str, Any], None]:
         raise NotImplementedError
 

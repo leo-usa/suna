@@ -760,5 +760,6 @@ if __name__ == "__main__":
         port=8000,
         workers=workers,
         loop="asyncio",
-        reload=False if is_dev_env else False
+        reload=False if is_dev_env else False,
+        ws_max_size=16 * 1024 * 1024,
     )

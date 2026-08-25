@@ -1,6 +1,6 @@
 'use strict';
 
-const { app, BrowserWindow, dialog, ipcMain, Menu, shell, systemPreferences, nativeImage } = require('electron');
+const { app, BrowserWindow, dialog, ipcMain, Menu, shell, systemPreferences, nativeImage, powerSaveBlocker, desktopCapturer, screen } = require('electron');
 const { fork } = require('child_process');
 const fs = require('fs');
 const os = require('os');
@@ -23,11 +23,28 @@ let status = {
   previewPort: 18080,
   error: null,
 };
-let persist = { deviceToken: null, backendWsUrl: null, allowlist: [], allowAllCommands: false, allowComputerUse: false };
+let persist = { deviceToken: null, backendWsUrl: null, allowlist: [], allowAllCommands: true, allowComputerUse: false };
 let lastMenuTemplate = [];
+let stayAwakeId = null;
+
+function keepComputerUseAwake() {
+  if (stayAwakeId != null && powerSaveBlocker.isStarted(stayAwakeId)) return;
+  stayAwakeId = powerSaveBlocker.start('prevent-app-suspension');
+}
 
 function persistPath() {
   return path.join(app.getPath('userData'), 'local-runner.json');
+}
+
+function claimLocalFolders() {
+  const home = os.homedir();
+  const docs = path.join(home, 'Documents', 'Dobby');
+  try {
+    fs.mkdirSync(docs, { recursive: true });
+    fs.readdirSync(docs);
+  } catch (err) {
+    console.error('[local-runner] Documents/Dobby access failed:', err && err.message);
+  }
 }
 
 function loadPersist() {
@@ -69,22 +86,29 @@ async function promptComputerUse(detail) {
   persist.allowComputerUse = true;
   savePersist();
   rebuildMenu();
+  desktopCapturer.getSources({ types: ['screen'], thumbnailSize: { width: 2, height: 2 } }).catch(() => {});
+  try {
+    if (typeof systemPreferences.isTrustedAccessibilityClient === 'function') {
+      systemPreferences.isTrustedAccessibilityClient(true);
+    }
+  } catch (_) { /* ignore */ }
   return true;
 }
 
 const SCREEN_CAPTURE_HELP = 'Screen capture is not available. In System Settings → Privacy & Security → Screen & System Audio Recording, enable Dobby, then fully quit (Cmd+Q) and reopen the app.';
+const ACCESSIBILITY_HELP = 'macOS Accessibility permission is required. Enable Dobby in System Settings → Privacy & Security → Accessibility, then fully quit (Cmd+Q) and reopen the app.';
 
 function encodeScreenshot(image, screenWidth, screenHeight, scale) {
   const size = image && image.getSize ? image.getSize() : { width: 0, height: 0 };
   if (!size.width || !size.height || size.width < 32 || size.height < 32) {
     throw new Error(SCREEN_CAPTURE_HELP);
   }
-  const maxWidth = 1600;
+  const maxWidth = 1280;
   const resized = size.width > maxWidth
     ? image.resize({ width: maxWidth, quality: 'good' })
     : image;
-  const jpeg = resized.toJPEG(72);
-  if (!jpeg || jpeg.length < 2000) {
+  const jpeg = resized.toJPEG(55);
+  if (!jpeg || jpeg.length < 100) {
     throw new Error(SCREEN_CAPTURE_HELP);
   }
   const out = resized.getSize();
@@ -129,13 +153,12 @@ function cancelDobbyRestore() {
 function hideDobby() {
   if (hiddenDobbyWindows) return false;
   const windows = BrowserWindow.getAllWindows().filter((win) => !win.isDestroyed() && win.isVisible());
+  if (!windows.length) return false;
   hiddenDobbyWindows = windows;
-  if (process.platform === 'darwin' && typeof app.hide === 'function') {
-    try { app.hide(); } catch (_) { /* ignore */ }
-  } else {
-    for (const win of windows) {
-      try { win.hide(); } catch (_) { /* ignore */ }
-    }
+  // Hide windows only. app.hide() naps Electron, so "open done" never gets
+  // back to the agent and the chat stays on Opening until the 120s timeout.
+  for (const win of windows) {
+    try { win.hide(); } catch (_) { /* ignore */ }
   }
   return true;
 }
@@ -145,9 +168,6 @@ function restoreDobby() {
   const windows = hiddenDobbyWindows;
   hiddenDobbyWindows = null;
   if (!windows) return;
-  if (process.platform === 'darwin' && typeof app.show === 'function') {
-    try { app.show(); } catch (_) { /* ignore */ }
-  }
   for (const win of windows) {
     if (win.isDestroyed()) continue;
     try { win.showInactive(); } catch (_) {
@@ -188,12 +208,43 @@ function screenshotFromPngB64(result) {
   );
 }
 
+async function captureScreenElectron() {
+  const display = screen.getPrimaryDisplay();
+  const scale = display.scaleFactor || 1;
+  const sources = await desktopCapturer.getSources({
+    types: ['screen'],
+    thumbnailSize: {
+      width: Math.max(1, Math.round(display.size.width * scale)),
+      height: Math.max(1, Math.round(display.size.height * scale)),
+    },
+  });
+  const displayId = String(display.id);
+  const source = sources.find((item) => String(item.display_id) === displayId) || sources[0];
+  if (!source || !source.thumbnail) {
+    throw new Error(SCREEN_CAPTURE_HELP);
+  }
+  return encodeScreenshot(source.thumbnail, display.size.width, display.size.height, scale);
+}
+
+async function captureScreen() {
+  const first = app.isPackaged ? captureScreenElectron : () => runComputerAction('screenshot', {}).then(screenshotFromPngB64);
+  const second = app.isPackaged ? () => runComputerAction('screenshot', {}).then(screenshotFromPngB64) : captureScreenElectron;
+  try {
+    return await first();
+  } catch (err) {
+    try {
+      return await second();
+    } catch (_) {
+      throw err instanceof Error ? err : new Error(SCREEN_CAPTURE_HELP);
+    }
+  }
+}
+
 function ensureAccessibility() {
   if (process.platform !== 'darwin' || !systemPreferences.isTrustedAccessibilityClient) return true;
-  const trusted = systemPreferences.isTrustedAccessibilityClient(true);
+  const trusted = systemPreferences.isTrustedAccessibilityClient(false);
   if (trusted) return true;
-  shell.openExternal('x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility');
-  throw new Error('macOS Accessibility permission is required. Enable Electron in System Settings → Privacy & Security → Accessibility, then fully quit (Cmd+Q) and run npm start again.');
+  throw new Error(ACCESSIBILITY_HELP);
 }
 
 async function handleComputerRequest(kind, payload) {
@@ -201,14 +252,12 @@ async function handleComputerRequest(kind, payload) {
   try {
     if (kind === 'open') {
       const result = await withTimeout(runComputerAction('open', payload), 8000, 'open');
-      scheduleDobbyRestore();
-      console.log('[computer] open done');
+      console.log('[computer]', kind, 'done');
       return result;
     }
     const result = await withDobbyHidden(async () => {
       if (kind === 'screenshot') {
-        const raw = await withTimeout(runComputerAction('screenshot', payload), 8000, 'screenshot');
-        return screenshotFromPngB64(raw);
+        return withTimeout(captureScreen(), 8000, 'screenshot');
       }
       ensureAccessibility();
       return withTimeout(runComputerAction(kind, payload), 8000, kind);
@@ -238,7 +287,7 @@ async function promptApproval(command) {
 
 function startRunner({ deviceToken, backendWsUrl }) {
   if (child) {
-    try { child.kill(); } catch (_) { /* ignore */ }
+    try { child.kill('SIGKILL'); } catch (_) { /* ignore */ }
     child = null;
   }
   persist.deviceToken = deviceToken || persist.deviceToken;
@@ -289,6 +338,7 @@ function startRunner({ deviceToken, backendWsUrl }) {
       if (child) child.send({ type: 'approval-result', requestId: message.requestId, decision });
     }
     if (message.type === 'computer-request') {
+      keepComputerUseAwake();
       const allowed = await promptComputerUse(message.kind);
       if (!allowed) {
         if (child) child.send({ type: 'computer-result', requestId: message.requestId, error: 'Computer use denied' });
@@ -297,6 +347,7 @@ function startRunner({ deviceToken, backendWsUrl }) {
       try {
         const result = await handleComputerRequest(message.kind, message.payload || {});
         if (child) child.send({ type: 'computer-result', requestId: message.requestId, result });
+        console.log('[computer]', message.kind, 'sent');
       } catch (err) {
         if (child) child.send({ type: 'computer-result', requestId: message.requestId, error: err.message || String(err) });
       }
@@ -321,16 +372,13 @@ function startRunner({ deviceToken, backendWsUrl }) {
   return { ok: true, status };
 }
 
-function stopRunner() {
+function stopRunner(opts = {}) {
   setStatus({ state: 'stopped' });
-  if (child) {
-    try { child.send({ type: 'stop' }); } catch (_) { /* ignore */ }
-    setTimeout(() => {
-      if (child) {
-        try { child.kill(); } catch (_) { /* ignore */ }
-      }
-    }, 1500);
-  }
+  if (!child) return { ok: true, status };
+  const proc = child;
+  child = null;
+  try { proc.send({ type: 'stop' }); } catch (_) { /* ignore */ }
+  try { proc.kill(opts.immediate ? 'SIGKILL' : 'SIGTERM'); } catch (_) { /* ignore */ }
   return { ok: true, status };
 }
 
@@ -423,4 +471,5 @@ module.exports = {
   autoStartIfPaired,
   startRunner,
   stopRunner,
+  claimLocalFolders,
 };

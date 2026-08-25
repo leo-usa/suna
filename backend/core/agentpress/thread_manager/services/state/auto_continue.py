@@ -161,7 +161,7 @@ class AutoContinueManager:
     ) -> AsyncGenerator:
         logger.debug(f"Starting auto-continue generator, max: {native_max_auto_continues}")
         
-        while auto_continue_state['active'] and auto_continue_state['count'] < native_max_auto_continues:
+        while auto_continue_state['active']:
             auto_continue_state['active'] = False
             
             try:
@@ -266,10 +266,3 @@ class AutoContinueManager:
                     ErrorProcessor.log_error(processed_error)
                     yield processed_error.to_stream_dict()
                     return
-        
-        if auto_continue_state['active'] and auto_continue_state['count'] >= native_max_auto_continues:
-            logger.warning(f"Reached maximum auto-continue limit ({native_max_auto_continues})")
-            yield {
-                "type": "content",
-                "content": f"\n[Worker reached maximum auto-continue limit of {native_max_auto_continues}]"
-            }

@@ -281,8 +281,12 @@ class LocalComputer:
             self._params({"x": x, "y": y, "button": button, "count": count, **meta}),
         ) or {}
 
-    async def type(self, text: str) -> dict:
-        return await rpc(self._device_id, proto.COMPUTER_TYPE, self._params({"text": text})) or {}
+    async def type(self, text: str, replace: bool = False, submit: bool = False) -> dict:
+        return await rpc(
+            self._device_id,
+            proto.COMPUTER_TYPE,
+            self._params({"text": text, "replace": replace, "submit": submit}),
+        ) or {}
 
     async def key(self, key: str) -> dict:
         return await rpc(self._device_id, proto.COMPUTER_KEY, self._params({"key": key})) or {}

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { backendApi } from '@/lib/api-client';
+import { ensureLocalRunnerReady } from '@/lib/api/local-runner';
 import { sandboxKeys } from './keys';
 import type {
   SandboxStatus,
@@ -133,6 +134,9 @@ export function useStartSandbox() {
 
   return useMutation({
     mutationFn: async (projectId: string) => {
+      if (typeof window !== 'undefined' && window.dobbyLocal) {
+        await ensureLocalRunnerReady();
+      }
       const response = await backendApi.post<{ status: string; sandbox_id: string | null; message: string }>(
         `/project/${projectId}/sandbox/start`
       );

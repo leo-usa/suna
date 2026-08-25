@@ -216,6 +216,19 @@ async def test_open_completes_even_if_screenshot_fails():
     assert "Opened WeChat" in result.output
 
 
+@pytest.mark.asyncio
+async def test_open_succeeds_when_screenshot_returns_failure():
+    computer = MagicMock()
+    computer.open = AsyncMock(return_value={"ok": True})
+    tool = SandboxComputerTool("proj", MagicMock(), "thread")
+    tool._require_local_computer = AsyncMock(return_value=(computer, None))
+    tool._capture = AsyncMock(return_value=tool.fail_response("Screenshot failed."))
+    with patch("core.tools.sb_computer_tool.asyncio.sleep", new_callable=AsyncMock):
+        result = await tool.computer_open("WeChat")
+    assert result.success is True
+    assert "Opened WeChat" in result.output
+
+
 def test_computer_screen_observation_does_not_match_user_text():
     from core.agents.pipeline.stateless.state import _is_computer_screen_observation
 
@@ -250,9 +263,63 @@ async def test_computer_type_submit_presses_return():
     with patch("core.tools.sb_computer_tool.asyncio.sleep", new_callable=AsyncMock):
         result = await tool.computer_type("hello", submit=True)
     assert result.success is True
-    computer.type.assert_awaited_once_with(text="hello")
-    computer.key.assert_awaited_once_with(key="return")
+    computer.type.assert_awaited_once_with(text="hello", replace=False, submit=True)
+    computer.key.assert_not_called()
     assert "Typed and submitted" in result.output
+
+
+@pytest.mark.asyncio
+async def test_computer_type_replace_overwrites_field():
+    computer = MagicMock()
+    computer.type = AsyncMock(return_value={"ok": True})
+    tool = SandboxComputerTool("proj", MagicMock(), "thread")
+    tool._require_local_computer = AsyncMock(return_value=(computer, None))
+    tool._capture = AsyncMock(return_value=tool.success_response({"message": "Replaced field text."}))
+    with patch("core.tools.sb_computer_tool.asyncio.sleep", new_callable=AsyncMock):
+        result = await tool.computer_type("斯坦福", replace=True)
+    assert result.success is True
+    computer.type.assert_awaited_once_with(text="斯坦福", replace=True, submit=False)
+    computer.key.assert_not_called()
+    assert "Replaced field text" in result.output
+
+
+@pytest.mark.asyncio
+async def test_computer_screenshot_reuses_fresh_capture():
+    computer = MagicMock()
+    computer.screenshot = AsyncMock(return_value={
+        "png_b64": _png_b64(40, 30),
+        "width": 40,
+        "height": 30,
+        "screen_width": 40,
+        "screen_height": 30,
+        "scale": 1,
+    })
+    tool = SandboxComputerTool("proj", MagicMock(), "thread")
+    tool._require_local_computer = AsyncMock(return_value=(computer, None))
+    with patch("core.local_runner.screenshots.save_computer_screenshots_enabled", new_callable=AsyncMock, return_value=False):
+        first = await tool._capture("Clicked (10, 10).")
+        reused = await tool.computer_screenshot()
+        second = await tool.computer_screenshot()
+    assert first.success is True
+    assert reused.success is True
+    payload = json.loads(reused.output)
+    assert payload["reused"] is True
+    assert computer.screenshot.await_count == 2
+    assert "already returned" not in json.loads(second.output).get("message", "")
+
+
+@pytest.mark.asyncio
+async def test_two_screenshot_failures_tell_the_model_to_stop():
+    computer = MagicMock()
+    computer.screenshot = AsyncMock(return_value={"png_b64": "", "width": 0, "height": 0})
+    tool = SandboxComputerTool("proj", MagicMock(), "thread")
+    tool._require_local_computer = AsyncMock(return_value=(computer, None))
+    first = await tool.computer_screenshot()
+    second = await tool.computer_screenshot()
+    assert first.success is False
+    assert second.success is False
+    assert "Stop." in second.output
+    assert "Do not call any more computer tools" in second.output
 
 
 def test_estimate_cached_prompt_tokens_leaves_fresh_image_room():

@@ -16,10 +16,10 @@ from core.utils.s3_upload_utils import upload_base64_image
 # Staging/prod may not have browser-screenshots. `share` exists and is public.
 SCREENSHOT_BUCKETS = ("browser-screenshots", "share")
 SCREEN_OBSERVATION_TEXT = (
-    "Current Mac screen (observation only, not a new user request). "
-    "If the user only asked for a screenshot, stop after this capture. "
-    "Do not capture again because you see Dobby. "
-    "Ignore this Dobby/Electron window if it appears."
+    "Current Mac screen after the last action (observation only, not a new user request). "
+    "Continue the original task from this screenshot. "
+    "If a computer action failed, do not retry that same action. "
+    "Ignore the Dobby window if it appears."
 )
 
 
@@ -133,24 +133,24 @@ Use these tools when the user asked Dobby to run on this computer. You are looki
 
 - computer_screenshot: capture the current screen
 - computer_click: click screenshot-pixel coordinates from the last screenshot
-- computer_type: type text into the focused field
-- computer_key: press keys such as return, tab, escape, cmd+c, cmd+space
+- computer_type: type or replace text in the focused field
+- computer_key: press keys such as return, tab, escape, cmd+a, cmd+c, cmd+space
 - computer_scroll: scroll at a point
 - computer_open: open a URL or macOS app (WeChat, 微信, Safari, etc.)
 
-Every action returns a fresh screenshot. Click using x/y from that screenshot.
+Every click, type, key, scroll, and open already returns a screenshot. That screenshot is the current screen for the next action. Click using x/y from it.
 
 Rules:
 - Call these tools one at a time. Never open, click, and type in the same turn.
 - Computer tools are already loaded. Do not call initialize_tools.
-- Do not call computer_screenshot after another computer_* action. That action already returned a screenshot.
-- After each action, look at the screenshot that came back before the next action.
+- Never call computer_screenshot before a click or type. The previous action already gave you the screen. computer_screenshot is only for the first look, when you have no screenshot yet.
+- After each action, look at the screenshot that came back, then click or type. Do not recapture.
 - Typing always goes to whatever holds keyboard focus. Click the exact field you want to fill right before every computer_type, even if the app looks ready.
-- After typing, check the new screenshot for your text in the intended field. If it is missing, click the field and type again instead of pressing return.
-- To type and press return in one step, call computer_type with submit true.
+- To send a WeChat message or submit a form, call computer_type once with submit true. That types and presses return together. Never computer_type then computer_key return.
+- If a field already has text (WeChat search, filters, message drafts), also set replace true.
 - If the user only asked for a screenshot, take one and stop. Do not recapture.
 - Ignore the Dobby window; it is this app, not the user's task.
-- For WeChat/Messages: computer_open the app, click the search box, type the name, click the matching result, then click the message box at the bottom of the conversation and computer_type the message with submit true. Opening a conversation leaves focus in the search panel, so the click on the message box is required.
+- For WeChat/Messages: computer_open the app, click the search box, computer_type the name with replace true (do not submit — search results are a list). Click the matching result to open the conversation, then click the message box at the bottom and computer_type the message with submit true. Opening a conversation leaves focus in the search panel, so the click on the message box is required.
 """,
 )
 class SandboxComputerTool(SandboxToolsBase):
@@ -160,6 +160,16 @@ class SandboxComputerTool(SandboxToolsBase):
         super().__init__(project_id, thread_manager)
         self.thread_id = thread_id
         self._last_screen: dict = {}
+        self._fresh_capture = False
+        self._consecutive_failures = 0
+
+    def _fail(self, msg: str) -> ToolResult:
+        self._consecutive_failures += 1
+        if self._consecutive_failures >= 2:
+            return self.fail_response(
+                f"{msg} Stop. Do not call any more computer tools. Tell the user to enable Screen Recording and Accessibility for Dobby, then fully quit (Cmd+Q) and reopen the app."
+            )
+        return self.fail_response(msg)
 
     async def _require_local_computer(self):
         await self._ensure_sandbox()
@@ -179,7 +189,7 @@ class SandboxComputerTool(SandboxToolsBase):
         result = await asyncio.wait_for(computer.screenshot(), timeout=8) or {}
         png_b64, image_width, image_height = prepare_screenshot(result.get("png_b64") or "")
         if not png_b64:
-            return self.fail_response("Screenshot failed. Grant Screen Recording permission to Electron, then fully quit and restart the desktop app.")
+            return self.fail_response("Screenshot failed. Grant Screen Recording permission to Dobby, then fully quit (Cmd+Q) and reopen the desktop app.")
 
         # width/height must describe the image the model actually sees, since clicks
         # are mapped back to the screen using that ratio.
@@ -223,6 +233,8 @@ class SandboxComputerTool(SandboxToolsBase):
                 "metadata": {"kind": "computer_screenshot"},
             }
         logger.info(f"[COMPUTER] Capture ready: {message}")
+        self._fresh_capture = True
+        self._consecutive_failures = 0
         return self.success_response(payload)
 
     async def _omit_previous_computer_screenshots(self) -> None:
@@ -257,7 +269,7 @@ class SandboxComputerTool(SandboxToolsBase):
         "type": "function",
         "function": {
             "name": "computer_screenshot",
-            "description": "Capture the current Mac screen. If the user only asked for a screenshot, take exactly one and stop. Do not recapture because you see Dobby. Use width/height for click coordinates in screenshot pixels.",
+            "description": "Capture the Mac screen only when you do not already have one. Click, type, key, scroll, and open already return a screenshot — use that instead of calling this. If the user only asked for a screenshot, take exactly one and stop.",
             "parameters": {
                 "type": "object",
                 "properties": {},
@@ -267,16 +279,28 @@ class SandboxComputerTool(SandboxToolsBase):
     })
     async def computer_screenshot(self) -> ToolResult:
         try:
-            return await self._capture("Screenshot captured.")
+            if self._fresh_capture:
+                self._fresh_capture = False
+                logger.info("[COMPUTER] Reusing last screenshot instead of recapturing")
+                return self.success_response({
+                    "success": True,
+                    "message": "The last computer action already returned the current screen. Use that screenshot's coordinates for the next click or type. Do not recapture.",
+                    **self._last_screen,
+                    "reused": True,
+                })
+            result = await self._capture("Screenshot captured.")
+            if not result.success:
+                return self._fail(result.output)
+            return result
         except Exception as e:
             logger.error(f"[COMPUTER] screenshot failed: {e}")
-            return self.fail_response(str(e))
+            return self._fail(str(e))
 
     @openapi_schema({
         "type": "function",
         "function": {
             "name": "computer_click",
-            "description": "Click the Mac screen at screenshot-pixel coordinates from the latest computer_screenshot. Use the cursor tip on the target.",
+            "description": "Click the Mac screen at screenshot-pixel coordinates from the last computer_* screenshot (the one the previous click/type/open already returned). Do not call computer_screenshot first. Use the cursor tip on the target.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -296,50 +320,48 @@ class SandboxComputerTool(SandboxToolsBase):
             if error:
                 return error
             await computer.click(x=x, y=y, button=button or "left", count=int(count or 1), **self._screen_meta())
-            await asyncio.sleep(0.4)
+            await asyncio.sleep(0.7)
             return await self._capture(f"Clicked ({int(x)}, {int(y)}).")
         except Exception as e:
             logger.error(f"[COMPUTER] click failed: {e}")
-            return self.fail_response(str(e))
+            return self._fail(str(e))
 
     @openapi_schema({
         "type": "function",
         "function": {
             "name": "computer_type",
-            "description": "Type text into the focused field on this Mac. Always click the target field with computer_click first, then confirm in the returned screenshot that the text landed there. Set submit true to press return after typing.",
+            "description": "Type text into the focused field on this Mac. Always click the target field with computer_click first. Set replace true to overwrite existing text in one step (select-all then paste) — use this for WeChat search and any field that is not empty. Set submit true to type and press return in the same step (send a message or submit a form). Do not follow this with computer_key return.",
             "parameters": {
                 "type": "object",
                 "properties": {
                     "text": {"type": "string", "description": "Text to type"},
-                    "submit": {"type": "boolean", "description": "If true, press return after typing"},
+                    "replace": {"type": "boolean", "description": "If true, select all existing text and replace it. Use this instead of backspacing or clicking a clear button."},
+                    "submit": {"type": "boolean", "description": "If true, type and press return in one step, then screenshot once. Use this to send a message or submit a form. Do not use this for WeChat contact search, and do not call computer_key return afterward."},
                 },
                 "required": ["text"],
                 "additionalProperties": False,
             },
         },
     })
-    async def computer_type(self, text: str, submit: bool = False) -> ToolResult:
+    async def computer_type(self, text: str, replace: bool = False, submit: bool = False) -> ToolResult:
         try:
             computer, error = await self._require_local_computer()
             if error:
                 return error
-            await computer.type(text=str(text or ""))
-            if submit:
-                await asyncio.sleep(0.15)
-                await computer.key(key="return")
-                await asyncio.sleep(0.35)
-                return await self._capture("Typed and submitted.")
+            await computer.type(text=str(text or ""), replace=bool(replace), submit=bool(submit))
             await asyncio.sleep(0.35)
-            return await self._capture("Typed text.")
+            if submit:
+                return await self._capture("Typed and submitted.")
+            return await self._capture("Replaced field text." if replace else "Typed text.")
         except Exception as e:
             logger.error(f"[COMPUTER] type failed: {e}")
-            return self.fail_response(str(e))
+            return self._fail(str(e))
 
     @openapi_schema({
         "type": "function",
         "function": {
             "name": "computer_key",
-            "description": "Press a key or key combo on this Mac. Examples: return, tab, escape, space, cmd+c, cmd+v, cmd+space, cmd+tab.",
+            "description": "Press a key or key combo on this Mac. Examples: tab, escape, space, cmd+c, cmd+v, cmd+space, cmd+tab. To type text and press return, use computer_type with submit true — do not type and then call this with return. To replace field text, prefer computer_type with replace true instead of cmd+a plus a second type.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -360,7 +382,7 @@ class SandboxComputerTool(SandboxToolsBase):
             return await self._capture(f"Pressed {key}.")
         except Exception as e:
             logger.error(f"[COMPUTER] key failed: {e}")
-            return self.fail_response(str(e))
+            return self._fail(str(e))
 
     @openapi_schema({
         "type": "function",
@@ -390,7 +412,7 @@ class SandboxComputerTool(SandboxToolsBase):
             return await self._capture("Scrolled.")
         except Exception as e:
             logger.error(f"[COMPUTER] scroll failed: {e}")
-            return self.fail_response(str(e))
+            return self._fail(str(e))
 
     @openapi_schema({
         "type": "function",
@@ -415,10 +437,13 @@ class SandboxComputerTool(SandboxToolsBase):
             await computer.open(target=str(target or ""))
             await asyncio.sleep(0.8)
             try:
-                return await asyncio.wait_for(self._capture(f"Opened {target}."), timeout=15)
+                captured = await asyncio.wait_for(self._capture(f"Opened {target}."), timeout=15)
+                if captured.success:
+                    return captured
+                logger.warning(f"[COMPUTER] open succeeded but screenshot failed: {captured.output}")
             except Exception as e:
                 logger.warning(f"[COMPUTER] open succeeded but screenshot failed: {e}")
-                return self.success_response({"success": True, "message": f"Opened {target}."})
+            return self.success_response({"success": True, "message": f"Opened {target}."})
         except Exception as e:
             logger.error(f"[COMPUTER] open failed: {e}")
             return self.fail_response(str(e))

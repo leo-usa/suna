@@ -157,6 +157,26 @@ Usage notes:
                     folder = folder[len("workspace/"):]
                 if folder:
                     cwd = f"{self.workspace_path}/{folder}"
+
+            sandbox_id = str(getattr(self._sandbox_info, "sandbox_id", "") or "")
+            if sandbox_id.startswith("local:"):
+                try:
+                    result = await self.sandbox.process.exec(
+                        command,
+                        timeout=float(timeout),
+                        cwd=cwd,
+                    )
+                    output = (result.stdout or result.result or "") or ""
+                    stderr = result.stderr or ""
+                    if stderr:
+                        output = f"{output}\n{stderr}".strip() if output else stderr
+                    return self.success_response({
+                        "output": output.strip(),
+                        "cwd": cwd,
+                        "exit_code": int(result.exit_code or 0),
+                    })
+                except Exception as e:
+                    return self.fail_response(f"Error executing command: {str(e)}")
             
             # Use PTY for real-time streaming
             tool_output_ctx = get_tool_output_streaming_context()

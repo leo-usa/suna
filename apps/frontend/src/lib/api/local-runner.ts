@@ -96,7 +96,7 @@ async function connectLocalRunner(timeoutMs: number): Promise<void> {
 
   if (status.hasToken) {
     await startRunnerConnection(api, { backendWsUrl: wsUrl });
-    if (await waitUntilOnline(api, timeoutMs)) return;
+    if (await waitUntilOnline(api, timeoutMs) && (await backendHasOnlineDevice())) return;
   }
 
   const paired = await pairLocalRunner();
@@ -104,7 +104,7 @@ async function connectLocalRunner(timeoutMs: number): Promise<void> {
     deviceToken: paired.device_token,
     backendWsUrl: wsUrl,
   });
-  if (await waitUntilOnline(api, timeoutMs)) return;
+  if (await waitUntilOnline(api, timeoutMs) && (await backendHasOnlineDevice())) return;
   const failed = await api.status();
   throw new Error(failed.error || 'This computer is not connected. Open the Dobby desktop app and try again.');
 }

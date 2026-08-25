@@ -5,28 +5,38 @@ import { isElectron } from '@/lib/utils/is-electron';
 import { ensureLocalRunnerReady } from '@/lib/api/local-runner';
 
 export function useLocalRunnerPairing(enabled: boolean) {
-  const started = useRef(false);
+  const inFlight = useRef(false);
 
   useEffect(() => {
     if (!enabled || !isElectron() || typeof window === 'undefined' || !window.dobbyLocal) {
       return;
     }
-    if (started.current) return;
-    started.current = true;
 
     let cancelled = false;
-    (async () => {
+
+    const connect = async () => {
+      if (cancelled || inFlight.current) return;
+      inFlight.current = true;
       try {
         await ensureLocalRunnerReady();
-        if (cancelled) return;
       } catch (error) {
         console.warn('[local-runner] pairing failed', error);
-        started.current = false;
+      } finally {
+        inFlight.current = false;
       }
-    })();
+    };
+
+    void connect();
+    const interval = window.setInterval(() => {
+      if (cancelled || inFlight.current) return;
+      void window.dobbyLocal?.status().then((status) => {
+        if (status.state !== 'online') void connect();
+      });
+    }, 5000);
 
     return () => {
       cancelled = true;
+      window.clearInterval(interval);
     };
   }, [enabled]);
 }

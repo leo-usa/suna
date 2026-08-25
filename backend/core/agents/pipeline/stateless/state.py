@@ -27,7 +27,7 @@ def _is_computer_screen_observation(msg: Dict[str, Any]) -> bool:
             has_image = True
         if part.get("type") == "text":
             text = str(part.get("text") or "")
-            if text.startswith("Current Mac screen (observation only") or text.strip() == "[Screenshot of this computer]":
+            if text.startswith("Current Mac screen") or text.strip() == "[Screenshot of this computer]":
                 is_computer_screen = True
     return has_image and is_computer_screen
 
@@ -184,6 +184,9 @@ class RunState:
             self._messages.append(msg)
 
     async def _check_credits(self) -> None:
+        await self.ensure_credits(wait_for_cache_ms=3000)
+
+    async def ensure_credits(self, wait_for_cache_ms: int = 0) -> bool:
         try:
             from core.billing.credits.integration import billing_integration
             from core.utils.config import config, EnvMode
@@ -191,22 +194,25 @@ class RunState:
             
             if config.ENV_MODE == EnvMode.LOCAL:
                 logger.debug("[RunState] Skipping credit check in local mode")
-                return
+                return True
             
             can_run, message, _ = await billing_integration.check_and_reserve_credits(
-                self.account_id, wait_for_cache_ms=3000
+                self.account_id, wait_for_cache_ms=wait_for_cache_ms
             )
             
             if not can_run:
                 logger.error(f"[RunState] {message}")
-                self._terminate(f"insufficient_credits")
+                self._terminate("insufficient_credits")
                 await stream_user_error(
                     stream_key=self.stream_key,
                     error=message,
                     error_code="INSUFFICIENT_CREDITS"
                 )
+                return False
+            return True
         except Exception as e:
             logger.warning(f"[RunState] Credit check failed: {e}")
+            return True
 
     @property
     def step(self) -> int:
@@ -248,7 +254,7 @@ class RunState:
         if self._step_counter >= self.MAX_STEPS:
             self._terminate("max_steps_exceeded")
             return False
-            
+
         return True
 
     def next_step(self) -> int:

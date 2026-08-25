@@ -10,9 +10,11 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
+    "test": "node --test runner/workspace.test.js runner/computer.test.js",
     "build": "electron-builder",
     "build:mac": "node -r dotenv/config -e 'require(\"./build-signed.js\")' || electron-builder --mac",
-    "build:mac:unsigned": "electron-builder --mac",
+    "build:mac:unsigned": "CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --mac",
+    "app:local": "node make-local-app.js",
     "build:win": "electron-builder --win",
     "build:linux": "electron-builder --linux"
   },
@@ -41,7 +43,14 @@
       "hardenedRuntime": true,
       "gatekeeperAssess": false,
       "entitlements": "entitlements.mac.plist",
-      "entitlementsInherit": "entitlements.mac.plist"
+      "entitlementsInherit": "entitlements.mac.plist",
+      "extendInfo": {
+        "NSAppleEventsUsageDescription": "Dobby uses Apple Events to type, click, and open apps on this Mac.",
+        "NSScreenCaptureUsageDescription": "Dobby captures the screen so it can see what is on this computer.",
+        "NSDocumentsFolderUsageDescription": "Dobby saves this project's files in Documents/Dobby so it can list, read, and edit them on this Mac.",
+        "NSDesktopFolderUsageDescription": "Dobby can use files on your Desktop when a project needs them.",
+        "NSDownloadsFolderUsageDescription": "Dobby can use files in Downloads when a project needs them."
+      }
     },
     "afterSign": "notarize.js",
     "dmg": {

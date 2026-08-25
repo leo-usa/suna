@@ -63,7 +63,7 @@ class SandboxResolver:
     ) -> Optional[SandboxInfo]:
         start_time = time.time()
 
-        local_info = await self._resolve_local(project_id, db_client)
+        local_info = await self._resolve_local(project_id, account_id, db_client)
         if local_info:
             elapsed = (time.time() - start_time) * 1000
             logger.debug(f"[RESOLVER] Local runner for {project_id}: {local_info.sandbox_id} in {elapsed:.0f}ms")
@@ -106,13 +106,13 @@ class SandboxResolver:
         
         return sandbox_info
 
-    async def _resolve_local(self, project_id: str, db_client) -> Optional[SandboxInfo]:
+    async def _resolve_local(self, project_id: str, account_id: str, db_client) -> Optional[SandboxInfo]:
         if not db_client:
             return None
         try:
             result = (
                 await db_client.table("projects")
-                .select("execution_target, local_device_id, name")
+                .select("execution_target, local_device_id, name, account_id")
                 .eq("project_id", project_id)
                 .maybe_single()
                 .execute()
@@ -121,13 +121,19 @@ class SandboxResolver:
                 return None
             device_id = result.data.get("local_device_id")
             project_name = result.data.get("name")
-            if not device_id:
-                logger.warning(f"[RESOLVER] Project {project_id} is local but has no device")
-                return None
+            owner_id = result.data.get("account_id") or account_id
             from core.local_runner.client import LocalSandbox
-            from core.local_runner.registry import LocalRunnerOffline, get_online_info, is_online
+            from core.local_runner.registry import LocalRunnerOffline, get_online_info
+            from core.local_runner.service import ensure_project_device_online
 
-            if not await is_online(device_id):
+            device_id = await ensure_project_device_online(
+                db_client,
+                project_id,
+                account_id=owner_id,
+                device_id=device_id,
+            )
+            if not device_id:
+                logger.warning(f"[RESOLVER] Project {project_id} is local but has no online device")
                 raise LocalRunnerOffline("This computer is not connected. Open the Dobby desktop app and try again.")
             info = await get_online_info(device_id)
             preview_port = int((info or {}).get("preview_port") or 18080)

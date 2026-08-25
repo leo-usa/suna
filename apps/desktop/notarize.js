@@ -8,14 +8,14 @@ exports.default = async function notarizing(context) {
     return;
   }
 
-  // Skip if no credentials (local builds)
+  const appName = context.packager.appInfo.productFilename;
+  const appPath = `${appOutDir}/${appName}.app`;
+
+  // Skip if no credentials (local unsigned builds).
   if (!process.env.APPLE_ID || !process.env.APPLE_APP_SPECIFIC_PASSWORD) {
     console.log('⏭️  Skipping notarization (no credentials)');
     return;
   }
-
-  const appName = context.packager.appInfo.productFilename;
-  const appPath = `${appOutDir}/${appName}.app`;
 
   console.log(`🔔 Notarizing ${appPath}...`);
 

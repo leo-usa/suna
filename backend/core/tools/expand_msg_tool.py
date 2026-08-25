@@ -255,7 +255,11 @@ class ExpandMessageTool(Tool):
             return self.fail_response(
                 f"Tools not found: {', '.join(not_found)}. Available tools: {available}"
             )
-        
+
+        computer_already_ready = any(
+            "computer" in str(name).lower() for name in already_active
+        ) or any(fn.startswith("computer_") for fn in active_functions)
+
         project_id = getattr(self.thread_manager, 'project_id', None)
         jit_config = getattr(self.thread_manager, 'jit_config', None)
         
@@ -333,6 +337,15 @@ class ExpandMessageTool(Tool):
         message = f"Loaded {len(guides)} tool guide(s). Tools are now available for use."
         if already_active:
             message += f" Already ready without initialization: {', '.join(already_active)}."
+        if computer_already_ready:
+            from core.tools.sb_computer_tool import SandboxComputerTool
+            computer_guide = getattr(SandboxComputerTool, "__tool_metadata__", None)
+            if computer_guide and computer_guide.usage_guide:
+                guides.append(f"## This computer\n\n{computer_guide.usage_guide}")
+            message += (
+                " Local computer tools are already loaded. Do not call initialize_tools again. "
+                "Continue with computer_open for the app the user named."
+            )
         
         result = self.success_response({
             "status": "success",

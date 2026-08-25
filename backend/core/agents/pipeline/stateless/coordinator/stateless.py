@@ -25,7 +25,7 @@ from .initialization import ManagerInitializer
 class StatelessCoordinator(BaseCoordinator):
     INIT_TIMEOUT = 10.0
 
-    async def execute(self, ctx: PipelineContext, max_steps: int = 25) -> AsyncGenerator[Dict[str, Any], None]:
+    async def execute(self, ctx: PipelineContext, max_steps: int | None = None) -> AsyncGenerator[Dict[str, Any], None]:
         start = time.time()
         self._thread_run_id = str(uuid.uuid4())
 
@@ -113,7 +113,7 @@ class StatelessCoordinator(BaseCoordinator):
         self, 
         ctx: PipelineContext, 
         execution_engine: ExecutionEngine, 
-        max_steps: int
+        max_steps: int | None
     ) -> AsyncGenerator[Dict[str, Any], None]:
         should_continue_loop = True
         auto_continue_count = 0
@@ -128,6 +128,10 @@ class StatelessCoordinator(BaseCoordinator):
             if ctx.cancellation_event and ctx.cancellation_event.is_set():
                 self._state.cancel()
                 yield {"type": "status", "status": "stopped", "message": "Cancelled"}
+                break
+
+            if not await self._state.ensure_credits(wait_for_cache_ms=3000 if auto_continue_count == 0 else 0):
+                yield {"type": "status", "status": "stopped", "message": "Insufficient credits"}
                 break
 
             if not await idempotency.check(ctx.agent_run_id, step, "llm"):
@@ -170,7 +174,7 @@ class StatelessCoordinator(BaseCoordinator):
             auto_continue_count += 1
             logger.debug(f"[Coordinator] Auto-continue #{auto_continue_count}")
 
-            if auto_continue_count >= max_steps:
+            if max_steps is not None and auto_continue_count >= max_steps:
                 self._state._terminate("max_auto_continues")
                 break
 

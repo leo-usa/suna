@@ -76,7 +76,11 @@ function isHealthPath(urlPath) {
 function startPreviewServer({ port, home } = {}) {
   const roots = dobbyRoots(home || os.homedir());
   for (const root of roots) {
-    fs.mkdirSync(root, { recursive: true });
+    try {
+      fs.mkdirSync(root, { recursive: true });
+    } catch (_) {
+      /* TCC may prompt later when a project folder is used */
+    }
   }
 
   const server = http.createServer((req, res) => {

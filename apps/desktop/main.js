@@ -17,6 +17,19 @@ function resolveAppUrl() {
 // Get URL from environment, packaged build metadata, or production
 const APP_URL = resolveAppUrl();
 
+const gotSingleInstanceLock = app.requestSingleInstanceLock();
+if (!gotSingleInstanceLock) {
+  app.quit();
+} else {
+  app.on('second-instance', () => {
+    const win = BrowserWindow.getAllWindows()[0];
+    if (!win) return;
+    if (win.isMinimized()) win.restore();
+    win.show();
+    win.focus();
+  });
+}
+
 // Simple dev check without ES module dependency
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
 
@@ -572,7 +585,9 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+  if (!gotSingleInstanceLock) return;
   localRunner.registerIpc();
+  localRunner.claimLocalFolders();
 
   if (process.platform === 'darwin') {
     // Use .icns for macOS dock icon - ensures proper styling with rounded corners
@@ -623,4 +638,8 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
   }
+});
+
+app.on('before-quit', () => {
+  localRunner.stopRunner({ immediate: true });
 });

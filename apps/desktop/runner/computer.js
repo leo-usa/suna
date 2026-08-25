@@ -152,14 +152,27 @@ function writeClipboardText(text) {
   });
 }
 
-async function typeViaPaste(text) {
+async function typeViaPaste(text, replace, submit) {
   const value = String(text || '');
-  if (!value) return { ok: true };
+  if (replace) {
+    await runOsascript(keyScript('cmd+a'));
+    await delay(40);
+    if (!value) {
+      await runOsascript(keyScript('backspace'));
+      return { ok: true };
+    }
+  } else if (!value) {
+    return { ok: true };
+  }
   const previous = await readClipboardText();
   try {
     await writeClipboardText(value);
     await runOsascript(keyScript('cmd+v'));
     await delay(80);
+    if (submit) {
+      await delay(150);
+      await runOsascript(keyScript('return'));
+    }
   } finally {
     try {
       await writeClipboardText(previous);
@@ -255,6 +268,14 @@ const APP_ALIASES = {
   'google chrome': ['Google Chrome', 'Chrome'],
 };
 
+const APP_BUNDLES = {
+  wechat: 'com.tencent.xinWeChat',
+  weixin: 'com.tencent.xinWeChat',
+  微信: 'com.tencent.xinWeChat',
+};
+
+let lastActivatedApp = '';
+
 function openCandidates(target) {
   const value = String(target || '').trim();
   if (!value) return [];
@@ -273,10 +294,56 @@ function spawnOpen(args) {
   });
 }
 
+function activateAppScript(names) {
+  return `
+function run() {
+  const names = ${JSON.stringify(names)};
+  const se = Application('System Events');
+  for (const name of names) {
+    try {
+      const matches = se.applicationProcesses.whose({ name: name });
+      if (matches.length) {
+        matches[0].frontmost = true;
+        return name;
+      }
+    } catch (e) {}
+  }
+  for (const name of names) {
+    try {
+      Application(name).activate();
+      return name;
+    } catch (e) {}
+  }
+  return '';
+}
+`;
+}
+
+async function activateApp(name) {
+  const names = openCandidates(name);
+  if (name && !names.includes(name)) names.unshift(name);
+  if (!names.length) return;
+  await runOsascript(activateAppScript(names));
+}
+
+async function rememberActivatedApp(name) {
+  lastActivatedApp = name;
+}
+
+async function ensureLastAppFront() {
+  if (!lastActivatedApp) return;
+  try {
+    await activateApp(lastActivatedApp);
+  } catch (_) {
+    /* keep going; a failed activate should not block the screenshot */
+  }
+}
+
 async function openTarget(target) {
   const value = String(target || '').trim();
   if (!value) throw new Error('Missing app or URL');
   if (/^[a-z][a-z0-9+.-]*:/i.test(value) || value.startsWith('/')) {
+    lastActivatedApp = '';
     await spawnOpen([value]);
     return { ok: true, opened: value };
   }
@@ -285,7 +352,18 @@ async function openTarget(target) {
   for (const name of names) {
     try {
       await spawnOpen(['-a', name]);
+      await rememberActivatedApp(name);
       return { ok: true, opened: name };
+    } catch (err) {
+      lastError = err;
+    }
+  }
+  const bundle = APP_BUNDLES[value.toLowerCase()];
+  if (bundle) {
+    try {
+      await spawnOpen(['-b', bundle]);
+      await rememberActivatedApp(names[0] || value);
+      return { ok: true, opened: names[0] || value };
     } catch (err) {
       lastError = err;
     }
@@ -295,6 +373,7 @@ async function openTarget(target) {
 
 async function runComputerAction(kind, payload) {
   payload = payload || {};
+  if (kind !== 'open') await ensureLastAppFront();
   switch (kind) {
     case 'screenshot':
       return screenshotWithScreencapture();
@@ -306,7 +385,7 @@ async function runComputerAction(kind, payload) {
     case 'type':
       // keystroke() only emits keys on the current layout, so Chinese becomes
       // garbage (杨宁 → aa). Paste inserts the real Unicode and also bypasses IME.
-      return typeViaPaste(payload.text);
+      return typeViaPaste(payload.text, payload.replace, payload.submit);
     case 'key':
       await runOsascript(keyScript(payload.key));
       return { ok: true, key: payload.key };
@@ -332,5 +411,6 @@ module.exports = {
   utf8Env,
   keyScript,
   openCandidates,
+  activateAppScript,
   runComputerAction,
 };

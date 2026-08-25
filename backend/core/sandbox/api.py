@@ -193,7 +193,7 @@ async def get_sandbox_by_id_safely(client, sandbox_id: str) -> AsyncSandbox:
         device_id = config.get("device_id")
         project = (
             await client.table("projects")
-            .select("local_device_id, name")
+            .select("local_device_id, name, account_id")
             .eq("project_id", project_id)
             .maybe_single()
             .execute()
@@ -202,6 +202,13 @@ async def get_sandbox_by_id_safely(client, sandbox_id: str) -> AsyncSandbox:
         if not device_id:
             device_id = project_data.get("local_device_id")
         project_name = project_data.get("name")
+        from core.local_runner.service import ensure_project_device_online
+        device_id = await ensure_project_device_online(
+            client,
+            project_id,
+            account_id=project_data.get("account_id"),
+            device_id=device_id,
+        )
         if not device_id:
             raise HTTPException(status_code=503, detail="This computer is not paired")
         if not await is_online(device_id):
@@ -665,9 +672,15 @@ async def ensure_project_sandbox_active(
         sandbox_id = sandbox_resource.get('external_id')
         from core.local_runner.service import is_local_sandbox_id
         if is_local_sandbox_id(sandbox_id):
-            from core.local_runner.registry import is_online
+            from core.local_runner.service import ensure_project_device_online
             device_id = (sandbox_resource.get("config") or {}).get("device_id")
-            if not device_id or not await is_online(device_id):
+            device_id = await ensure_project_device_online(
+                client,
+                project_id,
+                account_id=project_data.get("account_id"),
+                device_id=device_id,
+            )
+            if not device_id:
                 raise HTTPException(status_code=503, detail="This computer is not connected. Open the Dobby desktop app and try again.")
             return {
                 "status": "success",

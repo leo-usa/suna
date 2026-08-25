@@ -66,11 +66,22 @@ export function LocalExecutionToggle({ projectId }: { projectId?: string }) {
   };
 
   useEffect(() => {
-    if (!electron || !projectId || pending || projectLoading) return;
+    if (!electron || !projectId || pending || projectLoading || !project) return;
     if (triedProject.current === projectId) return;
-    if (getPreferredExecutionTarget() !== 'local') return;
-    if (!project || project.execution_target === 'local') return;
     triedProject.current = projectId;
+    if (project.execution_target === 'local') {
+      void (async () => {
+        try {
+          await ensureLocalRunnerReady();
+          await setProjectExecutionTarget(projectId, 'local');
+          await queryClient.invalidateQueries({ queryKey: threadKeys.project(projectId) });
+        } catch (error: any) {
+          toast.error(error?.message || t('localRunnerConnectFailed'));
+        }
+      })();
+      return;
+    }
+    if (getPreferredExecutionTarget() !== 'local') return;
     void onToggle(true);
   }, [electron, projectId, project, pending, projectLoading]);
 

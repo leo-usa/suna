@@ -6,8 +6,8 @@ from core.utils.logger import logger
 
 class AutoContinueChecker:
     @staticmethod
-    def check(chunk: Dict[str, Any], count: int, max_continues: int) -> tuple[bool, bool]:
-        if count >= max_continues:
+    def check(chunk: Dict[str, Any], count: int, max_continues: int | None = None) -> tuple[bool, bool]:
+        if max_continues is not None and count >= max_continues:
             return False, False
 
         if chunk.get("type") != "status":
