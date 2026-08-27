@@ -183,7 +183,7 @@ async def enable_local_execution(
 
     project = (
         await client.table("projects")
-        .select("project_id, sandbox_resource_id, execution_target")
+        .select("project_id, sandbox_resource_id, execution_target, name")
         .eq("project_id", project_id)
         .maybe_single()
         .execute()
@@ -241,6 +241,7 @@ async def enable_local_execution(
         },
     )
     logger.info(f"[LOCAL_RUNNER] Project {project_id} now runs on device {device_id}")
+    await ensure_local_workspace(device_id, project_id, project.data.get("name"))
     return {
         "project_id": project_id,
         "execution_target": "local",
@@ -248,6 +249,30 @@ async def enable_local_execution(
         "sandbox_id": sandbox_id,
         "sandbox_url": sandbox_url,
     }
+
+
+async def ensure_local_workspace(
+    device_id: Optional[str],
+    project_id: str,
+    project_name: Optional[str] = None,
+) -> bool:
+    """Create ~/Documents/Dobby/<project> on the Mac as soon as a local run starts."""
+    from core.local_runner.registry import rpc
+
+    if not device_id or not project_id:
+        return False
+    if not await is_online(device_id):
+        return False
+    params: dict[str, Any] = {"project_id": project_id, "path": "/workspace"}
+    if project_name:
+        params["project_name"] = project_name
+    try:
+        await rpc(device_id, proto.FS_MAKE_DIR, params, timeout=30)
+        logger.info(f"[LOCAL_RUNNER] Ensured workspace folder for {project_id}")
+        return True
+    except Exception as e:
+        logger.warning(f"[LOCAL_RUNNER] Could not create workspace folder for {project_id}: {e}")
+        return False
 
 
 async def enable_local_execution_for_user(client, project_id: str, account_id: str, user_id: str) -> dict[str, Any]:

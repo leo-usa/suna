@@ -42,7 +42,7 @@ class ManagerInitializer:
         try:
             client = await thread_manager.db.client
             project = await client.table('projects')\
-                .select('execution_target, local_device_id')\
+                .select('execution_target, local_device_id, name')\
                 .eq('project_id', ctx.project_id)\
                 .maybe_single()\
                 .execute()
@@ -50,6 +50,13 @@ class ManagerInitializer:
                 execution_target = project.data.get('execution_target')
                 ctx.execution_target = execution_target
                 ctx.local_device_id = project.data.get('local_device_id')
+                if (execution_target or "").lower() == "local" and ctx.local_device_id:
+                    from core.local_runner.service import ensure_local_workspace
+                    await ensure_local_workspace(
+                        ctx.local_device_id,
+                        ctx.project_id,
+                        project.data.get("name"),
+                    )
         except Exception as e:
             logger.debug(f"Could not load execution_target for {ctx.project_id}: {e}")
 

@@ -22,6 +22,7 @@ from core.utils.logger import logger
 
 _connections: dict[str, "RunnerConnection"] = {}
 _connections_lock = asyncio.Lock()
+_BLPOP_SLICE_SECONDS = 5
 
 
 class LocalRunnerError(RuntimeError):
@@ -110,12 +111,17 @@ async def register_connection(
     return conn
 
 
-async def unregister_connection(device_id: str) -> None:
+async def unregister_connection(device_id: str, conn: Optional[RunnerConnection] = None) -> None:
+    """Drop a runner socket. If `conn` is given, ignore stale sockets that a newer connection replaced."""
     async with _connections_lock:
-        conn = _connections.pop(device_id, None)
-    if conn:
-        await conn.stop()
-    await redis.delete(ONLINE_KEY.format(device_id=device_id))
+        current = _connections.get(device_id)
+        if conn is not None and current is not conn:
+            return
+        popped = _connections.pop(device_id, None)
+    if popped:
+        await popped.stop()
+    if conn is None or popped is conn:
+        await redis.delete(ONLINE_KEY.format(device_id=device_id))
 
 
 def get_connection(device_id: str) -> Optional[RunnerConnection]:
@@ -192,7 +198,7 @@ async def rpc(device_id: str, method: str, params: Optional[dict] = None, timeou
         await client.rpush(inbox, json.dumps(message))
         await client.expire(inbox, int(timeout) + 30)
         reply_key = REPLY_KEY.format(request_id=request_id)
-        popped = await client.blpop(reply_key, timeout=int(timeout))
+        popped = await _blpop_until(client, reply_key, timeout)
         if not popped:
             raise LocalRunnerError(f"RPC {method} timed out waiting for runner {device_id}")
         _key, raw = popped
@@ -204,6 +210,25 @@ async def rpc(device_id: str, method: str, params: Optional[dict] = None, timeou
         err = response["error"]
         raise LocalRunnerError(err.get("message") if isinstance(err, dict) else str(err))
     return response.get("result")
+
+
+async def _blpop_until(client, key: str, timeout: float):
+    """BLPOP in short slices so redis-py's 10s socket_timeout cannot abort a long wait."""
+    loop = asyncio.get_running_loop()
+    deadline = loop.time() + max(0.0, float(timeout))
+    while True:
+        remaining = deadline - loop.time()
+        if remaining <= 0:
+            return None
+        slice_timeout = max(1, min(_BLPOP_SLICE_SECONDS, int(remaining) or 1))
+        try:
+            popped = await client.blpop(key, timeout=slice_timeout)
+        except Exception as e:
+            if type(e).__name__ not in {"TimeoutError", "Timeout"}:
+                raise
+            popped = None
+        if popped:
+            return popped
 
 
 async def _write_reply(request_id: str, message: dict) -> None:

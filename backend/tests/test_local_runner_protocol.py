@@ -1,3 +1,5 @@
+import pytest
+
 from core.local_runner.protocol import (
     COMPUTER_CLICK,
     COMPUTER_SCREENSHOT,
@@ -60,6 +62,36 @@ def test_uses_local_runtime():
     assert uses_local_runtime("local", None) is True
     assert uses_local_runtime("cloud", "local:proj") is True
     assert uses_local_runtime("cloud", "daytona-id") is False
+
+
+@pytest.mark.asyncio
+async def test_ensure_local_workspace_creates_folder_via_rpc(monkeypatch):
+    from core.local_runner import service as local_service
+    from core.local_runner.protocol import FS_MAKE_DIR
+
+    calls = []
+
+    async def fake_is_online(device_id):
+        return device_id == "dev-online"
+
+    async def fake_rpc(device_id, method, params, timeout=30):
+        calls.append((device_id, method, params, timeout))
+        return {"ok": True}
+
+    monkeypatch.setattr(local_service, "is_online", fake_is_online)
+    monkeypatch.setattr("core.local_runner.registry.rpc", fake_rpc)
+
+    assert await local_service.ensure_local_workspace(None, "proj") is False
+    assert await local_service.ensure_local_workspace("dev-offline", "proj") is False
+    assert await local_service.ensure_local_workspace("dev-online", "proj", "Hello World") is True
+    assert calls == [
+        (
+            "dev-online",
+            FS_MAKE_DIR,
+            {"project_id": "proj", "path": "/workspace", "project_name": "Hello World"},
+            30,
+        )
+    ]
 
 
 def test_computer_tool_is_not_in_cloud_index():

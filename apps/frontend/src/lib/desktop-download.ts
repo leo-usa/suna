@@ -4,7 +4,7 @@ export const DESKTOP_DOWNLOAD_LINKS = {
   windows: 'https://download.dobby.now/desktop/latest/windows/Dobby%20Setup%201.0.0.exe',
   /** Apple Silicon (M1/M2/M3) */
   macArm:
-    'https://tsdrmlnyclxwkryqrjic.supabase.co/storage/v1/object/public/Desktop%20App/Dobby-2.0.1-arm64.dmg',
+    'https://tsdrmlnyclxwkryqrjic.supabase.co/storage/v1/object/public/Desktop%20App/Dobby-2.0.2-arm64.dmg',
   /** Intel Mac DMG — hidden when unset */
   macIntel:
     (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_DESKTOP_DOWNLOAD_MAC_INTEL) || '',

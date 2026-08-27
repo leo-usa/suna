@@ -51,7 +51,7 @@
     "subtitleMac": "Hand it off to Dobby — including on this Mac. Screenshots, clicks, typing, and apps like WeChat.",
     "subtitleDesktop": "Hand it off to Dobby. From anywhere on your computer.",
     "downloadHeading": "Download the desktop app",
-    "downloadHint": "Version 2.0.1 · macOS (Apple Silicon) · not Apple-signed",
+    "downloadHint": "Version 2.0.2 · macOS (Apple Silicon) · not Apple-signed",
     "featuresTitle": "Why you'll love it",
     "features": {
       "handoff": {
@@ -85,7 +85,7 @@
         "3": "Drag Dobby into Applications, then open it from Applications — not from the DMG or Downloads.",
         "4": "If macOS still blocks it: Control-click Dobby → Open, or System Settings → Privacy & Security → Open Anyway."
       },
-      "command": "xattr -d com.apple.quarantine ~/Downloads/Dobby-2.0.1-arm64.dmg\nopen ~/Downloads/Dobby-2.0.1-arm64.dmg"
+      "command": "xattr -d com.apple.quarantine ~/Downloads/Dobby-2.0.2-arm64.dmg\nopen ~/Downloads/Dobby-2.0.2-arm64.dmg"
     },
     "localSetup": {
       "title": "Turn on local computer",

@@ -643,3 +643,7 @@ app.on('window-all-closed', () => {
 app.on('before-quit', () => {
   localRunner.stopRunner({ immediate: true });
 });
+
+app.on('will-quit', () => {
+  localRunner.stopRunner({ immediate: true });
+});

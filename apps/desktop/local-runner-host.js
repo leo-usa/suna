@@ -1,7 +1,7 @@
 'use strict';
 
 const { app, BrowserWindow, dialog, ipcMain, Menu, shell, systemPreferences, nativeImage, powerSaveBlocker, desktopCapturer, screen } = require('electron');
-const { fork } = require('child_process');
+const { execFileSync, fork } = require('child_process');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -62,6 +62,38 @@ function savePersist() {
 
 function runnerScript() {
   return path.join(runnerDir(), 'index.js');
+}
+
+function runnerPids() {
+  const script = runnerScript();
+  try {
+    const out = execFileSync('/bin/ps', ['-axo', 'pid=,command='], { encoding: 'utf8' });
+    const pids = [];
+    for (const line of out.split('\n')) {
+      if (!line.includes(script)) continue;
+      const pid = parseInt(line.trim(), 10);
+      if (pid > 0 && pid !== process.pid) pids.push(pid);
+    }
+    return pids;
+  } catch (_) {
+    return [];
+  }
+}
+
+function killPid(pid) {
+  if (!pid) return;
+  try { process.kill(pid, 'SIGKILL'); } catch (_) { /* already gone */ }
+}
+
+function killAllRunners() {
+  const tracked = child;
+  child = null;
+  if (tracked) {
+    try { tracked.send({ type: 'stop' }); } catch (_) { /* ignore */ }
+    try { tracked.kill('SIGKILL'); } catch (_) { /* ignore */ }
+    killPid(tracked.pid);
+  }
+  for (const pid of runnerPids()) killPid(pid);
 }
 
 function setStatus(partial) {
@@ -286,10 +318,7 @@ async function promptApproval(command) {
 }
 
 function startRunner({ deviceToken, backendWsUrl }) {
-  if (child) {
-    try { child.kill('SIGKILL'); } catch (_) { /* ignore */ }
-    child = null;
-  }
+  killAllRunners();
   persist.deviceToken = deviceToken || persist.deviceToken;
   persist.backendWsUrl = backendWsUrl || persist.backendWsUrl;
   savePersist();
@@ -307,6 +336,7 @@ function startRunner({ deviceToken, backendWsUrl }) {
 
   child = fork(runnerScript(), [], {
     cwd: runnerDir,
+    detached: false,
     env: {
       ...process.env,
       LANG: process.env.LANG || 'en_US.UTF-8',
@@ -321,10 +351,12 @@ function startRunner({ deviceToken, backendWsUrl }) {
     },
     stdio: ['pipe', 'pipe', 'pipe', 'ipc'],
   });
+  const spawned = child;
   child.stdout.on('data', (buf) => console.log('[runner]', buf.toString()));
   child.stderr.on('data', (buf) => console.error('[runner]', buf.toString()));
   child.on('message', async (message) => {
     if (!message || typeof message !== 'object') return;
+    if (child !== spawned) return;
     if (message.type === 'status') {
       setStatus({
         state: message.status || status.state,
@@ -335,21 +367,21 @@ function startRunner({ deviceToken, backendWsUrl }) {
     }
     if (message.type === 'approval') {
       const decision = await promptApproval(message.command);
-      if (child) child.send({ type: 'approval-result', requestId: message.requestId, decision });
+      if (child === spawned) child.send({ type: 'approval-result', requestId: message.requestId, decision });
     }
     if (message.type === 'computer-request') {
       keepComputerUseAwake();
       const allowed = await promptComputerUse(message.kind);
       if (!allowed) {
-        if (child) child.send({ type: 'computer-result', requestId: message.requestId, error: 'Computer use denied' });
+        if (child === spawned) child.send({ type: 'computer-result', requestId: message.requestId, error: 'Computer use denied' });
         return;
       }
       try {
         const result = await handleComputerRequest(message.kind, message.payload || {});
-        if (child) child.send({ type: 'computer-result', requestId: message.requestId, result });
+        if (child === spawned) child.send({ type: 'computer-result', requestId: message.requestId, result });
         console.log('[computer]', message.kind, 'sent');
       } catch (err) {
-        if (child) child.send({ type: 'computer-result', requestId: message.requestId, error: err.message || String(err) });
+        if (child === spawned) child.send({ type: 'computer-result', requestId: message.requestId, error: err.message || String(err) });
       }
     }
     if (message.type === 'allow-all') {
@@ -363,10 +395,11 @@ function startRunner({ deviceToken, backendWsUrl }) {
     }
   });
   child.on('exit', (code) => {
+    if (child !== spawned) return;
+    child = null;
     if (status.state !== 'stopped') {
       setStatus({ state: 'offline', error: code ? `Runner exited ${code}` : null });
     }
-    child = null;
   });
   setStatus({ state: 'starting', error: null });
   return { ok: true, status };
@@ -374,11 +407,7 @@ function startRunner({ deviceToken, backendWsUrl }) {
 
 function stopRunner(opts = {}) {
   setStatus({ state: 'stopped' });
-  if (!child) return { ok: true, status };
-  const proc = child;
-  child = null;
-  try { proc.send({ type: 'stop' }); } catch (_) { /* ignore */ }
-  try { proc.kill(opts.immediate ? 'SIGKILL' : 'SIGTERM'); } catch (_) { /* ignore */ }
+  killAllRunners();
   return { ok: true, status };
 }
 

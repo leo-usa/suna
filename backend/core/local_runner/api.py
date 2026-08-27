@@ -138,6 +138,7 @@ async def revoke_device(device_id: str, user_id: str = Depends(verify_and_get_us
 async def local_runner_ws(websocket: WebSocket):
     await websocket.accept()
     device_id: Optional[str] = None
+    conn = None
     try:
         auth = await websocket.receive_json()
         if not isinstance(auth, dict) or auth.get("type") != proto.AUTH_TYPE:
@@ -184,7 +185,7 @@ async def local_runner_ws(websocket: WebSocket):
         async def send(message: dict):
             await websocket.send_json(message)
 
-        await register_connection(device_id, send, preview_port, host_tools=host_tools)
+        conn = await register_connection(device_id, send, preview_port, host_tools=host_tools)
         await websocket.send_json({"type": proto.READY_TYPE, "device_id": device_id})
         logger.info(f"[LOCAL_RUNNER] Device {device_id} connected")
 
@@ -194,8 +195,8 @@ async def local_runner_ws(websocket: WebSocket):
                 continue
             msg_type = message.get("type")
             if msg_type == proto.PING_TYPE:
-                conn = get_connection(device_id)
-                await mark_online(device_id, preview_port, host_tools=(conn.host_tools if conn else host_tools))
+                live = get_connection(device_id)
+                await mark_online(device_id, preview_port, host_tools=(live.host_tools if live else host_tools))
                 await websocket.send_json({"type": proto.PONG_TYPE})
                 continue
             if msg_type == proto.EVENT_TYPE:
@@ -214,5 +215,5 @@ async def local_runner_ws(websocket: WebSocket):
         except Exception:
             pass
     finally:
-        if device_id:
-            await unregister_connection(device_id)
+        if device_id and conn is not None:
+            await unregister_connection(device_id, conn)

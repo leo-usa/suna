@@ -124,7 +124,7 @@ class SandboxResolver:
             owner_id = result.data.get("account_id") or account_id
             from core.local_runner.client import LocalSandbox
             from core.local_runner.registry import LocalRunnerOffline, get_online_info
-            from core.local_runner.service import ensure_project_device_online
+            from core.local_runner.service import ensure_local_workspace, ensure_project_device_online
 
             device_id = await ensure_project_device_online(
                 db_client,
@@ -143,6 +143,7 @@ class SandboxResolver:
                 preview_port=preview_port,
                 project_name=project_name,
             )
+            await ensure_local_workspace(device_id, project_id, project_name)
             return SandboxInfo(
                 sandbox_id=f"local:{project_id}",
                 sandbox=sandbox,

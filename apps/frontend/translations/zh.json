@@ -51,7 +51,7 @@
     "subtitleMac": "把任务交给 Dobby，也可以直接操作这台 Mac：截屏、点击、输入，以及微信等应用。",
     "subtitleDesktop": "把任务交给 Dobby，在电脑上随时随地继续。",
     "downloadHeading": "下载桌面应用",
-    "downloadHint": "版本 2.0.1 · macOS（Apple 芯片）· 未经过 Apple 签名",
+    "downloadHint": "版本 2.0.2 · macOS（Apple 芯片）· 未经过 Apple 签名",
     "featuresTitle": "你会喜欢的理由",
     "features": {
       "handoff": {
@@ -85,7 +85,7 @@
         "3": "把 Dobby 拖进「应用程序」，然后从「应用程序」打开，不要从 DMG 或「下载」里打开。",
         "4": "如果仍然无法打开：按住 Control 键点击 Dobby →「打开」，或「系统设置」→「隐私与安全性」→「仍要打开」。"
       },
-      "command": "xattr -d com.apple.quarantine ~/Downloads/Dobby-2.0.1-arm64.dmg\nopen ~/Downloads/Dobby-2.0.1-arm64.dmg"
+      "command": "xattr -d com.apple.quarantine ~/Downloads/Dobby-2.0.2-arm64.dmg\nopen ~/Downloads/Dobby-2.0.2-arm64.dmg"
     },
     "localSetup": {
       "title": "开启本地电脑模式",

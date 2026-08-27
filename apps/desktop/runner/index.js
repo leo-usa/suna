@@ -432,7 +432,10 @@ async function handleRpc(method, params) {
 
 let socket = null;
 let pingTimer = null;
+let reconnectTimer = null;
 let backoffMs = 1000;
+let connectGeneration = 0;
+let stopping = false;
 
 function sendEvent(payload) {
   if (socket && socket.readyState === WebSocket.OPEN) {
@@ -473,14 +476,34 @@ async function onMessage(raw) {
   }
 }
 
+function closeSocket() {
+  if (pingTimer) {
+    clearInterval(pingTimer);
+    pingTimer = null;
+  }
+  const old = socket;
+  socket = null;
+  if (!old) return;
+  try { old.removeAllListeners(); } catch (_) { /* ignore */ }
+  try { old.terminate(); } catch (_) {
+    try { old.close(); } catch (__) { /* ignore */ }
+  }
+}
+
 function connect() {
-  if (!TOKEN || !BACKEND_WS) {
-    sendParent({ type: 'status', status: 'error', error: 'Missing device token or backend URL' });
+  if (stopping || !TOKEN || !BACKEND_WS) {
+    if (!TOKEN || !BACKEND_WS) {
+      sendParent({ type: 'status', status: 'error', error: 'Missing device token or backend URL' });
+    }
     return;
   }
+  const gen = ++connectGeneration;
+  closeSocket();
   sendParent({ type: 'status', status: 'connecting' });
-  socket = new WebSocket(BACKEND_WS);
-  socket.on('open', () => {
+  const ws = new WebSocket(BACKEND_WS);
+  socket = ws;
+  ws.on('open', () => {
+    if (gen !== connectGeneration || socket !== ws) return;
     sendJson({ type: 'auth', device_token: TOKEN });
     sendJson({
       type: 'hello',
@@ -492,23 +515,39 @@ function connect() {
     if (pingTimer) clearInterval(pingTimer);
     pingTimer = setInterval(() => sendJson({ type: 'ping' }), PING_MS);
   });
-  socket.on('message', onMessage);
-  socket.on('close', () => {
+  ws.on('message', onMessage);
+  ws.on('close', () => {
+    if (gen !== connectGeneration || stopping) return;
     sendParent({ type: 'status', status: 'offline' });
     scheduleReconnect();
   });
-  socket.on('error', (err) => {
+  ws.on('error', (err) => {
+    if (gen !== connectGeneration || stopping) return;
     sendParent({ type: 'status', status: 'error', error: err.message });
   });
 }
 
 function scheduleReconnect() {
+  if (stopping) return;
   if (pingTimer) {
     clearInterval(pingTimer);
     pingTimer = null;
   }
-  setTimeout(connect, backoffMs);
+  if (reconnectTimer) clearTimeout(reconnectTimer);
+  reconnectTimer = setTimeout(() => {
+    reconnectTimer = null;
+    connect();
+  }, backoffMs);
   backoffMs = Math.min(backoffMs * 2, 15000);
+}
+
+function shutdown() {
+  stopping = true;
+  if (reconnectTimer) {
+    clearTimeout(reconnectTimer);
+    reconnectTimer = null;
+  }
+  closeSocket();
 }
 
 process.on('message', (message) => {
@@ -529,9 +568,19 @@ process.on('message', (message) => {
     }
   }
   if (message.type === 'stop') {
-    if (socket) socket.close();
+    shutdown();
     process.exit(0);
   }
+});
+
+process.on('SIGTERM', () => {
+  shutdown();
+  process.exit(0);
+});
+
+process.on('SIGINT', () => {
+  shutdown();
+  process.exit(0);
 });
 
 startPreviewServer({ port: PREVIEW_PORT, home: HOME })
