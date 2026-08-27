@@ -1,5 +1,6 @@
 import { handleApiError } from '../error-handler';
 import { backendApi } from '../api-client';
+import { isLocalSandboxId } from './local-runner';
 
 export interface FileInfo {
   name: string;
@@ -98,10 +99,13 @@ export const listSandboxFiles = async (
     const normalizedPath = normalizePathWithUnicode(path);
     const response = await backendApi.get<{ files: FileInfo[] }>(
       `/sandboxes/${sandboxId}/files?path=${encodeURIComponent(normalizedPath)}`,
-      { showErrors: true }
+      { showErrors: !isLocalSandboxId(sandboxId) }
     );
 
     if (response.error) {
+      if (isLocalSandboxId(sandboxId)) {
+        return [];
+      }
       throw new Error(
         `Error listing sandbox files: ${response.error.message} (${response.error.status})`,
       );
@@ -109,6 +113,9 @@ export const listSandboxFiles = async (
 
     return response.data?.files || [];
   } catch (error) {
+    if (isLocalSandboxId(sandboxId)) {
+      return [];
+    }
     console.error('Failed to list sandbox files:', error);
     throw error;
   }
@@ -126,10 +133,13 @@ export const getSandboxFileContent = async (
     const normalizedPath = normalizePathWithUnicode(path);
     const response = await backendApi.get<string | Blob>(
       `/sandboxes/${sandboxId}/files/content?path=${encodeURIComponent(normalizedPath)}`,
-      { showErrors: true }
+      { showErrors: !isLocalSandboxId(sandboxId) }
     );
 
     if (response.error) {
+      if (isLocalSandboxId(sandboxId)) {
+        throw new Error(response.error.message || 'Local computer is offline');
+      }
       throw new Error(
         `Error getting sandbox file content: ${response.error.message} (${response.error.status})`,
       );
@@ -138,6 +148,9 @@ export const getSandboxFileContent = async (
     // backendApi handles content-type detection and returns appropriate type
     return response.data!;
   } catch (error) {
+    if (isLocalSandboxId(sandboxId)) {
+      throw error;
+    }
     console.error('Failed to get sandbox file content:', error);
     handleApiError(error, { operation: 'load file content', resource: `file ${path}` });
     throw error;

@@ -4,9 +4,19 @@ import { handleApiError } from '../error-handler';
 export type ExecutionTarget = 'cloud' | 'local';
 
 const PREFERRED_TARGET_KEY = 'dobby-run-on-this-computer';
+export const LOCAL_SANDBOX_PREFIX = 'local:';
+
+export function isLocalSandboxId(sandboxId?: string | null): boolean {
+  return Boolean(sandboxId) && sandboxId.startsWith(LOCAL_SANDBOX_PREFIX);
+}
+
+export function isLocalRunnerAvailable(): boolean {
+  return typeof window !== 'undefined' && Boolean(window.dobbyLocal);
+}
 
 export function getPreferredExecutionTarget(): ExecutionTarget {
   if (typeof window === 'undefined') return 'cloud';
+  if (!isLocalRunnerAvailable()) return 'cloud';
   return window.localStorage.getItem(PREFERRED_TARGET_KEY) === '1' ? 'local' : 'cloud';
 }
 
@@ -85,7 +95,7 @@ async function startRunnerConnection(
 }
 
 async function connectLocalRunner(timeoutMs: number): Promise<void> {
-  if (typeof window === 'undefined' || !window.dobbyLocal) {
+  if (!isLocalRunnerAvailable() || !window.dobbyLocal) {
     throw new Error('This computer is not connected. Open the Dobby desktop app and try again.');
   }
   const api = window.dobbyLocal;

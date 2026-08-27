@@ -1,7 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { backendApi } from '@/lib/api-client';
-import { ensureLocalRunnerReady } from '@/lib/api/local-runner';
+import {
+  ensureLocalRunnerReady,
+  isLocalRunnerAvailable,
+  isLocalSandboxId,
+  setProjectExecutionTarget,
+} from '@/lib/api/local-runner';
+import { threadKeys } from '@/hooks/threads/keys';
 import { sandboxKeys } from './keys';
 import type {
   SandboxStatus,
@@ -134,11 +140,13 @@ export function useStartSandbox() {
 
   return useMutation({
     mutationFn: async (projectId: string) => {
-      if (typeof window !== 'undefined' && window.dobbyLocal) {
+      if (isLocalRunnerAvailable()) {
         await ensureLocalRunnerReady();
       }
       const response = await backendApi.post<{ status: string; sandbox_id: string | null; message: string }>(
-        `/project/${projectId}/sandbox/start`
+        `/project/${projectId}/sandbox/start`,
+        undefined,
+        { showErrors: false },
       );
 
       if (!response.success) {
@@ -187,6 +195,11 @@ export function useStopSandbox() {
 // This prevents multiple hook instances from triggering simultaneous starts
 const globalAutoStartAttempted = new Map<string, boolean>();
 const globalAutoStartInProgress = new Map<string, boolean>();
+const globalWebCloudFallback = new Map<string, boolean>();
+
+function isLocalSandboxState(state: SandboxState | null | undefined): boolean {
+  return Boolean(state) && (state?.target === 'local' || isLocalSandboxId(state?.sandbox_id));
+}
 
 /**
  * Hook that monitors sandbox status and auto-starts if OFFLINE.
@@ -209,6 +222,7 @@ export function useSandboxStatusWithAutoStart(
     autoStart?: boolean;
   }
 ) {
+  const queryClient = useQueryClient();
   const autoStartEnabled = options?.autoStart !== false;
   const [isAutoStarting, setIsAutoStarting] = useState(false);
   const lastProjectIdRef = useRef<string | undefined>(undefined);
@@ -219,6 +233,7 @@ export function useSandboxStatusWithAutoStart(
       // Clear global state for the new project
       globalAutoStartAttempted.delete(projectId);
       globalAutoStartInProgress.delete(projectId);
+      globalWebCloudFallback.delete(projectId);
       setIsAutoStarting(false);
       lastProjectIdRef.current = projectId;
     }
@@ -254,6 +269,23 @@ export function useSandboxStatusWithAutoStart(
     if (alreadyAttempted || alreadyInProgress) return;
     if (!sandboxState) return;
 
+    // Browsers cannot start the Mac runner. Restore the cloud sandbox instead of 503ing.
+    if (isLocalSandboxState(sandboxState) && !isLocalRunnerAvailable()) {
+      if (globalWebCloudFallback.get(projectId)) return;
+      globalWebCloudFallback.set(projectId, true);
+      try {
+        await setProjectExecutionTarget(projectId, 'cloud');
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: threadKeys.project(projectId) }),
+          queryClient.invalidateQueries({ queryKey: sandboxKeys.status(projectId) }),
+        ]);
+      } catch (error) {
+        globalWebCloudFallback.set(projectId, false);
+        console.warn('[useSandboxStatusWithAutoStart] Cloud fallback failed:', error);
+      }
+      return;
+    }
+
     // Only auto-start if:
     // 1. Status is OFFLINE (sandbox exists but stopped)
     // 2. We have a sandbox_id (confirms sandbox exists)
@@ -274,14 +306,14 @@ export function useSandboxStatusWithAutoStart(
       try {
         await startSandboxRef.current.mutateAsync(projectId);
       } catch (error) {
-        console.error('[useSandboxStatusWithAutoStart] Auto-start failed:', error);
+        console.warn('[useSandboxStatusWithAutoStart] Auto-start failed:', error);
         // Reset so user can try again
         globalAutoStartAttempted.set(projectId, false);
         globalAutoStartInProgress.set(projectId, false);
         setIsAutoStarting(false);
       }
     }
-  }, [projectId, autoStartEnabled, sandboxState]);
+  }, [projectId, autoStartEnabled, sandboxState, queryClient]);
 
   // Trigger auto-start when status becomes OFFLINE
   useEffect(() => {

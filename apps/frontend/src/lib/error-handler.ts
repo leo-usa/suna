@@ -159,13 +159,20 @@ const formatErrorMessage = (message: string, context?: ErrorContext): string => 
 
 
 export const handleApiError = (error: any, context?: ErrorContext): void => {
-  console.error('API Error:', error, context);
+  const rawMessage = extractErrorMessage(error);
+  const isLocalRunnerOffline =
+    error?.status === 503 &&
+    typeof rawMessage === 'string' &&
+    rawMessage.includes('Open the Dobby desktop app');
 
-  if (!shouldShowError(error, context)) {
+  if (!isLocalRunnerOffline) {
+    console.error('API Error:', error, context);
+  }
+
+  if (isLocalRunnerOffline || !shouldShowError(error, context)) {
     return;
   }
 
-  const rawMessage = extractErrorMessage(error);
   const formattedMessage = formatErrorMessage(rawMessage, context);
 
   // Handle tier restriction errors using shared formatting function

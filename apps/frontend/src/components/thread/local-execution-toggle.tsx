@@ -81,8 +81,6 @@ export function LocalExecutionToggle({ projectId }: { projectId?: string }) {
       })();
       return;
     }
-    if (getPreferredExecutionTarget() !== 'local') return;
-    void onToggle(true);
   }, [electron, projectId, project, pending, projectLoading]);
 
   const onSaveScreenshots = async (next: boolean) => {
