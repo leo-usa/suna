@@ -25,11 +25,16 @@
           </p>
           
           <div style="margin-bottom: 32px;">
-            <a href="{{ .ConfirmationURL }}" style="display: inline-block; background-color: #000000; color: #ffffff; font-weight: 500; font-size: 15px; line-height: 20px; padding: 14px 32px; border-radius: 16px; text-decoration: none;">
+            <!-- Do not use ConfirmationURL: email scanners consume that one-time link.
+                 Paste this template into Supabase → Authentication → Email Templates → Magic Link. -->
+            <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=magiclink&email={{ .Email }}" style="display: inline-block; background-color: #000000; color: #ffffff; font-weight: 500; font-size: 15px; line-height: 20px; padding: 14px 32px; border-radius: 16px; text-decoration: none;">
               Sign in
             </a>
           </div>
           
+          <p style="font-size: 13px; line-height: 18px; color: #999; margin: 0 0 16px 0;">
+            Your code: <strong>{{ .Token }}</strong>
+          </p>
           <p style="font-size: 13px; line-height: 18px; color: #999; margin: 0;">
             This link expires in 1 hour. If you didn't request this, you can safely ignore this email.
           </p>

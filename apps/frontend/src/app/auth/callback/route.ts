@@ -46,14 +46,21 @@ export async function GET(request: NextRequest) {
   const next = searchParams.get('returnUrl') || searchParams.get('redirect') || '/dashboard'
   const termsAccepted = searchParams.get('terms_accepted') === 'true'
   const email = searchParams.get('email') || '' // Email passed from magic link redirect URL
+  const tokenHash = searchParams.get('token_hash')
 
   const baseUrl = getPublicSiteOrigin(request)
   const error = searchParams.get('error')
   const errorCode = searchParams.get('error_code')
   const errorDescription = searchParams.get('error_description')
 
+  if (tokenHash) {
+    const confirmUrl = new URL(`${baseUrl}/auth/confirm`)
+    searchParams.forEach((value, key) => {
+      confirmUrl.searchParams.set(key, value)
+    })
+    return NextResponse.redirect(confirmUrl)
+  }
 
-  // Handle errors FIRST - before any Supabase operations that might affect session
   if (error) {
     console.error('❌ Auth callback error:', error, errorCode, errorDescription)
 
@@ -63,9 +70,7 @@ export async function GET(request: NextRequest) {
       errorCode === 'expired_token' ||
       errorCode === 'token_expired' ||
       error?.toLowerCase().includes('expired') ||
-      error?.toLowerCase().includes('invalid') ||
-      errorDescription?.toLowerCase().includes('expired') ||
-      errorDescription?.toLowerCase().includes('invalid')
+      errorDescription?.toLowerCase().includes('expired')
 
     if (isExpiredOrInvalid) {
       // Redirect to auth page with expired state to show resend form
@@ -127,10 +132,8 @@ export async function GET(request: NextRequest) {
         console.error('❌ Error exchanging code for session:', error)
         
         // Check if the error is due to expired/invalid link
-        const isExpired = 
+        const isExpired =
           error.message?.toLowerCase().includes('expired') ||
-          error.message?.toLowerCase().includes('invalid') ||
-          error.status === 400 ||
           error.code === 'expired_token' ||
           error.code === 'token_expired' ||
           error.code === 'otp_expired'

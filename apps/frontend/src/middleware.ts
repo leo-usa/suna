@@ -19,6 +19,7 @@ const PUBLIC_ROUTES = [
   '/', // Homepage should be public!
   '/auth',
   '/auth/callback',
+  '/auth/confirm',
   '/auth/signup',
   '/auth/forgot-password',
   '/auth/reset-password',
@@ -124,11 +125,20 @@ export async function middleware(request: NextRequest) {
   // Detect authentication parameters and redirect to proper callback handler
   if (pathname === '/' || pathname === '') {
     const searchParams = request.nextUrl.searchParams;
-    const code = searchParams.get('code');
-    const token = searchParams.get('token');
-    const type = searchParams.get('type');
-    const error = searchParams.get('error');
+    const tokenHash = searchParams.get('token_hash')
+    const code = searchParams.get('code')
+    const token = searchParams.get('token')
+    const type = searchParams.get('type')
+    const error = searchParams.get('error')
     
+    if (tokenHash) {
+      const confirmUrl = new URL('/auth/confirm', request.url)
+      searchParams.forEach((value, key) => {
+        confirmUrl.searchParams.set(key, value)
+      })
+      return NextResponse.redirect(confirmUrl)
+    }
+
     // If we have Supabase auth parameters, redirect to /auth/callback
     // Note: Mobile apps use direct deep links and bypass this route
     if (code || token || type || error) {

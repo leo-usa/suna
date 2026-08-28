@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useMediaQuery } from '@/hooks/utils';
 import { useState, useEffect, Suspense, lazy, useRef } from 'react';
-import { signUp, signInWithPassword, signUpWithPassword, verifyOtp } from './actions';
+import { signInWithPassword, signUpWithPassword, verifyOtp } from './actions';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { AlertCircle, Mail, MailCheck, Clock, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -19,10 +19,10 @@ import { toast } from '@/lib/toast';
 import { useTranslations } from 'next-intl';
 import { DobbyLogo } from '@/components/sidebar/dobby-logo';
 import { ReferralCodeDialog } from '@/components/referrals/referral-code-dialog';
-import { isElectron, getAuthOrigin } from '@/lib/utils/is-electron';
 import { ExampleShowcase } from '@/components/auth/example-showcase';
 import { trackSendAuthLink } from '@/lib/analytics/gtm';
 import { backendApi } from '@/lib/api-client';
+import { sendMagicLink } from '@/lib/auth/send-magic-link';
 
 // Lazy load heavy components
 const GoogleSignIn = lazy(() => import('@/components/GoogleSignIn'));
@@ -174,37 +174,27 @@ function LoginContent() {
 
     const email = formData.get('email') as string;
     setRegistrationEmail(email);
-
     const finalReturnUrl = returnUrl || '/dashboard';
-    formData.append('returnUrl', finalReturnUrl);
-    // Use custom protocol for Electron, standard origin for web
-    formData.append('origin', isElectron() ? getAuthOrigin() : window.location.origin);
-    formData.append('acceptedTerms', acceptedTerms.toString());
-    // Flag for Electron to use custom callback handling
-    if (isElectron()) {
-      formData.append('isDesktopApp', 'true');
-    }
 
-    const result = await signUp(prevState, formData);
-
-    // Magic link always returns success with message (no immediate redirect)
-    if (result && typeof result === 'object' && 'success' in result && result.success) {
-      if ('email' in result && result.email) {
-        setRegistrationEmail(result.email as string);
-        setRegistrationSuccess(true);
-        return result;
+    try {
+      await sendMagicLink({
+        email,
+        returnUrl: finalReturnUrl,
+        termsAccepted,
+        referralCode: referralCode || undefined,
+      });
+      if (email) {
+        setRegistrationEmail(email.trim().toLowerCase());
       }
-    }
-
-    if (result && typeof result === 'object' && 'message' in result) {
+      setRegistrationSuccess(true);
+      return { success: true, email: email.trim().toLowerCase() };
+    } catch (error: any) {
       toast.error(t('signUpFailed'), {
-        description: result.message as string,
+        description: error?.message || t('unexpectedAuthError'),
         duration: 5000,
       });
       return {};
     }
-
-    return result;
   };
 
 
