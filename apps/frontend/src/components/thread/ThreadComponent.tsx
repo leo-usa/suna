@@ -21,7 +21,7 @@ import { SidebarContext } from '@/components/ui/sidebar';
 import { useAgentStream } from '@/hooks/messages';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/utils';
-import { isLocalMode } from '@/lib/config';
+import { isInsufficientCreditsMessage } from '@agentpress/shared/utils';
 import { ThreadContent } from '@/components/thread/content/ThreadContent';
 import { NewThreadEmptyState } from '@/components/thread/content/NewThreadEmptyState';
 import { ThreadSkeleton } from '@/components/thread/content/ThreadSkeleton';
@@ -1079,12 +1079,7 @@ export function ThreadComponent({ projectId, threadId, compact = false, configur
     const isExpected =
       lower.includes('not found') || lower.includes('agent run is not running');
 
-    const isBillingError =
-      lower.includes('insufficient credits') ||
-      lower.includes('credit') ||
-      lower.includes('balance') ||
-      lower.includes('out of credits') ||
-      lower.includes('no credits');
+    const isBillingError = isInsufficientCreditsMessage(errorMessage);
 
     if (isBillingError) {
       console.error(`[PAGE] Agent stopped due to billing error: ${errorMessage}`);

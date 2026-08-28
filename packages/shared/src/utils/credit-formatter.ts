@@ -77,3 +77,24 @@ export function formatDollarsAsCredits(dollars: number): string {
   return formatCredits(credits);
 }
 
+/**
+ * True only for an actual user-balance stop.
+ * Do not match generic "credit" / "balance" — those fire on "Credits available: N credits"
+ * and on provider errors (e.g. OpenRouter) that mention credits.
+ */
+export function isInsufficientCreditsMessage(message: string | null | undefined): boolean {
+  if (!message) return false;
+  const lower = message.toLowerCase();
+
+  const balanceMatch = message.match(/your balance is (-?\d+)\s*credits/i);
+  if (balanceMatch) {
+    return Number(balanceMatch[1]) < 0;
+  }
+
+  if (lower.includes('insufficient_credits')) return true;
+  if (lower === 'insufficient credits' || lower.startsWith('insufficient credits:')) return true;
+  if (lower.includes('out of credits') || lower.includes('no credits')) return true;
+
+  return false;
+}
+

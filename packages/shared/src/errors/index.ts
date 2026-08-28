@@ -5,6 +5,8 @@
  * billing errors, and other API errors across frontend and mobile.
  */
 
+import { isInsufficientCreditsMessage } from '../utils/credit-formatter';
+
 // ============================================================================
 // Error Classes
 // ============================================================================
@@ -433,11 +435,10 @@ export function extractTierLimitErrorState(error: any): TierLimitErrorState | nu
   }
 
   if (error instanceof BillingError) {
-    const message = error.detail?.message?.toLowerCase() || '';
-    const isCreditsExhausted = 
-      message.includes('credit') ||
-      message.includes('balance') ||
-      message.includes('insufficient');
+    const message = error.detail?.message || '';
+    const isCreditsExhausted =
+      error.detail?.error_code === 'INSUFFICIENT_CREDITS' ||
+      isInsufficientCreditsMessage(message);
 
     return {
       type: isCreditsExhausted ? 'INSUFFICIENT_CREDITS' : 'BILLING_ERROR',
@@ -449,6 +450,13 @@ export function extractTierLimitErrorState(error: any): TierLimitErrorState | nu
   if (error?.status === 402 || error?.code) {
     const errorCode = error?.code || error?.detail?.error_code || error?.error_code;
     const detail = error?.detail || error;
+
+    if (errorCode === 'INSUFFICIENT_CREDITS') {
+      return {
+        type: 'INSUFFICIENT_CREDITS',
+        message: detail.message || 'Insufficient credits',
+      };
+    }
 
     if (errorCode === 'THREAD_LIMIT_EXCEEDED') {
       return {

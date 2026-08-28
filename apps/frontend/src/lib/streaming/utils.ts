@@ -1,4 +1,5 @@
-import { BILLING_ERROR_KEYWORDS, COMPLETION_MESSAGE_PATTERNS } from './constants';
+import { isInsufficientCreditsMessage } from '@agentpress/shared/utils';
+import { COMPLETION_MESSAGE_PATTERNS } from './constants';
 import type { AgentStatus, BillingErrorContext } from './types';
 
 export function safeJsonParse<T>(json: string | null | undefined, fallback: T): T {
@@ -31,17 +32,11 @@ export function isCompletionMessage(processedData: string): boolean {
 }
 
 export function isBillingError(message: string): boolean {
-  const messageLower = message.toLowerCase();
-  return BILLING_ERROR_KEYWORDS.some(keyword => messageLower.includes(keyword));
+  return isInsufficientCreditsMessage(message);
 }
 
 export function extractBillingErrorContext(errorMessage: string): BillingErrorContext {
-  const messageLower = errorMessage.toLowerCase();
-  const isCreditsExhausted = 
-    messageLower.includes('insufficient credits') ||
-    messageLower.includes('out of credits') ||
-    messageLower.includes('no credits') ||
-    messageLower.includes('balance');
+  const isCreditsExhausted = isBillingError(errorMessage);
   
   const balanceMatch = errorMessage.match(/balance is (-?\d+)\s*credits/i);
   const balance = balanceMatch ? balanceMatch[1] : null;

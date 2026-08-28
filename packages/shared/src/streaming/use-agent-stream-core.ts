@@ -1,7 +1,7 @@
 import { useCallback, useRef, useEffect, useState, useMemo } from 'react';
 import type { UnifiedMessage, ParsedContent, ParsedMetadata } from '../types';
 import type { TextChunk } from './text-ordering';
-import { safeJsonParse } from '../utils';
+import { safeJsonParse, isInsufficientCreditsMessage } from '../utils';
 import {
   createAccumulatorState,
   clearAccumulator,
@@ -302,13 +302,6 @@ export function useAgentStreamCore(
 
   // Handle billing errors
   const handleBillingError = useCallback((errorMessage: string) => {
-    const messageLower = errorMessage.toLowerCase();
-    const isCreditsExhausted = 
-      messageLower.includes('insufficient credits') ||
-      messageLower.includes('out of credits') ||
-      messageLower.includes('no credits') ||
-      messageLower.includes('balance');
-    
     const balanceMatch = errorMessage.match(/balance is (-?\d+)\s*credits/i);
     const balance = balanceMatch ? balanceMatch[1] : null;
     
@@ -344,14 +337,9 @@ export function useAgentStreamCore(
       
       if (jsonData.status === 'error') {
         const errorMessage = jsonData.message || 'Unknown error occurred';
-        const messageLower = errorMessage.toLowerCase();
-        const isBillingError = 
-          messageLower.includes('insufficient credits') ||
-          messageLower.includes('credit') ||
-          messageLower.includes('balance') ||
-          messageLower.includes('out of credits') ||
-          messageLower.includes('no credits') ||
-          messageLower.includes('billing check failed');
+        const isBillingError =
+          jsonData.error_code === 'INSUFFICIENT_CREDITS' ||
+          isInsufficientCreditsMessage(errorMessage);
         
         if (isBillingError) {
           handleBillingError(errorMessage);
@@ -371,19 +359,11 @@ export function useAgentStreamCore(
       
       // Handle stopped status (normal completion or billing error)
       if (jsonData.type === 'status' && jsonData.status === 'stopped') {
-        if (jsonData.message) {
-          const message = jsonData.message.toLowerCase();
-          const isBillingError = 
-            message.includes('insufficient credits') ||
-            message.includes('credit') ||
-            message.includes('balance') ||
-            message.includes('out of credits') ||
-            message.includes('no credits') ||
-            message.includes('billing check failed');
-          
-          if (isBillingError) {
-            handleBillingError(jsonData.message);
-          }
+        if (
+          jsonData.error_code === 'INSUFFICIENT_CREDITS' ||
+          isInsufficientCreditsMessage(jsonData.message)
+        ) {
+          handleBillingError(jsonData.message || 'insufficient_credits');
         }
         finalizeStream('stopped', currentRunIdRef.current);
         return;
@@ -727,14 +707,7 @@ export function useAgentStreamCore(
             }
           } else if (agentStatus.status === 'stopped' && agentStatus.error) {
             const errorMessage = agentStatus.error;
-            const lower = errorMessage.toLowerCase();
-            const isBillingError = 
-              lower.includes('insufficient credits') ||
-              lower.includes('credit') ||
-              lower.includes('balance') ||
-              lower.includes('out of credits') ||
-              lower.includes('no credits') ||
-              lower.includes('billing check failed');
+            const isBillingError = isInsufficientCreditsMessage(errorMessage);
             
             if (isBillingError) {
               handleBillingError(errorMessage);

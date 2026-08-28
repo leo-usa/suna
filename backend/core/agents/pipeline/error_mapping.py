@@ -147,7 +147,6 @@ class ErrorMapper:
         ("rate limit", "RATE_LIMIT"),
         ("rate_limit", "RATE_LIMIT"),
         ("429", "RATE_LIMIT"),
-        ("credit", "CREDIT_EXHAUSTED"),
         ("insufficient_credits", "CREDIT_EXHAUSTED"),
         ("concurrent", "CONCURRENT_LIMIT"),
         ("too many", "CONCURRENT_LIMIT"),

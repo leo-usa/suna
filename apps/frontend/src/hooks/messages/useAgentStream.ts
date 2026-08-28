@@ -16,6 +16,7 @@ import { composioKeys } from '@/hooks/composio/keys';
 import { knowledgeBaseKeys } from '@/hooks/knowledge-base/keys';
 import { fileQueryKeys } from '@/hooks/files/use-file-queries';
 import { threadKeys, projectKeys } from '@/hooks/threads/keys';
+import { isInsufficientCreditsMessage } from '@agentpress/shared/utils';
 import { usePricingModalStore } from '@/stores/pricing-modal-store';
 import { useTranslations } from 'next-intl';
 import { accountStateKeys } from '@/hooks/billing';
@@ -102,12 +103,7 @@ export function useAgentStream(
   }, [threadId, agentId]);
 
   const handleBillingError = useMemo(() => (errorMessage: string, balance?: string | null) => {
-    const messageLower = errorMessage.toLowerCase();
-    const isCreditsExhausted =
-      messageLower.includes('insufficient credits') ||
-      messageLower.includes('out of credits') ||
-      messageLower.includes('no credits') ||
-      messageLower.includes('balance');
+    const isCreditsExhausted = isInsufficientCreditsMessage(errorMessage);
 
     const alertTitle = isCreditsExhausted
       ? t('limitAlerts.insufficientCredits.title')

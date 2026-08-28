@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { isInsufficientCreditsMessage } from '@agentpress/shared/utils';
 import { ProjectLimitError, BillingError } from '@/lib/api/errors';
 
 interface UseBillingModalReturn {
@@ -24,14 +25,7 @@ export function useBillingModal(): UseBillingModalReturn {
     let isCreditsExhausted = false;
 
     if (error instanceof BillingError) {
-      const message = error.detail?.message?.toLowerCase() || '';
-      // Check if the error message indicates credits/balance issues
-      isCreditsExhausted = 
-        message.includes('credit') ||
-        message.includes('balance') ||
-        message.includes('insufficient') ||
-        message.includes('out of credits') ||
-        message.includes('no credits');
+      isCreditsExhausted = isInsufficientCreditsMessage(error.detail?.message);
     } else if (error instanceof ProjectLimitError) {
       // Project limit errors are not about credits
       isCreditsExhausted = false;

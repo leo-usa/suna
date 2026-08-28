@@ -131,7 +131,12 @@ class StatelessCoordinator(BaseCoordinator):
                 break
 
             if not await self._state.ensure_credits(wait_for_cache_ms=3000 if auto_continue_count == 0 else 0):
-                yield {"type": "status", "status": "stopped", "message": "Insufficient credits"}
+                yield {
+                    "type": "status",
+                    "status": "stopped",
+                    "message": "insufficient_credits",
+                    "error_code": "INSUFFICIENT_CREDITS",
+                }
                 break
 
             if not await idempotency.check(ctx.agent_run_id, step, "llm"):

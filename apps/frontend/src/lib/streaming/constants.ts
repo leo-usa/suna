@@ -27,15 +27,6 @@ export const TERMINAL_STATUSES = [
   'agent_not_running',
 ] as const;
 
-export const BILLING_ERROR_KEYWORDS = [
-  'insufficient credits',
-  'out of credits',
-  'no credits',
-  'balance',
-  'credit',
-  'billing check failed',
-] as const;
-
 export const COMPLETION_MESSAGE_PATTERNS = [
   '"type": "status"',
   '"status": "completed"',

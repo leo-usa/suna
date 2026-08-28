@@ -182,7 +182,8 @@ class AutoContinueManager:
                             yield {
                                 "type": "status",
                                 "status": "stopped",
-                                "message": f"Insufficient credits: {message}"
+                                "message": message,
+                                "error_code": "INSUFFICIENT_CREDITS",
                             }
                             break
                     except Exception as e:

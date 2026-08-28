@@ -103,7 +103,8 @@ export function processStreamData(
   
   if (jsonData.status === 'error') {
     const errorMessage = (jsonData.message as string) || 'Unknown error occurred';
-    if (isBillingError(errorMessage)) {
+    const errorCode = jsonData.error_code as string | undefined;
+    if (errorCode === 'INSUFFICIENT_CREDITS' || isBillingError(errorMessage)) {
       return { type: 'billing_error', errorMessage };
     }
     return { type: 'error', errorMessage };
@@ -113,8 +114,9 @@ export function processStreamData(
     const status = jsonData.status as string;
     if (status === 'stopped') {
       const message = jsonData.message as string | undefined;
-      if (message && isBillingError(message)) {
-        return { type: 'billing_error', errorMessage: message };
+      const errorCode = jsonData.error_code as string | undefined;
+      if (errorCode === 'INSUFFICIENT_CREDITS' || (message && isBillingError(message))) {
+        return { type: 'billing_error', errorMessage: message || 'insufficient_credits' };
       }
       return { type: 'status', status: 'stopped' };
     }

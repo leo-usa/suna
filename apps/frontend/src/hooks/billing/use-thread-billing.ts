@@ -29,7 +29,8 @@ export function useThreadBilling(
     try {
       const result = await accountState.refetch();
       
-      if (result.data && !accountStateSelectors.canRun(result.data)) {
+      const creditsTotal = result.data?.credits?.total ?? 0;
+      if (result.data && creditsTotal < 0) {
         if (onBillingError) {
           onBillingError();
         }

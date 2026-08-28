@@ -255,7 +255,7 @@ async def _build_minimal_account_state(account_id: str) -> Dict:
             'daily': daily_credits,
             'monthly': monthly_credits,
             'extra': extra_credits,
-            'can_run': total_credits >= 1,
+            'can_run': total_balance_dollars >= 0,
             'daily_refresh': daily_credits_info
         },
         'subscription': {
@@ -506,7 +506,7 @@ async def _build_account_state(account_id: str, skip_cache: bool = False) -> Dic
             'daily': daily_credits,
             'monthly': monthly_credits,
             'extra': extra_credits,
-            'can_run': total_credits >= 1,
+            'can_run': total_balance_dollars >= 0,
             'daily_refresh': daily_credits_info
         },
         'subscription': {
