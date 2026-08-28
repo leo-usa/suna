@@ -180,7 +180,7 @@ function LoginContent() {
       await sendMagicLink({
         email,
         returnUrl: finalReturnUrl,
-        termsAccepted,
+        termsAccepted: acceptedTerms,
         referralCode: referralCode || undefined,
       });
       if (email) {
