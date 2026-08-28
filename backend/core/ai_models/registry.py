@@ -16,10 +16,20 @@ class BedrockConfig:
         "kimi_k2": "hfgufmm5fgcq",
         "minimax_m2": "zix3khptbyoe",
     }
+
+    # US geo inference profiles (not the Kortix application-inference-profile ARNs).
+    GEO_MODEL_IDS = {
+        "sonnet_5": "us.anthropic.claude-sonnet-5",
+        "fable_5": "us.anthropic.claude-fable-5",
+    }
     
     @classmethod
     def build_arn(cls, profile_id: str) -> str:
         return f"bedrock/converse/arn:aws:bedrock:{cls.REGION}:{cls.ACCOUNT_ID}:application-inference-profile/{profile_id}"
+
+    @classmethod
+    def build_geo_id(cls, model_key: str) -> str:
+        return f"bedrock/converse/{cls.GEO_MODEL_IDS[model_key]}"
     
     @classmethod
     def get_haiku_arn(cls) -> str:
@@ -28,6 +38,14 @@ class BedrockConfig:
     @classmethod
     def get_sonnet_arn(cls) -> str:
         return cls.build_arn(cls.PROFILE_IDS["sonnet_4_5"])
+
+    @classmethod
+    def get_sonnet_5_id(cls) -> str:
+        return cls.build_geo_id("sonnet_5")
+
+    @classmethod
+    def get_fable_5_id(cls) -> str:
+        return cls.build_geo_id("fable_5")
 
 
 class PricingPresets:
@@ -74,12 +92,6 @@ class PricingPresets:
         input_cost_per_million_tokens=0.60,
         output_cost_per_million_tokens=3.00,
         cached_read_cost_per_million_tokens=0.095,
-    )
-
-    HAIKU_3_5 = ModelPricing(
-        input_cost_per_million_tokens=0.80,
-        output_cost_per_million_tokens=4.00,
-        cached_read_cost_per_million_tokens=0.08,
     )
 
     DEEPSEEK_V3 = ModelPricing(
@@ -1389,29 +1401,6 @@ class ModelFactory:
         )
 
     @staticmethod
-    def create_haiku_3_5() -> Model:
-        return Model(
-            id="dobby/haiku-3.5",
-            name="Claude Haiku 3.5",
-            litellm_model_id="bedrock/anthropic.claude-3-5-haiku-20241022-v1:0",
-            provider=ModelProvider.BEDROCK,
-            aliases=["haiku-3.5", "claude-3.5-haiku", "claude-3-5-haiku"],
-            context_window=200_000,
-            capabilities=[
-                ModelCapability.CHAT,
-                ModelCapability.FUNCTION_CALLING,
-                ModelCapability.VISION,
-                ModelCapability.PROMPT_CACHING,
-            ],
-            pricing=PricingPresets.HAIKU_3_5,
-            tier_availability=["paid"],
-            priority=70,
-            recommended=False,
-            enabled=True,
-            config=_create_anthropic_model_config(),
-        )
-
-    @staticmethod
     def create_kimi_k2() -> Model:
         return Model(
             id="dobby/kimi-k2",
@@ -1495,7 +1484,6 @@ class ModelRegistry:
         self.register(ModelFactory.create_kimi_k3())
         self.register(ModelFactory.create_minimax_m2())
         self.register(ModelFactory.create_minimax_m2_7())
-        self.register(ModelFactory.create_haiku_3_5())
         self.register(ModelFactory.create_deepseek_v3())
         self.register(ModelFactory.create_deepseek_v4_flash())
         self.register(ModelFactory.create_deepseek_v4_pro())
@@ -1550,14 +1538,15 @@ class ModelRegistry:
         self._litellm_id_to_pricing["openrouter/moonshotai/kimi-k2.5"] = PricingPresets.KIMI_K2_5
         self._litellm_id_to_pricing["openrouter/moonshotai/kimi-k2.6"] = PricingPresets.KIMI_K2_6
         self._litellm_id_to_pricing["openrouter/moonshotai/kimi-k3"] = PricingPresets.KIMI_K3
-        self._litellm_id_to_pricing["bedrock/anthropic.claude-3-5-haiku-20241022-v1:0"] = PricingPresets.HAIKU_3_5
         self._litellm_id_to_pricing["openrouter/deepseek/deepseek-chat-v3-0324"] = PricingPresets.DEEPSEEK_V3
         self._litellm_id_to_pricing["openrouter/deepseek/deepseek-v4-flash"] = PricingPresets.DEEPSEEK_V4_FLASH
         self._litellm_id_to_pricing["openrouter/deepseek/deepseek-v4-pro"] = PricingPresets.DEEPSEEK_V4_PRO
         self._litellm_id_to_pricing["openrouter/anthropic/claude-sonnet-5"] = PricingPresets.CLAUDE_SONNET_5
+        self._litellm_id_to_pricing[BedrockConfig.get_sonnet_5_id()] = PricingPresets.CLAUDE_SONNET_5
         self._litellm_id_to_pricing["openrouter/anthropic/claude-opus-4.7"] = PricingPresets.CLAUDE_OPUS_4_7
         self._litellm_id_to_pricing["openrouter/anthropic/claude-opus-5"] = PricingPresets.CLAUDE_OPUS_5
         self._litellm_id_to_pricing["openrouter/anthropic/claude-fable-5"] = PricingPresets.CLAUDE_FABLE_5
+        self._litellm_id_to_pricing[BedrockConfig.get_fable_5_id()] = PricingPresets.CLAUDE_FABLE_5
         self._litellm_id_to_pricing["openrouter/google/gemini-2.5-pro"] = PricingPresets.GEMINI_2_5_PRO
         self._litellm_id_to_pricing["openrouter/google/gemini-3.1-pro-preview"] = PricingPresets.GEMINI_3_1_PRO
         self._litellm_id_to_pricing["openrouter/google/gemini-3.5-flash-lite"] = PricingPresets.GEMINI_3_5_FLASH_LITE

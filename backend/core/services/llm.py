@@ -103,6 +103,8 @@ def setup_api_keys() -> None:
     
     if getattr(config, 'AWS_BEARER_TOKEN_BEDROCK', None):
         os.environ["AWS_BEARER_TOKEN_BEDROCK"] = config.AWS_BEARER_TOKEN_BEDROCK
+    if not os.environ.get("AWS_REGION_NAME"):
+        os.environ["AWS_REGION_NAME"] = "us-west-2"
 
 
 def _configure_openai_compatible(model_name: str, api_key: Optional[str], api_base: Optional[str]) -> None:
@@ -240,6 +242,11 @@ async def make_llm_api_call(
     model_str = params.get("model", "")
     if "kimi" in model_str.lower():
         params["frequency_penalty"] = 0
+
+    # Bedrock Fable 5 rejects temperature other than 1.0 (or omitted) and top_p < 0.99.
+    if "fable" in model_str.lower() or "fable" in (resolved_model_name or "").lower():
+        params.pop("temperature", None)
+        params.pop("top_p", None)
 
     if tools:
         params["tools"] = tools

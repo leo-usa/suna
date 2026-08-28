@@ -59,6 +59,9 @@ class BedrockProvider(AnthropicProvider):
         return "bedrock"
     
     def get_extra_params(self, model_id: str, **kwargs) -> Dict[str, Any]:
+        return {"aws_region_name": self._bedrock_region}
+
+    def get_extra_headers(self, model_id: str) -> Dict[str, str]:
         return {}
     
     def get_model_arn(self, profile_id: str) -> str:
