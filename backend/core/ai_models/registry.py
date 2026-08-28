@@ -254,7 +254,7 @@ class PricingPresets:
     )
 
 
-FREE_MODEL_ID = "dobby/gpt-5.6-luna"
+FREE_MODEL_ID = "dobby/claude-sonnet-5"
 PREMIUM_MODEL_ID = "dobby/power"
 IMAGE_MODEL_ID = "dobby/gpt-5.6-luna"
 
