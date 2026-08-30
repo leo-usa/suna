@@ -48,10 +48,10 @@
   },
   "downloadPage": {
     "title": "Dobby for Desktop",
-    "subtitleMac": "Hand it off to Dobby — including on this Mac. Screenshots, clicks, typing, and apps like WeChat.",
+    "subtitleMac": "Hand it off to Dobby on Mac or Windows. Screenshots, clicks, typing, and apps like WeChat are Mac-only for now.",
     "subtitleDesktop": "Hand it off to Dobby. From anywhere on your computer.",
     "downloadHeading": "Download the desktop app",
-    "downloadHint": "Version 2.0.2 · macOS (Apple Silicon) · not Apple-signed",
+    "downloadHint": "Version 2.0.2 · macOS (Apple Silicon) and Windows · not code-signed",
     "featuresTitle": "Why you'll love it",
     "features": {
       "handoff": {
@@ -75,9 +75,23 @@
         "description": "Turn on Run on this computer and Dobby can see the screen, click, type, and work in apps like WeChat — on your machine, not in the cloud."
       }
     },
-    "setupTitle": "Set up on Mac",
+    "setupTitle": "Set up",
+    "openUnsignedWindows": {
+      "title": "Open the unsigned Windows app",
+      "intro": "This installer is not signed with a Windows certificate. SmartScreen may say “Windows protected your PC.” That warning is expected, not a broken file.",
+      "steps": {
+        "1": "Download and run Dobby Setup 2.0.2.exe.",
+        "2": "If Windows protected your PC appears, click More info.",
+        "3": "Click Run anyway, then finish the installer.",
+        "4": "Open Dobby from the Start menu."
+      }
+    },
+    "computerUseWindows": {
+      "title": "Computer use is not on Windows yet",
+      "body": "Seeing the screen, clicking, typing, and controlling apps like WeChat are not implemented on Windows yet. You can still sign in, chat, and use the cloud sandbox. Run on this computer can use local files and commands; use a Mac or cloud for computer control."
+    },
     "openUnsigned": {
-      "title": "Open the unsigned app",
+      "title": "Open the unsigned Mac app",
       "intro": "This build is not signed or notarized by Apple. A “Dobby is damaged” warning is Gatekeeper, not a broken file. Keep only one copy: Applications/Dobby.app. Quit extras with Cmd+Q — leftover helpers from a second copy will hang local mode.",
       "steps": {
         "1": "Cmd+Q any running Dobby. If an older Dobby is already in Applications, replace it with this build. Do not also run a copy from Downloads, the DMG, or another folder.",

@@ -1,7 +1,8 @@
 export type DesktopPlatform = 'windows' | 'mac';
 
 export const DESKTOP_DOWNLOAD_LINKS = {
-  windows: 'https://download.dobby.now/desktop/latest/windows/Dobby%20Setup%201.0.0.exe',
+  windows:
+    'https://tsdrmlnyclxwkryqrjic.supabase.co/storage/v1/object/public/Desktop%20App/Dobby%20Setup%202.0.2.exe',
   /** Apple Silicon (M1/M2/M3) */
   macArm:
     'https://tsdrmlnyclxwkryqrjic.supabase.co/storage/v1/object/public/Desktop%20App/Dobby-2.0.2-arm64.dmg',

@@ -7,7 +7,6 @@ import { useTranslations } from 'next-intl';
 import { SimpleFooter } from '@/components/home/simple-footer';
 import { DobbyLogo } from '@/components/sidebar/dobby-logo';
 import { DESKTOP_DOWNLOAD_LINKS } from '@/lib/desktop-download';
-// import { detectDesktopPlatform, type DesktopPlatform } from '@/lib/desktop-download';
 
 function AppleLogo({ className }: { className?: string }) {
   return (
@@ -27,6 +26,7 @@ const FEATURE_ICONS = {
 } as const;
 
 const OPEN_STEPS = ['1', '2', '3', '4'] as const;
+const OPEN_WINDOWS_STEPS = ['1', '2', '3', '4'] as const;
 const LOCAL_STEPS = ['1', '2', '3', '4'] as const;
 const PERMISSION_KEYS = ['screen', 'accessibility', 'files', 'automation'] as const;
 const HOST_TOOL_KEYS = ['python', 'packages', 'cloud'] as const;
@@ -60,20 +60,14 @@ export default function DesktopDownloadPage() {
   const t = useTranslations('downloadPage');
   const tBanners = useTranslations('announcements.appBanners');
   const [mounted, setMounted] = useState(false);
-  // const [platform, setPlatform] = useState<DesktopPlatform>('mac');
 
   useEffect(() => {
     setMounted(true);
-    // setPlatform(detectDesktopPlatform());
   }, []);
 
   if (!mounted) {
     return null;
   }
-
-  const primaryHref = DESKTOP_DOWNLOAD_LINKS.macArm;
-  // Windows installer — enable when build is published:
-  // platform === 'windows' ? DESKTOP_DOWNLOAD_LINKS.windows : DESKTOP_DOWNLOAD_LINKS.macArm;
 
   return (
     <main className="w-full min-h-screen bg-background relative flex flex-col">
@@ -108,7 +102,7 @@ export default function DesktopDownloadPage() {
           transition={{ delay: 0.15, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
           className="flex flex-col items-center mb-16"
         >
-          <div className="relative bg-white dark:bg-[#2a2a2a] rounded-3xl overflow-hidden border border-border/60 dark:border-[#232324] w-full max-w-md">
+          <div className="relative bg-white dark:bg-[#2a2a2a] rounded-3xl overflow-hidden border border-border/60 dark:border-[#232324] w-full max-w-lg">
             <div className="relative h-32 bg-muted dark:bg-[#e8e4df] flex items-center justify-center">
               <div className="w-[200px] h-16 bg-background dark:bg-white rounded-xl p-2 flex items-center justify-center border border-border/40 dark:border-transparent shadow-sm">
                 <div className="w-10 h-10 bg-foreground dark:bg-[#1a1a1a] rounded-lg flex items-center justify-center">
@@ -127,15 +121,11 @@ export default function DesktopDownloadPage() {
 
               <div className="flex flex-wrap gap-3 justify-center">
                 <DownloadButton
-                  href={primaryHref}
+                  href={DESKTOP_DOWNLOAD_LINKS.macArm}
                   sublabel={tBanners('downloadFor')}
                   label={tBanners('platformMacM')}
                   icon={<AppleLogo className="h-5 w-5 text-white dark:text-black" />}
                 />
-              </div>
-
-              {/* Windows download — uncomment when installer is ready
-              <div className="mt-4 flex flex-wrap gap-3 justify-center">
                 <DownloadButton
                   href={DESKTOP_DOWNLOAD_LINKS.windows}
                   sublabel={tBanners('downloadFor')}
@@ -143,7 +133,6 @@ export default function DesktopDownloadPage() {
                   icon={<Monitor className="h-5 w-5 text-white dark:text-black" />}
                 />
               </div>
-              */}
 
               {DESKTOP_DOWNLOAD_LINKS.macIntel && (
                 <p className="mt-4 text-center">
@@ -200,6 +189,34 @@ export default function DesktopDownloadPage() {
           <h2 className="text-2xl md:text-3xl font-medium text-foreground mb-12">{t('setupTitle')}</h2>
 
           <div className="space-y-14">
+            <section>
+              <div className="w-10 h-10 bg-foreground/10 dark:bg-foreground/5 rounded-xl flex items-center justify-center mb-4">
+                <ShieldAlert className="h-5 w-5 text-foreground" />
+              </div>
+              <h3 className="text-base font-semibold text-foreground mb-3">{t('openUnsignedWindows.title')}</h3>
+              <p className="text-muted-foreground text-base leading-relaxed mb-6">{t('openUnsignedWindows.intro')}</p>
+              <ol className="space-y-4">
+                {OPEN_WINDOWS_STEPS.map((step) => (
+                  <li key={step} className="flex gap-4">
+                    <span className="flex-shrink-0 w-7 h-7 rounded-full bg-foreground/10 text-sm font-medium flex items-center justify-center text-foreground">
+                      {step}
+                    </span>
+                    <p className="text-muted-foreground text-base leading-relaxed pt-0.5">
+                      {t(`openUnsignedWindows.steps.${step}`)}
+                    </p>
+                  </li>
+                ))}
+              </ol>
+            </section>
+
+            <section>
+              <div className="w-10 h-10 bg-foreground/10 dark:bg-foreground/5 rounded-xl flex items-center justify-center mb-4">
+                <MousePointerClick className="h-5 w-5 text-foreground" />
+              </div>
+              <h3 className="text-base font-semibold text-foreground mb-3">{t('computerUseWindows.title')}</h3>
+              <p className="text-muted-foreground text-base leading-relaxed">{t('computerUseWindows.body')}</p>
+            </section>
+
             <section>
               <div className="w-10 h-10 bg-foreground/10 dark:bg-foreground/5 rounded-xl flex items-center justify-center mb-4">
                 <ShieldAlert className="h-5 w-5 text-foreground" />
