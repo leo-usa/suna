@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - PRODUCTION
+      - feature/wechat-ilink-integration
     paths:
       - 'apps/desktop/**'
       - '.github/workflows/desktop-build.yml'

@@ -50,6 +50,9 @@ function jsonrpcError(id, message, code = -32000) {
 function accessMessage(err, target) {
   const code = err && err.code;
   if (code === 'EPERM' || code === 'EACCES') {
+    if (process.platform === 'win32') {
+      return `Windows blocked access to ${target}. Check folder permissions, then quit and reopen Dobby.`;
+    }
     return `macOS blocked access to ${target}. In System Settings → Privacy & Security → Files and Folders, enable Documents for Dobby, then fully quit (Cmd+Q) and reopen.`;
   }
   return err && err.message ? err.message : String(err);
@@ -167,7 +170,16 @@ function execCommand(command, cwd, env, timeoutMs, projectRoot, onChild) {
   return new Promise((resolve) => {
     const child = exec(rewritten, {
       cwd: workdir,
-      env: { ...process.env, PATH: shellPath(), HOME, TMPDIR: tmpDir, ...(env || {}) },
+      env: {
+        ...process.env,
+        PATH: shellPath(),
+        HOME,
+        USERPROFILE: process.env.USERPROFILE || HOME,
+        TMPDIR: tmpDir,
+        TEMP: tmpDir,
+        TMP: tmpDir,
+        ...(env || {}),
+      },
       timeout: timeoutMs || 120000,
       maxBuffer: 8 * 1024 * 1024,
       shell: true,
@@ -507,7 +519,13 @@ function connect() {
     sendJson({ type: 'auth', device_token: TOKEN });
     sendJson({
       type: 'hello',
-      capabilities: ['fs', 'process', 'pty', 'preview', 'computer_use'],
+      capabilities: [
+        'fs',
+        'process',
+        'pty',
+        'preview',
+        ...(process.platform === 'darwin' ? ['computer_use'] : []),
+      ],
       preview_port: PREVIEW_PORT,
       platform: process.platform,
       host_tools: hostTools,

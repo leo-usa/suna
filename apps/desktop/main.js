@@ -82,6 +82,9 @@ function syncCheckoutPresentation(win, url) {
 if (process.platform === 'darwin') {
   app.setName('Dobby');
 }
+if (process.platform === 'win32') {
+  app.setAppUserModelId('com.dobby.desktop');
+}
 
 // Register as default protocol handler for dobby://
 // This allows magic links to open in the desktop app

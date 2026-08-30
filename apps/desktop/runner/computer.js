@@ -373,6 +373,9 @@ async function openTarget(target) {
 
 async function runComputerAction(kind, payload) {
   payload = payload || {};
+  if (process.platform !== 'darwin') {
+    throw new Error('Computer control (click, type, and open apps) is only available on macOS right now. Use the cloud sandbox, or file and command tools on this computer.');
+  }
   if (kind !== 'open') await ensureLastAppFront();
   switch (kind) {
     case 'screenshot':

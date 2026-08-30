@@ -4,11 +4,28 @@ const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
 
+function unixPathExtras() {
+  return ['/opt/homebrew/bin', '/usr/local/bin', '/usr/bin', '/bin'];
+}
+
+function windowsPathExtras() {
+  const local = process.env.LOCALAPPDATA || '';
+  const roaming = process.env.APPDATA || '';
+  return [
+    'C:\\Program Files\\Git\\cmd',
+    'C:\\Program Files\\Git\\bin',
+    'C:\\Program Files\\nodejs',
+    path.join(local, 'Programs', 'Python'),
+    path.join(local, 'Programs', 'Microsoft VS Code', 'bin'),
+    path.join(roaming, 'npm'),
+  ].filter(Boolean);
+}
+
 function shellPath() {
-  const extras = ['/opt/homebrew/bin', '/usr/local/bin', '/usr/bin', '/bin'];
+  const extras = process.platform === 'win32' ? windowsPathExtras() : unixPathExtras();
   const parts = String(process.env.PATH || '').split(path.delimiter).filter(Boolean);
   for (const extra of extras) {
-    if (!parts.includes(extra)) parts.push(extra);
+    if (extra && !parts.includes(extra)) parts.push(extra);
   }
   return parts.join(path.delimiter);
 }
@@ -60,17 +77,28 @@ function firstToken(command) {
 
 function missingToolHint(command, stderr) {
   const text = `${stderr || ''}`;
-  const token = firstToken(command).replace(/^.*\//, '');
-  const missing = /command not found|not found/i.test(text);
+  const token = firstToken(command).replace(/^.*[\\/]/, '');
+  const missing = /command not found|not found|is not recognized as an internal or external command/i.test(text);
   if (!missing) return '';
+  const host = process.platform === 'win32' ? 'this computer' : 'this Mac';
+  const quit = process.platform === 'win32' ? 'fully quit Dobby and reopen' : 'fully quit Dobby (Cmd+Q) and reopen';
   if (token === 'python3' || token === 'python' || /\bpython3?: command not found/i.test(text)) {
-    return 'Python 3 was not found on this Mac. Install Python 3.11+ from https://www.python.org/downloads/macos/ or run `brew install python`, then fully quit Dobby (Cmd+Q) and reopen. Or turn off "Run on this computer" to use the cloud sandbox.\n';
+    const install = process.platform === 'win32'
+      ? 'Install Python 3.11+ from https://www.python.org/downloads/windows/ and tick "Add python.exe to PATH"'
+      : 'Install Python 3.11+ from https://www.python.org/downloads/macos/ or run `brew install python`';
+    return `Python 3 was not found on ${host}. ${install}, then ${quit}. Or turn off "Run on this computer" to use the cloud sandbox.\n`;
   }
   if (token === 'node' || token === 'npm' || token === 'npx' || /\bnode: command not found/i.test(text)) {
-    return 'Node.js was not found on this Mac. Install it from https://nodejs.org/ or `brew install node`, then quit and reopen Dobby. Or turn off "Run on this computer" to use the cloud sandbox.\n';
+    const install = process.platform === 'win32'
+      ? 'Install it from https://nodejs.org/'
+      : 'Install it from https://nodejs.org/ or `brew install node`';
+    return `Node.js was not found on ${host}. ${install}, then quit and reopen Dobby. Or turn off "Run on this computer" to use the cloud sandbox.\n`;
   }
   if (token === 'git' || /\bgit: command not found/i.test(text)) {
-    return 'Git was not found on this Mac. Install Xcode Command Line Tools (`xcode-select --install`) or `brew install git`, then quit and reopen Dobby.\n';
+    const install = process.platform === 'win32'
+      ? 'Install Git from https://git-scm.com/download/win'
+      : 'Install Xcode Command Line Tools (`xcode-select --install`) or `brew install git`';
+    return `Git was not found on ${host}. ${install}, then quit and reopen Dobby.\n`;
   }
   return '';
 }
