@@ -19,7 +19,6 @@ DEFAULT_OP_TIMEOUT = float(os.getenv("REDIS_OP_TIMEOUT", "5.0"))  # Basic operat
 DEFAULT_STREAM_TIMEOUT = float(os.getenv("REDIS_STREAM_TIMEOUT", "10.0"))  # Stream operations
 SOCKET_TIMEOUT = float(os.getenv("REDIS_SOCKET_TIMEOUT", "10.0"))  # Reduced from 30s
 SOCKET_CONNECT_TIMEOUT = float(os.getenv("REDIS_SOCKET_CONNECT_TIMEOUT", "5.0"))  # Reduced from 15s
-HEALTH_CHECK_INTERVAL = int(os.getenv("REDIS_HEALTH_CHECK_INTERVAL", "15"))  # More frequent
 
 # Split pool configuration - prevents XREAD BLOCK from starving GET/SET
 GENERAL_POOL_SIZE = int(os.getenv("REDIS_GENERAL_POOL_SIZE", "200"))
@@ -54,6 +53,13 @@ class _HubSubscription:
         return False
 
 
+def _is_poisoned_redis_error(exc: BaseException) -> bool:
+    """True when redis-py blew the stack retrying a dead connection (client is unusable)."""
+    if isinstance(exc, RecursionError):
+        return True
+    return "maximum recursion depth exceeded" in str(exc)
+
+
 class StreamHub:
     """
     Multiplexes stream reads: 1 XREAD per stream key, fan-out to N clients.
@@ -64,12 +70,13 @@ class StreamHub:
                 yield format_sse(msg)
     """
 
-    def __init__(self, redis_client: Redis, queue_maxsize: int = 256):
+    def __init__(self, redis_client: Redis, queue_maxsize: int = 256, on_poisoned=None):
         self._redis = redis_client
         self._queue_maxsize = queue_maxsize
         self._pumps: Dict[str, asyncio.Task] = {}
         self._subs: Dict[str, Set[asyncio.Queue]] = defaultdict(_builtin_set)
         self._lock = asyncio.Lock()
+        self._on_poisoned = on_poisoned
         # Metrics
         self.streams_active = 0
         self.subscribers_total = 0
@@ -126,11 +133,20 @@ class StreamHub:
                                     # logger.info(f"[HUB] Delivered msg {msg_id} to queue for {stream_key}")
                                 except asyncio.QueueFull:
                                     self.messages_dropped += 1
+                except RecursionError as e:
+                    logger.warning(f"Hub pump recursion for {stream_key}: {e}")
+                    if self._on_poisoned:
+                        self._on_poisoned()
+                    await asyncio.sleep(1.0)
                 except (ConnectionError, RedisConnectionError, OSError) as e:
                     logger.warning(f"Hub pump connection error for {stream_key}: {e}")
+                    if _is_poisoned_redis_error(e) and self._on_poisoned:
+                        self._on_poisoned()
                     await asyncio.sleep(0.5)
                 except Exception as e:
                     logger.warning(f"Hub pump error for {stream_key}: {e}")
+                    if _is_poisoned_redis_error(e) and self._on_poisoned:
+                        self._on_poisoned()
                     await asyncio.sleep(0.1)
         except asyncio.CancelledError:
             logger.debug(f"Hub pump cancelled for {stream_key}")
@@ -187,6 +203,8 @@ class RedisClient:
 
         self._init_lock: Optional[asyncio.Lock] = None
         self._initialized = False
+        self._reconnect_scheduled = False
+        self._reconnect_task: Optional[asyncio.Task] = None
         # Metrics for monitoring
         self._op_count = 0
         self._timeout_count = 0
@@ -306,16 +324,23 @@ class RedisClient:
             
             retry = Retry(ExponentialBackoff(), 3)
 
-            # GENERAL POOL - for GET/SET/XADD (non-blocking ops)
-            self._pool = ConnectionPool.from_url(
-                config["url"],
+            # retry_on_timeout + health_check_interval recurse in redis-py 5.2.1
+            # when Redis is overloaded or a connection is half-dead (github.com/redis/redis-py/issues/3745).
+            # Timeouts are enforced by _with_timeout / asyncio.wait_for instead.
+            pool_kwargs = dict(
                 decode_responses=True,
-                max_connections=GENERAL_POOL_SIZE,
                 socket_timeout=SOCKET_TIMEOUT,
                 socket_connect_timeout=SOCKET_CONNECT_TIMEOUT,
                 socket_keepalive=True,
-                retry_on_timeout=True,
-                health_check_interval=HEALTH_CHECK_INTERVAL,
+                retry_on_timeout=False,
+                health_check_interval=0,
+            )
+
+            # GENERAL POOL - for GET/SET/XADD (non-blocking ops)
+            self._pool = ConnectionPool.from_url(
+                config["url"],
+                max_connections=GENERAL_POOL_SIZE,
+                **pool_kwargs,
             )
             self._client = Redis(
                 connection_pool=self._pool,
@@ -326,13 +351,8 @@ class RedisClient:
             # STREAM POOL - for XREAD/XREADGROUP (blocking ops) - isolated to prevent starvation
             self._stream_pool = ConnectionPool.from_url(
                 config["url"],
-                decode_responses=True,
                 max_connections=STREAM_POOL_SIZE,
-                socket_timeout=SOCKET_TIMEOUT,
-                socket_connect_timeout=SOCKET_CONNECT_TIMEOUT,
-                socket_keepalive=True,
-                retry_on_timeout=True,
-                health_check_interval=HEALTH_CHECK_INTERVAL,
+                **pool_kwargs,
             )
             self._stream_client = Redis(
                 connection_pool=self._stream_pool,
@@ -344,7 +364,7 @@ class RedisClient:
                 await asyncio.wait_for(self._client.ping(), timeout=5.0)
                 await asyncio.wait_for(self._stream_client.ping(), timeout=5.0)
                 # Initialize hub for SSE fan-out
-                self._hub = StreamHub(self._stream_client)
+                self._hub = StreamHub(self._stream_client, on_poisoned=self._schedule_reconnect)
                 self._initialized = True
                 self._init_time = time.time()
                 logger.info(f"Successfully connected to Redis (general_pool={GENERAL_POOL_SIZE}, stream_pool={STREAM_POOL_SIZE})")
@@ -411,6 +431,29 @@ class RedisClient:
 
             self._initialized = False
             logger.info("Redis connections and pools closed")
+
+    def _schedule_reconnect(self) -> None:
+        """Replace poisoned pools after redis-py RecursionError. Safe to call from many tasks."""
+        if self._reconnect_scheduled:
+            return
+        self._reconnect_scheduled = True
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            self._reconnect_scheduled = False
+            return
+        self._reconnect_task = loop.create_task(self._reset_after_poison())
+
+    async def _reset_after_poison(self) -> None:
+        logger.warning("Resetting Redis pools after recursion/poisoned connection")
+        try:
+            await self.close()
+            await self.get_client()
+            logger.info("Redis pools reconnected after reset")
+        except Exception as e:
+            logger.error(f"Redis reconnect after poison failed: {e}")
+        finally:
+            self._reconnect_scheduled = False
     
     async def verify_connection(self) -> bool:
         try:
@@ -457,13 +500,22 @@ class RedisClient:
             self._timeout_count += 1
             logger.warning(f"⚠️ [REDIS TIMEOUT] {operation_name} timed out after {timeout_seconds}s")
             return default
+        except RecursionError as e:
+            self._error_count += 1
+            logger.warning(f"⚠️ [REDIS CONNECTION] {operation_name}: {e}")
+            self._schedule_reconnect()
+            return default
         except (ConnectionError, RedisConnectionError, OSError) as e:
             self._error_count += 1
             logger.warning(f"⚠️ [REDIS CONNECTION] {operation_name}: {e}")
+            if _is_poisoned_redis_error(e):
+                self._schedule_reconnect()
             return default
         except Exception as e:
             self._error_count += 1
             logger.warning(f"⚠️ [REDIS ERROR] {operation_name}: {e}")
+            if _is_poisoned_redis_error(e):
+                self._schedule_reconnect()
             return default
     
     # ========== Basic Operations with Timeout ==========
