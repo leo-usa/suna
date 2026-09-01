@@ -50,8 +50,7 @@ const PUBLIC_ROUTES = [
   '/download', // Desktop / mobile download page
   '/works', // Published works gallery
   '/community', // Legacy community viewer redirects to /works
-  '/cn/consumer', // Chinese consumer landing
-  '/cn/enterprise', // Chinese enterprise landing
+  '/cn', // Chinese product / about landing
   '/docs', // API / product docs (e.g. /docs/api)
   '/countryerror', // Country restriction error page should be public
   ...locales.flatMap(locale => MARKETING_ROUTES.map(route => `/${locale}${route === '/' ? '' : route}`)),
@@ -88,6 +87,27 @@ function detectMobilePlatformFromUA(userAgent: string | null): 'ios' | 'android'
   return null;
 }
 
+function requestHeadersWithLocale(request: NextRequest, localeOverride?: string): Headers {
+  const pathname = request.nextUrl.pathname;
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set('x-pathname', pathname);
+
+  const first = pathname.split('/').filter(Boolean)[0];
+  let locale = localeOverride;
+  if (!locale) {
+    if (pathname === '/cn' || pathname.startsWith('/cn/')) locale = 'zh';
+    else if (first && locales.includes(first as Locale)) locale = first;
+  }
+  if (locale) requestHeaders.set('x-locale', locale);
+  return requestHeaders;
+}
+
+function nextWithLocaleHeaders(request: NextRequest) {
+  return NextResponse.next({
+    request: { headers: requestHeadersWithLocale(request) },
+  });
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
@@ -109,11 +129,26 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
-  if (pathname === '/consumer' || pathname === '/consumers') {
-    return NextResponse.redirect(new URL('/cn/consumer', request.url));
+  if (
+    pathname === '/consumer' ||
+    pathname === '/consumers' ||
+    pathname === '/enterprise' ||
+    pathname === '/cn/consumer' ||
+    pathname === '/cn/enterprise'
+  ) {
+    return NextResponse.redirect(new URL('/cn', request.url), 301);
   }
-  if (pathname === '/enterprise') {
-    return NextResponse.redirect(new URL('/cn/enterprise', request.url));
+
+  if (pathname === '/zh/about') {
+    return NextResponse.redirect(new URL('/cn', request.url), 301);
+  }
+
+  if (
+    pathname === '/about' &&
+    !isSearchEngineCrawler(request.headers.get('user-agent')) &&
+    request.cookies.get('locale')?.value === 'zh'
+  ) {
+    return NextResponse.redirect(new URL('/cn', request.url));
   }
 
   if (pathname === '/suna' || /\/suna\/?$/.test(pathname)) {
@@ -183,16 +218,19 @@ export async function middleware(request: NextRequest) {
     
     if (isRemainingPathMarketing) {
       // Rewrite /de to /, /de/suna to /suna, etc.
-      const response = NextResponse.rewrite(new URL(remainingPath, request.url));
+      const requestHeaders = requestHeadersWithLocale(request, locale);
+      const response = NextResponse.rewrite(new URL(remainingPath, request.url), {
+        request: { headers: requestHeaders },
+      });
       response.cookies.set('locale', locale, {
         path: '/',
         maxAge: 31536000, // 1 year
         sameSite: 'lax',
       });
-      
+
       // Store locale in headers so next-intl can pick it up
       response.headers.set('x-locale', locale);
-      
+
       return response;
     }
   }
@@ -203,9 +241,7 @@ export async function middleware(request: NextRequest) {
   );
 
   // Create a single Supabase client instance that we'll reuse
-  let supabaseResponse = NextResponse.next({
-    request,
-  });
+  let supabaseResponse = nextWithLocaleHeaders(request);
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -217,9 +253,7 @@ export async function middleware(request: NextRequest) {
         },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-          supabaseResponse = NextResponse.next({
-            request,
-          });
+          supabaseResponse = nextWithLocaleHeaders(request);
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
           );
@@ -291,6 +325,13 @@ export async function middleware(request: NextRequest) {
   // Allow all public routes without auth redirects, but still return the response
   // that carries Supabase cookie updates from getUser() above (SSR refresh).
   if (PUBLIC_ROUTES.some(route => pathname === route || pathname.startsWith(route + '/'))) {
+    if (pathname === '/cn' || pathname.startsWith('/cn/')) {
+      supabaseResponse.cookies.set('locale', 'zh', {
+        path: '/',
+        maxAge: 31536000,
+        sameSite: 'lax',
+      });
+    }
     return supabaseResponse;
   }
 

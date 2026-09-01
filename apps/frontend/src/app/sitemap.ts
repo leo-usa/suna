@@ -18,8 +18,7 @@ const EN_ONLY_ROUTES = [
   { path: '/agents-101', priority: 0.6, changeFrequency: 'monthly' as const },
   { path: '/help', priority: 0.5, changeFrequency: 'monthly' as const },
   { path: '/docs/api', priority: 0.6, changeFrequency: 'monthly' as const },
-  { path: '/cn/consumer', priority: 0.85, changeFrequency: 'weekly' as const },
-  { path: '/cn/enterprise', priority: 0.85, changeFrequency: 'weekly' as const },
+  { path: '/cn', priority: 0.95, changeFrequency: 'weekly' as const },
 ];
 
 function languageMap(path: string): Record<string, string> {

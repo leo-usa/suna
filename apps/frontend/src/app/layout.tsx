@@ -1,5 +1,7 @@
 import { ThemeProvider } from '@/components/home/theme-provider';
 import { siteMetadata } from '@/lib/site-metadata';
+import { htmlLangFromRequest } from '@/lib/seo';
+import { headers } from 'next/headers';
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { AuthProvider } from '@/components/AuthProvider';
@@ -91,11 +93,17 @@ export const metadata: Metadata = {
   manifest: '/manifest.json',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const requestHeaders = await headers();
+  const htmlLang = htmlLangFromRequest(
+    requestHeaders.get('x-locale'),
+    requestHeaders.get('x-pathname'),
+  );
+
   return (
-    <html lang="en" suppressHydrationWarning className={`${roobert.variable} ${roobertMono.variable}`}>
+    <html lang={htmlLang} suppressHydrationWarning className={`${roobert.variable} ${roobertMono.variable}`}>
       <head>
         {/* Preload critical fonts for faster FCP - local fonts need crossOrigin for CORS */}
         <link

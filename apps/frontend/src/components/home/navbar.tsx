@@ -11,7 +11,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { useAuth } from '@/components/AuthProvider';
 import { useRouter, usePathname } from 'next/navigation';
 import { DobbyLogo } from '@/components/sidebar/dobby-logo';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { trackCtaSignup } from '@/lib/analytics/gtm';
 import { AppDownloadQR } from '@/components/common/app-download-qr';
 import { isMobileDevice } from '@/lib/utils/is-mobile-device';
@@ -40,6 +40,16 @@ const SCROLL_THRESHOLD_UP = 20;
 
 // Set true to show the top-nav "Mobile" (/app) link + QR popover and drawer item.
 const SHOW_MOBILE_NAV_LINK = false;
+
+function navHref(item: (typeof siteConfig.nav.links)[number], locale: string) {
+  if (item.i18nKey === 'about' && locale === 'zh') return '/cn';
+  return item.href;
+}
+
+function navIsActive(pathname: string, href: string) {
+  if (href === '/cn') return pathname === '/cn' || pathname.startsWith('/cn/');
+  return pathname === href;
+}
 
 const overlayVariants = {
   hidden: { opacity: 0 },
@@ -98,6 +108,7 @@ export function Navbar({ isAbsolute = false }: NavbarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const t = useTranslations('common');
+  const locale = useLocale();
   const lastScrollY = useRef(0);
 
   const filteredNavLinks = siteConfig.nav.links;
@@ -170,17 +181,18 @@ export function Navbar({ isAbsolute = false }: NavbarProps) {
             {/* Center Section - Nav Links (absolutely centered) */}
             <nav className="hidden md:flex items-center justify-center gap-1 absolute left-1/2 -translate-x-1/2">
               {filteredNavLinks.map((item) => {
-                const isExternal = item.href.startsWith('http');
+                const href = navHref(item, locale);
+                const isExternal = href.startsWith('http');
                 const className = cn(
                   "px-3 py-1.5 text-sm font-medium rounded-lg transition-colors",
-                  pathname === item.href
+                  navIsActive(pathname, href)
                     ? "text-foreground"
                     : "text-muted-foreground hover:text-foreground"
                 );
                 return isExternal ? (
                   <a
                     key={item.id}
-                    href={item.href}
+                    href={href}
                     target="_blank"
                     rel="noopener noreferrer"
                     className={className}
@@ -188,7 +200,7 @@ export function Navbar({ isAbsolute = false }: NavbarProps) {
                     {t(`nav.${item.i18nKey}`)}
                   </a>
                 ) : (
-                  <Link key={item.id} href={item.href} className={className}>
+                  <Link key={item.id} href={href} className={className}>
                     {t(`nav.${item.i18nKey}`)}
                   </Link>
                 );
@@ -297,30 +309,32 @@ export function Navbar({ isAbsolute = false }: NavbarProps) {
               variants={drawerMenuContainerVariants}
             >
               <ul className="flex flex-col gap-1">
-                {filteredNavLinks.map((item) => (
+                {filteredNavLinks.map((item) => {
+                  const href = navHref(item, locale);
+                  return (
                   <motion.li
                     key={item.id}
                     variants={drawerMenuVariants}
                   >
                     <a
-                      href={item.href}
+                      href={href}
                       onClick={(e) => {
-                        if (!item.href.startsWith('#')) {
+                        if (!href.startsWith('#')) {
                           setIsDrawerOpen(false);
                           return;
                         }
                         e.preventDefault();
                         if (pathname !== '/') {
-                          router.push(`/${item.href}`);
+                          router.push(`/${href}`);
                           setIsDrawerOpen(false);
                           return;
                         }
-                        const element = document.getElementById(item.href.substring(1));
+                        const element = document.getElementById(href.substring(1));
                         element?.scrollIntoView({ behavior: 'smooth' });
                         setIsDrawerOpen(false);
                       }}
                       className={`block py-3 text-4xl font-medium tracking-tight transition-colors ${
-                        (item.href.startsWith('#') && pathname === '/' && activeSection === item.href.substring(1)) || (item.href === pathname)
+                        (href.startsWith('#') && pathname === '/' && activeSection === href.substring(1)) || navIsActive(pathname, href)
                           ? 'text-foreground'
                           : 'text-muted-foreground hover:text-foreground'
                       }`}
@@ -328,7 +342,8 @@ export function Navbar({ isAbsolute = false }: NavbarProps) {
                       {t(`nav.${item.i18nKey}`)}
                     </a>
                   </motion.li>
-                ))}
+                  );
+                })}
                 {SHOW_MOBILE_NAV_LINK && (
                 <motion.li variants={drawerMenuVariants}>
                   <Link

@@ -59,8 +59,8 @@ export function HomeSeoContent() {
           <Link href="/pricing" className="text-foreground underline underline-offset-4">
             Pricing
           </Link>
-          <Link href="/cn/consumer" className="text-foreground underline underline-offset-4">
-            中文个人版
+          <Link href="/cn" className="text-foreground underline underline-offset-4">
+            中文介绍
           </Link>
         </div>
       </section>

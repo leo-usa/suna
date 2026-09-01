@@ -1,116 +1,177 @@
-import { SUPPORT_MAILTO } from '@/lib/site-config';
 import type { CnLandingContent } from './cn-landing-types';
 
-export const cnConsumerLanding: CnLandingContent = {
-  badge: '个人用户 · 中文原生',
-  title: '你的云端 AI 员工，\n微信里也能用',
+export const cnLandingContent: CnLandingContent = {
+  badge: '中文介绍 · 个人与团队',
+  title: '你的云端 AI 员工，\n国内用上 GPT、Claude，不需翻墙',
   subtitle:
-    '免安装、中文界面、支付宝与微信预付。做调研、写文档、生成演示文稿——Dobby 在云端真实执行任务，而不只是聊天。',
+    '打开 dobby.now 即可开始，国内直连 GPT 与 Claude，不用翻墙。同一段对话里每一轮都可以换模型，也可用国内开源模型。桌面端用这台电脑，云端沙箱关电脑也能继续跑。微信和飞书入口正在内测。',
   primaryCta: { label: '免费开始使用', href: '/auth' },
   secondaryCta: { label: '查看套餐', href: '/pricing' },
-  featuresTitle: '为什么选择 Dobby',
+  featuresTitle: 'Dobby 能帮你做什么',
   features: [
     {
-      icon: 'sparkles',
-      title: '注册即用',
-      description: '无需自建服务器或配置 Gateway。打开 dobby.now，登录即可开始任务。',
+      icon: 'globe',
+      title: '国内用上 GPT、Claude，不需翻墙',
+      description:
+        '在国内打开 dobby.now 就能用 GPT 和 Claude，不必翻墙、不必自备海外账号。',
     },
     {
-      icon: 'globe',
-      title: '完整中文体验',
-      description: '工作台、账单、模式选择与绑定流程均为简体中文，适合国内用户习惯。',
+      icon: 'sparkles',
+      title: '全球与国产模型，对话中途可换',
+      description:
+        'Claude、GPT，以及国内开源模型都能用。同一段对话里，每一轮都可以换模型，不必锁死在一家。',
     },
     {
       icon: 'wallet',
-      title: '支付宝 · 微信预付',
-      description: '支持国内常用支付方式购买不过期积分，Basic 用户预付期间可解锁 Plus 级能力。',
+      title: '中文即用，国内支付',
+      description:
+        '工作台、账单与绑定流程都是简体中文。可用支付宝、微信支付购买不过期积分，不必先配海外卡。',
     },
     {
-      icon: 'message-circle',
-      title: '微信里直接聊',
-      description: '通过 iLink 绑定共享 Dobby 微信机器人，在熟悉的微信对话里下达任务。',
-    },
-    {
-      icon: 'smartphone',
-      title: '手机 App',
-      description: 'iOS / Android 客户端，随时随地继续对话与查看结果。',
-    },
-    {
-      icon: 'zap',
-      title: '多场景一键开始',
-      description: '调研、文档、数据、演示文稿、图像等模式，从首页即可快速启动。',
-    },
-  ],
-  comparisonTitle: 'Dobby 和 OpenClaw 有什么不同？',
-  comparisonSubtitle:
-    'OpenClaw 适合喜欢自建 Gateway、住在聊天软件里的技术用户。Dobby 适合想要「开箱即用、云端干活」的个人用户。',
-  comparisonRows: [
-    { label: '上手', dobby: '注册即用', openClaw: '需安装配置' },
-    { label: '界面', dobby: '中文 Web / App 工作台', openClaw: 'Control UI + 聊天频道' },
-    { label: '执行环境', dobby: '托管云沙箱（浏览器/文件）', openClaw: '自管运行时' },
-    { label: '支付', dobby: '支付宝 / 微信 / 套餐', openClaw: '自备模型 API Key' },
-    { label: '微信', dobby: '官方机器人 + 验证码绑定', openClaw: '需自行桥接' },
-  ],
-  closingTitle: '今天就开始你的第一个任务',
-  closingBody: '免费注册，体验 Super Worker。需要更多积分时，可在账单页使用支付宝或微信预付。',
-};
-
-export const cnEnterpriseLanding: CnLandingContent = {
-  badge: '企业团队 · 云端 AI 员工',
-  title: '为团队部署\n可执行的 AI Worker',
-  subtitle:
-    '自定义智能体、100+ 业务集成、定时与事件自动化——统一账单与用量管理。无需像 OpenClaw 那样自建 Gateway 与沙箱基础设施。',
-  primaryCta: { label: '团队免费试用', href: '/auth' },
-  secondaryCta: { label: '联系商务', href: SUPPORT_MAILTO },
-  featuresTitle: '企业级能力',
-  features: [
-    {
-      icon: 'bot',
-      title: '可配置 AI Worker',
-      description: '为销售、运营、研究、客服等场景定制指令、工具、知识库与集成权限。',
+      icon: 'monitor',
+      title: '这台电脑也能干活',
+      description:
+        '安装桌面端，选择「这台电脑」，Dobby 可以读写本机文件、调用本机应用。适合要处理本地资料的任务。',
     },
     {
       icon: 'cloud',
-      title: '托管云沙箱',
-      description: '浏览器自动化、文件处理、Shell 任务在隔离环境中执行，IT 无需维护执行节点。',
+      title: '云端接着跑',
+      description:
+        '不想占用这台电脑时，用托管云沙箱：浏览网页、处理文件、跑脚本。合上笔记本，任务仍可继续。',
     },
     {
-      icon: 'plug',
-      title: '100+ 集成',
-      description: 'Gmail、Slack、GitHub、Notion 等通过 Composio/MCP 连接企业现有工具链。',
+      icon: 'presentation',
+      title: '幻灯片、调研、文档、视频',
+      description:
+        '不只是聊天。从首页即可启动调研、文档、数据、演示文稿、图像和视频等真实交付，而不是一堆建议。',
     },
     {
-      icon: 'timer',
-      title: '定时与事件触发',
-      description: '日报、周报、监控、表单/邮件事件——让 Worker 7×24 自动运行。',
-    },
-    {
-      icon: 'users',
-      title: '统一账户与用量',
-      description: '项目、线程、积分与订阅集中管理，适合小团队到部门级试点。',
-    },
-    {
-      icon: 'shield',
-      title: '相比自建更省运维',
-      description: '相对 OpenClaw 自建方案，无需部署 Gateway、频道桥接与模型路由维护。',
+      icon: 'message-circle',
+      title: '微信、飞书（内测）',
+      description:
+        '微信和飞书机器人正在内测，可在对话里下达任务。网页和桌面端是现在就可用的正式入口。',
     },
   ],
-  comparisonTitle: '企业选型：Dobby vs OpenClaw',
+  comparisonTitle: '和 WorkBuddy、Codex / Claude Code、OpenClaw 有什么不同',
   comparisonSubtitle:
-    '若团队需要「业务同学今天就能用」的 AI 员工，Dobby 托管模式通常比 OpenClaw 自建更快落地。',
+    '国内打开就能用 GPT 和 Claude，不用翻墙——这是第一差别。然后才是模型选择：Dobby 每一轮对话都能换，也可用国内开源模型。WorkBuddy 主要用国内模型；Codex 与 Claude Code 各自只用自家模型，官方入口在国内常需翻墙。OpenClaw 能接很多模型，但要自己搭 Gateway，上手太重。',
+  comparisonHeaders: {
+    dimension: '维度',
+    dobby: 'Dobby',
+    workbuddy: '腾讯 WorkBuddy',
+    codingAgents: 'Codex / Claude Code',
+    openClaw: 'OpenClaw',
+  },
   comparisonRows: [
-    { label: '部署', dobby: 'SaaS，dobby.now', openClaw: '自建 Gateway / VPS' },
-    { label: '交付周期', dobby: '天级上线试点', openClaw: '周级运维与集成' },
-    { label: '可视化', dobby: 'Dobby Computer 实时查看', openClaw: '偏日志与聊天' },
-    { label: '国内支付', dobby: '支付宝 / 微信预付', openClaw: '无产品化方案' },
-    { label: '微信触达', dobby: 'iLink 企业用户绑定', openClaw: '需 IT 自建' },
-    { label: '数据控制', dobby: '云端托管', openClaw: '完全自管（优势）' },
+    {
+      label: '国内访问',
+      dobby: '国内直连 GPT、Claude，不需翻墙',
+      workbuddy: '主要用国内模型，没有 GPT / Claude',
+      codingAgents: '官方入口在国内常需翻墙',
+      openClaw: '自备海外 API，通常需翻墙',
+    },
+    {
+      label: '模型',
+      dobby: 'Claude、GPT、国内开源模型；每一轮对话可换',
+      workbuddy: '主要用国内模型',
+      codingAgents: '各自只用自家模型',
+      openClaw: '可接多家，需自备 Key、自行配置',
+    },
+    {
+      label: '上手',
+      dobby: '打开 dobby.now，登录即可',
+      workbuddy: '安装客户端，腾讯云账号',
+      codingAgents: '安装 CLI，绑定代码仓库',
+      openClaw: '自建 Gateway，配置重、上手慢',
+    },
+    {
+      label: '定位',
+      dobby: '通用 AI 员工，网页注册即用',
+      workbuddy: '腾讯系 AI 办公工作台',
+      codingAgents: '开发者编程助手（终端 / IDE）',
+      openClaw: '自托管智能体框架',
+    },
+    {
+      label: '这台电脑',
+      dobby: '桌面端可操作本机文件与应用',
+      workbuddy: '授权本地文件夹后读写',
+      codingAgents: '以本地代码仓库为主',
+      openClaw: '自管运行时与本机环境',
+    },
+    {
+      label: '关掉电脑后',
+      dobby: '云端沙箱可继续执行',
+      workbuddy: '部分云端任务可继续；本机任务需电脑在线',
+      codingAgents: '本机会话结束即停',
+      openClaw: '取决于你自己怎么部署',
+    },
+    {
+      label: '日常产出',
+      dobby: '幻灯片、调研、文档、视频、数据',
+      workbuddy: '文档、表格、PPT、办公数据处理',
+      codingAgents: '代码、补丁、仓库改动',
+      openClaw: '取决于你接的工具与频道',
+    },
+    {
+      label: '支付',
+      dobby: '支付宝 / 微信支付预付积分',
+      workbuddy: '腾讯云 / 腾讯生态计费',
+      codingAgents: 'API 或订阅',
+      openClaw: '自备模型 API Key',
+    },
+    {
+      label: '微信 / 飞书',
+      dobby: '入口内测中，网页与桌面端可先用',
+      workbuddy: '可通过微信等远程控制本机客户端',
+      codingAgents: '不是产品入口',
+      openClaw: '需自行桥接频道',
+    },
   ],
-  closingTitle: '安排团队试点',
+  faqTitle: '常见问题',
+  faq: [
+    {
+      q: 'Dobby 是什么？',
+      a: 'Dobby 是会实际执行任务的 AI 员工，而不只是聊天。你可以让它做幻灯片、调研、文档、视频，或在这台电脑和云端沙箱里跟进多步工作。',
+    },
+    {
+      q: '国内能直接用 GPT、Claude 吗？要翻墙吗？',
+      a: '能。打开 dobby.now 即可在国内使用 GPT 和 Claude，不需要翻墙，也不必自备海外账号。',
+    },
+    {
+      q: '还可以用哪些模型？中途能换吗？',
+      a: '还可以用国内开源模型。同一段对话里，每一轮都可以换模型，不必整段锁死在一家。',
+    },
+    {
+      q: '和腾讯 WorkBuddy 有什么不同？',
+      a: 'WorkBuddy 主要用国内模型，用不了 GPT / Claude。Dobby 在国内就能用 GPT 和 Claude，不用翻墙；同一段对话里每一轮也都能换模型。打开网页即可，也支持支付宝与微信支付。',
+    },
+    {
+      q: '和 Codex、Claude Code 有什么不同？',
+      a: 'Codex 与 Claude Code 各自只能用自家模型，官方入口在国内常需翻墙，而且主要帮开发者写代码。Dobby 国内直连、不锁模型，面向幻灯片、调研、文档、视频，以及这台电脑上的任务。',
+    },
+    {
+      q: '和 OpenClaw 有什么不同？',
+      a: 'OpenClaw 也能接很多模型，但要自己搭 Gateway、配频道和海外 API，上手太重，在国内通常还要翻墙。Dobby 打开 dobby.now 登录即可。',
+    },
+    {
+      q: '能在我自己的电脑上干活吗？',
+      a: '可以。安装桌面端后，发起任务时选择「这台电脑」，Dobby 可以处理本机文件和应用。也可以改用云端沙箱，不占用这台电脑。',
+    },
+    {
+      q: '微信和飞书能用吗？',
+      a: '微信和飞书入口正在内测。现在请先用网页或桌面端；账单页可用支付宝或微信支付预付积分。',
+    },
+  ],
+  closingTitle: '今天开始第一个任务',
   closingBody:
-    '从 Super Worker 或小范围自定义 Worker 开始。如需发票、批量采购或私有化讨论，请邮件联系 support@dobby.now。',
+    '免费注册即可体验。国内直连 GPT 与 Claude，不用翻墙；同一段对话里随时换模型。需要更多积分时，在账单页用支付宝或微信预付。',
+  closingChecks: [
+    '国内用上 GPT、Claude，不需翻墙',
+    '每一轮对话可换模型，也可用国内开源模型',
+    '微信、飞书入口内测中',
+  ],
 };
 
-export function getCnLandingContent(variant: 'consumer' | 'enterprise'): CnLandingContent {
-  return variant === 'enterprise' ? cnEnterpriseLanding : cnConsumerLanding;
+export function getCnLandingContent(): CnLandingContent {
+  return cnLandingContent;
 }

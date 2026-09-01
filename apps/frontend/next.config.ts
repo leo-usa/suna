@@ -131,6 +131,12 @@ const nextConfig = (): NextConfig => ({
     return [
       { source: '/suna', destination: '/', permanent: true },
       { source: '/:locale/suna', destination: '/', permanent: true },
+      { source: '/cn/consumer', destination: '/cn', permanent: true },
+      { source: '/cn/enterprise', destination: '/cn', permanent: true },
+      { source: '/consumer', destination: '/cn', permanent: true },
+      { source: '/consumers', destination: '/cn', permanent: true },
+      { source: '/enterprise', destination: '/cn', permanent: true },
+      { source: '/zh/about', destination: '/cn', permanent: true },
     ];
   },
 

@@ -2,6 +2,24 @@ import type { Metadata } from 'next';
 import { CANONICAL_ORIGIN, pageUrl } from '@/lib/site-url';
 import { siteMetadata } from '@/lib/site-metadata';
 
+const HTML_LANG: Record<string, string> = {
+  en: 'en',
+  zh: 'zh-CN',
+  de: 'de',
+  it: 'it',
+  ja: 'ja',
+  pt: 'pt',
+  fr: 'fr',
+  es: 'es',
+};
+
+/** `<html lang>` from middleware request headers. `/cn` is always Chinese. */
+export function htmlLangFromRequest(locale: string | null, pathname: string | null): string {
+  if (pathname === '/cn' || pathname?.startsWith('/cn/')) return 'zh-CN';
+  if (locale && HTML_LANG[locale]) return HTML_LANG[locale];
+  return 'en';
+}
+
 export function pageMetadata({
   title,
   description,

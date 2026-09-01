@@ -7,7 +7,14 @@ export type CnLandingFeature = {
 export type CnComparisonRow = {
   label: string;
   dobby: string;
+  workbuddy: string;
+  codingAgents: string;
   openClaw: string;
+};
+
+export type CnFaqItem = {
+  q: string;
+  a: string;
 };
 
 export type CnLandingContent = {
@@ -20,9 +27,17 @@ export type CnLandingContent = {
   features: CnLandingFeature[];
   comparisonTitle: string;
   comparisonSubtitle: string;
+  comparisonHeaders: {
+    dimension: string;
+    dobby: string;
+    workbuddy: string;
+    codingAgents: string;
+    openClaw: string;
+  };
   comparisonRows: CnComparisonRow[];
+  faqTitle: string;
+  faq: CnFaqItem[];
   closingTitle: string;
   closingBody: string;
+  closingChecks: string[];
 };
-
-export type CnLandingVariant = 'consumer' | 'enterprise';
