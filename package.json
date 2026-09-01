@@ -5,7 +5,7 @@
   "scripts": {
     "dev:frontend": "pnpm --filter Dobby dev",
     "dev:mobile": "pnpm --filter dobby dev",
-    "build:frontend": "NODE_OPTIONS=--max-old-space-size=8192 pnpm --filter Dobby build"
+    "build:frontend": "NODE_OPTIONS=--max-old-space-size=6144 pnpm --filter Dobby build"
   },
   "pnpm": {
     "overrides": {

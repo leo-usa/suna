@@ -47,6 +47,10 @@ const nextConfig = (): NextConfig => ({
   eslint: {
     ignoreDuringBuilds: true,
   },
+  // Skip tsc on Render so the 8GB box has room for static generation after compile.
+  typescript: {
+    ignoreBuildErrors: process.env.RENDER === 'true',
+  },
 
   // Transpile shared package
   transpilePackages: ['@agentpress/shared'],
@@ -79,6 +83,10 @@ const nextConfig = (): NextConfig => ({
   
   // Performance optimizations
   experimental: {
+    webpackMemoryOptimizations: true,
+    // One SSG worker; inherited NODE_OPTIONS otherwise spawn several 6GB heaps and OOM Render.
+    staticGenerationMaxConcurrency: 1,
+    staticGenerationMinPagesPerWorker: 200,
     // Optimize package imports for faster builds and smaller bundles
     optimizePackageImports: [
       'lucide-react',
