@@ -1,19 +1,22 @@
 import { Metadata } from 'next';
 import { getThread } from '@/lib/api/threads';
 import { getProject } from '@/lib/api/threads';
+import { pageUrl } from '@/lib/site-url';
 
 export async function generateMetadata({ params }): Promise<Metadata> {
   const { threadId } = await params;
+  const shareUrl = pageUrl(`/share/${threadId}`);
+  const fallbackImage = pageUrl('/share-page/og-fallback.png');
   const fallbackMetaData = {
     title: 'Shared Conversation | Dobby',
     description: 'Replay this Worker conversation on Dobby',
     alternates: {
-      canonical: `${process.env.NEXT_PUBLIC_URL}/share/${threadId}`,
+      canonical: shareUrl,
     },
     openGraph: {
       title: 'Shared Conversation | Dobby',
       description: 'Replay this Worker conversation on Dobby',
-      images: [`${process.env.NEXT_PUBLIC_URL}/share-page/og-fallback.png`],
+      images: [fallbackImage],
     },
   };
 
@@ -35,14 +38,14 @@ export async function generateMetadata({ params }): Promise<Metadata> {
       projectData.description ||
       'Replay this Worker conversation on Dobby';
     const ogImage = isDevelopment
-      ? `${process.env.NEXT_PUBLIC_URL}/share-page/og-fallback.png`
-      : `${process.env.NEXT_PUBLIC_URL}/api/share-page/og-image?title=${projectData.name}`;
+      ? fallbackImage
+      : pageUrl(`/api/share-page/og-image?title=${projectData.name}`);
 
     return {
       title,
       description,
       alternates: {
-        canonical: `${process.env.NEXT_PUBLIC_URL}/share/${threadId}`,
+        canonical: shareUrl,
       },
       openGraph: {
         title,

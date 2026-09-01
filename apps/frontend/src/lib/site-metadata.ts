@@ -1,13 +1,11 @@
-/**
- * Site metadata configuration - SIMPLE AND WORKING
- */
-
-const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.dobby.now';
+import { getSiteUrl } from '@/lib/site-url';
 
 export const siteMetadata = {
   name: 'Dobby',
-  title: 'Dobby: Your Autonomous AI Worker',
-  description: 'Built for complex tasks, designed for everything. The ultimate AI assistant that handles it all—from simple requests to mega-complex projects.',
-  url: baseUrl,
-  keywords: 'Dobby, AI Worker, Agentic AI, Autonomous AI Worker, AI Automation, AI Workflow Automation, AI Assistant, Task Automation',
+  title: 'Dobby — Autonomous AI Worker for Slides, Research & Your Mac',
+  description:
+    'Dobby is an AI worker for slides, research, docs, and video. Run it in the browser, on your computer, or in WeChat.',
+  url: getSiteUrl(),
+  keywords:
+    'Dobby, AI Worker, Autonomous AI Worker, AI Automation, AI Assistant, slides, research, WeChat AI',
 };

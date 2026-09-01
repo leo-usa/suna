@@ -1,4 +1,5 @@
 import { pricingTiers, type PricingTier } from '@/lib/pricing-config';
+import { getSiteUrl } from '@/lib/site-url';
 
 // Re-export for backward compatibility
 export type { PricingTier } from '@/lib/pricing-config';
@@ -7,7 +8,7 @@ export const SUPPORT_EMAIL = 'support@dobby.now';
 export const SUPPORT_MAILTO = `mailto:${SUPPORT_EMAIL}`;
 
 export const siteConfig = {
-  url: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+  url: getSiteUrl(),
   nav: {
     links: [
       { id: 1, href: '/', i18nKey: 'home' as const },
@@ -38,9 +39,9 @@ export const siteConfig = {
       title: 'Resources',
       links: [
         { id: 5, title: 'Tutorials', url: '/tutorials' },
-        { id: 6, title: 'Documentation', url: 'https://github.com/kortix-ai/suna' },
+        { id: 6, title: 'Documentation', url: '/docs/api' },
         { id: 7, title: 'Discord', url: 'https://discord.com/invite/RvFhXUdZ9H' },
-        { id: 8, title: 'GitHub', url: 'https://github.com/kortix-ai/suna' },
+        { id: 8, title: 'API', url: 'https://api.dobby.now' },
       ],
     },
     {
@@ -48,7 +49,7 @@ export const siteConfig = {
       links: [
         { id: 9, title: 'Privacy Policy', url: '/legal?tab=privacy' },
         { id: 10, title: 'Terms of Service', url: '/legal?tab=terms' },
-        { id: 11, title: 'License', url: 'https://github.com/kortix-ai/suna/blob/main/LICENSE' },
+        { id: 11, title: 'License', url: '/legal' },
       ],
     },
   ],

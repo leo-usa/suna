@@ -1,45 +1,64 @@
 import { MetadataRoute } from 'next';
-import { siteConfig } from '@/lib/site-config';
 import { locales } from '@/i18n/config';
+import { CANONICAL_ORIGIN } from '@/lib/site-url';
 
-// Marketing pages that support locale routing for SEO
-const MARKETING_ROUTES = [
-  { path: '/', priority: 1, changeFrequency: 'daily' as const },
-  { path: '/suna', priority: 0.9, changeFrequency: 'monthly' as const },
-  { path: '/legal', priority: 0.5, changeFrequency: 'monthly' as const },
-  { path: '/support', priority: 0.7, changeFrequency: 'weekly' as const },
+const LOCALIZED_ROUTES = [
+  { path: '/', priority: 1, changeFrequency: 'weekly' as const },
+  { path: '/legal', priority: 0.4, changeFrequency: 'monthly' as const },
+  { path: '/support', priority: 0.6, changeFrequency: 'monthly' as const },
+];
+
+const EN_ONLY_ROUTES = [
+  { path: '/about', priority: 0.8, changeFrequency: 'monthly' as const },
+  { path: '/pricing', priority: 0.9, changeFrequency: 'weekly' as const },
+  { path: '/download', priority: 0.8, changeFrequency: 'weekly' as const },
+  { path: '/tutorials', priority: 0.7, changeFrequency: 'weekly' as const },
+  { path: '/works', priority: 0.8, changeFrequency: 'daily' as const },
+  { path: '/careers', priority: 0.5, changeFrequency: 'monthly' as const },
+  { path: '/agents-101', priority: 0.6, changeFrequency: 'monthly' as const },
+  { path: '/help', priority: 0.5, changeFrequency: 'monthly' as const },
+  { path: '/docs/api', priority: 0.6, changeFrequency: 'monthly' as const },
   { path: '/cn/consumer', priority: 0.85, changeFrequency: 'weekly' as const },
   { path: '/cn/enterprise', priority: 0.85, changeFrequency: 'weekly' as const },
 ];
 
-export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = siteConfig.url;
-  const sitemapEntries: MetadataRoute.Sitemap = [];
+function languageMap(path: string): Record<string, string> {
+  const languages = Object.fromEntries(
+    locales.map((loc) => [
+      loc,
+      loc === 'en' ? `${CANONICAL_ORIGIN}${path === '/' ? '' : path}` : `${CANONICAL_ORIGIN}/${loc}${path === '/' ? '' : path}`,
+    ]),
+  );
+  languages['x-default'] = `${CANONICAL_ORIGIN}${path === '/' ? '' : path}`;
+  return languages;
+}
 
-  // Generate entries for each marketing route in all locales
-  MARKETING_ROUTES.forEach((route) => {
+export default function sitemap(): MetadataRoute.Sitemap {
+  const entries: MetadataRoute.Sitemap = [];
+
+  LOCALIZED_ROUTES.forEach((route) => {
     locales.forEach((locale) => {
-      const url = locale === 'en' 
-        ? `${baseUrl}${route.path}` 
-        : `${baseUrl}/${locale}${route.path}`;
-      
-      sitemapEntries.push({
+      const url =
+        locale === 'en'
+          ? `${CANONICAL_ORIGIN}${route.path === '/' ? '' : route.path}`
+          : `${CANONICAL_ORIGIN}/${locale}${route.path === '/' ? '' : route.path}`;
+
+      entries.push({
         url,
-        lastModified: new Date(),
         changeFrequency: route.changeFrequency,
         priority: route.priority,
-        alternates: {
-          languages: Object.fromEntries(
-            locales.map((loc) => [
-              loc,
-              loc === 'en' ? `${baseUrl}${route.path}` : `${baseUrl}/${loc}${route.path}`
-            ])
-          ),
-        },
+        alternates: { languages: languageMap(route.path) },
       });
     });
   });
 
-  return sitemapEntries;
-}
+  EN_ONLY_ROUTES.forEach((route) => {
+    entries.push({
+      url: `${CANONICAL_ORIGIN}${route.path}`,
+      changeFrequency: route.changeFrequency,
+      priority: route.priority,
+    });
+  });
 
+  return entries;
+}

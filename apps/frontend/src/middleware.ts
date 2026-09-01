@@ -4,10 +4,16 @@ import type { NextRequest } from 'next/server';
 import { locales, defaultLocale, type Locale } from '@/i18n/config';
 import { detectBestLocaleFromHeaders } from '@/lib/utils/geo-detection-server';
 
+function isSearchEngineCrawler(userAgent: string | null): boolean {
+  if (!userAgent) return false;
+  return /googlebot|google-inspectiontool|bingbot|yandexbot|baiduspider|duckduckbot|slurp|facebookexternalhit|twitterbot|linkedinbot|applebot|semrushbot|ahrefsbot/i.test(
+    userAgent,
+  );
+}
+
 // Marketing pages that support locale routing for SEO (/de, /it, etc.)
 const MARKETING_ROUTES = [
   '/',
-  '/suna',
   '/legal',
   '/support',
   '/templates',
@@ -30,8 +36,8 @@ const PUBLIC_ROUTES = [
   '/master-login', // Master password admin login
   '/checkout', // Public checkout wrapper for Apple compliance
   '/support', // Support page should be public
-  '/suna', // Dobby rebrand page should be public for SEO
   '/help', // Help center and documentation should be public
+  '/credits-explained', // Credits explained page should be public
   '/credits-explained', // Credits explained page should be public
   '/agents-101',
   '/about', // About page should be public 
@@ -108,6 +114,10 @@ export async function middleware(request: NextRequest) {
   }
   if (pathname === '/enterprise') {
     return NextResponse.redirect(new URL('/cn/enterprise', request.url));
+  }
+
+  if (pathname === '/suna' || /\/suna\/?$/.test(pathname)) {
+    return NextResponse.redirect(new URL('/', request.url), 301);
   }
   
   // Skip middleware for static files and API routes
@@ -236,7 +246,11 @@ export async function middleware(request: NextRequest) {
   // 1. User is visiting a marketing route without locale prefix
   // 2. User doesn't have an explicit preference (no cookie, no user metadata)
   // 3. Detected locale is not English (default)
-  if (isMarketingRoute && (!firstSegment || !locales.includes(firstSegment as Locale))) {
+  if (
+    !isSearchEngineCrawler(request.headers.get('user-agent')) &&
+    isMarketingRoute &&
+    (!firstSegment || !locales.includes(firstSegment as Locale))
+  ) {
     // Check if user has explicit preference in cookie
     const localeCookie = request.cookies.get('locale')?.value;
     const hasExplicitPreference = !!localeCookie && locales.includes(localeCookie as Locale);

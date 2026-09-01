@@ -2,6 +2,7 @@
 
 import { Navbar } from '@/components/home/navbar';
 import { usePathname } from 'next/navigation';
+import { locales } from '@/i18n/config';
 
 export default function HomeLayout({
   children,
@@ -9,7 +10,8 @@ export default function HomeLayout({
   children: React.ReactNode;
 }>) {
   const pathname = usePathname();
-  const isHomePage = pathname === '/';
+  const isHomePage =
+    pathname === '/' || locales.some((locale) => pathname === `/${locale}`);
 
   return (
     <div className="w-full min-h-dvh relative">

@@ -43,7 +43,7 @@ const VIMEO_VIDEOS_IMAGES_EMBED = `<div style="position: relative; padding-botto
 /** Locale-specific embed overrides; other locales keep the default entry below. */
 const LOCALE_TUTORIAL_OVERRIDES: Record<string, Record<string, TutorialLocaleOverride>> = {
   zh: {
-    'introduction-to-kortix': {
+    'introduction-to-dobby': {
       embedCode: SOHU_INTRO_EMBED,
       isPlaceholder: false,
     },
@@ -76,7 +76,7 @@ function resolveTutorialEntries(locale: string): TutorialEntry[] {
 
 const TUTORIAL_ENTRIES: TutorialEntry[] = [
   {
-    id: 'introduction-to-kortix',
+    id: 'introduction-to-dobby',
     icon: Sparkles,
     embedCode: `<div style="position: relative; padding-bottom: calc(57.3684% + 41px); height: 0px; width: 100%;"><iframe src="https://demo.arcade.software/iG83WENBBNvLFbzIf8kE?embed&embed_mobile=tab&embed_desktop=inline&show_copy_link=true" title="Explore Templates and AI-Powered Content Generation Modes" frameborder="0" loading="lazy" webkitallowfullscreen mozallowfullscreen allowfullscreen allow="clipboard-write" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; color-scheme: light;" ></iframe></div>`,
     isPlaceholder: true,

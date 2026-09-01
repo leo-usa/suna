@@ -40,9 +40,9 @@ const helpData = {
       title: "Quick Links",
       items: [
         {
-          title: "GitHub Repository",
-          url: "https://github.com/kortix-ai/suna",
-          external: true,
+          title: "API docs",
+          url: "/docs/api",
+          external: false,
         },
         {
           title: "Discord Community",

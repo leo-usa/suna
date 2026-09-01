@@ -1,24 +1,24 @@
-'use client';
+import type { Metadata } from 'next';
+import { HomeClient } from '@/components/home/home-client';
+import { HomeSeoContent } from '@/components/home/home-seo-content';
+import { pageMetadata } from '@/lib/seo';
+import { siteMetadata } from '@/lib/site-metadata';
 
-import { Suspense, lazy } from 'react';
-import { BackgroundAALChecker } from '@/components/auth/background-aal-checker';
-import { HeroSection as NewHeroSection } from '@/components/home/hero-section';
-
-// Lazy load components
-const MobileAppInterstitial = lazy(() =>
-  import('@/components/announcements/mobile-app-interstitial').then(mod => ({ default: mod.MobileAppInterstitial }))
-);
+export const metadata: Metadata = pageMetadata({
+  title: siteMetadata.title,
+  description: siteMetadata.description,
+  path: '/',
+  absoluteTitle: true,
+});
 
 export default function Home() {
   return (
-    <BackgroundAALChecker>
-      <div className="h-dvh">
-        <NewHeroSection />
-        {/* Mobile app banner - shown on mobile devices for logged-in users */}
-        <Suspense fallback={null}>
-          <MobileAppInterstitial />
-        </Suspense>
-      </div>
-    </BackgroundAALChecker>
+    <>
+      <h1 className="sr-only">
+        Dobby is an autonomous AI worker for slides, research, docs, and tasks on your computer
+      </h1>
+      <HomeClient />
+      <HomeSeoContent />
+    </>
   );
 }

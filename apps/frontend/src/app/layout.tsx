@@ -32,8 +32,6 @@ export const viewport: Viewport = {
   ],
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
   viewportFit: 'cover',
 };
 
@@ -45,7 +43,7 @@ export const metadata: Metadata = {
   },
   description: siteMetadata.description,
   keywords: siteMetadata.keywords,
-  authors: [{ name: 'Dobby Team', url: 'https://www.dobby.now' }],
+  authors: [{ name: 'Dobby Team', url: siteMetadata.url }],
   creator: 'Dobby Team',
   publisher: 'Dobby Team',
   applicationName: siteMetadata.name,
@@ -80,8 +78,6 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: siteMetadata.title,
     description: siteMetadata.description,
-    creator: '@dobby',
-    site: '@dobby',
     images: ['/banner.png'],
   },
   icons: {
@@ -93,9 +89,6 @@ export const metadata: Metadata = {
     apple: [{ url: '/logo_black.png', sizes: '180x180' }],
   },
   manifest: '/manifest.json',
-  alternates: {
-    canonical: siteMetadata.url,
-  },
 };
 
 export default function RootLayout({
@@ -185,9 +178,8 @@ export default function RootLayout({
               description: siteMetadata.description,
               foundingDate: '2024',
               sameAs: [
-                'https://github.com/Kortix-ai/Suna',
-                'https://x.com/kortix',
-                'https://linkedin.com/company/kortix',
+                'https://www.linkedin.com/company/dobby/',
+                'https://discord.com/invite/RvFhXUdZ9H',
               ],
               contactPoint: {
                 '@type': 'ContactPoint',
@@ -213,11 +205,6 @@ export default function RootLayout({
                 '@type': 'Offer',
                 price: '0',
                 priceCurrency: 'USD',
-              },
-              aggregateRating: {
-                '@type': 'AggregateRating',
-                ratingValue: '4.8',
-                ratingCount: '1000',
               },
             }),
           }}

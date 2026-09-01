@@ -580,15 +580,12 @@ function LegalContent() {
                         Software License
                       </h3>
                       <p className="text-muted-foreground text-balance mb-6">
-                        For the full license terms, please refer to the LICENSE file in our GitHub repository:{' '}
-                        <a
-                          href="https://github.com/kortix-ai/suna/blob/main/LICENSE"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-primary hover:underline"
-                        >
-                          github.com/kortix-ai/suna/blob/main/LICENSE
+                        For the full license terms, please refer to the License
+                        information in these Terms or contact{' '}
+                        <a href="mailto:support@dobby.now" className="text-primary hover:underline">
+                          support@dobby.now
                         </a>
+                        .
                       </p>
 
                       <h3 className="text-lg font-medium tracking-tight">

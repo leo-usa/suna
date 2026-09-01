@@ -724,7 +724,7 @@ function LoginContent() {
                     privacyPolicy: (chunks) => {
                       return (
                         <a
-                          href="https://www.dobby.now/legal?tab=privacy"
+                          href="/legal?tab=privacy"
                           target="_blank"
                           rel="noopener noreferrer"
                           className="hover:underline underline-offset-2 text-primary"
@@ -737,7 +737,7 @@ function LoginContent() {
                     termsOfService: (chunks) => {
                       return (
                         <a
-                          href="https://www.dobby.now/legal?tab=terms"
+                          href="/legal?tab=terms"
                           target="_blank"
                           rel="noopener noreferrer"
                           className="hover:underline underline-offset-2 text-primary"
@@ -890,7 +890,7 @@ function LoginContent() {
                     {t.rich('acceptPrivacyTerms', {
                       privacyPolicy: (chunks) => (
                         <a
-                          href="https://www.dobby.now/legal?tab=privacy"
+                          href="/legal?tab=privacy"
                           target="_blank"
                           rel="noopener noreferrer"
                           className="hover:underline underline-offset-2 text-primary"
@@ -901,7 +901,7 @@ function LoginContent() {
                       ),
                       termsOfService: (chunks) => (
                         <a
-                          href="https://www.dobby.now/legal?tab=terms"
+                          href="/legal?tab=terms"
                           target="_blank"
                           rel="noopener noreferrer"
                           className="hover:underline underline-offset-2 text-primary"

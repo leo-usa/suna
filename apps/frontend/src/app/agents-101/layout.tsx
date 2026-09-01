@@ -1,23 +1,11 @@
 import { Metadata } from 'next';
+import { pageMetadata } from '@/lib/seo';
 
-export const metadata: Metadata = {
-  title: 'Workers 101 | Dobby',
-  description: 'An introduction to AI Workers. Learn what AI workers are, how they work, and how to build them.',
-  openGraph: {
-    title: 'Workers 101 | Dobby',
-    description: 'An introduction to AI Workers.',
-    url: 'https://www.dobby.now/agents-101',
-    siteName: 'Dobby',
-    images: [{ url: '/banner.png', width: 1200, height: 630 }],
-    type: 'website',
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Workers 101 | Dobby',
-    description: 'An introduction to AI Workers.',
-    images: ['/banner.png'],
-  },
-};
+export const metadata: Metadata = pageMetadata({
+  title: 'Workers 101',
+  description: 'An introduction to AI workers. Learn what they are, how they work, and how to build them.',
+  path: '/agents-101',
+});
 
 export default function Agents101Layout({
   children,

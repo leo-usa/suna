@@ -119,6 +119,13 @@ const nextConfig = (): NextConfig => ({
     ];
   },
   
+  async redirects() {
+    return [
+      { source: '/suna', destination: '/', permanent: true },
+      { source: '/:locale/suna', destination: '/', permanent: true },
+    ];
+  },
+
   // HTTP headers for caching and performance
   async headers() {
     return [
