@@ -136,7 +136,7 @@ class PricingPresets:
     CLAUDE_FABLE_5 = ModelPricing(
         input_cost_per_million_tokens=10.00,
         output_cost_per_million_tokens=50.00,
-        cached_read_cost_per_million_tokens=1.00,
+        cached_read_cost_per_million_tokens=0.25,
         cache_write_5m_cost_per_million_tokens=12.50,
     )
 
@@ -980,11 +980,17 @@ class ModelFactory:
     @staticmethod
     def create_claude_fable_5() -> Model:
         return Model(
-            id="dobby/claude-fable-5",
-            name="Claude Fable 5",
-            litellm_model_id="openrouter/anthropic/claude-fable-5",
+            id="dobby/claude-fable-5.1",
+            name="Claude Fable 5.1",
+            litellm_model_id="openrouter/anthropic/claude-fable-5.1",
             provider=ModelProvider.OPENROUTER,
-            aliases=["claude-fable-5", "anthropic/claude-fable-5"],
+            aliases=[
+                "claude-fable-5.1",
+                "anthropic/claude-fable-5.1",
+                "dobby/claude-fable-5",
+                "claude-fable-5",
+                "anthropic/claude-fable-5",
+            ],
             context_window=1_000_000,
             capabilities=[
                 ModelCapability.CHAT,
@@ -1545,6 +1551,7 @@ class ModelRegistry:
         self._litellm_id_to_pricing[BedrockConfig.get_sonnet_5_id()] = PricingPresets.CLAUDE_SONNET_5
         self._litellm_id_to_pricing["openrouter/anthropic/claude-opus-4.7"] = PricingPresets.CLAUDE_OPUS_4_7
         self._litellm_id_to_pricing["openrouter/anthropic/claude-opus-5"] = PricingPresets.CLAUDE_OPUS_5
+        self._litellm_id_to_pricing["openrouter/anthropic/claude-fable-5.1"] = PricingPresets.CLAUDE_FABLE_5
         self._litellm_id_to_pricing["openrouter/anthropic/claude-fable-5"] = PricingPresets.CLAUDE_FABLE_5
         self._litellm_id_to_pricing[BedrockConfig.get_fable_5_id()] = PricingPresets.CLAUDE_FABLE_5
         self._litellm_id_to_pricing["openrouter/google/gemini-2.5-pro"] = PricingPresets.GEMINI_2_5_PRO
