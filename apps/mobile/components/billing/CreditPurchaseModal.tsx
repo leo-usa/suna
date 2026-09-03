@@ -3,7 +3,7 @@ import { View, Pressable, Modal, ScrollView, ActivityIndicator } from 'react-nat
 import { Text } from '@/components/ui/text';
 import { Icon } from '@/components/ui/icon';
 import { AlertCircle } from 'lucide-react-native';
-import { formatCredits } from '@agentpress/shared';
+import { formatCredits, dollarsToCredits } from '@agentpress/shared';
 import { startUnifiedCreditPurchase, invalidateCreditsAfterPurchase } from '@/lib/billing';
 import * as Haptics from 'expo-haptics';
 import { useQueryClient } from '@tanstack/react-query';
@@ -20,16 +20,17 @@ interface CreditPurchaseModalProps {
 interface CreditPackage {
   amount: number;
   price: number;
+  bonusPercent: number;
   popular?: boolean;
 }
 
 const CREDIT_PACKAGES: CreditPackage[] = [
-  { amount: 10, price: 10 },
-  { amount: 25, price: 25 },
-  { amount: 50, price: 50 },
-  { amount: 100, price: 100, popular: true },
-  { amount: 250, price: 250 },
-  { amount: 500, price: 500 },
+  { amount: 10, price: 10, bonusPercent: 0 },
+  { amount: 25, price: 25, bonusPercent: 5 },
+  { amount: 50, price: 50, bonusPercent: 8 },
+  { amount: 100, price: 100, bonusPercent: 12, popular: true },
+  { amount: 250, price: 250, bonusPercent: 16 },
+  { amount: 500, price: 500, bonusPercent: 20 },
 ];
 
 export function CreditPurchaseModal({
@@ -206,8 +207,15 @@ export function CreditPurchaseModal({
                       ${pkg.amount}
                     </Text>
                     <Text className="text-xs font-roobert text-muted-foreground mt-1">
-                      Credits
+                      {formatCredits(Math.round(dollarsToCredits(pkg.amount) * (1 + pkg.bonusPercent / 100)))} credits
                     </Text>
+                    {pkg.bonusPercent > 0 && (
+                      <View className="mt-1 bg-green-500/15 px-2 py-0.5 rounded-full">
+                        <Text className="text-[10px] font-roobert-medium text-green-600">
+                          +{pkg.bonusPercent}% extra
+                        </Text>
+                      </View>
+                    )}
                     {pkg.popular && (
                       <View className="mt-1 bg-primary/10 px-2 py-0.5 rounded-full">
                         <Text className="text-[10px] font-roobert-medium text-primary">

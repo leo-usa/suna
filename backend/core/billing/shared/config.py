@@ -1,5 +1,5 @@
-from decimal import Decimal
-from typing import Dict, List, Optional
+from decimal import Decimal, ROUND_HALF_UP
+from typing import Any, Dict, List, Optional, TypedDict
 from dataclasses import dataclass
 
 from core.utils.config import config
@@ -320,14 +320,87 @@ TIERS: Dict[str, Tier] = {
     ),
 }
 
+_MONEY = Decimal('0.01')
+
 CREDIT_PACKAGES = [
-    {'amount': Decimal('10.00'), 'stripe_price_id': config.STRIPE_CREDITS_10_PRICE_ID},
-    {'amount': Decimal('25.00'), 'stripe_price_id': config.STRIPE_CREDITS_25_PRICE_ID},
-    {'amount': Decimal('50.00'), 'stripe_price_id': config.STRIPE_CREDITS_50_PRICE_ID},
-    {'amount': Decimal('100.00'), 'stripe_price_id': config.STRIPE_CREDITS_100_PRICE_ID},
-    {'amount': Decimal('250.00'), 'stripe_price_id': config.STRIPE_CREDITS_250_PRICE_ID},
-    {'amount': Decimal('500.00'), 'stripe_price_id': config.STRIPE_CREDITS_500_PRICE_ID},
+    {'amount': Decimal('10.00'), 'stripe_price_id': config.STRIPE_CREDITS_10_PRICE_ID, 'bonus_percent': Decimal('0'), 'popular': False},
+    {'amount': Decimal('25.00'), 'stripe_price_id': config.STRIPE_CREDITS_25_PRICE_ID, 'bonus_percent': Decimal('5'), 'popular': False},
+    {'amount': Decimal('50.00'), 'stripe_price_id': config.STRIPE_CREDITS_50_PRICE_ID, 'bonus_percent': Decimal('8'), 'popular': False},
+    {'amount': Decimal('100.00'), 'stripe_price_id': config.STRIPE_CREDITS_100_PRICE_ID, 'bonus_percent': Decimal('12'), 'popular': True},
+    {'amount': Decimal('250.00'), 'stripe_price_id': config.STRIPE_CREDITS_250_PRICE_ID, 'bonus_percent': Decimal('16'), 'popular': False},
+    {'amount': Decimal('500.00'), 'stripe_price_id': config.STRIPE_CREDITS_500_PRICE_ID, 'bonus_percent': Decimal('20'), 'popular': False},
 ]
+
+
+class CreditPurchaseGrant(TypedDict):
+    base: Decimal
+    bonus_percent: Decimal
+    bonus: Decimal
+    total: Decimal
+    stripe_price_id: Optional[str]
+    popular: bool
+
+
+def _money(value: Any) -> Decimal:
+    return Decimal(str(value)).quantize(_MONEY, rounding=ROUND_HALF_UP)
+
+
+def compute_credit_purchase_grant(amount: Decimal) -> CreditPurchaseGrant:
+    """Extra credits for catalog packs only. Other amounts stay 1:1. Stripe IDs unchanged."""
+    base = _money(amount)
+    for pkg in CREDIT_PACKAGES:
+        if _money(pkg['amount']) == base:
+            bonus_percent = _money(pkg.get('bonus_percent', 0))
+            bonus = _money(base * bonus_percent / Decimal('100'))
+            price_id = pkg.get('stripe_price_id') or None
+            if price_id is not None:
+                price_id = str(price_id).strip() or None
+            return {
+                'base': base,
+                'bonus_percent': bonus_percent,
+                'bonus': bonus,
+                'total': _money(base + bonus),
+                'stripe_price_id': price_id,
+                'popular': bool(pkg.get('popular')),
+            }
+    return {
+        'base': base,
+        'bonus_percent': Decimal('0.00'),
+        'bonus': Decimal('0.00'),
+        'total': base,
+        'stripe_price_id': None,
+        'popular': False,
+    }
+
+
+def serialize_credit_packages() -> List[Dict[str, Any]]:
+    packages = []
+    for pkg in CREDIT_PACKAGES:
+        grant = compute_credit_purchase_grant(pkg['amount'])
+        packages.append({
+            'amount': float(grant['base']),
+            'bonus_percent': float(grant['bonus_percent']),
+            'base_credits': int(grant['base'] * CREDITS_PER_DOLLAR),
+            'bonus_credits': int(grant['bonus'] * CREDITS_PER_DOLLAR),
+            'total_credits': int(grant['total'] * CREDITS_PER_DOLLAR),
+            'popular': grant['popular'],
+        })
+    return packages
+
+
+def granted_credits_from_purchase(purchase: Dict[str, Any]) -> Decimal:
+    """Refund the credits we granted. Historical 1:1 purchases have no credits_granted metadata."""
+    metadata = purchase.get('metadata') or {}
+    if isinstance(metadata, str):
+        import json
+        try:
+            metadata = json.loads(metadata)
+        except (TypeError, ValueError):
+            metadata = {}
+    granted = metadata.get('credits_granted')
+    if granted is not None and str(granted) != '':
+        return _money(granted)
+    return _money(purchase.get('amount_dollars') or 0)
 
 ADMIN_LIMITS = {
     'max_credit_adjustment': Decimal('1000.00'),

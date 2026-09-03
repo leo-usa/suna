@@ -87,11 +87,23 @@ class CheckoutHandler:
                         completed_at=datetime.now(timezone.utc).isoformat()
                     )
             
+            grant_description = f"Purchased ${credit_amount} credits"
+            amount_paid = metadata.get('amount_paid')
+            bonus_percent = metadata.get('bonus_percent')
+            if amount_paid and bonus_percent:
+                try:
+                    if Decimal(str(bonus_percent)) > 0:
+                        grant_description = f"Purchased ${amount_paid} credits (+{bonus_percent}% extra)"
+                    else:
+                        grant_description = f"Purchased ${amount_paid} credits"
+                except (ValueError, TypeError, ArithmeticError):
+                    pass
+
             result = await credit_manager.add_credits(
                 account_id=account_id,
                 amount=credit_amount,
                 is_expiring=False,
-                description=f"Purchased ${credit_amount} credits",
+                description=grant_description,
                 type='purchase',
                 stripe_event_id=stripe_event_id or metadata.get('purchase_id') or session.get('id')
             )

@@ -818,6 +818,7 @@
     "confirmDowngradeDescription": "Du wechselst zum {planName}-Plan. Diese Änderung wird am Ende deines aktuellen Abrechnungszeitraums wirksam.",
     "confirmDowngrade": "Ja, Herabstufen",
     "pickPlan": "Wähle den Plan, der zu dir passt.",
+    "subscribeHeading": "Subscribe",
     "subscriptionPage": {
       "titleRequired": "Subscription Required",
       "titleTrialEnded": "Your Trial Has Ended",
@@ -925,9 +926,14 @@
     },
     "creditPurchase": {
       "title": "Get additional credits",
+      "sectionTitle": "Prepaid credits",
+      "sectionSubtitle": "Pay once with card, Alipay, or WeChat Pay. No subscription required. Larger packs include extra credits.",
+      "plusBenefits": "Prepaid credits unlock Plus features — the same models and limits as Plus — for as long as you have a balance. Credits never expire.",
       "description": "Add prepaid credits to continue using Dobby. Credits do not expire.",
       "currentBalance": "Current balance:",
       "creditsPackLabel": "{count} Credits",
+      "extraPercent": "+{percent}% extra",
+      "buyNow": "Buy credits",
       "paymentMethod": "Payment method",
       "payCard": "Card",
       "payAlipay": "Alipay",

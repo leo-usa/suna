@@ -10,6 +10,7 @@ from ..shared.config import (
     get_annual_prepaid_price_usd,
     get_tier_by_name,
     ANNUAL_PREPAID_TIER_KEYS,
+    compute_credit_purchase_grant,
 )
 from core.utils.config import config
 from core.billing import repo as billing_repo
@@ -89,7 +90,14 @@ class PaymentService(PaymentProcessorInterface):
             raise
         
         purchase_id = None
-        purchase_metadata = {'amount': float(amount), 'payment_method': payment_method}
+        grant = compute_credit_purchase_grant(amount)
+        purchase_metadata = {
+            'amount': float(amount),
+            'payment_method': payment_method,
+            'credits_granted': float(grant['total']),
+            'bonus_percent': float(grant['bonus_percent']),
+            'bonus_credits': float(grant['bonus']),
+        }
         try:
             purchase_record = await billing_repo.create_credit_purchase(
                 account_id=account_id,
@@ -116,20 +124,25 @@ class PaymentService(PaymentProcessorInterface):
             metadata = {
                 'type': 'credit_purchase',
                 'account_id': account_id,
-                'credit_amount': str(amount),
+                'credit_amount': str(grant['total']),
+                'amount_paid': str(amount),
+                'bonus_percent': str(grant['bonus_percent']),
                 'purchase_id': str(purchase_id),
-                'payment_method': payment_method
+                'payment_method': payment_method,
             }
+            product_name = f'${amount} Credits'
+            if grant['bonus_percent'] > 0:
+                product_name = f'${amount} Credits (+{grant["bonus_percent"]}% extra)'
             session_params = {
                 'customer': customer_id,
                 **payment_method_params,
                 'line_items': [{
                     'price_data': {
                         'currency': 'usd',
-                        'product_data': {'name': f'${amount} Credits'},
-                        'unit_amount': int(amount * 100)
+                        'product_data': {'name': product_name},
+                        'unit_amount': int(amount * 100),
                     },
-                    'quantity': 1
+                    'quantity': 1,
                 }],
                 'mode': 'payment',
                 'success_url': success_url,
@@ -156,7 +169,10 @@ class PaymentService(PaymentProcessorInterface):
                     'session_id': session.id,
                     'amount': float(amount),
                     'purchase_id': str(purchase_id),
-                    'payment_method': payment_method
+                    'payment_method': payment_method,
+                    'credits_granted': float(grant['total']),
+                    'bonus_percent': float(grant['bonus_percent']),
+                    'bonus_credits': float(grant['bonus']),
                 }
             )
             

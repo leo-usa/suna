@@ -84,7 +84,7 @@ export function PlanSelectionModal({
                         alertTitle={storeAlertTitle}
                         alertSubtitle={storeAlertSubtitle}
                         onSubscriptionUpdate={handleSubscriptionUpdate}
-                        showBuyCredits={true}
+                        showCreditPacks={true}
                     />
                 </PricingFullPageShell>
             </DialogContent>

@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from core.utils.logger import logger
 from core.billing.credits.manager import credit_manager
 from core.billing import repo as billing_repo
+from core.billing.shared.config import granted_credits_from_purchase
 
 
 class RefundHandler:
@@ -55,7 +56,7 @@ class RefundHandler:
             return
         
         account_id = purchase['account_id']
-        credits_to_deduct = Decimal(str(purchase['amount_dollars']))
+        credits_to_deduct = granted_credits_from_purchase(purchase)
         
         try:
             if not existing_refund:

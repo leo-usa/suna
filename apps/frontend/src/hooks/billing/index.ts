@@ -79,6 +79,12 @@ export {
   type ModelPricingResponse,
 } from './use-model-pricing';
 
+export {
+  useCreditPackages,
+  type CreditPackage,
+  type CreditPackagesResponse,
+} from './use-credit-packages';
+
 // =============================================================================
 // ADMIN HOOKS - For admin dashboard
 // =============================================================================

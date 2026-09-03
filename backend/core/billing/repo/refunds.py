@@ -13,7 +13,7 @@ async def get_refund_by_stripe_id(stripe_refund_id: str) -> Optional[Dict[str, A
 
 async def get_purchase_by_payment_intent(payment_intent_id: str) -> Optional[Dict[str, Any]]:
     sql = """
-    SELECT id, account_id, amount_dollars, status
+    SELECT id, account_id, amount_dollars, status, metadata
     FROM credit_purchases
     WHERE stripe_payment_intent_id = :payment_intent_id
     """

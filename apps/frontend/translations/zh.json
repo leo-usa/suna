@@ -1696,6 +1696,7 @@
     "confirmDowngradeDescription": "您即将切换到{planName}计划。此更改将在您当前计费周期结束时生效。",
     "confirmDowngrade": "是的，降级",
     "pickPlan": "选择适合你的计划。",
+    "subscribeHeading": "订阅套餐",
     "subscriptionPage": {
       "titleRequired": "推荐订阅使用",
       "titleTrialEnded": "试用已结束",
@@ -1823,9 +1824,14 @@
     },
     "creditPurchase": {
       "title": "购买额外积分",
+      "sectionTitle": "预付积分",
+      "sectionSubtitle": "支持银行卡、支付宝或微信支付一次性购买，无需订阅。买得越多，额外积分比例越高。",
+      "plusBenefits": "持有预付积分即可享受 Plus 套餐权益（相同模型与功能上限）。积分不过期。",
       "description": "充值预付费积分以继续使用 Dobby。积分不过期。",
       "currentBalance": "当前余额：",
       "creditsPackLabel": "{count} 积分",
+      "extraPercent": "+{percent}% 额外积分",
+      "buyNow": "购买积分",
       "paymentMethod": "支付方式",
       "payCard": "银行卡",
       "payAlipay": "支付宝",

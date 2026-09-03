@@ -1,5 +1,6 @@
 export * from './pricing';
 export * from './credit-purchase';
+export { CreditPackSection } from './credit-pack-section';
 export * from './credit-transactions';
 export * from './subscription-cancellation-card';
 export * from './scheduled-downgrade-card';

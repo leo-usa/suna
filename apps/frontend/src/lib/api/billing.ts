@@ -221,6 +221,20 @@ export interface PurchaseCreditsResponse {
   checkout_url: string;
 }
 
+export interface CreditPackage {
+  amount: number;
+  bonus_percent: number;
+  base_credits: number;
+  bonus_credits: number;
+  total_credits: number;
+  popular?: boolean;
+}
+
+export interface CreditPackagesResponse {
+  packages: CreditPackage[];
+  credits_per_dollar: number;
+}
+
 export interface PurchaseAnnualPlanRequest {
   tier_key: 'tier_2_20' | 'tier_6_50' | 'tier_25_200';
   success_url: string;
@@ -527,6 +541,15 @@ export const billingApi = {
     const response = await backendApi.post<PurchaseCreditsResponse>(
       '/billing/purchase-credits',
       request
+    );
+    if (response.error) throw response.error;
+    return response.data!;
+  },
+
+  async getCreditPackages() {
+    const response = await backendApi.get<CreditPackagesResponse>(
+      '/billing/credit-packages',
+      { showErrors: false }
     );
     if (response.error) throw response.error;
     return response.data!;

@@ -8,7 +8,6 @@ import { motion } from 'framer-motion';
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   CheckIcon,
-  ShoppingCart,
   Lightbulb,
   X,
   Copy,
@@ -29,7 +28,7 @@ import posthog from 'posthog-js';
 import { AnimatedBg } from '@/components/ui/animated-bg';
 import { TierBadge } from '@/components/billing/tier-badge';
 import { DobbyLogo } from '@/components/sidebar/dobby-logo';
-import { CreditPurchaseModal } from '@/components/billing/credit-purchase';
+import { CreditPackSection } from '@/components/billing/credit-pack-section';
 import { ModelPricingModal } from '@/components/billing/model-pricing-modal';
 import { BorderBeam } from '@/components/ui/border-beam';
 import { useTranslations } from 'next-intl';
@@ -1111,6 +1110,7 @@ interface PricingSectionProps {
   alertTitle?: string;
   alertSubtitle?: string;
   showBuyCredits?: boolean;
+  showCreditPacks?: boolean;
   annualPrepaidMode?: boolean;
   isPrepaidAnnual?: boolean;
   prepaidAnnualTierKey?: string | null;
@@ -1131,6 +1131,7 @@ export function PricingSection({
   alertTitle,
   alertSubtitle,
   showBuyCredits = false,
+  showCreditPacks,
   annualPrepaidMode = false,
   isPrepaidAnnual = false,
   prepaidAnnualTierKey = null,
@@ -1193,8 +1194,8 @@ export function PricingSection({
   const currentBillingPeriod = getCurrentBillingPeriod();
 
   const [planLoadingStates, setPlanLoadingStates] = useState<Record<string, boolean>>({});
-  const [showCreditPurchaseModal, setShowCreditPurchaseModal] = useState(false);
   const [showModelPricingModal, setShowModelPricingModal] = useState(false);
+  const shouldShowCreditPacks = !annualPrepaidMode && (showCreditPacks ?? showBuyCredits);
 
   useEffect(() => {
     return () => {
@@ -1369,12 +1370,37 @@ export function PricingSection({
       className={cn("flex flex-col items-center justify-center w-full relative", noPadding ? "pb-0" : "pb-12")}
     >
       <div className="w-full mx-auto px-4 sm:px-6 flex flex-col">
+        {shouldShowCreditPacks && showTitleAndTabs && (isAlert || customTitle) && (
+          <div className="w-full max-w-5xl mx-auto mb-6 sm:mb-8 text-center">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-semibold tracking-tight text-foreground">
+              {isAlert
+                ? (localizedAlert.title || t('limitReachedUpgrade'))
+                : customTitle}
+            </h2>
+            {(isAlert ? localizedAlert.subtitle : customSubtitle) && (
+              <p className="mt-2 text-base sm:text-lg text-muted-foreground">
+                {isAlert ? localizedAlert.subtitle : customSubtitle}
+              </p>
+            )}
+          </div>
+        )}
+
+        {shouldShowCreditPacks && (
+          <CreditPackSection
+            currentBalance={currentSubscription?.credits.total || 0}
+            canPurchase={!isAuthenticated || !!currentSubscription?.subscription.can_purchase_credits}
+            onPurchaseComplete={handleSubscriptionUpdate}
+            isPrepaidAnnual={!!(currentSubscription?.subscription.is_prepaid_annual || isPrepaidAnnual)}
+            onViewModelPricing={() => setShowModelPricingModal(true)}
+          />
+        )}
+
         {/* Header */}
         <div className="w-full max-w-5xl mx-auto mb-4 sm:mb-6 sm:pt-4">
           {/* Title + Toggle Row */}
           {showTitleAndTabs && (
             <div className="mb-4 sm:mb-5">
-              {isAlert ? (
+              {isAlert && !shouldShowCreditPacks ? (
                 <div className="flex flex-col gap-4 items-center text-center">
                   <div className="flex flex-col gap-2">
                     <h2 className="text-2xl sm:text-3xl lg:text-4xl font-semibold tracking-tight text-foreground">
@@ -1426,9 +1452,11 @@ export function PricingSection({
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div>
                     <h2 className="text-2xl pb-2 sm:pb-0 sm:text-3xl font-semibold tracking-tight">
-                      {customTitle || t('pickPlan')}
+                      {shouldShowCreditPacks
+                        ? t('subscribeHeading')
+                        : (customTitle || t('pickPlan'))}
                     </h2>
-                    {customSubtitle && (
+                    {!shouldShowCreditPacks && customSubtitle && (
                       <p className="mt-2 text-sm sm:text-base text-muted-foreground max-w-2xl">
                         {customSubtitle}
                       </p>
@@ -1563,32 +1591,10 @@ export function PricingSection({
           })()}
         </div>
 
-        {/* Extra credits + Alipay/WeChat annual — above plan cards */}
+        {/* Subscription helper links — above plan cards */}
         {!annualPrepaidMode && (
           <div className="w-full max-w-5xl mx-auto mb-6 sm:mb-8 flex flex-col items-center gap-4">
-            <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center gap-3">
-              {showBuyCredits &&
-                isAuthenticated &&
-                currentSubscription?.subscription.can_purchase_credits && (
-                  <Button
-                    onClick={() => setShowCreditPurchaseModal(true)}
-                    variant="outline"
-                    size="lg"
-                    className="gap-2"
-                  >
-                    <ShoppingCart className="h-5 w-5" />
-                    {t('getAdditionalCredits')}
-                  </Button>
-                )}
-              {!(currentSubscription?.subscription.is_prepaid_annual || isPrepaidAnnual) && (
-                <Button variant="outline" size="lg" asChild>
-                  <Link href="/billing/annual-prepay">
-                    {t('annualPrepay.settingsLink')}
-                  </Link>
-                </Button>
-              )}
-            </div>
-            {(showBuyCredits || showTitleAndTabs) && (
+            {(showBuyCredits || showTitleAndTabs || shouldShowCreditPacks) && (
               <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
                 <Button
                   variant="link"
@@ -1608,6 +1614,15 @@ export function PricingSection({
                   <Cpu className="h-3.5 w-3.5 mr-2" />
                   <span className="text-sm">{t('modelPricing.viewLink')}</span>
                 </Button>
+                {!(currentSubscription?.subscription.is_prepaid_annual || isPrepaidAnnual) && (
+                  <Button
+                    variant="link"
+                    asChild
+                    className="text-muted-foreground hover:text-foreground h-auto p-0"
+                  >
+                    <Link href="/billing/annual-prepay">{t('annualPrepay.settingsLink')}</Link>
+                  </Button>
+                )}
               </div>
             )}
           </div>
@@ -1690,15 +1705,6 @@ export function PricingSection({
         </div>
 
       </div>
-
-      {/* Credit Purchase Modal */}
-      <CreditPurchaseModal
-        open={showCreditPurchaseModal}
-        onOpenChange={setShowCreditPurchaseModal}
-        currentBalance={currentSubscription?.credits.total || 0}
-        canPurchase={currentSubscription?.subscription.can_purchase_credits || false}
-        onPurchaseComplete={handleSubscriptionUpdate}
-      />
 
       <ModelPricingModal
         open={showModelPricingModal}

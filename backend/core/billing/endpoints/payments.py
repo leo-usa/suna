@@ -5,10 +5,19 @@ from datetime import datetime, timezone, timedelta
 from core.utils.auth_utils import verify_and_get_user_id_from_jwt
 from core.utils.logger import logger
 from ..shared.models import PurchaseCreditsRequest, PurchaseAnnualPlanRequest
-from ..shared.config import CREDITS_PER_DOLLAR
+from ..shared.config import CREDITS_PER_DOLLAR, serialize_credit_packages
 from ..payments import payment_service
 
 router = APIRouter(tags=["billing-payments"])
+
+
+@router.get("/credit-packages")
+async def get_credit_packages() -> Dict:
+    return {
+        'packages': serialize_credit_packages(),
+        'credits_per_dollar': CREDITS_PER_DOLLAR,
+    }
+
 
 @router.post("/purchase-credits")
 async def purchase_credits_checkout(

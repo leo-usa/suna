@@ -60,7 +60,7 @@ export default function PricingPage() {
             <PricingSection
               returnUrl={typeof window !== 'undefined' ? window.location.href : '/pricing'}
               showTitleAndTabs={true}
-              showBuyCredits={true}
+              showCreditPacks={true}
             />
           </Suspense>
         </motion.div>

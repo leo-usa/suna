@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from core.utils.logger import logger
 from core.utils.distributed_lock import DistributedLock
 from ....credits.manager import credit_manager
+from ....shared.config import compute_credit_purchase_grant
 from ..repositories import CreditRepository, SubscriptionRepository
 
 
@@ -86,17 +87,26 @@ class CreditService:
                 )
                 return
             
-            credits_to_add = Decimal(str(price))
+            grant = compute_credit_purchase_grant(Decimal(str(price)))
+            credits_to_add = grant['total']
             
             await CreditRepository.create_credit_purchase(
                 None, app_user_id, price, product_id, transaction_id
             )
             
+            if grant['bonus_percent'] > 0:
+                description = (
+                    f"Credit topup via RevenueCat: ${price} "
+                    f"(+{grant['bonus_percent']}% extra, {product_id})"
+                )
+            else:
+                description = f"Credit topup via RevenueCat: ${price} ({product_id})"
+
             result = await credit_manager.add_credits(
                 account_id=app_user_id,
                 amount=credits_to_add,
                 is_expiring=False,
-                description=f"Credit topup via RevenueCat: ${price} ({product_id})",
+                description=description,
                 type='purchase'
             )
             

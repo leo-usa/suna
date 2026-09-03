@@ -1743,9 +1743,14 @@
     },
     "creditPurchase": {
       "title": "Get additional credits",
+      "sectionTitle": "Prepaid credits",
+      "sectionSubtitle": "Pay once with card, Alipay, or WeChat Pay. No subscription required. Larger packs include extra credits.",
+      "plusBenefits": "Prepaid credits unlock Plus features — the same models and limits as Plus — for as long as you have a balance. Credits never expire.",
       "description": "Add prepaid credits to continue using Dobby. Credits do not expire.",
       "currentBalance": "Current balance:",
       "creditsPackLabel": "{count} Credits",
+      "extraPercent": "+{percent}% extra",
+      "buyNow": "Buy credits",
       "paymentMethod": "Payment method",
       "payCard": "Card",
       "payAlipay": "Alipay",
@@ -1803,10 +1808,11 @@
     "confirmDowngradeDescription": "You're about to downgrade to {planName}. This change will take effect at the end of your current billing period.",
     "confirmDowngrade": "Yes, Downgrade",
     "pickPlan": "Pick the plan that works for you.",
+    "subscribeHeading": "Subscribe",
     "subscriptionPage": {
       "titleRequired": "Subscription Required",
       "titleTrialEnded": "Your Trial Has Ended",
-      "descriptionRequired": "A subscription is required to use Dobby. Choose the plan that works best for you.",
+      "descriptionRequired": "Buy prepaid credits with card, Alipay, or WeChat Pay, or choose a subscription.",
       "descriptionTrialEnded": "Your 7-day free trial has ended. Choose a plan to continue using Dobby AI.",
       "questionsContact": "Questions? Contact us at <email>support@dobby.now</email>"
     },
