@@ -161,11 +161,16 @@ class PricingPresets:
         cache_write_5m_cost_per_million_tokens=0.0833,
     )
 
-    GEMINI_3_6_FLASH = ModelPricing(
-        input_cost_per_million_tokens=1.50,
-        output_cost_per_million_tokens=7.50,
+    GEMINI_3_8_FLASH = ModelPricing(
+        input_cost_per_million_tokens=0.75,
+        output_cost_per_million_tokens=3.75,
+        cached_read_cost_per_million_tokens=0.075,
+    )
+
+    MUSE_SPARK_1_3 = ModelPricing(
+        input_cost_per_million_tokens=1.25,
+        output_cost_per_million_tokens=4.25,
         cached_read_cost_per_million_tokens=0.15,
-        cache_write_5m_cost_per_million_tokens=0.0833,
     )
 
     GEMMA_4_31B = ModelPricing(
@@ -1074,13 +1079,19 @@ class ModelFactory:
         )
 
     @staticmethod
-    def create_gemini_3_6_flash() -> Model:
+    def create_gemini_3_8_flash() -> Model:
         return Model(
-            id="dobby/gemini-3.6-flash",
-            name="Gemini 3.6 Flash",
-            litellm_model_id="openrouter/google/gemini-3.6-flash",
+            id="dobby/gemini-3.8-flash",
+            name="Gemini 3.8 Flash",
+            litellm_model_id="openrouter/google/gemini-3.8-flash",
             provider=ModelProvider.OPENROUTER,
-            aliases=["gemini-3.6-flash", "google/gemini-3.6-flash"],
+            aliases=[
+                "gemini-3.8-flash",
+                "google/gemini-3.8-flash",
+                "dobby/gemini-3.6-flash",
+                "gemini-3.6-flash",
+                "google/gemini-3.6-flash",
+            ],
             context_window=1_000_000,
             capabilities=[
                 ModelCapability.CHAT,
@@ -1089,11 +1100,35 @@ class ModelFactory:
                 ModelCapability.THINKING,
                 ModelCapability.PROMPT_CACHING,
             ],
-            pricing=PricingPresets.GEMINI_3_6_FLASH,
+            pricing=PricingPresets.GEMINI_3_8_FLASH,
             tier_availability=["free", "paid"],
             priority=93,
             recommended=False,
             enabled=True,
+        )
+
+    @staticmethod
+    def create_muse_spark_1_3() -> Model:
+        return Model(
+            id="dobby/muse-spark-1.3",
+            name="Muse Spark 1.3",
+            litellm_model_id="openrouter/meta/muse-spark-1.3",
+            provider=ModelProvider.OPENROUTER,
+            aliases=["muse-spark-1.3", "meta/muse-spark-1.3"],
+            context_window=1_000_000,
+            capabilities=[
+                ModelCapability.CHAT,
+                ModelCapability.FUNCTION_CALLING,
+                ModelCapability.VISION,
+                ModelCapability.THINKING,
+                ModelCapability.PROMPT_CACHING,
+            ],
+            pricing=PricingPresets.MUSE_SPARK_1_3,
+            tier_availability=["free", "paid"],
+            priority=95,
+            recommended=False,
+            enabled=True,
+            config=ModelConfig(reasoning=ReasoningSettings(enabled=True)),
         )
 
     @staticmethod
@@ -1500,7 +1535,8 @@ class ModelRegistry:
         self.register(ModelFactory.create_gemini_2_5_pro())
         self.register(ModelFactory.create_gemini_3_1_pro())
         self.register(ModelFactory.create_gemini_3_5_flash_lite())
-        self.register(ModelFactory.create_gemini_3_6_flash())
+        self.register(ModelFactory.create_gemini_3_8_flash())
+        self.register(ModelFactory.create_muse_spark_1_3())
         self.register(ModelFactory.create_gemma_4_31b())
         self.register(ModelFactory.create_glm_5_2())
         self.register(ModelFactory.create_qwen_3_8_max())
@@ -1557,7 +1593,9 @@ class ModelRegistry:
         self._litellm_id_to_pricing["openrouter/google/gemini-2.5-pro"] = PricingPresets.GEMINI_2_5_PRO
         self._litellm_id_to_pricing["openrouter/google/gemini-3.1-pro-preview"] = PricingPresets.GEMINI_3_1_PRO
         self._litellm_id_to_pricing["openrouter/google/gemini-3.5-flash-lite"] = PricingPresets.GEMINI_3_5_FLASH_LITE
-        self._litellm_id_to_pricing["openrouter/google/gemini-3.6-flash"] = PricingPresets.GEMINI_3_6_FLASH
+        self._litellm_id_to_pricing["openrouter/google/gemini-3.8-flash"] = PricingPresets.GEMINI_3_8_FLASH
+        self._litellm_id_to_pricing["openrouter/google/gemini-3.6-flash"] = PricingPresets.GEMINI_3_8_FLASH
+        self._litellm_id_to_pricing["openrouter/meta/muse-spark-1.3"] = PricingPresets.MUSE_SPARK_1_3
         self._litellm_id_to_pricing["openrouter/google/gemma-4-31b-it"] = PricingPresets.GEMMA_4_31B
         self._litellm_id_to_pricing["openrouter/x-ai/grok-4"] = PricingPresets.GROK_4
         self._litellm_id_to_pricing["openrouter/x-ai/grok-4.5"] = PricingPresets.GROK_4_5
