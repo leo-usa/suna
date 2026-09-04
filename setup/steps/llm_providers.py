@@ -58,7 +58,7 @@ class LLMProvidersStep(BaseStep):
             "AWS Bedrock",
             "bedrock",
             "AWS_BEARER_TOKEN_BEDROCK",
-            "bedrock/anthropic.claude-3-haiku-20240307-v1:0",
+            "bedrock/converse/us.anthropic.claude-sonnet-5",
         ),
         "3": (
             "Grok via OpenRouter",
@@ -117,7 +117,7 @@ class LLMProvidersStep(BaseStep):
             if pid == provider_id:
                 return (provider_id, env_key, model)
         # Fallback
-        return ("bedrock", "AWS_BEARER_TOKEN_BEDROCK", "bedrock/anthropic.claude-3-haiku-20240307-v1:0")
+        return ("bedrock", "AWS_BEARER_TOKEN_BEDROCK", "bedrock/converse/us.anthropic.claude-sonnet-5")
 
     def _configure_main_provider(self) -> None:
         """Configure the main LLM model (required for dobby/basic)."""
@@ -198,7 +198,7 @@ class LLMProvidersStep(BaseStep):
         self.console.print("  - anthropic/claude-sonnet-4-20250514")
         self.console.print("  - openrouter/google/gemini-2.0-flash")
         self.console.print("  - openrouter/anthropic/claude-3-opus")
-        self.console.print("  - bedrock/anthropic.claude-3-haiku-20240307-v1:0")
+        self.console.print("  - bedrock/converse/us.anthropic.claude-sonnet-5")
         self.console.print("")
 
         custom_model = input("Model name: ").strip()

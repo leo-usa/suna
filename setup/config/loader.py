@@ -115,6 +115,8 @@ class ConfigLoader:
             "llm": {
                 "MAIN_LLM": backend_env.get("MAIN_LLM", "anthropic"),
                 "MAIN_LLM_MODEL": backend_env.get("MAIN_LLM_MODEL", ""),
+                "BEDROCK_CLAUDE_GPT": backend_env.get("BEDROCK_CLAUDE_GPT", ""),
+                "AWS_REGION_NAME": backend_env.get("AWS_REGION_NAME", "us-west-2"),
                 "OPENAI_API_KEY": backend_env.get("OPENAI_API_KEY", ""),
                 "ANTHROPIC_API_KEY": backend_env.get("ANTHROPIC_API_KEY", ""),
                 "GROQ_API_KEY": backend_env.get("GROQ_API_KEY", ""),

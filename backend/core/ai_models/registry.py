@@ -9,7 +9,7 @@ from core.utils.logger import logger
 class BedrockConfig:
     REGION = "us-west-2"
     ACCOUNT_ID = "935064898258"
-    
+
     PROFILE_IDS = {
         "haiku_4_5": "heol2zyy5v48",
         "sonnet_4_5": "few7z4l830xh",
@@ -17,12 +17,19 @@ class BedrockConfig:
         "minimax_m2": "zix3khptbyoe",
     }
 
-    # US geo inference profiles (not the Kortix application-inference-profile ARNs).
+    # US geo cross-region inference profiles (not application-inference-profile ARNs).
     GEO_MODEL_IDS = {
+        "haiku_4_5": "us.anthropic.claude-haiku-4-5-20251001-v1:0",
         "sonnet_5": "us.anthropic.claude-sonnet-5",
+        "opus_5": "us.anthropic.claude-opus-5",
         "fable_5": "us.anthropic.claude-fable-5",
+        "fable_5_1": "us.anthropic.claude-fable-5-1",
+        "gpt_5_5": "us.openai.gpt-5.5",
+        "gpt_5_6_luna": "us.openai.gpt-5.6-luna",
+        "gpt_5_6_terra": "us.openai.gpt-5.6-terra",
+        "gpt_5_6_sol": "us.openai.gpt-5.6-sol",
     }
-    
+
     @classmethod
     def build_arn(cls, profile_id: str) -> str:
         return f"bedrock/converse/arn:aws:bedrock:{cls.REGION}:{cls.ACCOUNT_ID}:application-inference-profile/{profile_id}"
@@ -30,11 +37,15 @@ class BedrockConfig:
     @classmethod
     def build_geo_id(cls, model_key: str) -> str:
         return f"bedrock/converse/{cls.GEO_MODEL_IDS[model_key]}"
-    
+
     @classmethod
     def get_haiku_arn(cls) -> str:
         return cls.build_arn(cls.PROFILE_IDS["haiku_4_5"])
-    
+
+    @classmethod
+    def get_haiku_geo_id(cls) -> str:
+        return cls.build_geo_id("haiku_4_5")
+
     @classmethod
     def get_sonnet_arn(cls) -> str:
         return cls.build_arn(cls.PROFILE_IDS["sonnet_4_5"])
@@ -44,8 +55,38 @@ class BedrockConfig:
         return cls.build_geo_id("sonnet_5")
 
     @classmethod
+    def get_opus_5_id(cls) -> str:
+        return cls.build_geo_id("opus_5")
+
+    @classmethod
     def get_fable_5_id(cls) -> str:
         return cls.build_geo_id("fable_5")
+
+    @classmethod
+    def get_fable_5_1_id(cls) -> str:
+        return cls.build_geo_id("fable_5_1")
+
+
+def _bedrock_region() -> str:
+    return (
+        getattr(config, "AWS_REGION_NAME", None)
+        or BedrockConfig.REGION
+    )
+
+
+def _bedrock_claude_gpt_enabled() -> bool:
+    token = getattr(config, "AWS_BEARER_TOKEN_BEDROCK", None)
+    if not token:
+        return False
+    if getattr(config, "BEDROCK_CLAUDE_GPT", False):
+        return True
+    return getattr(config, "MAIN_LLM", "") == "bedrock"
+
+
+def _claude_gpt_route(openrouter_id: str, geo_key: str) -> Tuple[str, ModelProvider, Optional[str]]:
+    if _bedrock_claude_gpt_enabled():
+        return BedrockConfig.build_geo_id(geo_key), ModelProvider.BEDROCK, openrouter_id
+    return openrouter_id, ModelProvider.OPENROUTER, None
 
 
 class PricingPresets:
@@ -287,7 +328,7 @@ def _create_kimi_model_config() -> ModelConfig:
 
 
 def _should_use_bedrock() -> bool:
-    return config.ENV_MODE in (EnvMode.STAGING, EnvMode.PRODUCTION) and config.MAIN_LLM == "bedrock"
+    return _bedrock_claude_gpt_enabled()
 
 
 def _get_main_llm() -> str:
@@ -301,12 +342,14 @@ class ModelFactory:
     @staticmethod
     def create_anthropic_haiku(use_bedrock: bool = False) -> Model:
         if use_bedrock:
-            litellm_id = BedrockConfig.get_haiku_arn()
+            litellm_id = BedrockConfig.get_haiku_geo_id()
             provider = ModelProvider.BEDROCK
+            fallback = "openrouter/anthropic/claude-haiku-4.5"
         else:
             litellm_id = "anthropic/claude-haiku-4-5-20251001"
             provider = ModelProvider.ANTHROPIC
-        
+            fallback = None
+
         return Model(
             id="dobby/haiku",
             name="Claude Haiku 4.5",
@@ -326,6 +369,7 @@ class ModelFactory:
             recommended=False,
             enabled=True,
             config=_create_anthropic_model_config(),
+            fallback_litellm_model_id=fallback,
         )
     
     @staticmethod
@@ -362,7 +406,7 @@ class ModelFactory:
     def create_basic_model(main_llm: str, custom_model: Optional[str] = None) -> Model:
         # Default models per provider
         default_models = {
-            "bedrock": BedrockConfig.get_haiku_arn(),
+            "bedrock": BedrockConfig.get_sonnet_5_id(),
             "anthropic": "openrouter/anthropic/claude-sonnet-5",
             "grok": "openrouter/x-ai/grok-4.1-fast",
             "openai": "openrouter/openai/gpt-4o-mini",
@@ -399,19 +443,21 @@ class ModelFactory:
                 litellm_model_id=custom_model or default_models["bedrock"],
                 provider=ModelProvider.BEDROCK,
                 aliases=["kortix-basic", "Dobby Basic"],
-                context_window=200_000,
+                context_window=1_000_000,
                 capabilities=[
                     ModelCapability.CHAT,
                     ModelCapability.FUNCTION_CALLING,
                     ModelCapability.VISION,
+                    ModelCapability.THINKING,
                     ModelCapability.PROMPT_CACHING,
                 ],
-                pricing=PricingPresets.HAIKU_4_5,
+                pricing=PricingPresets.CLAUDE_SONNET_5,
                 tier_availability=["free", "paid"],
                 priority=102,
                 recommended=True,
                 enabled=True,
                 config=_create_anthropic_model_config(),
+                fallback_litellm_model_id="openrouter/anthropic/claude-sonnet-5",
             )
         elif main_llm == "anthropic":
             return Model(
@@ -518,7 +564,7 @@ class ModelFactory:
     def create_power_model(main_llm: str, custom_model: Optional[str] = None) -> Model:
         # Default models per provider (same as basic for now)
         default_models = {
-            "bedrock": BedrockConfig.get_haiku_arn(),
+            "bedrock": BedrockConfig.get_sonnet_5_id(),
             "anthropic": "openrouter/anthropic/claude-sonnet-5",
             "grok": "openrouter/x-ai/grok-4.1-fast",
             "openai": "openrouter/openai/gpt-4o-mini",
@@ -555,7 +601,7 @@ class ModelFactory:
                 litellm_model_id=custom_model or default_models["bedrock"],
                 provider=ModelProvider.BEDROCK,
                 aliases=["kortix-power", "Dobby POWER Mode", "Dobby Power", "Dobby Advanced Mode"],
-                context_window=200_000,
+                context_window=1_000_000,
                 capabilities=[
                     ModelCapability.CHAT,
                     ModelCapability.FUNCTION_CALLING,
@@ -563,12 +609,13 @@ class ModelFactory:
                     ModelCapability.THINKING,
                     ModelCapability.PROMPT_CACHING,
                 ],
-                pricing=PricingPresets.HAIKU_4_5,
+                pricing=PricingPresets.CLAUDE_SONNET_5,
                 tier_availability=["paid"],
                 priority=101,
                 recommended=True,
                 enabled=True,
                 config=_create_anthropic_model_config(),
+                fallback_litellm_model_id="openrouter/anthropic/claude-sonnet-5",
             )
         elif main_llm == "anthropic":
             return Model(
@@ -908,11 +955,14 @@ class ModelFactory:
 
     @staticmethod
     def create_claude_sonnet_5() -> Model:
+        litellm_id, provider, fallback = _claude_gpt_route(
+            "openrouter/anthropic/claude-sonnet-5", "sonnet_5"
+        )
         return Model(
             id="dobby/claude-sonnet-5",
             name="Claude Sonnet 5",
-            litellm_model_id="openrouter/anthropic/claude-sonnet-5",
-            provider=ModelProvider.OPENROUTER,
+            litellm_model_id=litellm_id,
+            provider=provider,
             aliases=[
                 "claude-sonnet-5",
                 "anthropic/claude-sonnet-5",
@@ -934,6 +984,7 @@ class ModelFactory:
             priority=103,
             recommended=False,
             enabled=True,
+            fallback_litellm_model_id=fallback,
         )
 
     @staticmethod
@@ -961,11 +1012,14 @@ class ModelFactory:
 
     @staticmethod
     def create_claude_opus_5() -> Model:
+        litellm_id, provider, fallback = _claude_gpt_route(
+            "openrouter/anthropic/claude-opus-5", "opus_5"
+        )
         return Model(
             id="dobby/claude-opus-5",
             name="Claude Opus 5",
-            litellm_model_id="openrouter/anthropic/claude-opus-5",
-            provider=ModelProvider.OPENROUTER,
+            litellm_model_id=litellm_id,
+            provider=provider,
             aliases=["claude-opus-5", "anthropic/claude-opus-5"],
             context_window=1_000_000,
             capabilities=[
@@ -980,15 +1034,19 @@ class ModelFactory:
             priority=104,
             recommended=False,
             enabled=True,
+            fallback_litellm_model_id=fallback,
         )
 
     @staticmethod
     def create_claude_fable_5() -> Model:
+        litellm_id, provider, fallback = _claude_gpt_route(
+            "openrouter/anthropic/claude-fable-5.1", "fable_5_1"
+        )
         return Model(
             id="dobby/claude-fable-5.1",
             name="Claude Fable 5.1",
-            litellm_model_id="openrouter/anthropic/claude-fable-5.1",
-            provider=ModelProvider.OPENROUTER,
+            litellm_model_id=litellm_id,
+            provider=provider,
             aliases=[
                 "claude-fable-5.1",
                 "anthropic/claude-fable-5.1",
@@ -1009,6 +1067,7 @@ class ModelFactory:
             priority=105,
             recommended=False,
             enabled=True,
+            fallback_litellm_model_id=fallback,
         )
 
     @staticmethod
@@ -1275,11 +1334,14 @@ class ModelFactory:
 
     @staticmethod
     def create_gpt_5_5() -> Model:
+        litellm_id, provider, fallback = _claude_gpt_route(
+            "openrouter/openai/gpt-5.5", "gpt_5_5"
+        )
         return Model(
             id="dobby/gpt-5.5",
             name="GPT-5.5",
-            litellm_model_id="openrouter/openai/gpt-5.5",
-            provider=ModelProvider.OPENROUTER,
+            litellm_model_id=litellm_id,
+            provider=provider,
             aliases=["gpt-5.5", "openai/gpt-5.5"],
             context_window=1_050_000,
             capabilities=[
@@ -1292,6 +1354,7 @@ class ModelFactory:
             priority=100,
             recommended=False,
             enabled=True,
+            fallback_litellm_model_id=fallback,
         )
 
     @staticmethod
@@ -1316,11 +1379,14 @@ class ModelFactory:
 
     @staticmethod
     def create_gpt_5_6_luna() -> Model:
+        litellm_id, provider, fallback = _claude_gpt_route(
+            "openrouter/openai/gpt-5.6-luna", "gpt_5_6_luna"
+        )
         return Model(
             id="dobby/gpt-5.6-luna",
             name="GPT-5.6 Luna",
-            litellm_model_id="openrouter/openai/gpt-5.6-luna",
-            provider=ModelProvider.OPENROUTER,
+            litellm_model_id=litellm_id,
+            provider=provider,
             aliases=["gpt-5.6-luna", "openai/gpt-5.6-luna"],
             context_window=1_000_000,
             capabilities=[
@@ -1333,6 +1399,7 @@ class ModelFactory:
             priority=110,
             recommended=False,
             enabled=True,
+            fallback_litellm_model_id=fallback,
         )
 
     @staticmethod
@@ -1359,11 +1426,14 @@ class ModelFactory:
 
     @staticmethod
     def create_gpt_5_6_terra() -> Model:
+        litellm_id, provider, fallback = _claude_gpt_route(
+            "openrouter/openai/gpt-5.6-terra", "gpt_5_6_terra"
+        )
         return Model(
             id="dobby/gpt-5.6-terra",
             name="GPT-5.6 Terra",
-            litellm_model_id="openrouter/openai/gpt-5.6-terra",
-            provider=ModelProvider.OPENROUTER,
+            litellm_model_id=litellm_id,
+            provider=provider,
             aliases=["gpt-5.6-terra", "openai/gpt-5.6-terra"],
             context_window=1_000_000,
             capabilities=[
@@ -1376,6 +1446,7 @@ class ModelFactory:
             priority=112,
             recommended=False,
             enabled=True,
+            fallback_litellm_model_id=fallback,
         )
 
     @staticmethod
@@ -1402,11 +1473,14 @@ class ModelFactory:
 
     @staticmethod
     def create_gpt_5_6_sol() -> Model:
+        litellm_id, provider, fallback = _claude_gpt_route(
+            "openrouter/openai/gpt-5.6-sol", "gpt_5_6_sol"
+        )
         return Model(
             id="dobby/gpt-5.6-sol",
             name="GPT-5.6 Sol",
-            litellm_model_id="openrouter/openai/gpt-5.6-sol",
-            provider=ModelProvider.OPENROUTER,
+            litellm_model_id=litellm_id,
+            provider=provider,
             aliases=["gpt-5.6-sol", "openai/gpt-5.6-sol"],
             context_window=1_000_000,
             capabilities=[
@@ -1418,6 +1492,7 @@ class ModelFactory:
             priority=114,
             recommended=False,
             enabled=True,
+            fallback_litellm_model_id=fallback,
         )
 
     @staticmethod
@@ -1498,7 +1573,7 @@ class ModelRegistry:
     
     def _initialize_providers(self):
         bedrock_provider = BedrockProvider(
-            region=BedrockConfig.REGION,
+            region=_bedrock_region(),
             account_id=BedrockConfig.ACCOUNT_ID,
         )
         provider_registry.register("bedrock", bedrock_provider)
@@ -1568,9 +1643,11 @@ class ModelRegistry:
         basic_model.context_window = free_model.context_window
         basic_model.capabilities = list(free_model.capabilities)
         basic_model.config = free_model.config
+        basic_model.fallback_litellm_model_id = free_model.fallback_litellm_model_id
     
     def _register_pricing_mappings(self):
         self._litellm_id_to_pricing[BedrockConfig.get_haiku_arn()] = PricingPresets.HAIKU_4_5
+        self._litellm_id_to_pricing[BedrockConfig.get_haiku_geo_id()] = PricingPresets.HAIKU_4_5
         self._litellm_id_to_pricing["minimax/minimax-m2.1"] = PricingPresets.MINIMAX_M2
         self._litellm_id_to_pricing["openrouter/minimax/minimax-m2.1"] = PricingPresets.MINIMAX_M2
         self._litellm_id_to_pricing["openrouter/x-ai/grok-4.1-fast"] = PricingPresets.GROK_4_1_FAST
@@ -1587,9 +1664,11 @@ class ModelRegistry:
         self._litellm_id_to_pricing[BedrockConfig.get_sonnet_5_id()] = PricingPresets.CLAUDE_SONNET_5
         self._litellm_id_to_pricing["openrouter/anthropic/claude-opus-4.7"] = PricingPresets.CLAUDE_OPUS_4_7
         self._litellm_id_to_pricing["openrouter/anthropic/claude-opus-5"] = PricingPresets.CLAUDE_OPUS_5
+        self._litellm_id_to_pricing[BedrockConfig.get_opus_5_id()] = PricingPresets.CLAUDE_OPUS_5
         self._litellm_id_to_pricing["openrouter/anthropic/claude-fable-5.1"] = PricingPresets.CLAUDE_FABLE_5
         self._litellm_id_to_pricing["openrouter/anthropic/claude-fable-5"] = PricingPresets.CLAUDE_FABLE_5
         self._litellm_id_to_pricing[BedrockConfig.get_fable_5_id()] = PricingPresets.CLAUDE_FABLE_5
+        self._litellm_id_to_pricing[BedrockConfig.get_fable_5_1_id()] = PricingPresets.CLAUDE_FABLE_5
         self._litellm_id_to_pricing["openrouter/google/gemini-2.5-pro"] = PricingPresets.GEMINI_2_5_PRO
         self._litellm_id_to_pricing["openrouter/google/gemini-3.1-pro-preview"] = PricingPresets.GEMINI_3_1_PRO
         self._litellm_id_to_pricing["openrouter/google/gemini-3.5-flash-lite"] = PricingPresets.GEMINI_3_5_FLASH_LITE
@@ -1604,12 +1683,16 @@ class ModelRegistry:
         self._litellm_id_to_pricing["openrouter/qwen/qwen3.8-max"] = PricingPresets.QWEN_3_8_MAX
         self._litellm_id_to_pricing["openrouter/minimax/minimax-m2.7"] = PricingPresets.MINIMAX_M2_7
         self._litellm_id_to_pricing["openrouter/openai/gpt-5.5"] = PricingPresets.GPT_5_5
+        self._litellm_id_to_pricing[BedrockConfig.build_geo_id("gpt_5_5")] = PricingPresets.GPT_5_5
         self._litellm_id_to_pricing["openrouter/openai/gpt-5.5-pro"] = PricingPresets.GPT_5_5_PRO
         self._litellm_id_to_pricing["openrouter/openai/gpt-5.6-luna"] = PricingPresets.GPT_5_6_LUNA
+        self._litellm_id_to_pricing[BedrockConfig.build_geo_id("gpt_5_6_luna")] = PricingPresets.GPT_5_6_LUNA
         self._litellm_id_to_pricing["openrouter/openai/gpt-5.6-luna-pro"] = PricingPresets.GPT_5_6_LUNA
         self._litellm_id_to_pricing["openrouter/openai/gpt-5.6-terra"] = PricingPresets.GPT_5_6_TERRA
+        self._litellm_id_to_pricing[BedrockConfig.build_geo_id("gpt_5_6_terra")] = PricingPresets.GPT_5_6_TERRA
         self._litellm_id_to_pricing["openrouter/openai/gpt-5.6-terra-pro"] = PricingPresets.GPT_5_6_TERRA
         self._litellm_id_to_pricing["openrouter/openai/gpt-5.6-sol"] = PricingPresets.GPT_5_6_SOL
+        self._litellm_id_to_pricing[BedrockConfig.build_geo_id("gpt_5_6_sol")] = PricingPresets.GPT_5_6_SOL
         self._litellm_id_to_pricing["openrouter/openai/gpt-5.6-sol-pro"] = PricingPresets.GPT_5_6_SOL
     
     def register(self, model: Model) -> None:
@@ -1729,6 +1812,16 @@ class ModelRegistry:
         if normalized_id in self._litellm_id_to_pricing:
             return self._litellm_id_to_pricing[normalized_id]
         
+        if litellm_model_id.startswith("bedrock/converse/"):
+            geo_id = litellm_model_id.split("bedrock/converse/", 1)[-1]
+            converse_id = f"bedrock/converse/{geo_id}"
+            if converse_id in self._litellm_id_to_pricing:
+                return self._litellm_id_to_pricing[converse_id]
+        elif litellm_model_id.startswith(("us.", "global.")):
+            converse_id = f"bedrock/converse/{litellm_model_id}"
+            if converse_id in self._litellm_id_to_pricing:
+                return self._litellm_id_to_pricing[converse_id]
+
         if "application-inference-profile" in litellm_model_id:
             profile_id = litellm_model_id.split("/")[-1] if "/" in litellm_model_id else None
             if profile_id == BedrockConfig.PROFILE_IDS["haiku_4_5"]:

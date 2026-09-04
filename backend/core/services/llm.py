@@ -103,8 +103,47 @@ def setup_api_keys() -> None:
     
     if getattr(config, 'AWS_BEARER_TOKEN_BEDROCK', None):
         os.environ["AWS_BEARER_TOKEN_BEDROCK"] = config.AWS_BEARER_TOKEN_BEDROCK
-    if not os.environ.get("AWS_REGION_NAME"):
+    region = getattr(config, 'AWS_REGION_NAME', None)
+    if region:
+        os.environ["AWS_REGION_NAME"] = region
+    elif not os.environ.get("AWS_REGION_NAME"):
         os.environ["AWS_REGION_NAME"] = "us-west-2"
+    _register_bedrock_gpt_litellm_models()
+
+
+def _register_bedrock_gpt_litellm_models() -> None:
+    """Keep tools on Bedrock GPT requests.
+
+    LiteLLM parses ``bedrock/converse/us.openai.*`` as provider ``bedrock`` plus
+    model ``converse/us.openai.*``. That stripped ID is not in the cost map, so
+    ``drop_params=True`` silently removes tools and the model just talks.
+    """
+    try:
+        from core.ai_models.registry import BedrockConfig
+    except Exception:
+        return
+
+    template = {
+        "litellm_provider": "bedrock_converse",
+        "mode": "chat",
+        "supports_function_calling": True,
+        "supports_tool_choice": True,
+        "supports_vision": True,
+        "supports_prompt_caching": False,
+        "supports_reasoning": False,
+    }
+    for geo_key in ("gpt_5_5", "gpt_5_6_luna", "gpt_5_6_terra", "gpt_5_6_sol"):
+        geo_id = BedrockConfig.GEO_MODEL_IDS[geo_key]
+        base_id = geo_id.split(".", 1)[-1] if geo_id.startswith(("us.", "global.")) else geo_id
+        for model_id in (
+            geo_id,
+            base_id,
+            f"bedrock/{geo_id}",
+            f"bedrock/converse/{geo_id}",
+            f"converse/{geo_id}",
+        ):
+            existing = litellm.model_cost.get(model_id) or {}
+            litellm.model_cost[model_id] = {**existing, **template}
 
 
 def _configure_openai_compatible(model_name: str, api_key: Optional[str], api_base: Optional[str]) -> None:
@@ -170,6 +209,114 @@ async def estimate_llm_request_tokens(
         count_kwargs["tool_choice"] = tool_choice
 
     return await asyncio.to_thread(litellm.token_counter, **count_kwargs)
+
+
+def _is_bedrock_model(model_str: str) -> bool:
+    return "bedrock" in (model_str or "").lower()
+
+
+def _is_gpt_bedrock_model(model_str: str) -> bool:
+    lowered = (model_str or "").lower()
+    return _is_bedrock_model(lowered) and ("openai.gpt" in lowered or "us.openai." in lowered)
+
+
+def _strip_cache_control(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {k: _strip_cache_control(v) for k, v in value.items() if k != "cache_control"}
+    if isinstance(value, list):
+        return [_strip_cache_control(item) for item in value]
+    return value
+
+
+def _should_fallback_from_bedrock(error: Exception) -> bool:
+    from core.agentpress.error_processor import (
+        BudgetExceededError,
+        ContentPolicyViolationError,
+        ContextWindowExceededError,
+    )
+    if isinstance(error, (ContextWindowExceededError, ContentPolicyViolationError, BudgetExceededError)):
+        return False
+    return True
+
+
+def _sanitize_llm_params(params: Dict[str, Any], resolved_model_name: str) -> None:
+    model_str = params.get("model", "") or ""
+    lowered = model_str.lower()
+
+    if "kimi" in lowered:
+        params["frequency_penalty"] = 0
+
+    # Bedrock Claude (Sonnet 5 / Opus 5 / Fable / Haiku) rejects temperature.
+    if _is_bedrock_model(model_str) and (
+        "anthropic" in lowered
+        or "claude" in lowered
+        or "fable" in lowered
+        or "fable" in (resolved_model_name or "").lower()
+    ):
+        params.pop("temperature", None)
+        params.pop("top_p", None)
+
+    if _is_gpt_bedrock_model(model_str):
+        params.pop("frequency_penalty", None)
+        params.pop("reasoning_split", None)
+        if params.get("temperature") in (0, 0.0):
+            params.pop("temperature", None)
+        # Bedrock GPT rejects Anthropic cache_control / cachePoint.
+        if params.get("messages") is not None:
+            params["messages"] = _strip_cache_control(params["messages"])
+        if params.get("tools") is not None:
+            params["tools"] = _strip_cache_control(params["tools"])
+        # Default GPT-5.6 reasoning hides tokens from delta.content; keep effort low
+        # and do not drop tools/reasoning for these unmapped converse IDs.
+        params["reasoning"] = {"effort": "low"}
+        params["drop_params"] = False
+
+
+def _params_for_openrouter_fallback(params: Dict[str, Any], fallback_id: str) -> Dict[str, Any]:
+    fallback_params = dict(params)
+    fallback_params["model"] = fallback_id
+    fallback_params.pop("aws_region_name", None)
+    extra_body = dict(fallback_params.get("extra_body") or {})
+    extra_body.setdefault("app", getattr(config, "OR_APP_NAME", None) or "Dobby.now")
+    fallback_params["extra_body"] = extra_body
+    return fallback_params
+
+
+async def _invoke_litellm(
+    params: Dict[str, Any],
+    model_name: str,
+    stream: bool,
+    call_start: float,
+):
+    import time as time_module
+
+    correlation_id = _save_debug_input(params)
+
+    if stream:
+        response = await litellm.acompletion(**params)
+        ttft = time_module.monotonic() - call_start
+
+        if ttft > 30.0:
+            logger.error(f"[LLM] TTFT={ttft:.2f}s (CRITICAL) {model_name}")
+        elif ttft > 10.0:
+            logger.warning(f"[LLM] TTFT={ttft:.2f}s (slow) {model_name}")
+        else:
+            logger.info(f"[LLM] TTFT={ttft:.2f}s {model_name}")
+
+        if hasattr(response, '__aiter__'):
+            return _wrap_streaming_response(
+                response,
+                call_start,
+                model_name,
+                ttft_seconds=ttft,
+                correlation_id=correlation_id,
+            )
+        return response
+
+    response = await litellm.acompletion(**params)
+    duration = time_module.monotonic() - call_start
+    logger.info(f"[LLM] {duration:.2f}s {model_name}")
+    return response
 
 
 async def make_llm_api_call(
@@ -238,16 +385,6 @@ async def make_llm_api_call(
 
     params = model_manager.get_litellm_params(resolved_model_name, **override_params)
 
-    # Kimi models only support frequency_penalty=0
-    model_str = params.get("model", "")
-    if "kimi" in model_str.lower():
-        params["frequency_penalty"] = 0
-
-    # Bedrock Fable 5 rejects temperature other than 1.0 (or omitted) and top_p < 0.99.
-    if "fable" in model_str.lower() or "fable" in (resolved_model_name or "").lower():
-        params.pop("temperature", None)
-        params.pop("top_p", None)
-
     if tools:
         params["tools"] = tools
         params["tool_choice"] = tool_choice
@@ -256,36 +393,45 @@ async def make_llm_api_call(
         params["model_id"] = model_id
     if stream:
         params["stream_options"] = {"include_usage": True}
+
+    _sanitize_llm_params(params, resolved_model_name)
+
+    resolved_model = model_manager.get(resolved_model_name)
+    fallback_id = getattr(resolved_model, "fallback_litellm_model_id", None) if resolved_model else None
     
     import time as time_module
     call_start = time_module.monotonic()
     
     try:
-        # Save debug input and get correlation_id for tracking
-        correlation_id = _save_debug_input(params)
-        
-        if stream:
-            response = await litellm.acompletion(**params)
-            ttft = time_module.monotonic() - call_start
-            
-            if ttft > 30.0:
-                logger.error(f"[LLM] TTFT={ttft:.2f}s (CRITICAL) {model_name}")
-            elif ttft > 10.0:
-                logger.warning(f"[LLM] TTFT={ttft:.2f}s (slow) {model_name}")
-            else:
-                logger.info(f"[LLM] TTFT={ttft:.2f}s {model_name}")
-            
-            if hasattr(response, '__aiter__'):
-                return _wrap_streaming_response(response, call_start, model_name, ttft_seconds=ttft, correlation_id=correlation_id)
-            return response
-        else:
-            response = await litellm.acompletion(**params)
-            duration = time_module.monotonic() - call_start
-            logger.info(f"[LLM] {duration:.2f}s {model_name}")
-            return response
-        
+        return await _invoke_litellm(params, model_name, stream, call_start)
     except Exception as e:
         total_time = time_module.monotonic() - call_start
+        if (
+            fallback_id
+            and _is_bedrock_model(params.get("model", ""))
+            and _should_fallback_from_bedrock(e)
+        ):
+            logger.warning(
+                f"[LLM] Bedrock failed for {params.get('model')} after {total_time:.2f}s; "
+                f"retrying OpenRouter {fallback_id}: {str(e)[:200]}"
+            )
+            fallback_params = _params_for_openrouter_fallback(params, fallback_id)
+            _sanitize_llm_params(fallback_params, fallback_id)
+            fallback_start = time_module.monotonic()
+            try:
+                return await _invoke_litellm(fallback_params, model_name, stream, fallback_start)
+            except Exception as fallback_error:
+                fallback_time = time_module.monotonic() - fallback_start
+                logger.error(
+                    f"[LLM] OpenRouter fallback error after {fallback_time:.2f}s "
+                    f"for {model_name}: {str(fallback_error)[:100]}"
+                )
+                processed_error = ErrorProcessor.process_llm_error(
+                    fallback_error, context={"model": model_name, "fallback": fallback_id}
+                )
+                ErrorProcessor.log_error(processed_error)
+                raise LLMError(processed_error.message, error_type=processed_error.error_type)
+
         logger.error(f"[LLM] call error after {total_time:.2f}s for {model_name}: {str(e)[:100]}")
         processed_error = ErrorProcessor.process_llm_error(e, context={"model": model_name})
         ErrorProcessor.log_error(processed_error)

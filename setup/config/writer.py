@@ -131,6 +131,8 @@ class ConfigWriter:
             # Main LLM provider selection
             "MAIN_LLM": config.llm.MAIN_LLM,
             "MAIN_LLM_MODEL": config.llm.MAIN_LLM_MODEL,
+            "BEDROCK_CLAUDE_GPT": config.llm.BEDROCK_CLAUDE_GPT,
+            "AWS_REGION_NAME": config.llm.AWS_REGION_NAME or "us-west-2",
             # Supabase
             "SUPABASE_URL": config.supabase.SUPABASE_URL,
             "SUPABASE_ANON_KEY": config.supabase.SUPABASE_ANON_KEY,

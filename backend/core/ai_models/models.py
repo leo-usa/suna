@@ -91,6 +91,7 @@ class Model:
     priority: int = 0
     recommended: bool = False
     config: Optional[ModelConfig] = None
+    fallback_litellm_model_id: Optional[str] = None
     
     def __post_init__(self):
         if self.litellm_model_id is None:

@@ -86,6 +86,8 @@ class LLMConfig(BaseModel):
     #   - openai: openrouter/openai/gpt-4o-mini (requires OPENROUTER_API_KEY)
     #   - minimax: openrouter/minimax/minimax-m2.1 (requires OPENROUTER_API_KEY)
     MAIN_LLM_MODEL: str = ""
+    BEDROCK_CLAUDE_GPT: str = ""
+    AWS_REGION_NAME: str = "us-west-2"
 
     OPENAI_API_KEY: str = ""
     ANTHROPIC_API_KEY: str = ""
@@ -423,7 +425,7 @@ API_PROVIDER_INFO = {
         "name": "AWS Bedrock",
         "icon": "☁️",
         "url": "https://console.aws.amazon.com/bedrock",
-        "guide": "1. Go to AWS Console → Bedrock\n2. Configure model access in your region\n3. Create IAM credentials with Bedrock access\n4. Use AWS CLI to generate a bearer token",
+        "guide": "1. Go to AWS Console → Bedrock\n2. Enable the Claude and GPT models you need\n3. Create an API key in Bedrock (API keys)\n4. Set AWS_BEARER_TOKEN_BEDROCK, BEDROCK_CLAUDE_GPT=true, and AWS_REGION_NAME=us-west-2",
         "required": False,
     },
     "TAVILY_API_KEY": {

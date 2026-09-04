@@ -38,15 +38,48 @@ def _get_anthropic_client_singleton():
 
 
 def _get_bedrock_client_singleton():
-    """Module-level lazy initialization of Bedrock client (singleton)."""
+    """Module-level lazy initialization of Bedrock client (singleton).
+
+    The Bedrock count_tokens API needs IAM credentials. Skip boto3 when
+    only a Bedrock API key (AWS_BEARER_TOKEN_BEDROCK) is present.
+    """
     global _bedrock_client
+    if not os.environ.get("AWS_ACCESS_KEY_ID"):
+        return None
     if _bedrock_client is None:
         try:
             import boto3
-            _bedrock_client = boto3.client('bedrock-runtime', region_name='us-west-2')
+            region = os.environ.get("AWS_REGION_NAME") or "us-west-2"
+            _bedrock_client = boto3.client('bedrock-runtime', region_name=region)
         except Exception as e:
             logger.debug(f"Could not initialize Bedrock client: {e}")
     return _bedrock_client
+
+
+def _bedrock_count_tokens_model_id(model: str) -> Optional[str]:
+    """Resolve a Bedrock count_tokens modelId from a LiteLLM model string."""
+    if not model:
+        return None
+
+    if "application-inference-profile" in model:
+        from core.ai_models.registry import BedrockConfig
+        profile_id = model.split("/")[-1]
+        return {
+            BedrockConfig.PROFILE_IDS["haiku_4_5"]: "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+            BedrockConfig.PROFILE_IDS["sonnet_4_5"]: "us.anthropic.claude-sonnet-4-5-20250929-v1:0",
+            BedrockConfig.PROFILE_IDS["kimi_k2"]: "moonshot.kimi-k2-thinking",
+            BedrockConfig.PROFILE_IDS["minimax_m2"]: "minimax.minimax-m2",
+        }.get(profile_id)
+
+    remainder = model
+    for prefix in ("bedrock/converse/", "bedrock/"):
+        if remainder.startswith(prefix):
+            remainder = remainder[len(prefix):]
+            break
+
+    if remainder.startswith(("us.", "global.", "anthropic.", "openai.", "moonshot.", "minimax.")):
+        return remainder
+    return None
 
 
 class ContextManager:
@@ -146,8 +179,11 @@ class ContextManager:
                 logger.debug(f"Failed to apply caching for counting: {e}")
                 # Continue with uncached messages
         
-        # Check if this is an Anthropic model
-        if 'claude' in model.lower() or 'anthropic' in model.lower():
+        # Native Anthropic tokenizer (not Bedrock converse IDs)
+        if (
+            ('claude' in model.lower() or 'anthropic' in model.lower())
+            and 'bedrock' not in model.lower()
+        ):
             # Use Anthropic's official tokenizer
             try:
                 client = self._get_anthropic_client()
@@ -180,33 +216,12 @@ class ContextManager:
             except Exception as e:
                 logger.debug(f"Anthropic token counting failed, falling back to LiteLLM: {e}")
         
-        # Check if this is a Bedrock model
-        elif 'bedrock' in model.lower():
+        # Bedrock count_tokens needs IAM. With an API key only, use LiteLLM.
+        elif 'bedrock' in model.lower() and os.environ.get("AWS_ACCESS_KEY_ID"):
             try:
                 bedrock_client = self._get_bedrock_client()
-                if bedrock_client:
-                    # Import profile IDs
-                    from core.ai_models.registry import KIMI_K2_PROFILE_ID, SONNET_4_5_PROFILE_ID, HAIKU_4_5_PROFILE_ID, MINIMAX_M2_PROFILE_ID
-                    
-                    model_id_mapping = {
-                        KIMI_K2_PROFILE_ID: "moonshot.kimi-k2-thinking",  # Kimi K2 (Basic Mode)
-                        SONNET_4_5_PROFILE_ID: "us.anthropic.claude-sonnet-4-5-20250929-v1:0",  # Sonnet 4.5 (Power Mode)
-                        "tyj1ks3nj9qf": "anthropic.claude-sonnet-4-20250514-v1:0",  # Sonnet 4 (no constant defined)
-                        HAIKU_4_5_PROFILE_ID: "anthropic.claude-haiku-4-5-20251001-v1:0",  # HAIKU 4.5 (Legacy - replaced by Kimi K2)
-                        MINIMAX_M2_PROFILE_ID: "minimax.minimax-m2",  # MiniMax M2
-                    }
-                    
-                    # Extract profile ID from ARN
-                    bedrock_model_id = None
-                    if "application-inference-profile" in model:
-                        profile_id = model.split("/")[-1]
-                        bedrock_model_id = model_id_mapping.get(profile_id)
-                    
-                    if not bedrock_model_id:
-                        # Import Kimi K2 profile ID for default
-                        from core.ai_models.registry import KIMI_K2_PROFILE_ID
-                        bedrock_model_id = model_id_mapping.get(KIMI_K2_PROFILE_ID, "moonshot.kimi-k2-thinking")  # Default to Kimi K2
-                    
+                bedrock_model_id = _bedrock_count_tokens_model_id(model)
+                if bedrock_client and bedrock_model_id:
                     # Clean content blocks for Bedrock Converse API
                     def clean_content_for_bedrock(content):
                         """

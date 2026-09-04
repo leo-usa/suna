@@ -60,6 +60,10 @@ class Configuration:
     #   - openai: openrouter/openai/gpt-4o-mini
     #   - minimax: openrouter/minimax/minimax-m2.1
     MAIN_LLM_MODEL: Optional[str] = None
+    # Route catalog Claude + GPT models through Bedrock Converse when the
+    # Bedrock API key is also set. MAIN_LLM=bedrock enables the same routing.
+    BEDROCK_CLAUDE_GPT: bool = False
+    AWS_REGION_NAME: Optional[str] = "us-west-2"
     # ============================================
     
     # ===== PRESENCE CONFIGURATION =====
@@ -286,7 +290,7 @@ class Configuration:
     # Frontend URL configuration
     FRONTEND_URL_ENV: Optional[str] = None
     
-    # AWS Bedrock authentication
+    # AWS Bedrock authentication (API key from the Bedrock console)
     AWS_BEARER_TOKEN_BEDROCK: Optional[str] = None
     
     # Supabase configuration
