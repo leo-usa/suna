@@ -597,7 +597,52 @@
   "home": {
     "title": "Benvenuto",
     "subtitle": "Inizia",
-    "heroPlaceholder": "Descrivi il compito che vuoi che il tuo Worker completi..."
+    "heroPlaceholder": "Descrivi il compito che vuoi che il tuo Worker completi...",
+    "seo": {
+      "h1": "Dobby è un worker IA autonomo per slide, ricerca, documenti e attività sul tuo computer",
+      "canDoTitle": "Cosa può fare Dobby",
+      "canDoBody": "La maggior parte degli strumenti IA si ferma al pensare. Dobby agisce. Crea slide e documenti, fa ricerca, modifica dati, genera immagini e video e porta a termine lavoro in più passaggi nel cloud o su questo computer.",
+      "capabilities": {
+        "slides": "Slide e deck",
+        "research": "Brief di ricerca",
+        "docs": "Documenti e report",
+        "data": "Dati e grafici",
+        "media": "Immagini e video",
+        "canvas": "Canvas e siti"
+      },
+      "channelsTitle": "Browser, desktop o WeChat",
+      "channelsBody": "Inizia dalla chat sopra. Installa l’app desktop per lavorare con file e app locali. Oppure collega WeChat e continua dal telefono.",
+      "download": "Scarica per Mac e Windows",
+      "works": "Vedi i lavori pubblicati",
+      "pricing": "Prezzi",
+      "cnIntro": "中文介绍",
+      "questionsTitle": "Domande",
+      "faq": {
+        "what": {
+          "q": "Cos’è Dobby?",
+          "a": "Dobby è un worker IA che completa lavoro reale — slide, ricerca, documenti, video e altro — invece di limitarsi a chattare. Descrivi il risultato; Dobby usa strumenti, file e il browser per consegnarlo."
+        },
+        "desktop": {
+          "q": "Dobby può funzionare sul mio computer?",
+          "a": "Sì. L’app desktop Dobby può lavorare con file e app sul tuo Mac. Scaricala dalla pagina di download e avvia un’attività con “questo computer”."
+        },
+        "wechat": {
+          "q": "Dobby funziona su WeChat?",
+          "a": "Sì. Puoi collegare WeChat e parlare con Dobby lì. Alipay e WeChat Pay sono disponibili per i crediti prepagati."
+        },
+        "free": {
+          "q": "C’è un piano gratuito?",
+          "a": "Sì. Puoi iniziare con il piano gratuito e crediti settimanali, poi fare l’upgrade se ti servono più esecuzioni, un computer dedicato o più worker personalizzati."
+        }
+      },
+      "footer": {
+        "about": "Chi siamo",
+        "tutorials": "Tutorial",
+        "privacy": "Privacy",
+        "terms": "Termini",
+        "support": "Supporto"
+      }
+    }
   },
   "showcase": {
     "title": "Dobby: Il Tuo Worker IA Autonomo",

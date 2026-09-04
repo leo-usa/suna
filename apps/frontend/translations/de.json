@@ -1227,7 +1227,52 @@
     "notFound": "Nicht gefunden"
   },
   "home": {
-    "heroPlaceholder": "Beschreibe die Aufgabe, die dein Worker erledigen soll..."
+    "heroPlaceholder": "Beschreibe die Aufgabe, die dein Worker erledigen soll...",
+    "seo": {
+      "h1": "Dobby ist ein autonomer KI-Worker für Folien, Recherche, Dokumente und Aufgaben auf deinem Computer",
+      "canDoTitle": "Was Dobby kann",
+      "canDoBody": "Die meisten KI-Tools hören beim Denken auf. Dobby handelt. Es erstellt Folien und Dokumente, recherchiert, bearbeitet Daten, erzeugt Bilder und Videos und führt mehrstufige Arbeit in der Cloud oder auf diesem Computer zu Ende.",
+      "capabilities": {
+        "slides": "Folien und Decks",
+        "research": "Recherche-Briefings",
+        "docs": "Dokumente und Berichte",
+        "data": "Daten und Diagramme",
+        "media": "Bilder und Video",
+        "canvas": "Canvas und Websites"
+      },
+      "channelsTitle": "Browser, Desktop oder WeChat",
+      "channelsBody": "Starte im Chat oben. Installiere die Desktop-App, um mit lokalen Dateien und Apps zu arbeiten. Oder binde WeChat und mach auf dem Handy weiter.",
+      "download": "Für Mac und Windows herunterladen",
+      "works": "Veröffentlichte Arbeiten ansehen",
+      "pricing": "Preise",
+      "cnIntro": "中文介绍",
+      "questionsTitle": "Fragen",
+      "faq": {
+        "what": {
+          "q": "Was ist Dobby?",
+          "a": "Dobby ist ein KI-Worker, der echte Arbeit erledigt — Folien, Recherche, Dokumente, Video und mehr — statt nur zu chatten. Du beschreibst das Ergebnis; Dobby nutzt Tools, Dateien und den Browser, um es zu liefern."
+        },
+        "desktop": {
+          "q": "Kann Dobby auf meinem Computer laufen?",
+          "a": "Ja. Die Dobby-Desktop-App kann mit Dateien und Apps auf deinem Mac arbeiten. Lade sie auf der Download-Seite herunter und starte eine Aufgabe mit „dieser Computer“."
+        },
+        "wechat": {
+          "q": "Funktioniert Dobby in WeChat?",
+          "a": "Ja. Du kannst WeChat verbinden und dort mit Dobby sprechen. Alipay und WeChat Pay stehen für Prepaid-Credits zur Verfügung."
+        },
+        "free": {
+          "q": "Gibt es einen kostenlosen Plan?",
+          "a": "Ja. Du kannst mit dem kostenlosen Plan und wöchentlichen Credits starten und später upgraden, wenn du mehr Läufe, einen eigenen Computer oder mehr eigene Worker brauchst."
+        }
+      },
+      "footer": {
+        "about": "Über uns",
+        "tutorials": "Tutorials",
+        "privacy": "Datenschutz",
+        "terms": "AGB",
+        "support": "Support"
+      }
+    }
   },
   "showcase": {
     "title": "Dobby: Dein autonomer KI-Worker",

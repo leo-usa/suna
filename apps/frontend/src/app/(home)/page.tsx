@@ -14,9 +14,6 @@ export const metadata: Metadata = pageMetadata({
 export default function Home() {
   return (
     <>
-      <h1 className="sr-only">
-        Dobby is an autonomous AI worker for slides, research, docs, and tasks on your computer
-      </h1>
       <HomeClient />
       <HomeSeoContent />
     </>

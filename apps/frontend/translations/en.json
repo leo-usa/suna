@@ -1361,7 +1361,52 @@
     }
   },
   "home": {
-    "heroPlaceholder": "Describe the task you want your Worker to complete..."
+    "heroPlaceholder": "Describe the task you want your Worker to complete...",
+    "seo": {
+      "h1": "Dobby is an autonomous AI worker for slides, research, docs, and tasks on your computer",
+      "canDoTitle": "What Dobby can do",
+      "canDoBody": "Most AI tools stop at thinking. Dobby acts. It builds slides and documents, runs research, edits data, generates images and video, and follows through on multi-step work in the cloud or on this computer.",
+      "capabilities": {
+        "slides": "Slides and decks",
+        "research": "Research briefs",
+        "docs": "Docs and reports",
+        "data": "Data and charts",
+        "media": "Images and video",
+        "canvas": "Canvas and sites"
+      },
+      "channelsTitle": "Browser, desktop, or WeChat",
+      "channelsBody": "Start in the chat above. Install the desktop app to work with local files and apps. Or bind WeChat and keep going from your phone.",
+      "download": "Download for Mac and Windows",
+      "works": "See published works",
+      "pricing": "Pricing",
+      "cnIntro": "中文介绍",
+      "questionsTitle": "Questions",
+      "faq": {
+        "what": {
+          "q": "What is Dobby?",
+          "a": "Dobby is an AI worker that completes real work — slides, research, documents, video, and more — instead of only chatting. You describe the outcome; Dobby uses tools, files, and the browser to ship it."
+        },
+        "desktop": {
+          "q": "Can Dobby run on my computer?",
+          "a": "Yes. The Dobby desktop app can work with files and apps on your Mac. Download it from the download page, then start a task with “this computer.”"
+        },
+        "wechat": {
+          "q": "Does Dobby work in WeChat?",
+          "a": "Yes. You can bind WeChat and talk to Dobby there. Alipay and WeChat Pay are available for prepaid credits."
+        },
+        "free": {
+          "q": "Is there a free plan?",
+          "a": "Yes. You can start on the free plan with weekly credits, then upgrade if you need more runs, a dedicated computer, or more custom workers."
+        }
+      },
+      "footer": {
+        "about": "About",
+        "tutorials": "Tutorials",
+        "privacy": "Privacy",
+        "terms": "Terms",
+        "support": "Support"
+      }
+    }
   },
   "showcase": {
     "title": "Dobby: Your Autonomous AI Worker",

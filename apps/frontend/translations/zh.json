@@ -1353,7 +1353,52 @@
     }
   },
   "home": {
-    "heroPlaceholder": "描述你想让你的 Worker 完成的任务..."
+    "heroPlaceholder": "描述你想让你的 Worker 完成的任务...",
+    "seo": {
+      "h1": "Dobby 是自主 AI 工作器，能在电脑上完成幻灯片、调研、文档和任务",
+      "canDoTitle": "Dobby 能做什么",
+      "canDoBody": "多数 AI 工具停在“想”。Dobby 会动手：做幻灯片和文档、做调研、处理数据、生成图片和视频，并在云端或这台电脑上把多步骤工作做完。",
+      "capabilities": {
+        "slides": "幻灯片与演示文稿",
+        "research": "调研简报",
+        "docs": "文档与报告",
+        "data": "数据与图表",
+        "media": "图片与视频",
+        "canvas": "画布与网站"
+      },
+      "channelsTitle": "浏览器、桌面端或微信",
+      "channelsBody": "从上方对话框开始。安装桌面应用即可处理本机文件和应用。也可以绑定微信，用手机继续。",
+      "download": "下载 Mac 与 Windows 版",
+      "works": "查看已发布作品",
+      "pricing": "价格",
+      "cnIntro": "中文介绍",
+      "questionsTitle": "常见问题",
+      "faq": {
+        "what": {
+          "q": "Dobby 是什么？",
+          "a": "Dobby 是一名会把活干完的 AI 工作器——幻灯片、调研、文档、视频等，而不只是聊天。你描述结果，Dobby 用工具、文件和浏览器把它做出来。"
+        },
+        "desktop": {
+          "q": "Dobby 能在我的电脑上运行吗？",
+          "a": "可以。Dobby 桌面应用能处理你 Mac 上的文件和应用。从下载页安装后，发起任务时选择“这台电脑”。"
+        },
+        "wechat": {
+          "q": "Dobby 能在微信里用吗？",
+          "a": "可以。绑定微信后就能在微信里和 Dobby 对话。预付积分支持支付宝和微信支付。"
+        },
+        "free": {
+          "q": "有免费方案吗？",
+          "a": "有。可以从免费方案开始，每周获得积分；需要更多运行次数、专用电脑或更多自定义工作器时再升级。"
+        }
+      },
+      "footer": {
+        "about": "关于",
+        "tutorials": "教程",
+        "privacy": "隐私",
+        "terms": "条款",
+        "support": "支持"
+      }
+    }
   },
   "showcase": {
     "title": "Dobby：您的自主AI工作器",

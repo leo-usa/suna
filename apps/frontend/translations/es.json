@@ -595,7 +595,52 @@
     "customizeIcon": "Haz clic para personalizar el icono del Worker"
   },
   "home": {
-    "heroPlaceholder": "Describe la tarea que quieres que tu Worker complete..."
+    "heroPlaceholder": "Describe la tarea que quieres que tu Worker complete...",
+    "seo": {
+      "h1": "Dobby es un worker de IA autónomo para diapositivas, investigación, documentos y tareas en tu ordenador",
+      "canDoTitle": "Qué puede hacer Dobby",
+      "canDoBody": "La mayoría de las herramientas de IA se detienen en pensar. Dobby actúa. Crea diapositivas y documentos, investiga, edita datos, genera imágenes y vídeo, y lleva a cabo trabajo de varios pasos en la nube o en este ordenador.",
+      "capabilities": {
+        "slides": "Diapositivas y decks",
+        "research": "Informes de investigación",
+        "docs": "Documentos e informes",
+        "data": "Datos y gráficos",
+        "media": "Imágenes y vídeo",
+        "canvas": "Canvas y sitios"
+      },
+      "channelsTitle": "Navegador, escritorio o WeChat",
+      "channelsBody": "Empieza en el chat de arriba. Instala la app de escritorio para trabajar con archivos y apps locales. O vincula WeChat y sigue desde el teléfono.",
+      "download": "Descargar para Mac y Windows",
+      "works": "Ver trabajos publicados",
+      "pricing": "Precios",
+      "cnIntro": "中文介绍",
+      "questionsTitle": "Preguntas",
+      "faq": {
+        "what": {
+          "q": "¿Qué es Dobby?",
+          "a": "Dobby es un worker de IA que completa trabajo real — diapositivas, investigación, documentos, vídeo y más — en lugar de solo chatear. Describes el resultado; Dobby usa herramientas, archivos y el navegador para entregarlo."
+        },
+        "desktop": {
+          "q": "¿Puede Dobby ejecutarse en mi ordenador?",
+          "a": "Sí. La app de escritorio de Dobby puede trabajar con archivos y apps en tu Mac. Descárgala en la página de descarga y empieza una tarea con “este ordenador”."
+        },
+        "wechat": {
+          "q": "¿Funciona Dobby en WeChat?",
+          "a": "Sí. Puedes vincular WeChat y hablar con Dobby allí. Alipay y WeChat Pay están disponibles para créditos prepago."
+        },
+        "free": {
+          "q": "¿Hay un plan gratuito?",
+          "a": "Sí. Puedes empezar con el plan gratuito y créditos semanales, y actualizar si necesitas más ejecuciones, un ordenador dedicado o más workers personalizados."
+        }
+      },
+      "footer": {
+        "about": "Acerca de",
+        "tutorials": "Tutoriales",
+        "privacy": "Privacidad",
+        "terms": "Términos",
+        "support": "Soporte"
+      }
+    }
   },
   "showcase": {
     "title": "Dobby: Tu Worker de IA Autónomo",
