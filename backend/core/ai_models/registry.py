@@ -299,6 +299,12 @@ class PricingPresets:
         cache_write_5m_cost_per_million_tokens=6.25,
     )
 
+    GPT_6_ASTRA = ModelPricing(
+        input_cost_per_million_tokens=10.00,
+        output_cost_per_million_tokens=50.00,
+        cached_read_cost_per_million_tokens=1.00,
+    )
+
 
 FREE_MODEL_ID = "dobby/claude-sonnet-5"
 PREMIUM_MODEL_ID = "dobby/power"
@@ -1517,6 +1523,28 @@ class ModelFactory:
         )
 
     @staticmethod
+    def create_gpt_6_astra() -> Model:
+        return Model(
+            id="dobby/gpt-6-astra",
+            name="GPT-6 Astra",
+            litellm_model_id="openrouter/openai/gpt-6-astra",
+            provider=ModelProvider.OPENROUTER,
+            aliases=["gpt-6-astra", "openai/gpt-6-astra"],
+            context_window=1_000_000,
+            capabilities=[
+                ModelCapability.CHAT,
+                ModelCapability.FUNCTION_CALLING,
+                ModelCapability.VISION,
+                ModelCapability.PROMPT_CACHING,
+            ],
+            pricing=PricingPresets.GPT_6_ASTRA,
+            tier_availability=["paid"],
+            priority=116,
+            recommended=False,
+            enabled=True,
+        )
+
+    @staticmethod
     def create_kimi_k2() -> Model:
         return Model(
             id="dobby/kimi-k2",
@@ -1623,6 +1651,7 @@ class ModelRegistry:
         self.register(ModelFactory.create_gpt_5_6_terra_pro())
         self.register(ModelFactory.create_gpt_5_6_sol())
         self.register(ModelFactory.create_gpt_5_6_sol_pro())
+        self.register(ModelFactory.create_gpt_6_astra())
 
         if config.ENV_MODE != EnvMode.PRODUCTION:
             self.register(ModelFactory.create_test_model())
@@ -1694,6 +1723,7 @@ class ModelRegistry:
         self._litellm_id_to_pricing["openrouter/openai/gpt-5.6-sol"] = PricingPresets.GPT_5_6_SOL
         self._litellm_id_to_pricing[BedrockConfig.build_geo_id("gpt_5_6_sol")] = PricingPresets.GPT_5_6_SOL
         self._litellm_id_to_pricing["openrouter/openai/gpt-5.6-sol-pro"] = PricingPresets.GPT_5_6_SOL
+        self._litellm_id_to_pricing["openrouter/openai/gpt-6-astra"] = PricingPresets.GPT_6_ASTRA
     
     def register(self, model: Model) -> None:
         self._models[model.id] = model
