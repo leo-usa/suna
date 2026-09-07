@@ -27,7 +27,11 @@ def _is_computer_screen_observation(msg: Dict[str, Any]) -> bool:
             has_image = True
         if part.get("type") == "text":
             text = str(part.get("text") or "")
-            if text.startswith("Current Mac screen") or text.strip() == "[Screenshot of this computer]":
+            if (
+                text.startswith("Current Mac screen")
+                or text.startswith("Actions so far")
+                or text.strip() == "[Screenshot of this computer]"
+            ):
                 is_computer_screen = True
     return has_image and is_computer_screen
 

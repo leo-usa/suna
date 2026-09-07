@@ -291,11 +291,11 @@ class LocalComputer:
     async def key(self, key: str) -> dict:
         return await rpc(self._device_id, proto.COMPUTER_KEY, self._params({"key": key})) or {}
 
-    async def scroll(self, x: float = 0, y: float = 0, dy: float = 0, dx: float = 0, **meta) -> dict:
+    async def scroll(self, x: float = 0, y: float = 0, dy: float = 0, dx: float = 0, unit: str = "line", **meta) -> dict:
         return await rpc(
             self._device_id,
             proto.COMPUTER_SCROLL,
-            self._params({"x": x, "y": y, "dy": dy, "dx": dx, **meta}),
+            self._params({"x": x, "y": y, "dy": dy, "dx": dx, "unit": unit, **meta}),
         ) or {}
 
     async def open(self, target: str) -> dict:

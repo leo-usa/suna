@@ -56,6 +56,45 @@ const STRIPE_CHECKOUT_CSS = `
   html, body { background: #ffffff !important; color-scheme: light only !important; }
 `;
 
+function isOAuthUrl(url) {
+  if (!url) return false;
+  return url.includes('accounts.google.com') ||
+    url.includes('github.com/login/oauth') ||
+    url.includes('api.github.com') ||
+    url.includes('supabase.co/auth') ||
+    url.includes('/auth/v1/authorize');
+}
+
+function isAuthCallbackUrl(url) {
+  if (!url || url.startsWith('data:')) return false;
+  if (url.startsWith(`${PROTOCOL_SCHEME}://`)) {
+    return url.includes('auth/callback');
+  }
+  try {
+    const parsed = new URL(url);
+    return parsed.pathname.includes('/auth/callback') &&
+      parsed.origin === new URL(normalizedUrl).origin;
+  } catch {
+    return false;
+  }
+}
+
+function oauthWindowOptions(parentWindow) {
+  return {
+    width: 600,
+    height: 800,
+    ...(process.platform === 'win32' ? {} : { parent: parentWindow }),
+    modal: false,
+    autoHideMenuBar: true,
+    title: 'Sign In',
+    backgroundColor: '#000000',
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+    },
+  };
+}
+
 function isCheckoutUrl(url) {
   if (!url || url.startsWith('data:')) return false;
   try {
@@ -401,61 +440,30 @@ function createWindow() {
   // Intercept navigation for OAuth (popup flow)
   webContents.on('will-navigate', (event, navigationUrl) => {
     try {
-      const url = new URL(navigationUrl);
-      
-      // Check if this is an OAuth URL
-      const isOAuthUrl = navigationUrl.includes('accounts.google.com') ||
-                         navigationUrl.includes('github.com/login/oauth') ||
-                         navigationUrl.includes('api.github.com') ||
-                         navigationUrl.includes('supabase.co/auth') ||
-                         navigationUrl.includes('/auth/v1/authorize');
-      
-      if (isOAuthUrl) {
+      if (isOAuthUrl(navigationUrl)) {
         console.log('🚫 Preventing OAuth navigation in main window');
         console.log('✅ Opening OAuth in popup instead:', navigationUrl);
         event.preventDefault();
         
-        // Create OAuth popup window with loading animation
         const oauthWindow = new BrowserWindow({
-          width: 600,
-          height: 800,
-          parent: mainWindow,
-          modal: false,
-          autoHideMenuBar: true,
-          title: 'Sign In',
-          backgroundColor: '#000000',
+          ...oauthWindowOptions(mainWindow),
           show: false,
-          webPreferences: {
-            nodeIntegration: false,
-            contextIsolation: true,
-          },
         });
         
-        // Show loading animation first, then load OAuth URL
-        oauthWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(loadingHTML)}`);
         oauthWindow.once('ready-to-show', () => {
           oauthWindow.show();
-          oauthWindow.loadURL(navigationUrl);
         });
+        oauthWindow.loadURL(navigationUrl);
         
-        // Handle OAuth callback - close popup and load callback in main window
-        oauthWindow.webContents.on('will-navigate', (e, callbackUrl) => {
-          if (callbackUrl.includes('/auth/callback') || callbackUrl.includes(normalizedUrl)) {
-            console.log('✅ OAuth callback detected, closing popup');
-            e.preventDefault();
-            oauthWindow.close();
-            mainWindow.loadURL(callbackUrl);
-          }
-        });
-        
-        oauthWindow.webContents.on('will-redirect', (e, callbackUrl) => {
-          if (callbackUrl.includes('/auth/callback') || callbackUrl.includes(normalizedUrl)) {
-            console.log('✅ OAuth redirect detected, closing popup');
-            e.preventDefault();
-            oauthWindow.close();
-            mainWindow.loadURL(callbackUrl);
-          }
-        });
+        const returnToApp = (e, callbackUrl) => {
+          if (!isAuthCallbackUrl(callbackUrl)) return;
+          console.log('✅ OAuth callback detected, closing popup');
+          e.preventDefault();
+          oauthWindow.close();
+          mainWindow.loadURL(callbackUrl);
+        };
+        oauthWindow.webContents.on('will-navigate', returnToApp);
+        oauthWindow.webContents.on('will-redirect', returnToApp);
         
         return;
       }
@@ -476,8 +484,7 @@ function createWindow() {
                                href.includes('github.com/login/oauth') ||
                                href.includes('api.github.com') ||
                                href.includes('supabase.co/auth') ||
-                               href.includes('oauth') ||
-                               href.includes('authorize');
+                               href.includes('/auth/v1/authorize');
             if (isOAuthUrl) {
               e.preventDefault();
               window.open(href, '_blank', 'width=500,height=700');
@@ -493,32 +500,11 @@ function createWindow() {
     console.log('🔗 Window open requested:', url);
     
     // OAuth URLs that should open in a popup window
-    const isOAuthUrl = url.includes('accounts.google.com') ||
-                       url.includes('github.com/login/oauth') ||
-                       url.includes('api.github.com') ||
-                       url.includes('supabase.co/auth') ||
-                       url.includes('/auth/v1/authorize') ||
-                       url.includes('oauth') ||
-                       url.includes('authorize');
-    
-    if (isOAuthUrl) {
+    if (isOAuthUrl(url)) {
       console.log('✅ Opening OAuth in popup window');
-      // Open OAuth in a popup window - Electron will create it
       return {
         action: 'allow',
-        overrideBrowserWindowOptions: {
-          width: 600,
-          height: 800,
-          parent: mainWindow,
-          modal: false,
-          autoHideMenuBar: true,
-          title: 'Sign In',
-          backgroundColor: '#000000',
-          webPreferences: {
-            nodeIntegration: false,
-            contextIsolation: true,
-          },
-        },
+        overrideBrowserWindowOptions: oauthWindowOptions(mainWindow),
       };
     }
 
@@ -549,31 +535,17 @@ function createWindow() {
   app.on('web-contents-created', (event, contents) => {
     // Only handle popup windows (not main window)
     if (contents !== webContents) {
-      contents.on('will-navigate', (e, callbackUrl) => {
-        if (callbackUrl.includes('/auth/callback') || callbackUrl.includes(normalizedUrl)) {
-          e.preventDefault();
-          // Close the popup
-          const popupWindow = BrowserWindow.fromWebContents(contents);
-          if (popupWindow) {
-            popupWindow.close();
-          }
-          // Load callback in main window
-          mainWindow.loadURL(callbackUrl);
+      const returnToApp = (e, callbackUrl) => {
+        if (!isAuthCallbackUrl(callbackUrl)) return;
+        e.preventDefault();
+        const popupWindow = BrowserWindow.fromWebContents(contents);
+        if (popupWindow) {
+          popupWindow.close();
         }
-      });
-      
-      contents.on('will-redirect', (e, callbackUrl) => {
-        if (callbackUrl.includes('/auth/callback') || callbackUrl.includes(normalizedUrl)) {
-          e.preventDefault();
-          // Close the popup
-          const popupWindow = BrowserWindow.fromWebContents(contents);
-          if (popupWindow) {
-            popupWindow.close();
-          }
-          // Load callback in main window
-          mainWindow.loadURL(callbackUrl);
-        }
-      });
+        mainWindow.loadURL(callbackUrl);
+      };
+      contents.on('will-navigate', returnToApp);
+      contents.on('will-redirect', returnToApp);
     }
   });
 
@@ -631,8 +603,16 @@ app.whenReady().then(() => {
   }
 
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
+    localRunner.restoreDobby({ focus: true });
+    const windows = BrowserWindow.getAllWindows().filter((win) => !win.isDestroyed());
+    if (windows.length === 0) {
       createWindow();
+      return;
+    }
+    for (const win of windows) {
+      if (win.isMinimized()) win.restore();
+      if (!win.isVisible()) win.show();
+      win.focus();
     }
   });
 });

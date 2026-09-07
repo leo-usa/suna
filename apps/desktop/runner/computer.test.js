@@ -1,6 +1,6 @@
 const { describe, it } = require('node:test');
 const assert = require('node:assert/strict');
-const { KEY_CODES, mapToScreen, keyScript, pngSize, openCandidates, activateAppScript, typeScript, utf8Env } = require('./computer');
+const { KEY_CODES, mapToScreen, keyScript, pngSize, openCandidates, activateAppScript, typeScript, utf8Env, scrollScript, scrollTicks, PAGE_SCROLL_TICKS } = require('./computer');
 
 describe('computer coordinate mapping', () => {
   it('maps screenshot pixels onto logical screen points', () => {
@@ -84,5 +84,23 @@ describe('computer app open aliases', () => {
     assert.match(script, /frontmost = true/);
     assert.match(script, /WeChat/);
     assert.match(script, /\.activate\(\)/);
+  });
+});
+
+describe('computer scroll', () => {
+  it('posts one wheel tick per line for a small nudge', () => {
+    assert.deepEqual(scrollTicks(3, 0), { ticks: 3, stepY: -1, stepX: 0 });
+    const script = scrollScript(100, 200, 3, 0);
+    assert.match(script, /kCGScrollEventUnitLine/);
+    assert.match(script, /i < 3/);
+    assert.match(script, /sleepForTimeInterval\(0\.03\)/);
+  });
+
+  it('posts a page of separate ticks instead of one huge wheel value', () => {
+    assert.deepEqual(scrollTicks(520, 0, 'page'), { ticks: PAGE_SCROLL_TICKS, stepY: -1, stepX: 0 });
+    assert.deepEqual(scrollTicks(520, 0), { ticks: PAGE_SCROLL_TICKS, stepY: -1, stepX: 0 });
+    const script = scrollScript(100, 200, 520, 0, 'page');
+    assert.match(script, new RegExp(`i < ${PAGE_SCROLL_TICKS}`));
+    assert.doesNotMatch(script, /kCGScrollEventUnitPixel/);
   });
 });

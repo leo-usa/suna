@@ -12,7 +12,10 @@ from core.tools.sb_computer_tool import (
     SCREENSHOT_BUCKETS,
     SCREEN_OBSERVATION_TEXT,
     SandboxComputerTool,
+    format_action_log,
+    is_page_scroll,
     prepare_screenshot_b64,
+    screen_observation_text,
     screenshot_url_for_ui,
     upload_computer_screenshot,
 )
@@ -242,6 +245,13 @@ def test_computer_screen_observation_does_not_match_user_text():
     assert _is_computer_screen_observation({
         "role": "user",
         "content": [
+            {"type": "text", "text": "Actions so far (this text is the memory).\n\n" + SCREEN_OBSERVATION_TEXT},
+            {"type": "image_url", "image_url": {"url": "https://x"}},
+        ],
+    })
+    assert _is_computer_screen_observation({
+        "role": "user",
+        "content": [
             {"type": "text", "text": "[Screenshot of this computer]"},
             {"type": "image_url", "image_url": {"url": "https://x"}},
         ],
@@ -261,7 +271,7 @@ async def test_computer_type_submit_presses_return():
     tool._require_local_computer = AsyncMock(return_value=(computer, None))
     tool._capture = AsyncMock(return_value=tool.success_response({"message": "Typed and submitted."}))
     with patch("core.tools.sb_computer_tool.asyncio.sleep", new_callable=AsyncMock):
-        result = await tool.computer_type("hello", submit=True)
+        result = await tool.computer_type("hello", submit=True, intent="Send reply in the message box")
     assert result.success is True
     computer.type.assert_awaited_once_with(text="hello", replace=False, submit=True)
     computer.key.assert_not_called()
@@ -276,7 +286,7 @@ async def test_computer_type_replace_overwrites_field():
     tool._require_local_computer = AsyncMock(return_value=(computer, None))
     tool._capture = AsyncMock(return_value=tool.success_response({"message": "Replaced field text."}))
     with patch("core.tools.sb_computer_tool.asyncio.sleep", new_callable=AsyncMock):
-        result = await tool.computer_type("斯坦福", replace=True)
+        result = await tool.computer_type("斯坦福", replace=True, intent="Search field")
     assert result.success is True
     computer.type.assert_awaited_once_with(text="斯坦福", replace=True, submit=False)
     computer.key.assert_not_called()
@@ -320,6 +330,109 @@ async def test_two_screenshot_failures_tell_the_model_to_stop():
     assert second.success is False
     assert "Stop." in second.output
     assert "Do not call any more computer tools" in second.output
+
+
+def test_large_or_missing_dy_is_one_page():
+    assert is_page_scroll(None) is True
+    assert is_page_scroll(520) is True
+    assert is_page_scroll(3) is False
+
+
+@pytest.mark.asyncio
+async def test_scroll_defaults_to_one_page():
+    computer = MagicMock()
+    computer.scroll = AsyncMock(return_value={"ok": True})
+    tool = SandboxComputerTool("proj", MagicMock(), "thread")
+    tool._require_local_computer = AsyncMock(return_value=(computer, None))
+    tool._last_screen = {"height": 831, "screen_height": 982}
+    tool._capture = AsyncMock(return_value=tool.success_response({"message": "Scrolled one page."}))
+    with patch("core.tools.sb_computer_tool.asyncio.sleep", new_callable=AsyncMock):
+        result = await tool.computer_scroll(180, 400, intent="Reveal the next unused chats")
+    assert result.success is True
+    computer.scroll.assert_awaited_once()
+    kwargs = computer.scroll.await_args.kwargs
+    assert kwargs["dy"] == 1
+    assert kwargs["unit"] == "page"
+    assert "Scrolled one page" in tool._capture.await_args.args[0]
+
+
+@pytest.mark.asyncio
+async def test_scroll_treats_model_pixel_dy_as_one_page():
+    computer = MagicMock()
+    computer.scroll = AsyncMock(return_value={"ok": True})
+    tool = SandboxComputerTool("proj", MagicMock(), "thread")
+    tool._require_local_computer = AsyncMock(return_value=(computer, None))
+    tool._capture = AsyncMock(return_value=tool.success_response({"message": "Scrolled one page."}))
+    with patch("core.tools.sb_computer_tool.asyncio.sleep", new_callable=AsyncMock):
+        await tool.computer_scroll(180, 400, dy=520, intent="Reveal the next unused chats")
+    kwargs = computer.scroll.await_args.kwargs
+    assert kwargs["unit"] == "page"
+    assert kwargs["dy"] == 1
+
+
+def test_format_action_log_names_clicked_targets():
+    text = format_action_log(
+        ['Intent: Focus search box. Clicked (120, 64)', 'Intent: Open left-list row 家庭群. Clicked (412, 280)'],
+        ["Focus search box", "Open left-list row 家庭群"],
+    )
+    assert "Already done: Focus search box · Open left-list row 家庭群." in text
+    assert "1. Intent: Focus search box. Clicked (120, 64)" in text
+    assert "this text is the memory" in text
+    observation = screen_observation_text(
+        ['Intent: Focus search box. Clicked (120, 64)'],
+        ["Focus search box"],
+    )
+    assert observation.startswith("Actions so far")
+    assert "Current Mac screen" in observation
+    assert screen_observation_text() == SCREEN_OBSERVATION_TEXT
+
+
+@pytest.mark.asyncio
+async def test_click_without_intent_is_rejected():
+    computer = MagicMock()
+    computer.click = AsyncMock(return_value={"ok": True})
+    tool = SandboxComputerTool("proj", MagicMock(), "thread")
+    tool._require_local_computer = AsyncMock(return_value=(computer, None))
+    result = await tool.computer_click(120, 64)
+    assert result.success is False
+    assert "needs intent" in result.output
+    computer.click.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_click_keeps_named_actions_after_screenshot_is_replaced():
+    computer = MagicMock()
+    computer.click = AsyncMock(return_value={"ok": True})
+    computer.screenshot = AsyncMock(return_value={
+        "png_b64": _png_b64(),
+        "width": 40,
+        "height": 30,
+        "screen_width": 40,
+        "screen_height": 30,
+        "scale": 1,
+    })
+    tool = SandboxComputerTool("proj", MagicMock(), "thread")
+    tool._require_local_computer = AsyncMock(return_value=(computer, None))
+    with patch("core.local_runner.screenshots.save_computer_screenshots_enabled", new_callable=AsyncMock, return_value=False):
+        with patch("core.tools.sb_computer_tool.asyncio.sleep", new_callable=AsyncMock):
+            first = await tool.computer_click(120, 64, intent="Focus search box")
+            second = await tool.computer_click(412, 280, intent="Open left-list row 家庭群")
+    first_payload = json.loads(first.output)
+    second_payload = json.loads(second.output)
+    assert first_payload["targets"] == ["Focus search box"]
+    assert "Intent: Focus search box. Clicked (120, 64)" in first_payload["message"]
+    assert second_payload["targets"] == ["Focus search box", "Open left-list row 家庭群"]
+    assert second_payload["actions"] == [
+        "Intent: Focus search box. Clicked (120, 64)",
+        "Intent: Open left-list row 家庭群. Clicked (412, 280)",
+    ]
+    observation = second_payload["_image_context_data"]["message_content"]["content"][0]["text"]
+    assert observation.startswith("Actions so far")
+    assert "Already done: Focus search box · Open left-list row 家庭群." in observation
+    assert "1. Intent: Focus search box. Clicked (120, 64)" in observation
+    computer.click.assert_awaited()
+    assert "intent" not in computer.click.await_args.kwargs
+    assert "target" not in computer.click.await_args.kwargs
 
 
 def test_estimate_cached_prompt_tokens_leaves_fresh_image_room():

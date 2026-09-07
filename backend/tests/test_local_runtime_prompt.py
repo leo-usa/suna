@@ -6,6 +6,8 @@ def test_local_runtime_prompt_lists_missing_python():
     assert "NOT FOUND on this Mac" in text
     assert "python3 -m pip install" in text
     assert "cloud sandbox" in text.lower() or "switch to cloud" in text
+    assert "computer_click" in text
+    assert "search-first" in text
 
 
 def test_local_runtime_prompt_shows_detected_python():

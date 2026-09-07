@@ -219,14 +219,33 @@ se.keyCode(${code}${usingArg});
 `;
 }
 
-function scrollScript(x, y, dy, dx) {
+const PAGE_SCROLL_TICKS = 12;
+
+function scrollTicks(dy, dx, unit) {
+  const kind = String(unit || '').toLowerCase();
+  const totalY = Math.round(Number(dy) || 0);
+  const totalX = Math.round(Number(dx) || 0);
+  // Quartz positive wheel scrolls the list up. Positive dy means "down the list".
+  const signY = totalY === 0 ? (kind === 'page' || kind === 'pixel' ? -1 : 0) : (totalY > 0 ? -1 : 1);
+  const signX = totalX === 0 ? 0 : (totalX > 0 ? 1 : -1);
+  const raw = Math.abs(totalY) || Math.abs(totalX) || 1;
+  const page = kind === 'page' || kind === 'pixel' || raw >= 16;
+  const ticks = page ? PAGE_SCROLL_TICKS : Math.min(20, raw);
+  return { ticks, stepY: signY, stepX: signX };
+}
+
+function scrollScript(x, y, dy, dx, unit) {
+  const { ticks, stepY, stepX } = scrollTicks(dy, dx, unit);
   return `
 ObjC.import('Cocoa');
 const point = $.CGPointMake(${Number(x)}, ${Number(y)});
 const move = $.CGEventCreateMouseEvent(null, $.kCGEventMouseMoved, point, $.kCGMouseButtonLeft);
 $.CGEventPost($.kCGHIDEventTap, move);
-const scroll = $.CGEventCreateScrollWheelEvent(null, $.kCGScrollEventUnitLine, 2, ${Math.round(Number(dy) || 0)}, ${Math.round(Number(dx) || 0)});
-$.CGEventPost($.kCGHIDEventTap, scroll);
+for (let i = 0; i < ${ticks}; i++) {
+  const scroll = $.CGEventCreateScrollWheelEvent(null, $.kCGScrollEventUnitLine, 2, ${stepY}, ${stepX});
+  $.CGEventPost($.kCGHIDEventTap, scroll);
+  $.NSThread.sleepForTimeInterval(0.03);
+}
 `;
 }
 
@@ -394,7 +413,7 @@ async function runComputerAction(kind, payload) {
       return { ok: true, key: payload.key };
     case 'scroll': {
       const mapped = mapToScreen(payload.x || 0, payload.y || 0, payload);
-      await runOsascript(scrollScript(mapped.x, mapped.y, payload.dy, payload.dx));
+      await runOsascript(scrollScript(mapped.x, mapped.y, payload.dy, payload.dx, payload.unit));
       return { ok: true };
     }
     case 'open':
@@ -415,5 +434,8 @@ module.exports = {
   keyScript,
   openCandidates,
   activateAppScript,
+  scrollScript,
+  scrollTicks,
+  PAGE_SCROLL_TICKS,
   runComputerAction,
 };

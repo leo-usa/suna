@@ -4,6 +4,14 @@ import { createTrialCheckout } from '@/lib/api/billing';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 
+function normalizeEmail(email: string): string {
+  return String(email || '').replace(/[\u200B-\u200D\uFEFF]/g, '').trim().toLowerCase();
+}
+
+function normalizePassword(password: string): string {
+  return String(password || '').replace(/[\r\n]/g, '');
+}
+
 
 export async function signIn(prevState: any, formData: FormData) {
   const email = formData.get('email') as string;
@@ -216,8 +224,8 @@ export async function resendMagicLink(prevState: any, formData: FormData) {
 }
 
 export async function signInWithPassword(prevState: any, formData: FormData) {
-  const email = formData.get('email') as string;
-  const password = formData.get('password') as string;
+  const email = normalizeEmail(formData.get('email') as string);
+  const password = normalizePassword(formData.get('password') as string);
   const returnUrl = formData.get('returnUrl') as string | undefined;
 
   if (!email || !email.includes('@')) {
@@ -231,7 +239,7 @@ export async function signInWithPassword(prevState: any, formData: FormData) {
   const supabase = await createClient();
 
   const { data, error } = await supabase.auth.signInWithPassword({
-    email: email.trim().toLowerCase(),
+    email,
     password,
   });
 
@@ -281,9 +289,9 @@ export async function signInWithPassword(prevState: any, formData: FormData) {
 }
 
 export async function signUpWithPassword(prevState: any, formData: FormData) {
-  const email = formData.get('email') as string;
-  const password = formData.get('password') as string;
-  const confirmPassword = formData.get('confirmPassword') as string;
+  const email = normalizeEmail(formData.get('email') as string);
+  const password = normalizePassword(formData.get('password') as string);
+  const confirmPassword = normalizePassword(formData.get('confirmPassword') as string);
   const returnUrl = formData.get('returnUrl') as string | undefined;
   const origin = formData.get('origin') as string;
 
@@ -305,7 +313,7 @@ export async function signUpWithPassword(prevState: any, formData: FormData) {
   const emailRedirectTo = `${baseUrl}/auth/callback?returnUrl=${encodeURIComponent(returnUrl || '/dashboard')}`;
 
   const { error } = await supabase.auth.signUp({
-    email: email.trim().toLowerCase(),
+    email,
     password,
     options: {
       emailRedirectTo,

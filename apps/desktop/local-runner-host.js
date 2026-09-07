@@ -199,30 +199,40 @@ function hideDobby() {
   return true;
 }
 
-function restoreDobby() {
+function restoreDobby({ focus = false } = {}) {
   cancelDobbyRestore();
-  const windows = hiddenDobbyWindows;
+  const tracked = hiddenDobbyWindows;
   hiddenDobbyWindows = null;
-  if (!windows) return;
+  const windows = BrowserWindow.getAllWindows().filter((win) => !win.isDestroyed());
   for (const win of windows) {
-    if (win.isDestroyed()) continue;
-    try { win.showInactive(); } catch (_) {
+    const shouldShow = !win.isVisible() || (tracked && tracked.includes(win));
+    if (!shouldShow) continue;
+    try {
+      if (win.isMinimized()) win.restore();
+      if (focus) {
+        win.show();
+        win.focus();
+      } else {
+        win.showInactive();
+      }
+    } catch (_) {
       try { win.show(); } catch (__) { /* ignore */ }
     }
   }
 }
 
 function scheduleDobbyRestore() {
-  if (!hiddenDobbyWindows) return;
+  const hidden = hiddenDobbyWindows
+    || BrowserWindow.getAllWindows().some((win) => !win.isDestroyed() && !win.isVisible());
+  if (!hidden) return;
   cancelDobbyRestore();
-  dobbyRestoreTimer = setTimeout(restoreDobby, DOBBY_RESTORE_IDLE_MS);
+  dobbyRestoreTimer = setTimeout(() => restoreDobby({ focus: true }), DOBBY_RESTORE_IDLE_MS);
 }
 
-// The user brought Dobby back themselves, so forget the session and let the next
-// action hide it again rather than acting while Dobby holds focus.
+// Dock / Cmd-Tab must actually show the hidden windows. Forgetting the list
+// without showing them left Dobby running with no UI until it was force-quit.
 app.on('activate', () => {
-  cancelDobbyRestore();
-  hiddenDobbyWindows = null;
+  restoreDobby({ focus: true });
 });
 
 async function withDobbyHidden(fn) {
@@ -511,4 +521,5 @@ module.exports = {
   startRunner,
   stopRunner,
   claimLocalFolders,
+  restoreDobby,
 };

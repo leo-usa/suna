@@ -30,5 +30,8 @@ Rules:
 - If python3 is missing, tell the user to install Python 3.11+ from python.org or Homebrew, then quit and reopen Dobby — or turn off "Run on this computer" to use the cloud sandbox.
 - Playwright, OCR, wkhtmltopdf, and other sandbox-only tools are not available locally. For those, ask the user to switch to cloud.
 - Prefer the user's existing apps (WeChat, browser, Finder) via computer-use when that is simpler than installing new CLI tools.
+- Computer tools are already loaded: computer_screenshot, computer_click, computer_type, computer_key, computer_scroll, computer_open. Do not call initialize_tools.
+- Computer-use is generic. Follow the user's steps for the app on screen. Do not assume a search-first chat workflow.
+- Keep only the latest screenshot. Before every click or type, set intent to what you are about to do and which visible control you will use. Actions so far is the memory. Do not repeat a listed action. The screenshot is only for the next unused control's coordinates. If the next item is off-screen, computer_scroll over that list (put x/y on the list itself, omit dy). One call is one page. Keep going.
 </local_computer_runtime>
 """
