@@ -8,6 +8,7 @@ import uuid
 from litellm import aimage_generation, aimage_edit
 import base64
 from core.utils.file_name_generator import generate_smart_filename
+from core.billing.credits.media_calculator import GPT_IMAGE_OPENAI_SUNBURST
 
 @tool_metadata(
     display_name="Design & Graphics",
@@ -120,8 +121,8 @@ class SandboxDesignerTool(SandboxToolsBase):
                         },
                         "quality": {
                             "type": "string",
-                            "enum": ["low", "medium", "high", "auto"],
-                            "description": "Output quality. 'high' for best quality, 'auto' to let model decide. Default: 'auto'",
+                            "enum": ["low", "medium", "high", "xhigh", "max", "auto"],
+                            "description": "Output quality. Use medium for drafts, high for shipping assets, xhigh/max only for print. Default: 'auto'",
                         },
                         "add_to_canvas": {
                             "type": "string",
@@ -163,7 +164,7 @@ class SandboxDesignerTool(SandboxToolsBase):
 
             if mode == "create":
                 response = await aimage_generation(
-                    model="gpt-image-1.5",
+                    model=GPT_IMAGE_OPENAI_SUNBURST,
                     prompt=enhanced_prompt,
                     n=1,
                     size=size_string,
@@ -183,9 +184,10 @@ class SandboxDesignerTool(SandboxToolsBase):
                 response = await aimage_edit(
                     image=[image_io],  
                     prompt=enhanced_prompt,
-                    model="gpt-image-1.5",
+                    model=GPT_IMAGE_OPENAI_SUNBURST,
                     n=1,
                     size=size_string,
+                    quality=quality,
                 )
             else:
                 return self.fail_response("Invalid mode. Use 'create' or 'edit'.")

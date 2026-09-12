@@ -18,7 +18,13 @@ from PIL import Image
 from core.utils.logger import logger
 from core.utils.config import get_config
 from core.billing.credits.media_integration import media_billing
-from core.billing.credits.media_calculator import select_image_quality, cap_quality_for_tier, FREE_TIERS
+from core.billing.credits.media_calculator import (
+    GPT_IMAGE_ASPECT_RATIOS,
+    GPT_IMAGE_FLARE,
+    select_image_quality,
+    cap_quality_for_tier,
+    FREE_TIERS,
+)
 from core.utils.image_processing import upscale_image_sync, remove_background_sync, UPSCALE_MODEL, REMOVE_BG_MODEL
 from core.utils.file_name_generator import generate_smart_filename
 
@@ -144,9 +150,11 @@ ADD TO IMAGE GEN PROMPT FONT SO IT GENERATES MORE ACCURATE TEXT LIKE INTER OR RO
 Generate, edit, upscale, or remove background from images. Video generation supported.
 
 **ASPECT RATIOS - MANDATORY when using frame_id:**
-- Portrait frames (height > width, e.g. IG Story 1080x1920): aspect_ratio='2:3' 
-- Landscape frames (width > height, e.g. YouTube 1280x720): aspect_ratio='3:2'
-- Square frames (1080x1080): aspect_ratio='1:1'
+- Portrait stories (1080x1920): aspect_ratio='9:16'
+- Portrait posts (1080x1350): aspect_ratio='2:3' or '3:4'
+- Landscape video (1280x720): aspect_ratio='16:9'
+- Landscape stills: aspect_ratio='3:2' or '4:3'
+- Square (1080x1080): aspect_ratio='1:1'
 **ALWAYS match aspect_ratio to frame orientation!** Default is 1:1 if not specified.""",
                 "parameters": {
                     "type": "object",
@@ -172,8 +180,8 @@ Generate, edit, upscale, or remove background from images. Video generation supp
                         },
                         "aspect_ratio": {
                             "type": "string",
-                            "enum": ["1:1", "3:2", "2:3"],
-                            "description": "**MANDATORY when using frame_id!** Match frame orientation: portrait frames (1080x1920)='2:3', landscape (1280x720)='3:2', square (1080x1080)='1:1'. Default: '1:1'."
+                            "enum": ["1:1", "3:2", "2:3", "4:3", "3:4", "16:9", "9:16"],
+                            "description": "**MANDATORY when using frame_id!** Match frame orientation: stories 9:16, YouTube 16:9, portrait 2:3/3:4, landscape 3:2/4:3, square 1:1. Default: '1:1'."
                         },
                         "video_options": {
                             "type": "object",
@@ -332,7 +340,7 @@ Generate, edit, upscale, or remove background from images. Video generation supp
                 if account_id and not use_mock and len(image_files) > 0:
                     await media_billing.deduct_replicate_image(
                         account_id=account_id,
-                        model="openai/gpt-image-2",
+                        model=GPT_IMAGE_FLARE,
                         count=len(image_files),
                         description=f"Batch image {mode} ({len(image_files)} images, quality={quality_variant})",
                         thread_id=thread_id,
@@ -480,7 +488,7 @@ Generate, edit, upscale, or remove background from images. Video generation supp
                 if account_id and not use_mock:
                     await media_billing.deduct_replicate_image(
                         account_id=account_id,
-                        model="openai/gpt-image-2",
+                        model=GPT_IMAGE_FLARE,
                         count=1,
                         description=f"Image {mode} (quality={quality_variant})",
                         thread_id=thread_id,
@@ -525,24 +533,22 @@ Generate, edit, upscale, or remove background from images. Video generation supp
     ) -> str | ToolResult:
         """
         Helper function to execute a single image generation or edit operation.
-        Uses Replicate with GPT Image 2 for both generation and editing.
+        Uses Replicate GPT Image 2.5 Flare for both generation and editing.
         
         Parameters:
         - mode: 'generate' or 'edit'
         - prompt: The text prompt for generation/editing
         - image_path: Path to image (required for edit mode)
         - use_mock: Whether to use mock mode
-        - quality: Quality variant ('low', 'medium', 'high') - affects output quality and cost
+        - quality: Quality variant ('low', 'medium', 'high', 'xhigh', 'max', 'auto')
         - aspect_ratio: Output aspect ratio ('1:1', '16:9', '9:16', '4:3', '3:4', '3:2', '2:3')
         
         Returns:
         - str: Filename of the generated/edited image on success
         - ToolResult: Error result on failure
         """
-        # Validate aspect_ratio - only 3 ratios supported by the API
-        valid_ratios = ["1:1", "3:2", "2:3"]
-        if aspect_ratio not in valid_ratios:
-            aspect_ratio = "1:1"  # Default to square if invalid
+        if aspect_ratio not in GPT_IMAGE_ASPECT_RATIOS:
+            aspect_ratio = "1:1"
         
         try:
             if use_mock:
@@ -557,11 +563,11 @@ Generate, edit, upscale, or remove background from images. Video generation supp
             self._get_replicate_token()
 
             if mode == "generate":
-                logger.info(f"Calling Replicate openai/gpt-image-2 for generation (quality={quality}, aspect_ratio={aspect_ratio})")
+                logger.info(f"Calling Replicate {GPT_IMAGE_FLARE} for generation (quality={quality}, aspect_ratio={aspect_ratio})")
                 # Wrap replicate.run() in thread pool to avoid blocking event loop
                 output = await asyncio.to_thread(
                     replicate.run,
-                    "openai/gpt-image-2",
+                    GPT_IMAGE_FLARE,
                     input={
                         "prompt": prompt,
                         "aspect_ratio": aspect_ratio,
@@ -581,11 +587,11 @@ Generate, edit, upscale, or remove background from images. Video generation supp
                 image_b64 = base64.b64encode(image_bytes).decode('utf-8')
                 image_data_url = f"data:image/png;base64,{image_b64}"
 
-                logger.info(f"Calling Replicate openai/gpt-image-2 for editing (quality={quality}, aspect_ratio={aspect_ratio}) with image_path='{image_path}' (image size: {len(image_bytes)} bytes)")
+                logger.info(f"Calling Replicate {GPT_IMAGE_FLARE} for editing (quality={quality}, aspect_ratio={aspect_ratio}) with image_path='{image_path}' (image size: {len(image_bytes)} bytes)")
                 # Wrap replicate.run() in thread pool to avoid blocking event loop
                 output = await asyncio.to_thread(
                     replicate.run,
-                    "openai/gpt-image-2",
+                    GPT_IMAGE_FLARE,
                     input={
                         "prompt": prompt,
                         "input_images": [image_data_url],  # Note: input_images is an ARRAY

@@ -18,12 +18,13 @@ from core.utils.auth_utils import verify_and_get_user_id_from_jwt
 from core.utils.config import get_config
 from core.services.http_client import get_http_client
 from core.billing.credits.media_integration import media_billing
+from core.billing.credits.media_calculator import GPT_IMAGE_FLARE, GPT_IMAGE_SUNBURST
 
 router = APIRouter(prefix="/canvas-ai", tags=["Canvas AI"])
 
 # Model configurations
 MODELS = {
-    "replicate-gpt": "openai/gpt-image-2",  # GPT Image via Replicate
+    "replicate-gpt": GPT_IMAGE_FLARE,  # Everyday GPT Image 2.5 Flare
     "gemini-pro": "google/gemini-3-pro-image-preview",  # OpenRouter
     "gemini-flash": "google/gemini-2.5-flash-image",  # OpenRouter - fast & reliable
     "replicate-remove-bg": "851-labs/background-remover",
@@ -99,8 +100,8 @@ class OCRResponse(BaseModel):
 ACTION_MODELS = {
     "remove_bg": "replicate-remove-bg",   # Replicate 851-labs/background-remover
     "upscale": "replicate-upscale",       # Replicate recraft-ai/recraft-crisp-upscale
-    "edit_text": "replicate-gpt",         # Replicate GPT Image 2 (quality: low)
-    "mark_edit": "replicate-gpt",         # Replicate GPT Image 2 (quality: low)
+    "edit_text": "replicate-gpt",         # GPT Image 2.5 Flare (quality: low)
+    "mark_edit": "replicate-gpt",         # GPT Image 2.5 Flare (quality: low)
 }
 
 
@@ -136,26 +137,26 @@ def get_action_prompt(action: str, user_prompt: Optional[str] = None) -> str:
 
 
 async def process_with_replicate_gpt(image_bytes: bytes, mime_type: str, prompt: str) -> str:
-    """Process image using GPT Image via Replicate (openai/gpt-image-2) with quality: low"""
+    """Process image using GPT Image 2.5 Flare via Replicate with quality: low."""
     _get_replicate_token()
     
     # Convert bytes to data URL
     image_b64 = base64.b64encode(image_bytes).decode('utf-8')
     image_data_url = f"data:{mime_type};base64,{image_b64}"
     
-    logger.info(f"Calling Replicate openai/gpt-image-2 for editing with quality: low (image size: {len(image_bytes)} bytes)")
+    logger.info(f"Calling Replicate {GPT_IMAGE_FLARE} for editing with quality: low (image size: {len(image_bytes)} bytes)")
     
     try:
         # Wrap replicate.run() in thread pool to avoid blocking event loop
         output = await asyncio.to_thread(
             replicate.run,
-            "openai/gpt-image-2",
+            GPT_IMAGE_FLARE,
             input={
                 "prompt": prompt,
                 "input_images": [image_data_url],  # For editing, use input_images array
                 "aspect_ratio": "1:1",
                 "number_of_images": 1,
-                "quality": "low",  # Use low quality for cost efficiency (~$0.012/image on Replicate)
+                "quality": "low",
             }
         )
         
@@ -343,8 +344,8 @@ async def process_image(
     Actions:
     - upscale: Enhance image resolution (Replicate recraft-ai/recraft-crisp-upscale)
     - remove_bg: Remove background (Replicate 851-labs/background-remover)
-    - edit_text: Edit text content in the image (Replicate GPT Image 1.5, quality: low)
-    - mark_edit: Apply AI edits based on prompt (Replicate GPT Image 1.5, quality: low)
+    - edit_text: Edit text content in the image (GPT Image 2.5 Flare, quality: low)
+    - mark_edit: Apply AI edits based on prompt (GPT Image 2.5 Flare, quality: low)
     """
     # Backend decides which model to use per action
     model_key = ACTION_MODELS.get(request.action, DEFAULT_MODEL)
@@ -408,7 +409,6 @@ async def process_image(
         billing_model = MODELS.get(model_key, model_key)
         provider = "replicate" if model_key.startswith("replicate-") else "openrouter"
         
-        # For GPT Image 2, specify quality variant for correct pricing
         billing_kwargs = {
             "account_id": user_id,
             "provider": provider,
@@ -418,7 +418,7 @@ async def process_image(
             "description": f"Canvas {request.action}",
         }
         if model_key == "replicate-gpt":
-            billing_kwargs["variant"] = "low"  # GPT Image 2 quality: low (~$0.012/image)
+            billing_kwargs["variant"] = "low"
         
         await media_billing.deduct_media_credits(**billing_kwargs)
         
@@ -458,9 +458,9 @@ async def merge_images(
 ):
     """
     Merge multiple images with AI based on a prompt.
-    Uses GPT Image 1.5 via Replicate for best multi-image merging.
+    Uses GPT Image 2.5 Sunburst via Replicate for precise multi-image merging.
     """
-    logger.info(f"Canvas AI: Merging {len(request.images)} images with GPT Image 1.5 for user {user_id}")
+    logger.info(f"Canvas AI: Merging {len(request.images)} images with GPT Image 2.5 Sunburst for user {user_id}")
     
     # BILLING: Check if user has credits before proceeding
     has_credits, credit_msg, balance = await media_billing.check_credits(user_id)
@@ -516,19 +516,19 @@ The result should be a high-quality merged image."""
 
         _get_replicate_token()
         
-        logger.info(f"Calling Replicate openai/gpt-image-2 for merge with {len(input_images)} images")
+        logger.info(f"Calling Replicate {GPT_IMAGE_SUNBURST} for merge with {len(input_images)} images")
         
         try:
             # Wrap replicate.run() in thread pool to avoid blocking event loop
             output = await asyncio.to_thread(
                 replicate.run,
-                "openai/gpt-image-2",
+                GPT_IMAGE_SUNBURST,
                 input={
                     "prompt": merge_prompt,
                     "input_images": input_images,
                     "aspect_ratio": "1:1",
                     "number_of_images": 1,
-                    "quality": "low",  # Cost-efficient (~$0.012/image on Replicate)
+                    "quality": "low",
                 }
             )
             
@@ -543,7 +543,7 @@ The result should be a high-quality merged image."""
             await media_billing.deduct_media_credits(
                 account_id=user_id,
                 provider="replicate",
-                model="openai/gpt-image-2",
+                model=GPT_IMAGE_SUNBURST,
                 media_type="image",
                 count=1,
                 description="Canvas image merge",
