@@ -14,12 +14,16 @@ export const toast = Object.assign(
   {
     // No-op for success - user doesn't need to see these
     success: (_message: string | React.ReactNode, _data?: ExternalToast) => {
-      // Intentionally empty - suppress success notifications
+      if (_data?.id != null) {
+        sonnerToast.dismiss(_data.id);
+      }
       return '';
     },
     // No-op for error - user doesn't need to see these
     error: (_message: string | React.ReactNode, _data?: ExternalToast) => {
-      // Intentionally empty - suppress error notifications
+      if (_data?.id != null) {
+        sonnerToast.dismiss(_data.id);
+      }
       return '';
     },
     // Keep warning - these are still useful
