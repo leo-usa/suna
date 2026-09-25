@@ -22,6 +22,7 @@ class BedrockConfig:
         "haiku_4_5": "us.anthropic.claude-haiku-4-5-20251001-v1:0",
         "sonnet_5": "us.anthropic.claude-sonnet-5",
         "opus_5": "us.anthropic.claude-opus-5",
+        "opus_5_5": "us.anthropic.claude-opus-5-5",
         "fable_5": "us.anthropic.claude-fable-5",
         "fable_5_1": "us.anthropic.claude-fable-5-1",
         "gpt_5_5": "us.openai.gpt-5.5",
@@ -57,6 +58,10 @@ class BedrockConfig:
     @classmethod
     def get_opus_5_id(cls) -> str:
         return cls.build_geo_id("opus_5")
+
+    @classmethod
+    def get_opus_5_5_id(cls) -> str:
+        return cls.build_geo_id("opus_5_5")
 
     @classmethod
     def get_fable_5_id(cls) -> str:
@@ -172,6 +177,14 @@ class PricingPresets:
         output_cost_per_million_tokens=25.00,
         cached_read_cost_per_million_tokens=0.50,
         cache_write_5m_cost_per_million_tokens=6.25,
+    )
+
+    CLAUDE_OPUS_5_5 = ModelPricing(
+        input_cost_per_million_tokens=4.00,
+        output_cost_per_million_tokens=20.00,
+        cached_read_cost_per_million_tokens=0.20,
+        cache_write_5m_cost_per_million_tokens=5.00,
+        cache_write_1h_cost_per_million_tokens=8.00,
     )
 
     CLAUDE_FABLE_5 = ModelPricing(
@@ -1044,6 +1057,33 @@ class ModelFactory:
         )
 
     @staticmethod
+    def create_claude_opus_5_5() -> Model:
+        litellm_id, provider, fallback = _claude_gpt_route(
+            "openrouter/anthropic/claude-opus-5.5", "opus_5_5"
+        )
+        return Model(
+            id="dobby/claude-opus-5.5",
+            name="Claude Opus 5.5",
+            litellm_model_id=litellm_id,
+            provider=provider,
+            aliases=["claude-opus-5.5", "claude-opus-5-5", "anthropic/claude-opus-5.5"],
+            context_window=1_000_000,
+            capabilities=[
+                ModelCapability.CHAT,
+                ModelCapability.FUNCTION_CALLING,
+                ModelCapability.VISION,
+                ModelCapability.THINKING,
+                ModelCapability.PROMPT_CACHING,
+            ],
+            pricing=PricingPresets.CLAUDE_OPUS_5_5,
+            tier_availability=["paid"],
+            priority=106,
+            recommended=False,
+            enabled=True,
+            fallback_litellm_model_id=fallback,
+        )
+
+    @staticmethod
     def create_claude_fable_5() -> Model:
         litellm_id, provider, fallback = _claude_gpt_route(
             "openrouter/anthropic/claude-fable-5.1", "fable_5_1"
@@ -1634,6 +1674,7 @@ class ModelRegistry:
         self.register(ModelFactory.create_claude_sonnet_5())
         self.register(ModelFactory.create_claude_opus_4_7())
         self.register(ModelFactory.create_claude_opus_5())
+        self.register(ModelFactory.create_claude_opus_5_5())
         self.register(ModelFactory.create_claude_fable_5())
         self.register(ModelFactory.create_gemini_2_5_pro())
         self.register(ModelFactory.create_gemini_3_1_pro())
@@ -1694,6 +1735,8 @@ class ModelRegistry:
         self._litellm_id_to_pricing["openrouter/anthropic/claude-opus-4.7"] = PricingPresets.CLAUDE_OPUS_4_7
         self._litellm_id_to_pricing["openrouter/anthropic/claude-opus-5"] = PricingPresets.CLAUDE_OPUS_5
         self._litellm_id_to_pricing[BedrockConfig.get_opus_5_id()] = PricingPresets.CLAUDE_OPUS_5
+        self._litellm_id_to_pricing["openrouter/anthropic/claude-opus-5.5"] = PricingPresets.CLAUDE_OPUS_5_5
+        self._litellm_id_to_pricing[BedrockConfig.get_opus_5_5_id()] = PricingPresets.CLAUDE_OPUS_5_5
         self._litellm_id_to_pricing["openrouter/anthropic/claude-fable-5.1"] = PricingPresets.CLAUDE_FABLE_5
         self._litellm_id_to_pricing["openrouter/anthropic/claude-fable-5"] = PricingPresets.CLAUDE_FABLE_5
         self._litellm_id_to_pricing[BedrockConfig.get_fable_5_id()] = PricingPresets.CLAUDE_FABLE_5

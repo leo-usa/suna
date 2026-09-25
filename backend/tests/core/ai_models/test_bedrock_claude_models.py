@@ -33,6 +33,7 @@ def test_claude_and_gpt_use_bedrock_geo_ids_when_enabled():
         haiku = ModelFactory.create_anthropic_haiku(use_bedrock=True)
         sonnet = ModelFactory.create_claude_sonnet_5()
         opus = ModelFactory.create_claude_opus_5()
+        opus_55 = ModelFactory.create_claude_opus_5_5()
         fable = ModelFactory.create_claude_fable_5()
         gpt = ModelFactory.create_gpt_5_5()
         luna = ModelFactory.create_gpt_5_6_luna()
@@ -48,6 +49,10 @@ def test_claude_and_gpt_use_bedrock_geo_ids_when_enabled():
     assert sonnet.fallback_litellm_model_id == "openrouter/anthropic/claude-sonnet-5"
 
     assert opus.litellm_model_id == BedrockConfig.get_opus_5_id()
+    assert opus.fallback_litellm_model_id == "openrouter/anthropic/claude-opus-5"
+    assert opus_55.provider == ModelProvider.BEDROCK
+    assert opus_55.litellm_model_id == BedrockConfig.get_opus_5_5_id()
+    assert opus_55.fallback_litellm_model_id == "openrouter/anthropic/claude-opus-5.5"
     assert fable.litellm_model_id == BedrockConfig.get_fable_5_1_id()
     assert gpt.litellm_model_id == BedrockConfig.build_geo_id("gpt_5_5")
     assert luna.litellm_model_id == BedrockConfig.build_geo_id("gpt_5_6_luna")
@@ -94,6 +99,14 @@ def test_fable_legacy_alias_still_resolves():
 def test_bedrock_geo_pricing_maps():
     assert registry.get_pricing_for_litellm_id(BedrockConfig.get_sonnet_5_id()) is not None
     assert registry.get_pricing_for_litellm_id(BedrockConfig.get_fable_5_1_id()) is not None
+    opus_55 = registry.get_pricing_for_litellm_id(BedrockConfig.get_opus_5_5_id())
+    openrouter_opus_55 = registry.get_pricing_for_litellm_id("openrouter/anthropic/claude-opus-5.5")
+    assert opus_55 is not None
+    assert openrouter_opus_55 is not None
+    assert opus_55.input_cost_per_million_tokens == 4.00
+    assert opus_55.output_cost_per_million_tokens == 20.00
+    assert openrouter_opus_55.input_cost_per_million_tokens == 4.00
+    assert registry.get("dobby/claude-opus-5.5") is not None
     assert registry.get_pricing_for_litellm_id("us.anthropic.claude-sonnet-5") is not None
     assert registry.get_pricing_for_litellm_id(BedrockConfig.build_geo_id("gpt_5_6_luna")) is not None
 
