@@ -39,6 +39,9 @@ def test_claude_and_gpt_use_bedrock_geo_ids_when_enabled():
         luna = ModelFactory.create_gpt_5_6_luna()
         terra = ModelFactory.create_gpt_5_6_terra()
         sol = ModelFactory.create_gpt_5_6_sol()
+        gpt6_luna = ModelFactory.create_gpt_6_luna()
+        gpt6_sol = ModelFactory.create_gpt_6_sol()
+        astra = ModelFactory.create_gpt_6_astra()
 
     assert haiku.provider == ModelProvider.BEDROCK
     assert haiku.litellm_model_id == BedrockConfig.get_haiku_geo_id()
@@ -58,6 +61,10 @@ def test_claude_and_gpt_use_bedrock_geo_ids_when_enabled():
     assert luna.litellm_model_id == BedrockConfig.build_geo_id("gpt_5_6_luna")
     assert terra.litellm_model_id == BedrockConfig.build_geo_id("gpt_5_6_terra")
     assert sol.litellm_model_id == BedrockConfig.build_geo_id("gpt_5_6_sol")
+    assert gpt6_luna.litellm_model_id == BedrockConfig.build_geo_id("gpt_6_luna")
+    assert gpt6_sol.litellm_model_id == BedrockConfig.build_geo_id("gpt_6_sol")
+    assert astra.litellm_model_id == BedrockConfig.build_geo_id("gpt_6_astra")
+    assert astra.fallback_litellm_model_id == "openrouter/openai/gpt-6-astra"
     assert ModelCapability.PROMPT_CACHING not in gpt.capabilities
     assert gpt.fallback_litellm_model_id == "openrouter/openai/gpt-5.5"
 
@@ -109,6 +116,13 @@ def test_bedrock_geo_pricing_maps():
     assert registry.get("dobby/claude-opus-5.5") is not None
     assert registry.get_pricing_for_litellm_id("us.anthropic.claude-sonnet-5") is not None
     assert registry.get_pricing_for_litellm_id(BedrockConfig.build_geo_id("gpt_5_6_luna")) is not None
+    gpt6_sol = registry.get_pricing_for_litellm_id(BedrockConfig.build_geo_id("gpt_6_sol"))
+    gpt6_luna = registry.get_pricing_for_litellm_id(BedrockConfig.build_geo_id("gpt_6_luna"))
+    assert gpt6_sol is not None and gpt6_sol.input_cost_per_million_tokens == 2.00
+    assert gpt6_luna is not None and gpt6_luna.output_cost_per_million_tokens == 0.50
+    assert registry.get_pricing_for_litellm_id(BedrockConfig.build_geo_id("gpt_6_astra")) is not None
+    assert registry.get("dobby/gpt-6-luna") is not None
+    assert registry.get("dobby/gpt-6-sol") is not None
 
 
 def test_should_fallback_from_bedrock_skips_non_retryable():

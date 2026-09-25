@@ -29,6 +29,9 @@ class BedrockConfig:
         "gpt_5_6_luna": "us.openai.gpt-5.6-luna",
         "gpt_5_6_terra": "us.openai.gpt-5.6-terra",
         "gpt_5_6_sol": "us.openai.gpt-5.6-sol",
+        "gpt_6_luna": "us.openai.gpt-6-luna",
+        "gpt_6_sol": "us.openai.gpt-6-sol",
+        "gpt_6_astra": "us.openai.gpt-6-astra",
     }
 
     @classmethod
@@ -310,6 +313,20 @@ class PricingPresets:
         output_cost_per_million_tokens=30.00,
         cached_read_cost_per_million_tokens=0.50,
         cache_write_5m_cost_per_million_tokens=6.25,
+    )
+
+    GPT_6_LUNA = ModelPricing(
+        input_cost_per_million_tokens=0.10,
+        output_cost_per_million_tokens=0.50,
+        cached_read_cost_per_million_tokens=0.01,
+        cache_write_5m_cost_per_million_tokens=0.125,
+    )
+
+    GPT_6_SOL = ModelPricing(
+        input_cost_per_million_tokens=2.00,
+        output_cost_per_million_tokens=10.00,
+        cached_read_cost_per_million_tokens=0.20,
+        cache_write_5m_cost_per_million_tokens=2.50,
     )
 
     GPT_6_ASTRA = ModelPricing(
@@ -1563,12 +1580,65 @@ class ModelFactory:
         )
 
     @staticmethod
+    def create_gpt_6_luna() -> Model:
+        litellm_id, provider, fallback = _claude_gpt_route(
+            "openrouter/openai/gpt-6-luna", "gpt_6_luna"
+        )
+        return Model(
+            id="dobby/gpt-6-luna",
+            name="GPT-6 Luna",
+            litellm_model_id=litellm_id,
+            provider=provider,
+            aliases=["gpt-6-luna", "openai/gpt-6-luna"],
+            context_window=1_050_000,
+            capabilities=[
+                ModelCapability.CHAT,
+                ModelCapability.FUNCTION_CALLING,
+                ModelCapability.VISION,
+            ],
+            pricing=PricingPresets.GPT_6_LUNA,
+            tier_availability=["free", "paid"],
+            priority=118,
+            recommended=False,
+            enabled=True,
+            fallback_litellm_model_id=fallback,
+        )
+
+    @staticmethod
+    def create_gpt_6_sol() -> Model:
+        litellm_id, provider, fallback = _claude_gpt_route(
+            "openrouter/openai/gpt-6-sol", "gpt_6_sol"
+        )
+        return Model(
+            id="dobby/gpt-6-sol",
+            name="GPT-6 Sol",
+            litellm_model_id=litellm_id,
+            provider=provider,
+            aliases=["gpt-6-sol", "openai/gpt-6-sol"],
+            context_window=1_050_000,
+            capabilities=[
+                ModelCapability.CHAT,
+                ModelCapability.FUNCTION_CALLING,
+                ModelCapability.VISION,
+            ],
+            pricing=PricingPresets.GPT_6_SOL,
+            tier_availability=["paid"],
+            priority=120,
+            recommended=False,
+            enabled=True,
+            fallback_litellm_model_id=fallback,
+        )
+
+    @staticmethod
     def create_gpt_6_astra() -> Model:
+        litellm_id, provider, fallback = _claude_gpt_route(
+            "openrouter/openai/gpt-6-astra", "gpt_6_astra"
+        )
         return Model(
             id="dobby/gpt-6-astra",
             name="GPT-6 Astra",
-            litellm_model_id="openrouter/openai/gpt-6-astra",
-            provider=ModelProvider.OPENROUTER,
+            litellm_model_id=litellm_id,
+            provider=provider,
             aliases=["gpt-6-astra", "openai/gpt-6-astra"],
             context_window=1_000_000,
             capabilities=[
@@ -1579,9 +1649,10 @@ class ModelFactory:
             ],
             pricing=PricingPresets.GPT_6_ASTRA,
             tier_availability=["paid"],
-            priority=116,
+            priority=122,
             recommended=False,
             enabled=True,
+            fallback_litellm_model_id=fallback,
         )
 
     @staticmethod
@@ -1692,6 +1763,8 @@ class ModelRegistry:
         self.register(ModelFactory.create_gpt_5_6_terra_pro())
         self.register(ModelFactory.create_gpt_5_6_sol())
         self.register(ModelFactory.create_gpt_5_6_sol_pro())
+        self.register(ModelFactory.create_gpt_6_luna())
+        self.register(ModelFactory.create_gpt_6_sol())
         self.register(ModelFactory.create_gpt_6_astra())
 
         if config.ENV_MODE != EnvMode.PRODUCTION:
@@ -1766,7 +1839,12 @@ class ModelRegistry:
         self._litellm_id_to_pricing["openrouter/openai/gpt-5.6-sol"] = PricingPresets.GPT_5_6_SOL
         self._litellm_id_to_pricing[BedrockConfig.build_geo_id("gpt_5_6_sol")] = PricingPresets.GPT_5_6_SOL
         self._litellm_id_to_pricing["openrouter/openai/gpt-5.6-sol-pro"] = PricingPresets.GPT_5_6_SOL
+        self._litellm_id_to_pricing["openrouter/openai/gpt-6-luna"] = PricingPresets.GPT_6_LUNA
+        self._litellm_id_to_pricing[BedrockConfig.build_geo_id("gpt_6_luna")] = PricingPresets.GPT_6_LUNA
+        self._litellm_id_to_pricing["openrouter/openai/gpt-6-sol"] = PricingPresets.GPT_6_SOL
+        self._litellm_id_to_pricing[BedrockConfig.build_geo_id("gpt_6_sol")] = PricingPresets.GPT_6_SOL
         self._litellm_id_to_pricing["openrouter/openai/gpt-6-astra"] = PricingPresets.GPT_6_ASTRA
+        self._litellm_id_to_pricing[BedrockConfig.build_geo_id("gpt_6_astra")] = PricingPresets.GPT_6_ASTRA
     
     def register(self, model: Model) -> None:
         self._models[model.id] = model

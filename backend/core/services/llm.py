@@ -132,7 +132,15 @@ def _register_bedrock_gpt_litellm_models() -> None:
         "supports_prompt_caching": False,
         "supports_reasoning": False,
     }
-    for geo_key in ("gpt_5_5", "gpt_5_6_luna", "gpt_5_6_terra", "gpt_5_6_sol"):
+    for geo_key in (
+        "gpt_5_5",
+        "gpt_5_6_luna",
+        "gpt_5_6_terra",
+        "gpt_5_6_sol",
+        "gpt_6_luna",
+        "gpt_6_sol",
+        "gpt_6_astra",
+    ):
         geo_id = BedrockConfig.GEO_MODEL_IDS[geo_key]
         base_id = geo_id.split(".", 1)[-1] if geo_id.startswith(("us.", "global.")) else geo_id
         for model_id in (
