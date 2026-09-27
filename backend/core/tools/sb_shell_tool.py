@@ -14,33 +14,31 @@ _ANSI_ESCAPE = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
 
 
 def shell_command_with_done_marker(command: str, marker: str) -> str:
-    """Run command, then always print marker and its exit code.
+    """Run command, then print marker and its exit code when the prompt returns.
 
-    ``set +e`` keeps a failing command from exiting the shell before the marker
-    is printed. A heredoc needs the marker on a following line so its delimiter
-    stays alone on its own line.
+    The marker is armed with PROMPT_COMMAND before the command starts. Bash runs
+    that when it is about to show the next prompt, including after a failed
+    command. A trailing ``echo`` after a multiline quote is not reliable: the
+    shell can execute the program and then sit there without reading the rest.
+    ``set +e`` keeps a failing command from exiting the shell first. A heredoc
+    needs the command on following lines so its delimiter stays alone.
     """
-    finish = f"__ec=$?; echo '{marker}' $__ec"
+    arm = f"PROMPT_COMMAND='echo {marker} $?'"
     if _HEREDOC_RE.search(command):
-        return f"set +e\n{command}\n{finish}\n"
-    return f"set +e; {command}; {finish}\n"
+        return f"{arm}\nset +e\n{command}\n"
+    return f"{arm}; set +e; {command}\n"
 
 
 def executed_exit_code(output: str, marker: str) -> Optional[int]:
-    """Exit code from the executed marker line, not the terminal's input echo.
+    """Exit code from the prompt hook, not from the typed command echo.
 
-    The typed command contains the marker once. The ``echo`` after the command
-    prints it again, followed by an integer. Input echo looks like
-    ``echo 'MARKER' $__ec`` and must not count as completion.
+    The typed line contains the marker inside quotes and is not followed by a
+    number. The hook prints the marker and then the exit code.
     """
-    if output.count(marker) < 2:
+    matches = list(re.finditer(re.escape(marker) + r'[\r\n ]+(\d+)', output))
+    if not matches:
         return None
-    after = output[output.rfind(marker) + len(marker):]
-    line = after.split('\n', 1)[0].replace('\r', ' ').strip()
-    token = line.split(' ', 1)[0] if line else ''
-    if not token.isdigit():
-        return None
-    return int(token)
+    return int(matches[-1].group(1))
 
 
 @tool_metadata(
@@ -254,16 +252,16 @@ Usage notes:
                 await pty_handle.send_input(f"cd {cwd}\n")
                 await asyncio.sleep(0.1)
                 
-                # Add marker to detect completion. set +e so a failing command
-                # still prints the marker instead of leaving the agent waiting.
+                # Arm the marker before the command. It prints when bash returns
+                # to the prompt, so a finished multiline command is not left waiting.
                 marker = f"__CMD_DONE_{str(uuid4())[:8]}__"
                 full_command = shell_command_with_done_marker(command, marker)
                 
                 # Send the command
                 await pty_handle.send_input(full_command)
                 
-                # The marker appears in the typed command and again when echo runs.
-                # Only the executed line is followed by an integer exit code.
+                # The typed command contains the marker. The prompt hook prints it
+                # again, followed by the exit code.
                 start_time = time.time()
                 while (time.time() - start_time) < timeout:
                     await asyncio.sleep(0.1)
@@ -284,13 +282,10 @@ Usage notes:
                 # Clean output (remove marker line and control sequences)
                 final_output = "".join(output_buffer).replace('\r', '')
                 
-                # Remove the marker line from output
                 if marker in final_output:
-                    marker_idx = final_output.rfind(marker)
-                    # Find the start of the line containing the marker
-                    line_start = final_output.rfind('\n', 0, marker_idx)
-                    if line_start != -1:
-                        final_output = final_output[:line_start]
+                    final_output = "\n".join(
+                        line for line in final_output.split("\n") if marker not in line
+                    )
                 
                 final_output = _ANSI_ESCAPE.sub('', final_output)
                 
