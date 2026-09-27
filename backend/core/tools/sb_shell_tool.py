@@ -1,4 +1,5 @@
 import asyncio
+import re
 from typing import Optional, Dict, Any
 import time
 from uuid import uuid4
@@ -7,6 +8,40 @@ from core.sandbox.tool_base import SandboxToolsBase
 from core.agentpress.thread_manager import ThreadManager
 from core.utils.tool_output_streaming import stream_tool_output, get_tool_output_streaming_context, get_current_tool_call_id
 from core.utils.logger import logger
+
+_HEREDOC_RE = re.compile(r'<<-?\s*[\'"]?\w+[\'"]?\s*$', re.MULTILINE)
+_ANSI_ESCAPE = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+
+
+def shell_command_with_done_marker(command: str, marker: str) -> str:
+    """Run command, then always print marker and its exit code.
+
+    ``set +e`` keeps a failing command from exiting the shell before the marker
+    is printed. A heredoc needs the marker on a following line so its delimiter
+    stays alone on its own line.
+    """
+    finish = f"__ec=$?; echo '{marker}' $__ec"
+    if _HEREDOC_RE.search(command):
+        return f"set +e\n{command}\n{finish}\n"
+    return f"set +e; {command}; {finish}\n"
+
+
+def executed_exit_code(output: str, marker: str) -> Optional[int]:
+    """Exit code from the executed marker line, not the terminal's input echo.
+
+    The typed command contains the marker once. The ``echo`` after the command
+    prints it again, followed by an integer. Input echo looks like
+    ``echo 'MARKER' $__ec`` and must not count as completion.
+    """
+    if output.count(marker) < 2:
+        return None
+    after = output[output.rfind(marker) + len(marker):]
+    line = after.split('\n', 1)[0].replace('\r', ' ').strip()
+    token = line.split(' ', 1)[0] if line else ''
+    if not token.isdigit():
+        return None
+    return int(token)
+
 
 @tool_metadata(
     display_name="Bash",
@@ -219,43 +254,22 @@ Usage notes:
                 await pty_handle.send_input(f"cd {cwd}\n")
                 await asyncio.sleep(0.1)
                 
-                # Add marker to detect completion
+                # Add marker to detect completion. set +e so a failing command
+                # still prints the marker instead of leaving the agent waiting.
                 marker = f"__CMD_DONE_{str(uuid4())[:8]}__"
-                
-                # Check if command contains a heredoc - if so, we need the marker on a new line
-                # Heredocs require the delimiter (EOF, etc.) to be on its own line
-                # Common heredoc patterns: << EOF, << 'EOF', << "EOF", <<- EOF, <<-'EOF', etc.
-                import re
-                heredoc_pattern = r'<<-?\s*[\'"]?\w+[\'"]?\s*$'
-                if re.search(heredoc_pattern, command, re.MULTILINE):
-                    # Command has heredoc - put marker on a separate line
-                    full_command = f"{command}\necho '{marker}' $?\n"
-                else:
-                    full_command = f"{command}; echo '{marker}' $?\n"
+                full_command = shell_command_with_done_marker(command, marker)
                 
                 # Send the command
                 await pty_handle.send_input(full_command)
                 
-                # Wait for completion or timeout
-                # Note: marker appears TWICE in output:
-                # 1. When the terminal echoes the typed command
-                # 2. When the echo command actually executes after completion
-                # We need to wait for the SECOND occurrence
+                # The marker appears in the typed command and again when echo runs.
+                # Only the executed line is followed by an integer exit code.
                 start_time = time.time()
                 while (time.time() - start_time) < timeout:
                     await asyncio.sleep(0.1)
-                    
-                    # Check if marker appeared in output (need 2 occurrences)
-                    current_output = "".join(output_buffer)
-                    marker_count = current_output.count(marker)
-                    if marker_count >= 2:
-                        # Extract exit code from the LAST marker line (the actual output)
-                        try:
-                            marker_idx = current_output.rfind(marker)
-                            after_marker = current_output[marker_idx + len(marker):].strip().split()[0]
-                            exit_code = int(after_marker) if after_marker.isdigit() else 0
-                        except:
-                            exit_code = 0
+                    code = executed_exit_code("".join(output_buffer), marker)
+                    if code is not None:
+                        exit_code = code
                         break
                 else:
                     # Timeout reached
@@ -268,7 +282,7 @@ Usage notes:
                     pass
                 
                 # Clean output (remove marker line and control sequences)
-                final_output = "".join(output_buffer)
+                final_output = "".join(output_buffer).replace('\r', '')
                 
                 # Remove the marker line from output
                 if marker in final_output:
@@ -278,10 +292,7 @@ Usage notes:
                     if line_start != -1:
                         final_output = final_output[:line_start]
                 
-                # Strip ANSI escape sequences for cleaner output
-                import re
-                ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
-                final_output = ansi_escape.sub('', final_output)
+                final_output = _ANSI_ESCAPE.sub('', final_output)
                 
                 # Stream final message
                 if tool_output_ctx:
