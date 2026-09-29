@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 import {
   Globe,
@@ -34,15 +35,16 @@ interface BrowserHeaderProps {
 }
 
 export const BrowserHeader: React.FC<BrowserHeaderProps> = ({ isConnected, onRefresh, viewToggle }) => {
+  const t = useTranslations('toolViews.browser');
   return (
     <DobbyComputerHeader
       icon={Globe}
-      title="Browser"
+      title={t('browser')}
       actions={
         <>
           <Badge variant="outline" className="gap-1.5 p-2 rounded-3xl">
             <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500/80 animate-pulse' : 'bg-gray-400'}`}></div>
-            <span className="sm:inline">Live Preview</span>
+            <span className="sm:inline">{t('livePreview')}</span>
           </Badge>
           {viewToggle}
           {isConnected && onRefresh && (
@@ -51,7 +53,7 @@ export const BrowserHeader: React.FC<BrowserHeaderProps> = ({ isConnected, onRef
               size="sm"
               onClick={onRefresh}
               className="h-7 w-7 p-0 hover:bg-muted rounded-xl"
-              title="Refresh browser view"
+              title={t('refreshView')}
             >
               <RefreshCw className="h-3.5 w-3.5" />
             </Button>
@@ -77,6 +79,8 @@ export function BrowserToolView({
   viewToggle,
 }: ToolViewProps) {
   // All hooks must be called unconditionally at the top - BEFORE any early returns
+  const t = useTranslations('toolViews.browser');
+  const tCommon = useTranslations('toolViews.common');
   const [showContext, setShowContext] = React.useState(false);
   const isRunning = isStreaming || agentStatus === 'running';
   const [progress, setProgress] = React.useState(100);
@@ -255,7 +259,7 @@ export function BrowserToolView({
           <div className="absolute inset-0 flex items-center justify-center bg-zinc-50 dark:bg-zinc-900">
             <div className="text-center text-zinc-500 dark:text-zinc-400">
               <AlertTriangle className="h-8 w-8 mx-auto mb-2" />
-              <p className="font-medium mb-1">Failed to load screenshot</p>
+              <p className="font-medium mb-1">{t('screenshotLoadFailed')}</p>
               <p className="text-xs text-zinc-400 dark:text-zinc-500 max-w-md break-all px-4">
                 {screenshotUrlFinal}
               </p>
@@ -265,7 +269,7 @@ export function BrowserToolView({
           <Card className="p-0 overflow-hidden relative border">
             <Image
               src={screenshotUrlFinal}
-              alt="Browser Screenshot"
+              alt={t('screenshotAlt')}
               className="max-w-full max-h-full object-contain"
               width={1920}
               height={1080}
@@ -295,7 +299,7 @@ export function BrowserToolView({
               size="sm"
               onClick={() => setShowContext(!showContext)}
               className="h-7 w-7 hover:bg-muted rounded-xl"
-              title={showContext ? "Show screenshot" : "Show INPUT/OUTPUT context"}
+              title={showContext ? t('showScreenshot') : t('showContext')}
             >
               {showContext ? (
                 <ImageIcon className="h-3.5 w-3.5" />
@@ -313,12 +317,12 @@ export function BrowserToolView({
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
               {parameters && <JsonViewer
                 data={parameters}
-                title="INPUT"
+                title={tCommon('inputLabel')}
                 defaultExpanded={true}
               />}
               {result && <JsonViewer
                 data={result}
-                title="OUTPUT"
+                title={tCommon('outputLabel')}
                 defaultExpanded={true}
               />}
             </div>
@@ -331,12 +335,12 @@ export function BrowserToolView({
                 <MonitorPlay className="h-10 w-10 text-zinc-500 dark:text-zinc-400" />
               </div>
               <h3 className="text-xl font-semibold mb-2 text-zinc-900 dark:text-zinc-100">
-                {isRunning ? 'Browser action in progress' : 'Browser action completed'}
+                {isRunning ? t('actionInProgress') : t('actionCompleted')}
               </h3>
               <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4 text-center">
                 {isRunning 
-                  ? 'Browser action in progress...'
-                  : 'Screenshot will appear here when available.'}
+                  ? t('actionInProgressEllipsis')
+                  : t('screenshotWillAppear')}
               </p>
               {(displayUrl || url) && (
                 <div className="mt-4">
@@ -354,14 +358,14 @@ export function BrowserToolView({
                   >
                     <a href={displayUrl || url} target="_blank" rel="noopener noreferrer">
                       <ExternalLink className="h-3.5 w-3.5 mr-2" />
-                      Visit URL
+                      {t('visitUrl')}
                     </a>
                   </Button>
                 </div>
               )}
               {displayInstruction && (
                 <div className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-                  <span className="font-medium">Instruction: </span>
+                  <span className="font-medium">{t('instruction')} </span>
                   <span className="font-mono">{displayInstruction}</span>
                   {isInstructionAnimating && <span className="animate-pulse text-muted-foreground ml-1">▌</span>}
                 </div>

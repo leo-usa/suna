@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
@@ -22,6 +23,7 @@ export function PresentationSlideSkeleton({
   streamingContent,
   className = '',
 }: PresentationSlideSkeletonProps) {
+  const t = useTranslations('toolViews.presentation');
   const [containerRef, setContainerRef] = useState<HTMLDivElement | null>(null);
   const [scale, setScale] = useState(1);
 
@@ -126,7 +128,7 @@ ${streamingContent}
             // Render streaming HTML content in real-time
             <iframe
               srcDoc={streamingHtmlDoc}
-              title={`Slide ${slideNumber} (generating)`}
+              title={t('slideGenerating', { number: slideNumber })}
               className="border-0"
               sandbox="allow-same-origin"
               style={{

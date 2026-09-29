@@ -1,6 +1,7 @@
 'use client';
 
 import { memo } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   ContextMenu,
   ContextMenuContent,
@@ -43,6 +44,7 @@ export const FileContextMenu = memo(function FileContextMenu({
   onGetInfo,
   onOpenChange,
 }: FileContextMenuProps) {
+  const t = useTranslations('dobbyComputer.contextMenu');
   return (
     <ContextMenu onOpenChange={onOpenChange}>
       {children}
@@ -56,7 +58,7 @@ export const FileContextMenu = memo(function FileContextMenu({
           ) : (
             <Eye className="h-4 w-4 text-muted-foreground" />
           )}
-          {isDirectory ? 'Open' : 'Quick Look'}
+          {isDirectory ? t('open') : t('quickLook')}
           <ContextMenuShortcut>Space</ContextMenuShortcut>
         </ContextMenuItem>
 
@@ -66,7 +68,7 @@ export const FileContextMenu = memo(function FileContextMenu({
             className="focus:bg-background/10 focus:backdrop-blur-xl rounded-lg"
           >
             <Download className="h-4 w-4 text-muted-foreground" />
-            Download
+            {t('download')}
             <ContextMenuShortcut>⌘D</ContextMenuShortcut>
           </ContextMenuItem>
         )}
@@ -76,7 +78,7 @@ export const FileContextMenu = memo(function FileContextMenu({
           className="focus:bg-background/10 focus:backdrop-blur-xl rounded-lg"
         >
           <Info className="h-4 w-4 text-muted-foreground" />
-          Get Info
+          {t('getInfo')}
           <ContextMenuShortcut>⌘I</ContextMenuShortcut>
         </ContextMenuItem>
 

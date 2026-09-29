@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo, useEffect, useState, useCallback, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Layout,
   ImagePlus,
@@ -97,6 +98,7 @@ export function CanvasToolView({
   project,
   onFileClick,
 }: CanvasToolViewProps) {
+  const t = useTranslations('toolViews.canvas');
   const [refreshKey, setRefreshKey] = useState(0);
   const lastRefreshRef = useRef<number>(0);
   
@@ -267,7 +269,7 @@ export function CanvasToolView({
                 size="sm"
                 onClick={handleOpenInViewer}
                 className="h-8 w-8 p-0"
-                title="Open in file viewer"
+                title={t('openInViewer')}
               >
                 <ExternalLink className="h-3.5 w-3.5" />
               </Button>
@@ -288,10 +290,10 @@ export function CanvasToolView({
               <AlertTriangle className="h-8 w-8 text-zinc-500 dark:text-zinc-400" />
             </div>
             <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
-              Operation Failed
+              {t('operationFailed')}
             </h3>
             <p className="text-sm text-zinc-600 dark:text-zinc-400 text-center max-w-md">
-              {error || 'An error occurred during the canvas operation'}
+              {error || t('errorOccurred')}
             </p>
           </div>
         ) : isLoadingContent ? (
@@ -314,10 +316,10 @@ export function CanvasToolView({
               <Layout className="h-8 w-8 text-zinc-400 dark:text-zinc-600" />
             </div>
             <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
-              Canvas Empty
+              {t('canvasEmpty')}
             </h3>
             <p className="text-sm text-zinc-600 dark:text-zinc-400 text-center max-w-md">
-              This canvas doesn't have any content yet.
+              {t('noContent')}
             </p>
           </div>
         )}

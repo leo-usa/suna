@@ -3,6 +3,7 @@ import { ChevronDown, ChevronRight, Copy, Check, ExternalLink, MoreHorizontal } 
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { toast } from '@/lib/toast';
+import { useTranslations } from 'next-intl';
 
 interface SmartJsonViewerProps {
   data: any;
@@ -62,6 +63,7 @@ export const SmartJsonViewer: React.FC<SmartJsonViewerProps> = ({
   initialExpandedDepth = 1,
   depth = 0 
 }) => {
+  const t = useTranslations('toolViews.shared');
   const [isExpanded, setIsExpanded] = useState(depth < initialExpandedDepth);
   const [isHovered, setIsHovered] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -75,7 +77,7 @@ export const SmartJsonViewer: React.FC<SmartJsonViewerProps> = ({
     try {
       navigator.clipboard.writeText(JSON.stringify(data, null, 2));
       setCopied(true);
-      toast.success('Copied to clipboard');
+      toast.success(t('copiedToClipboard'));
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       console.error('Failed to copy:', err);

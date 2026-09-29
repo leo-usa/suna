@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,6 +17,7 @@ interface ApifyApprovalCardProps {
 }
 
 export function ApifyApprovalCard({ approval, threadId, onApproved }: ApifyApprovalCardProps) {
+  const t = useTranslations('toolViews.apify');
   const approveMutation = useApproveApifyRequest(threadId);
   const { data: updatedApproval } = useGetApifyApprovalStatus(approval.approval_id, threadId);
   
@@ -33,15 +35,15 @@ export function ApifyApprovalCard({ approval, threadId, onApproved }: ApifyAppro
   const getStatusConfig = () => {
     switch (currentApproval.status) {
       case 'pending':
-        return { icon: Clock, color: 'text-zinc-900 dark:text-zinc-100', bgColor: 'bg-zinc-50 dark:bg-zinc-900/20', borderColor: 'border-zinc-300 dark:border-zinc-700', label: 'Pending Approval' };
+        return { icon: Clock, color: 'text-zinc-900 dark:text-zinc-100', bgColor: 'bg-zinc-50 dark:bg-zinc-900/20', borderColor: 'border-zinc-300 dark:border-zinc-700', label: t('approvalStatus.pending') };
       case 'approved':
-        return { icon: CheckCircle2, color: 'text-zinc-900 dark:text-zinc-100', bgColor: 'bg-zinc-50 dark:bg-zinc-900/20', borderColor: 'border-zinc-300 dark:border-zinc-700', label: 'Approved' };
+        return { icon: CheckCircle2, color: 'text-zinc-900 dark:text-zinc-100', bgColor: 'bg-zinc-50 dark:bg-zinc-900/20', borderColor: 'border-zinc-300 dark:border-zinc-700', label: t('approvalStatus.approved') };
       case 'rejected':
-        return { icon: XCircle, color: 'text-zinc-900 dark:text-zinc-100', bgColor: 'bg-zinc-50 dark:bg-zinc-900/20', borderColor: 'border-zinc-300 dark:border-zinc-700', label: 'Rejected' };
+        return { icon: XCircle, color: 'text-zinc-900 dark:text-zinc-100', bgColor: 'bg-zinc-50 dark:bg-zinc-900/20', borderColor: 'border-zinc-300 dark:border-zinc-700', label: t('approvalStatus.rejected') };
       case 'expired':
-        return { icon: AlertCircle, color: 'text-zinc-900 dark:text-zinc-100', bgColor: 'bg-zinc-50 dark:bg-zinc-900/20', borderColor: 'border-zinc-300 dark:border-zinc-700', label: 'Expired' };
+        return { icon: AlertCircle, color: 'text-zinc-900 dark:text-zinc-100', bgColor: 'bg-zinc-50 dark:bg-zinc-900/20', borderColor: 'border-zinc-300 dark:border-zinc-700', label: t('approvalStatus.expired') };
       case 'executed':
-        return { icon: CheckCircle2, color: 'text-zinc-900 dark:text-zinc-100', bgColor: 'bg-zinc-50 dark:bg-zinc-900/20', borderColor: 'border-zinc-300 dark:border-zinc-700', label: 'Executed' };
+        return { icon: CheckCircle2, color: 'text-zinc-900 dark:text-zinc-100', bgColor: 'bg-zinc-50 dark:bg-zinc-900/20', borderColor: 'border-zinc-300 dark:border-zinc-700', label: t('approvalStatus.executed') };
       default:
         return { icon: AlertCircle, color: 'text-zinc-900 dark:text-zinc-100', bgColor: 'bg-zinc-50 dark:bg-zinc-900/20', borderColor: 'border-zinc-300 dark:border-zinc-700', label: currentApproval.status };
     }
@@ -71,7 +73,7 @@ export function ApifyApprovalCard({ approval, threadId, onApproved }: ApifyAppro
             </div>
             <div>
               <CardTitle className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
-                Apify Approval Request
+                {t('approvalRequest')}
               </CardTitle>
               <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
                 {currentApproval.actor_id}
@@ -86,12 +88,12 @@ export function ApifyApprovalCard({ approval, threadId, onApproved }: ApifyAppro
 
       <CardContent className="space-y-3">
         <div className="space-y-2">
-          <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Maximum Cost</p>
+          <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">{t('maximumCost')}</p>
           <div className="flex items-baseline gap-2">
             <span className="text-3xl font-bold text-zinc-900 dark:text-zinc-100 tabular-nums">
               {formatCredits(currentApproval.max_cost_usd ? currentApproval.max_cost_usd * CREDITS_PER_DOLLAR * 1.2 : 0)}
             </span>
-            <span className="text-sm font-medium text-zinc-500 dark:text-zinc-400">credits</span>
+            <span className="text-sm font-medium text-zinc-500 dark:text-zinc-400">{t('credits')}</span>
           </div>
           {currentApproval.max_cost_usd && (
             <p className="text-xs text-zinc-500 dark:text-zinc-400">≈ ${formatUSD(currentApproval.max_cost_usd)} USD</p>
@@ -100,12 +102,12 @@ export function ApifyApprovalCard({ approval, threadId, onApproved }: ApifyAppro
 
         {currentApproval.estimated_cost_usd && currentApproval.estimated_cost_usd !== (currentApproval.max_cost_usd || currentApproval.estimated_cost_usd) && (
           <div className="pt-2 border-t border-zinc-200 dark:border-zinc-800">
-            <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1.5">Estimated Cost</p>
+            <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1.5">{t('estimatedCost')}</p>
             <div className="flex items-baseline gap-2">
               <span className="text-xl font-semibold text-zinc-700 dark:text-zinc-300 tabular-nums">
                 {formatCredits(currentApproval.estimated_cost_credits)}
               </span>
-              <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">credits</span>
+              <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{t('credits')}</span>
               <span className="text-xs text-zinc-400 dark:text-zinc-500">≈ ${formatUSD(currentApproval.estimated_cost_usd)} USD</span>
             </div>
           </div>
@@ -122,12 +124,12 @@ export function ApifyApprovalCard({ approval, threadId, onApproved }: ApifyAppro
               {approveMutation.isPending ? (
                 <>
                   <DobbyLoader customSize={16} className="mr-2" />
-                  Approving...
+                  {t('approving')}
                 </>
               ) : (
                 <>
                   <CheckCircle2 className="h-4 w-4 mr-2" />
-                  Approve Spending
+                  {t('approveSpending')}
                 </>
               )}
             </Button>
@@ -137,21 +139,21 @@ export function ApifyApprovalCard({ approval, threadId, onApproved }: ApifyAppro
         {currentApproval.status === 'approved' && (
           <div className="flex items-center gap-2 p-2.5 bg-zinc-100 dark:bg-zinc-800 rounded-md border border-zinc-200 dark:border-zinc-700">
             <CheckCircle2 className="h-4 w-4 text-zinc-900 dark:text-zinc-100 flex-shrink-0" />
-            <p className="text-sm text-zinc-900 dark:text-zinc-100 font-medium">Approved – Actor can be executed</p>
+            <p className="text-sm text-zinc-900 dark:text-zinc-100 font-medium">{t('approvedMessage')}</p>
           </div>
         )}
 
         {currentApproval.status === 'expired' && (
           <div className="flex items-center gap-2 p-2.5 bg-zinc-100 dark:bg-zinc-800 rounded-md border border-zinc-200 dark:border-zinc-700">
             <AlertCircle className="h-4 w-4 text-zinc-900 dark:text-zinc-100 flex-shrink-0" />
-            <p className="text-sm text-zinc-900 dark:text-zinc-100 font-medium">Expired – Create a new approval request</p>
+            <p className="text-sm text-zinc-900 dark:text-zinc-100 font-medium">{t('expiredMessage')}</p>
           </div>
         )}
 
         <div className="text-xs text-zinc-500 dark:text-zinc-400 space-y-1">
-          {currentApproval.created_at && <p>Created: {new Date(currentApproval.created_at).toLocaleString()}</p>}
-          {currentApproval.approved_at && <p>Approved: {new Date(currentApproval.approved_at).toLocaleString()}</p>}
-          {currentApproval.expires_at && <p>Expires: {new Date(currentApproval.expires_at).toLocaleString()}</p>}
+          {currentApproval.created_at && <p>{t('createdAt', { date: new Date(currentApproval.created_at).toLocaleString() })}</p>}
+          {currentApproval.approved_at && <p>{t('approvedAt', { date: new Date(currentApproval.approved_at).toLocaleString() })}</p>}
+          {currentApproval.expires_at && <p>{t('expiresAt', { date: new Date(currentApproval.expires_at).toLocaleString() })}</p>}
         </div>
       </CardContent>
     </Card>

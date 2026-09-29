@@ -1,3 +1,4 @@
+import type { useTranslations } from 'next-intl';
 import { ToolCallData, ToolResultData } from '../types';
 
 type ToolCall = ToolCallData | { name?: string; arguments?: Record<string, any>; metadata?: any };
@@ -139,3 +140,21 @@ export function buildSheetsFromData(data: ExtractedSpreadsheetData): any[] {
   }];
 }
 
+
+const SYNC_ERROR_MESSAGE_KEYS: Record<string, string> = {
+  'Timed out opening file': 'timedOutOpeningFile',
+  'Spreadsheet was not ready': 'spreadsheetNotReady',
+  'Failed to load spreadsheet': 'failedToLoadSpreadsheet',
+  'No data to save': 'noDataToSave',
+  'Save failed - changes saved locally': 'saveFailedSavedLocally',
+  'Failed to open file': 'failedToOpenFile',
+  'File was modified externally': 'fileModifiedExternally',
+};
+
+export function translateSyncErrorMessage(
+  message: string,
+  t: ReturnType<typeof useTranslations>
+): string {
+  const key = SYNC_ERROR_MESSAGE_KEYS[message];
+  return key ? t(key) : message;
+}

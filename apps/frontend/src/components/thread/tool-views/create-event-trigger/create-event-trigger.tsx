@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Zap,
   CheckCircle,
@@ -30,6 +31,8 @@ export function CreateEventTriggerToolView({
   isSuccess = true,
   isStreaming = false,
 }: ToolViewProps) {
+  const t = useTranslations('toolViews.createEventTrigger');
+  const tCommon = useTranslations('toolViews.common');
   // Defensive check - ensure toolCall is defined
   if (!toolCall) {
     console.warn('CreateEventTriggerToolView: toolCall is undefined. Tool views should use structured props.');
@@ -113,7 +116,7 @@ export function CreateEventTriggerToolView({
               ) : (
                 <AlertTriangle className="h-3 w-3" />
               )}
-              {actualIsSuccess ? 'Trigger created' : 'Creation failed'}
+              {actualIsSuccess ? tCommon('triggerCreated') : tCommon('creationFailed')}
             </Badge>
           )}
         </div>
@@ -124,7 +127,7 @@ export function CreateEventTriggerToolView({
             icon={Zap}
             iconColor="text-zinc-500 dark:text-zinc-400"
             bgColor="bg-gradient-to-b from-zinc-100 to-zinc-50 shadow-inner dark:from-zinc-800/40 dark:to-zinc-900/60 dark:shadow-zinc-950/20"
-            title="Creating event trigger"
+            title={t('creating')}
             filePath={triggerName ? `"${triggerName}"` : undefined}
             showProgress={true}
           />
@@ -139,10 +142,10 @@ export function CreateEventTriggerToolView({
                     </div>
                     <div>
                       <h3 className="font-semibold text-lg text-zinc-900 dark:text-zinc-100">
-                        {triggerName || 'Event Trigger'}
+                        {triggerName || t('eventTrigger')}
                       </h3>
                       <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                        {slug ? formatSlugName(slug) : 'Custom Event'}
+                        {slug ? formatSlugName(slug) : t('customEvent')}
                       </p>
                     </div>
                   </div>
@@ -159,13 +162,13 @@ export function CreateEventTriggerToolView({
                       {trigger.is_active ? (
                         <>
                           <Activity className="h-3 w-3 mr-1" />
-                          Active
+                          {tCommon('active')}
                         </>
-                      ) : 'Inactive'}
+                      ) : tCommon('inactive')}
                     </Badge>
                     <Badge variant="outline" className="text-xs">
                       <Link2 className="h-3 w-3 mr-1" />
-                      {trigger.provider || 'Provider'}
+                      {trigger.provider || t('provider')}
                     </Badge>
                   </div>
                 </div>
@@ -184,19 +187,19 @@ export function CreateEventTriggerToolView({
                   <div className="space-y-1">
                     <div className="flex items-center gap-2 text-zinc-500 dark:text-zinc-400">
                       <Zap className="w-3 h-3" />
-                      <span className="text-xs">Trigger Type</span>
+                      <span className="text-xs">{t('triggerType')}</span>
                     </div>
                     <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 pl-5">
-                      {trigger.slug || slug || 'Event Trigger'}
+                      {trigger.slug || slug || t('eventTrigger')}
                     </p>
                   </div>
                   <div className="space-y-1">
                     <div className="flex items-center gap-2 text-zinc-500 dark:text-zinc-400">
                       <Play className="w-3 h-3" />
-                      <span className="text-xs">Status</span>
+                      <span className="text-xs">{t('status')}</span>
                     </div>
                     <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 pl-5">
-                      {trigger.is_active ? 'Running' : 'Stopped'}
+                      {trigger.is_active ? t('running') : t('stopped')}
                     </p>
                   </div>
                 </div>
@@ -207,7 +210,7 @@ export function CreateEventTriggerToolView({
                   <div className="flex items-center gap-2">
                     <Settings className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
                     <h4 className="font-medium text-zinc-900 dark:text-zinc-100">
-                      Trigger Configuration
+                      {t('triggerConfiguration')}
                     </h4>
                   </div>
                   <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-3 space-y-2">
@@ -230,7 +233,7 @@ export function CreateEventTriggerToolView({
                   <div className="flex items-center gap-2">
                     <Bot className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
                     <h4 className="font-medium text-zinc-900 dark:text-zinc-100">
-                      Agent Execution Prompt
+                      {t('agentExecutionPrompt')}
                     </h4>
                   </div>
                   <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-3">
@@ -246,13 +249,13 @@ export function CreateEventTriggerToolView({
                   <div className="flex items-center gap-2">
                     <Code2 className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
                     <h4 className="font-medium text-zinc-900 dark:text-zinc-100">
-                      Connection Details
+                      {t('connectionDetails')}
                     </h4>
                   </div>
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     {connected_account_id && (
                       <div className="space-y-1">
-                        <span className="text-zinc-500 dark:text-zinc-400">Account ID</span>
+                        <span className="text-zinc-500 dark:text-zinc-400">{t('accountId')}</span>
                         <p className="font-mono text-zinc-700 dark:text-zinc-300">
                           {connected_account_id}
                         </p>
@@ -260,7 +263,7 @@ export function CreateEventTriggerToolView({
                     )}
                     {profile_id && (
                       <div className="space-y-1">
-                        <span className="text-zinc-500 dark:text-zinc-400">Profile ID</span>
+                        <span className="text-zinc-500 dark:text-zinc-400">{t('profileId')}</span>
                         <p className="font-mono text-zinc-700 dark:text-zinc-300">
                           {profile_id}
                         </p>
@@ -273,7 +276,7 @@ export function CreateEventTriggerToolView({
               <div className="bg-gradient-to-r from-zinc-50 to-zinc-100 dark:from-zinc-900/20 dark:to-zinc-800/20 rounded-lg p-4 border border-zinc-200 dark:border-zinc-700">
                 <div className="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-400">
                   <div className="w-2 h-2 bg-zinc-500 rounded-full animate-pulse" />
-                  This trigger is now active and will automatically execute the agent when the configured event occurs.
+                  {t('nowActive')}
                 </div>
               </div>
             </div>
@@ -282,7 +285,7 @@ export function CreateEventTriggerToolView({
           <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg m-4">
             <p className="text-sm text-red-800 dark:text-red-200 flex items-center gap-2">
               <AlertTriangle className="h-4 w-4" />
-              Failed to create event trigger. Please check your configuration and try again.
+              {t('failed')}
             </p>
           </div>
         )}

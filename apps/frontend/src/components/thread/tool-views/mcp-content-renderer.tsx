@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { ContentFormat, FormatDetectionResult } from './mcp-format-detector';
 import { UnifiedMarkdown } from '@/components/markdown';
 import { CsvRenderer } from '@/components/file-renderers';
@@ -36,6 +37,7 @@ interface SearchResult {
 
 // Renderer for search results
 function SearchResultsRenderer({ data, metadata }: { data: any; metadata?: any }) {
+  const t = useTranslations('toolViews.mcpContent');
   // Normalize search results from various formats
   const normalizeResults = (data: any): SearchResult[] => {
     let items: any[] = [];
@@ -50,7 +52,7 @@ function SearchResultsRenderer({ data, metadata }: { data: any; metadata?: any }
       url: item.url || item.link || item.href,
       summary: item.summary || item.description || item.text || item.snippet || item.content,
       date: item.date || item.publishedDate || item.published_date,
-      title: item.title || item.name || `Result ${index + 1}`
+      title: item.title || item.name || t('resultNumber', { number: index + 1 })
     })).filter(item => item.title || item.url);
   };
 
@@ -63,19 +65,19 @@ function SearchResultsRenderer({ data, metadata }: { data: any; metadata?: any }
         <div className="flex items-center gap-2">
           <Search className="h-4 w-4 text-zinc-600 dark:text-zinc-400" />
           <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-            {results.length} search results
+            {t('searchResults', { count: results.length })}
           </span>
         </div>
         {meta?.costDollars?.total && (
           <div className="text-xs text-zinc-500 dark:text-zinc-400">
-            Cost: ${meta.costDollars.total}
+            {t('cost', { amount: meta.costDollars.total })}
           </div>
         )}
       </div>
 
       {(meta?.autopromptString || meta?.query) && (
         <div className="mb-4 p-2 bg-zinc-50 dark:bg-zinc-900 rounded text-xs text-zinc-600 dark:text-zinc-400">
-          <span className="font-medium">Query: </span>
+          <span className="font-medium">{t('query')} </span>
           <span className="italic">{meta.autopromptString || meta.query}</span>
         </div>
       )}
@@ -108,7 +110,7 @@ function SearchResultsRenderer({ data, metadata }: { data: any; metadata?: any }
 
                 {(result.author || result.date) && (
                   <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
-                    {result.author && <span>By {result.author}</span>}
+                    {result.author && <span>{t('byAuthor', { author: result.author })}</span>}
                     {result.date && (
                       <span>• {new Date(result.date).toLocaleDateString()}</span>
                     )}
@@ -149,7 +151,7 @@ function SearchResultsRenderer({ data, metadata }: { data: any; metadata?: any }
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent>
-                          <p>Copy URL</p>
+                          <p>{t('copyUrl')}</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
@@ -172,6 +174,7 @@ function SearchResultsRenderer({ data, metadata }: { data: any; metadata?: any }
 
 // Renderer for table data
 function TableRenderer({ data }: { data: any }) {
+  const t = useTranslations('toolViews.mcpContent');
   const renderAsTable = (items: any[]) => {
     if (!items.length) return null;
 
@@ -182,7 +185,7 @@ function TableRenderer({ data }: { data: any }) {
         <div className="flex items-center gap-2 mb-3">
           <Table className="h-4 w-4 text-zinc-600 dark:text-zinc-400" />
           <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-            Table Data ({items.length} rows)
+            {t('tableData', { count: items.length })}
           </span>
         </div>
         <ScrollArea className="max-h-96">
@@ -222,12 +225,13 @@ function TableRenderer({ data }: { data: any }) {
 
 // Renderer for JSON data
 function JsonRenderer({ data }: { data: any }) {
+  const t = useTranslations('toolViews.mcpContent');
   return (
     <div className="p-3">
       <div className="flex items-center gap-2 mb-3">
         <Database className="h-4 w-4 text-zinc-600 dark:text-zinc-400" />
         <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-          Structured Data
+          {t('structuredData')}
         </span>
       </div>
       <ScrollArea className="max-h-96">
@@ -241,7 +245,8 @@ function JsonRenderer({ data }: { data: any }) {
 
 // Renderer for key-value pairs
 function KeyValueRenderer({ content }: { content: string }) {
-  if (!content || typeof content !== 'string') return <div>No content available</div>;
+  const t = useTranslations('toolViews.mcpContent');
+  if (!content || typeof content !== 'string') return <div>{t('noContent')}</div>;
   
   const lines = content.split('\n').filter(line => line.includes(':'));
   const pairs = lines.map(line => {
@@ -254,7 +259,7 @@ function KeyValueRenderer({ content }: { content: string }) {
       <div className="flex items-center gap-2 mb-3">
         <Key className="h-4 w-4 text-zinc-600 dark:text-zinc-400" />
         <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-          Properties
+          {t('properties')}
         </span>
       </div>
       <div className="space-y-2">
@@ -275,6 +280,7 @@ function KeyValueRenderer({ content }: { content: string }) {
 
 // Renderer for URL lists
 function UrlListRenderer({ content }: { content: string }) {
+  const t = useTranslations('toolViews.mcpContent');
   const urls = content.match(/https?:\/\/\S+/g) || [];
 
   return (
@@ -282,7 +288,7 @@ function UrlListRenderer({ content }: { content: string }) {
       <div className="flex items-center gap-2 mb-3">
         <Link2 className="h-4 w-4 text-zinc-600 dark:text-zinc-400" />
         <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-          URLs ({urls.length})
+          {t('urls', { count: urls.length })}
         </span>
       </div>
       <div className="space-y-2">
@@ -306,12 +312,13 @@ function UrlListRenderer({ content }: { content: string }) {
 
 // Renderer for errors
 function ErrorRenderer({ content }: { content: string }) {
+  const t = useTranslations('toolViews.mcpContent');
   return (
     <div className="p-3">
       <div className="flex items-center gap-2 mb-3">
         <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
         <span className="text-sm font-medium text-red-700 dark:text-red-300">
-          Error Details
+          {t('errorDetails')}
         </span>
       </div>
       <div className="p-3 bg-red-50/50 dark:bg-red-900/20 rounded border border-red-200 dark:border-red-800">
@@ -338,6 +345,7 @@ function TextRenderer({ content }: { content: string }) {
 
 // Main renderer component
 export function MCPContentRenderer({ detectionResult, rawContent }: MCPContentRendererProps) {
+  const t = useTranslations('toolViews.mcpContent');
   const { format, confidence, metadata, parsedData } = detectionResult;
 
   // Convert content to string if needed
@@ -360,7 +368,7 @@ export function MCPContentRenderer({ detectionResult, rawContent }: MCPContentRe
           <div className="flex items-center gap-2 mb-3">
             <BookOpen className="h-4 w-4 text-zinc-600 dark:text-zinc-400" />
             <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-              Markdown Content
+              {t('markdownContent')}
             </span>
           </div>
           <UnifiedMarkdown content={contentStr} />
@@ -385,7 +393,7 @@ export function MCPContentRenderer({ detectionResult, rawContent }: MCPContentRe
           <div className="flex items-center gap-2 mb-3">
             <FileCode className="h-4 w-4 text-zinc-600 dark:text-zinc-400" />
             <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-              Code Output
+              {t('codeOutput')}
             </span>
           </div>
           <ScrollArea className="max-h-96">

@@ -7,6 +7,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { cn } from '@/lib/utils';
 import { useVoicePlayerStore } from '@/stores/voice-player-store';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 
 interface MessageActionsProps {
   text: string;
@@ -14,6 +15,7 @@ interface MessageActionsProps {
 }
 
 export function MessageActions({ text, className }: MessageActionsProps) {
+  const t = useTranslations('toolNames');
   const [copied, setCopied] = useState(false);
   const [liked, setLiked] = useState(false);
   const [disliked, setDisliked] = useState(false);
@@ -76,7 +78,7 @@ export function MessageActions({ text, className }: MessageActionsProps) {
           </Button>
         </TooltipTrigger>
         <TooltipContent side="bottom">
-          <p>{copied ? 'Copied!' : 'Copy'}</p>
+          <p>{copied ? t('copied') : t('copy')}</p>
         </TooltipContent>
       </Tooltip>
 

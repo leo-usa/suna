@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   FileText,
   AlertTriangle,
@@ -40,6 +41,8 @@ const getFileExtension = (filename: string) => {
 };
 
 function SingleFileView({ result }: { result: FileReadResult }) {
+  const t = useTranslations('toolViews.fileReader');
+  const tCommon = useTranslations('toolViews.common');
   const [copied, setCopied] = useState(false);
   const rawFilename = result.file_path.split('/').pop() || result.file_path;
   const filename = rawFilename.trim().replace(/[\r\n]+/g, '').replace(/\s+$/g, '');
@@ -52,9 +55,9 @@ function SingleFileView({ result }: { result: FileReadResult }) {
       await navigator.clipboard.writeText(result.content);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-      toast.success('Copied to clipboard');
+      toast.success(tCommon('copiedToClipboard'));
     } catch {
-      toast.error('Failed to copy');
+      toast.error(tCommon('copyFailed'));
     }
   };
 
@@ -71,7 +74,7 @@ function SingleFileView({ result }: { result: FileReadResult }) {
             {filename}
           </p>
           <p className="text-xs text-red-500 dark:text-red-400 mt-0.5 line-clamp-2">
-            {result.error || 'Failed to read file'}
+            {result.error || t('failedToRead')}
           </p>
         </div>
       </div>
@@ -104,12 +107,12 @@ function SingleFileView({ result }: { result: FileReadResult }) {
               )}
               {result.content_length !== undefined && (
                 <span className="text-xs text-zinc-500 dark:text-zinc-400">
-                  {result.content_length.toLocaleString()} chars
+                  {t('chars', { count: result.content_length.toLocaleString() })}
                 </span>
               )}
               {result.truncated && (
                 <Badge variant="outline" className="h-5 px-1.5 text-[10px] text-zinc-600 dark:text-zinc-400 border-zinc-300 dark:border-zinc-700">
-                  Truncated
+                  {t('truncated')}
                 </Badge>
               )}
             </div>
@@ -128,12 +131,12 @@ function SingleFileView({ result }: { result: FileReadResult }) {
               {copied ? (
                 <>
                   <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />
-                  Copied
+                  {tCommon('copied')}
                 </>
               ) : (
                 <>
                   <Copy className="h-3.5 w-3.5 mr-1.5" />
-                  Copy Content
+                  {t('copyContent')}
                 </>
               )}
             </Button>
@@ -156,6 +159,8 @@ function SingleFileView({ result }: { result: FileReadResult }) {
 }
 
 function BatchFileView({ results }: { results: FileReadResult[] }) {
+  const t = useTranslations('toolViews.fileReader');
+  const tCommon = useTranslations('toolViews.common');
   const [expandedIndex, setExpandedIndex] = useState<number | null>(results.length === 1 ? 0 : null);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
@@ -164,9 +169,9 @@ function BatchFileView({ results }: { results: FileReadResult[] }) {
       await navigator.clipboard.writeText(content);
       setCopiedIndex(index);
       setTimeout(() => setCopiedIndex(null), 2000);
-      toast.success('Copied to clipboard');
+      toast.success(tCommon('copiedToClipboard'));
     } catch {
-      toast.error('Failed to copy');
+      toast.error(tCommon('copyFailed'));
     }
   };
 
@@ -194,7 +199,7 @@ function BatchFileView({ results }: { results: FileReadResult[] }) {
                 </p>
                 {result.success && result.content_length !== undefined && (
                   <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-                    {result.content_length.toLocaleString()} chars
+                    {t('chars', { count: result.content_length.toLocaleString() })}
                   </p>
                 )}
               </div>
@@ -211,7 +216,7 @@ function BatchFileView({ results }: { results: FileReadResult[] }) {
               <div className="border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900">
                 <div className="p-4 flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800">
                   <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
-                    Content
+                    {t('content')}
                   </span>
                   <Button
                     variant="ghost"
@@ -228,12 +233,12 @@ function BatchFileView({ results }: { results: FileReadResult[] }) {
                     {copiedIndex === idx ? (
                       <>
                         <CheckCircle2 className="h-3 w-3 mr-1.5" />
-                        Copied
+                        {tCommon('copied')}
                       </>
                     ) : (
                       <>
                         <Copy className="h-3 w-3 mr-1.5" />
-                        Copy
+                        {tCommon('copy')}
                       </>
                     )}
                   </Button>
@@ -253,6 +258,8 @@ function BatchFileView({ results }: { results: FileReadResult[] }) {
 }
 
 function SearchResultsView({ hits }: { hits: SearchHit[] }) {
+  const t = useTranslations('toolViews.fileReader');
+  const tCommon = useTranslations('toolViews.common');
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
   const copyToClipboard = async (content: string, index: number) => {
@@ -260,9 +267,9 @@ function SearchResultsView({ hits }: { hits: SearchHit[] }) {
       await navigator.clipboard.writeText(content);
       setCopiedIndex(index);
       setTimeout(() => setCopiedIndex(null), 2000);
-      toast.success('Copied to clipboard');
+      toast.success(tCommon('copiedToClipboard'));
     } catch {
-      toast.error('Failed to copy');
+      toast.error(tCommon('copyFailed'));
     }
   };
 
@@ -311,12 +318,12 @@ function SearchResultsView({ hits }: { hits: SearchHit[] }) {
                 {copiedIndex === idx ? (
                   <>
                     <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />
-                    Copied
+                    {tCommon('copied')}
                   </>
                 ) : (
                   <>
                     <Copy className="h-3.5 w-3.5 mr-1.5" />
-                    Copy Content
+                    {t('copyContent')}
                   </>
                 )}
               </Button>
@@ -336,6 +343,7 @@ export function FileReaderToolView({
   isSuccess = true,
   isStreaming = false,
 }: ToolViewProps) {
+  const t = useTranslations('toolViews.fileReader');
   if (!toolCall) {
     console.warn('FileReaderToolView: toolCall is undefined.');
     return null;
@@ -367,10 +375,10 @@ export function FileReaderToolView({
   };
 
   const displayTitle = isSearch
-    ? searchData?.query || 'File Search'
+    ? searchData?.query || t('fileSearch')
     : isBatch
-      ? `${filePaths.length} files`
-      : getCleanFileName(filePaths[0] || 'File');
+      ? t('fileCount', { count: filePaths.length })
+      : getCleanFileName(filePaths[0] || t('file'));
 
   const HeaderIcon = isSearch ? Search : isBatch ? Files : FileText;
   const successCount = results.filter(r => r.success).length;
@@ -381,12 +389,12 @@ export function FileReaderToolView({
         {!isStreaming && isSearch && searchData && (
           <Badge variant="outline" className="text-xs font-normal bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700">
             <Search className="h-3 w-3 mr-1" />
-            {searchData.totalHits} {searchData.totalHits === 1 ? 'result' : 'results'}
+            {t('resultCount', { count: searchData.totalHits })}
           </Badge>
         )}
         {!isStreaming && isBatch && results.length > 0 && (
           <Badge variant="outline" className="text-xs font-normal">
-            {successCount}/{results.length} successful
+            {t('successful', { success: successCount, total: results.length })}
           </Badge>
         )}
       </ToolViewHeader>
@@ -407,7 +415,7 @@ export function FileReaderToolView({
                 {displayTitle}
               </p>
               <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-                {isSearch ? 'Searching...' : isBatch ? `Reading ${filePaths.length} files...` : 'Reading file...'}
+                {isSearch ? t('searching') : isBatch ? t('readingFiles', { count: filePaths.length }) : t('readingFile')}
               </p>
             </div>
           </div>
@@ -422,10 +430,10 @@ export function FileReaderToolView({
                 <Search className="h-8 w-8 text-zinc-400" />
               </div>
               <h3 className="text-lg font-semibold mb-2 text-zinc-900 dark:text-zinc-100">
-                No results found
+                {t('noResultsFound')}
               </h3>
               <p className="text-sm text-zinc-500 dark:text-zinc-400 text-center">
-                No matching content found for "{searchData.query}"
+                {t('noMatchingContent', { query: searchData.query })}
               </p>
             </div>
           )
@@ -445,12 +453,12 @@ export function FileReaderToolView({
               <FileText className="h-8 w-8 text-zinc-400" />
             </div>
             <h3 className="text-lg font-semibold mb-2 text-zinc-900 dark:text-zinc-100">
-              No results
+              {t('noResults')}
             </h3>
             <p className="text-sm text-zinc-500 dark:text-zinc-400 text-center">
               {filePaths.length > 0
-                ? `Waiting to process: ${filePaths.map(getCleanFileName).join(', ')}`
-                : 'No file path specified'}
+                ? t('waitingToProcess', { files: filePaths.map(getCleanFileName).join(', ') })
+                : t('noFilePath')}
             </p>
           </div>
         )}
@@ -466,13 +474,13 @@ export function FileReaderToolView({
             {isSearch ? (
               <>
                 <Search className="h-3 w-3 mr-1 text-zinc-600 dark:text-zinc-400" />
-                <span className="text-zinc-600 dark:text-zinc-400">Search</span>
+                <span className="text-zinc-600 dark:text-zinc-400">{t('search')}</span>
               </>
             ) : (
               <>
                 <FileText className="h-3 w-3 mr-1 text-zinc-600 dark:text-zinc-400" />
                 <span className="text-zinc-600 dark:text-zinc-400">
-                  {results.length === 1 ? 'Read' : `${results.length} files`}
+                  {results.length === 1 ? t('read') : t('fileCount', { count: results.length })}
                 </span>
               </>
             )}

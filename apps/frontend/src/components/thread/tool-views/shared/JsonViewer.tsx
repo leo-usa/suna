@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ChevronDown, ChevronRight, Copy, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { useTranslations } from 'next-intl';
 
 interface JsonViewerProps {
   data: any;
@@ -16,6 +17,7 @@ export const JsonViewer: React.FC<JsonViewerProps> = ({
   defaultExpanded = false, 
   className = "" 
 }) => {
+  const t = useTranslations('toolViews.shared');
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   const [copied, setCopied] = useState(false);
 
@@ -115,7 +117,7 @@ export const JsonViewer: React.FC<JsonViewerProps> = ({
           size="sm"
           onClick={handleCopy}
           className="h-6 w-6 p-0"
-          title="Copy to clipboard"
+          title={t('copyToClipboard')}
         >
           {copied ? (
             <Check className="h-3 w-3 text-zinc-500" />

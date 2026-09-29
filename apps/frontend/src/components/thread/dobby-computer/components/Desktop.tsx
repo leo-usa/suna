@@ -9,7 +9,8 @@ import { AppDock } from './Dock';
 import { PanelHeader } from './PanelHeader';
 import { SandboxInfoCard } from './SandboxInfoCard';
 import { ToolView } from '../../tool-views/wrapper';
-import { getUserFriendlyToolName, getToolIcon } from '@/components/thread/utils';
+import { getToolIcon } from '@/components/thread/utils';
+import { useToolNameLabel } from '@/hooks/use-tool-name-label';
 import { ToolCallInput } from '../DobbyComputer';
 import { Project } from '@/lib/api/threads';
 import { ApiMessageType } from '@/components/thread/types';
@@ -31,10 +32,15 @@ import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { toast } from '@/lib/toast';
 
+function SpreadsheetLoadingFallback() {
+  const t = useTranslations('dobbyComputer.desktop');
+  return <div className="flex items-center justify-center h-full text-muted-foreground">{t('loadingSpreadsheet')}</div>;
+}
+
 // Lazy load SpreadsheetApp as it imports Syncfusion (~1-2 MB)
 const SpreadsheetApp = dynamic(
   () => import('./SpreadsheetApp').then((mod) => mod.SpreadsheetApp),
-  { ssr: false, loading: () => <div className="flex items-center justify-center h-full text-muted-foreground">Loading spreadsheet...</div> }
+  { ssr: false, loading: () => <SpreadsheetLoadingFallback /> }
 );
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/components/AuthProvider';
@@ -158,6 +164,9 @@ export const SandboxDesktop = memo(function SandboxDesktop({
   isStreaming = false,
 }: SandboxDesktopProps) {
   const tFiles = useTranslations('dobbyComputer.fileBrowser');
+  const t = useTranslations('dobbyComputer.desktop');
+  const tApps = useTranslations('dobbyComputer.apps');
+  const { toolLabel } = useToolNameLabel();
   const [openWindows, setOpenWindows] = useState<OpenWindow[]>([]);
   const [maxZIndex, setMaxZIndex] = useState(1);
   const [activeWindowId, setActiveWindowId] = useState<string | null>(null);
@@ -543,14 +552,14 @@ export const SandboxDesktop = memo(function SandboxDesktop({
 
   const handleFileDownload = useCallback(async (filePath: string) => {
     if (!sandboxId || !session?.access_token) {
-      toast.error('Cannot download file');
+      toast.error(t('cannotDownloadFile'));
       return;
     }
 
     const fileName = filePath.split('/').pop() || 'download';
     
     try {
-      toast.loading(`Downloading ${fileName}...`, { id: 'download' });
+      toast.loading(t('downloading', { name: fileName }), { id: 'download' });
       
       const blob = await fetchFileContent(sandboxId, filePath, 'blob', session.access_token);
       
@@ -563,16 +572,16 @@ export const SandboxDesktop = memo(function SandboxDesktop({
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
       
-      toast.success(`Downloaded ${fileName}`, { id: 'download' });
+      toast.success(t('downloaded', { name: fileName }), { id: 'download' });
     } catch (error) {
       console.error('Download failed:', error);
-      toast.error(`Failed to download ${fileName}`, { id: 'download' });
+      toast.error(t('downloadFailed', { name: fileName }), { id: 'download' });
     }
-  }, [sandboxId, session?.access_token]);
+  }, [sandboxId, session?.access_token, t]);
 
   const handleUploadFiles = useCallback((files: FileList | File[]) => {
     if (!sandboxId) {
-      toast.error('No sandbox available');
+      toast.error(t('noSandbox'));
       return;
     }
     
@@ -585,7 +594,7 @@ export const SandboxDesktop = memo(function SandboxDesktop({
         targetPath,
       });
     });
-  }, [sandboxId, fileUploadMutation]);
+  }, [sandboxId, fileUploadMutation, t]);
 
   const handleFileInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -605,12 +614,12 @@ export const SandboxDesktop = memo(function SandboxDesktop({
     setIsCreatingNewFolder(false);
     
     if (!sandboxId || !session?.access_token) {
-      toast.error('Cannot create folder');
+      toast.error(t('cannotCreateFolder'));
       return;
     }
     
     if (workspaceFiles.some(f => f.name === folderName)) {
-      toast.error(`"${folderName}" already exists`);
+      toast.error(t('alreadyExists', { name: folderName }));
       return;
     }
     
@@ -627,15 +636,15 @@ export const SandboxDesktop = memo(function SandboxDesktop({
       });
       
       if (response.ok) {
-        toast.success(`Created "${folderName}"`);
+        toast.success(t('createdFolder', { name: folderName }));
         queryClient.invalidateQueries({ queryKey: fileQueryKeys.directories() });
       } else {
-        toast.error('Failed to create folder');
+        toast.error(t('createFolderFailed'));
       }
     } catch (error) {
-      toast.error('Failed to create folder');
+      toast.error(t('createFolderFailed'));
     }
-  }, [sandboxId, session?.access_token, workspaceFiles, queryClient]);
+  }, [sandboxId, session?.access_token, workspaceFiles, queryClient, t]);
 
   const handleCancelNewFolder = useCallback(() => {
     setIsCreatingNewFolder(false);
@@ -657,11 +666,11 @@ export const SandboxDesktop = memo(function SandboxDesktop({
 
   const handleDownloadAll = useCallback(async () => {
     if (!sandboxId) {
-      toast.error('No sandbox available');
+      toast.error(t('noSandbox'));
       return;
     }
-    toast.info('Download all functionality coming soon');
-  }, [sandboxId]);
+    toast.info(t('downloadAllComingSoon'));
+  }, [sandboxId, t]);
 
   const renderDesktop = () => (
     <>
@@ -700,7 +709,7 @@ export const SandboxDesktop = memo(function SandboxDesktop({
                 if (!toolCall) return null;
 
                 const toolName = toolCall.toolCall?.function_name || 'tool';
-                const friendlyName = getUserFriendlyToolName(toolName);
+                const friendlyName = toolLabel(toolName);
                 const ToolIcon = getToolIcon(convertToolName(toolName));
                 const colorScheme = getToolColorScheme(convertToolName(toolName));
                 const isToolStreaming = toolCall.toolResult === undefined;
@@ -772,7 +781,7 @@ export const SandboxDesktop = memo(function SandboxDesktop({
                   <AppWindow
                     key={window.id}
                     id={window.id}
-                    title="Browser"
+                    title={tApps('browser')}
                     icon={
                       <div className="w-4 h-4 rounded flex items-center justify-center bg-gradient-to-br from-[#7CB9E8] to-[#5B9BD5]">
                         <Globe className="w-2.5 h-2.5 text-white" />
@@ -796,7 +805,7 @@ export const SandboxDesktop = memo(function SandboxDesktop({
                   <AppWindow
                     key={window.id}
                     id={window.id}
-                    title="Terminal"
+                    title={tApps('terminal')}
                     icon={
                       <div className="w-4 h-4 rounded flex items-center justify-center bg-gradient-to-br from-[#3f3f46] to-[#18181b]">
                         <TerminalSquare className="w-2.5 h-2.5 text-[#4ade80]" />
@@ -820,7 +829,7 @@ export const SandboxDesktop = memo(function SandboxDesktop({
                   <AppWindow
                     key={window.id}
                     id={window.id}
-                    title={window.fileName || 'File'}
+                    title={window.fileName || t('file')}
                     icon={
                       <div className="w-4 h-4 flex items-center justify-center">
                         {getFileIconByName(window.fileName || '', false)}
@@ -863,7 +872,7 @@ export const SandboxDesktop = memo(function SandboxDesktop({
                   <AppWindow
                     key={window.id}
                     id={window.id}
-                    title="System Info"
+                    title={tApps('systemInfo')}
                     icon={
                       <div className="w-4 h-4 rounded flex items-center justify-center bg-gradient-to-br from-[#64748B] to-[#475569]">
                         <Info className="w-2.5 h-2.5 text-white" />
@@ -890,7 +899,7 @@ export const SandboxDesktop = memo(function SandboxDesktop({
                   <AppWindow
                     key={window.id}
                     id={window.id}
-                    title={`${window.fileInfo.name} Info`}
+                    title={t('fileInfoTitle', { name: window.fileInfo.name })}
                     icon={
                       <div className="w-4 h-4 flex items-center justify-center">
                         {getFileIconByName(window.fileInfo.name, window.fileInfo.isDirectory)}
@@ -914,7 +923,7 @@ export const SandboxDesktop = memo(function SandboxDesktop({
                   <AppWindow
                     key={window.id}
                     id={window.id}
-                    title="Spreadsheets"
+                    title={tApps('spreadsheets')}
                     icon={
                       <div className="w-4 h-4 rounded flex items-center justify-center bg-gradient-to-br from-[#10b981] to-[#059669]">
                         <Table className="w-2.5 h-2.5 text-white" />
@@ -969,7 +978,7 @@ export const SandboxDesktop = memo(function SandboxDesktop({
     <DesktopContextMenu
       onRefresh={() => {
         queryClient.invalidateQueries({ queryKey: fileQueryKeys.directories() });
-        toast.success('Refreshed');
+        toast.success(t('refreshed'));
       }}
       onOpenFiles={() => handleSystemAppClick('files')}
       onOpenBrowser={() => handleSystemAppClick('browser')}
@@ -996,7 +1005,7 @@ export const SandboxDesktop = memo(function SandboxDesktop({
           <div className="absolute inset-0 dark:block hidden">
             <Image 
               src="https://heprlhlltebrxydgtsjs.supabase.co/storage/v1/object/public/image-uploads/backgrounds/computer-bg-dark.jpg"
-              alt="Desktop wallpaper"
+              alt={t('wallpaperAlt')}
               fill
               className="object-cover"
               unoptimized
@@ -1005,7 +1014,7 @@ export const SandboxDesktop = memo(function SandboxDesktop({
           <div className="absolute inset-0 dark:hidden">
             <Image 
               src="https://heprlhlltebrxydgtsjs.supabase.co/storage/v1/object/public/image-uploads/backgrounds/computer-bg-light.jpg"
-              alt="Desktop wallpaper"
+              alt={t('wallpaperAlt')}
               fill
               className="object-cover"
               unoptimized

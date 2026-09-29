@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Terminal,
   CheckCircle,
@@ -26,6 +27,7 @@ export function CommandToolView({
   isSuccess = true,
   isStreaming = false,
 }: ToolViewProps) {
+  const t = useTranslations('toolViews.command');
   const scrollRef = useRef<HTMLDivElement>(null);
   
   const toolCallId = toolCall?.tool_call_id || '';
@@ -81,7 +83,7 @@ export function CommandToolView({
   const name = toolCall.function_name.replace(/_/g, '-');
 
   const displayText = name === 'check-command-output' ? sessionName : displayCommand;
-  const displayLabel = name === 'check-command-output' ? 'Session' : 'Command';
+  const displayLabel = name === 'check-command-output' ? t('session') : t('command');
   const displayPrefix = name === 'check-command-output' ? 'tmux:' : '$';
 
   const toolTitle = getToolTitle(name);
@@ -192,8 +194,8 @@ export function CommandToolView({
               icon={Terminal}
               iconColor="text-zinc-500 dark:text-zinc-400"
               bgColor="bg-gradient-to-b from-zinc-100 to-zinc-50 shadow-inner dark:from-zinc-800/40 dark:to-zinc-900/60"
-              title={name === 'check-command-output' ? 'Checking command output' : 'Executing command'}
-              filePath={displayText || 'Processing command...'}
+              title={name === 'check-command-output' ? t('checkingOutput') : t('executing')}
+              filePath={displayText || t('processing')}
               showProgress={true}
             />
           ) : (
@@ -205,7 +207,7 @@ export function CommandToolView({
                     <div className="flex-shrink-0 px-4 py-2.5 border-b border-border">
                       <Badge variant="outline" className="text-xs px-2.5 py-0.5 h-5 font-normal">
                         <TerminalIcon className="h-2.5 w-2.5 mr-1 opacity-70" />
-                        Command
+                        {t('command')}
                       </Badge>
                     </div>
                     <div className="p-4 overflow-x-auto">
@@ -224,14 +226,14 @@ export function CommandToolView({
                       <div className="flex items-center gap-2">
                         <Badge variant="outline" className="text-xs px-2.5 py-0.5 h-5 font-normal">
                           <TerminalIcon className="h-2.5 w-2.5 mr-1 opacity-70" />
-                          Output
+                          {t('output')}
                         </Badge>
                         <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
                           <span className="relative flex h-2 w-2">
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-zinc-400 opacity-75"></span>
                             <span className="relative inline-flex rounded-full h-2 w-2 bg-zinc-500"></span>
                           </span>
-                          Live
+                          {t('live')}
                         </span>
                       </div>
                     </div>
@@ -257,7 +259,7 @@ export function CommandToolView({
                     <div className="flex-shrink-0 px-4 py-2.5 border-b border-border">
                       <Badge variant="outline" className="text-xs px-2.5 py-0.5 h-5 font-normal">
                         <TerminalIcon className="h-2.5 w-2.5 mr-1 opacity-70" />
-                        Command
+                        {t('command')}
                       </Badge>
                     </div>
                     <div className="p-4 overflow-x-auto">
@@ -275,7 +277,7 @@ export function CommandToolView({
                     <div className="flex items-center gap-2 mb-2">
                       <Badge variant="outline" className="text-xs px-2.5 py-0.5 h-5 font-normal">
                         <CircleDashed className="h-2.5 w-2.5 mr-1 opacity-70 text-zinc-500 dark:text-zinc-400" />
-                        Status
+                        {t('status')}
                       </Badge>
                     </div>
                     <p className="text-xs text-foreground font-mono whitespace-pre-wrap break-words">{displayOutput}</p>
@@ -289,12 +291,12 @@ export function CommandToolView({
                       <div className="flex items-center gap-2">
                         <Badge variant="outline" className="text-xs px-2.5 py-0.5 h-5 font-normal">
                           <TerminalIcon className="h-2.5 w-2.5 mr-1 opacity-70" />
-                          Output
+                          {t('output')}
                         </Badge>
                         {exitCode !== null && exitCode !== 0 && (
                           <Badge variant="outline" className="text-xs h-5 px-2.5 py-0.5 border-red-700/30 text-red-400">
                             <AlertTriangle className="h-2.5 w-2.5 mr-1" />
-                            Error
+                            {t('error')}
                           </Badge>
                         )}
                       </div>
@@ -314,7 +316,7 @@ export function CommandToolView({
                   <div className="flex items-center justify-center py-12">
                     <div className="bg-card border border-border rounded-lg p-4 text-center">
                       <CircleDashed className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                      <p className="text-sm text-muted-foreground">No output received</p>
+                      <p className="text-sm text-muted-foreground">{t('noOutput')}</p>
                     </div>
                   </div>
                 ) : null}
@@ -327,12 +329,12 @@ export function CommandToolView({
               <Terminal className="h-10 w-10 text-zinc-400 dark:text-zinc-600" />
             </div>
             <h3 className="text-xl font-semibold mb-2 text-zinc-900 dark:text-zinc-100">
-              {name === 'check-command-output' ? 'No Session Found' : 'No Command Found'}
+              {name === 'check-command-output' ? t('noSessionFound') : t('noCommandFound')}
             </h3>
             <p className="text-sm text-zinc-500 dark:text-zinc-400 text-center max-w-md">
               {name === 'check-command-output'
-                ? 'No session name was detected. Please provide a valid session name to check.'
-                : 'No command was detected. Please provide a valid command to execute.'
+                ? t('noSessionDescription')
+                : t('noCommandDescription')
               }
             </p>
           </div>

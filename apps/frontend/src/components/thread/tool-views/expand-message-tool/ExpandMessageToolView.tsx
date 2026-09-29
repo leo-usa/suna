@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Expand,
   CheckCircle,
@@ -27,6 +28,7 @@ export function ExpandMessageToolView({
   isStreaming = false,
 }: ToolViewProps) {
   // All hooks must be called unconditionally at the top
+  const t = useTranslations('toolViews.expandMessage');
   const [isCopying, setIsCopying] = React.useState(false);
 
   const copyToClipboard = React.useCallback(async (text: string) => {
@@ -55,12 +57,12 @@ export function ExpandMessageToolView({
     setIsCopying(true);
     const success = await copyToClipboard(message);
     if (success) {
-      toast.success('Message copied to clipboard');
+      toast.success(t('copied'));
     } else {
-      toast.error('Failed to copy message');
+      toast.error(t('copyFailed'));
     }
     setTimeout(() => setIsCopying(false), 500);
-  }, [message, copyToClipboard]);
+  }, [message, copyToClipboard, t]);
 
   // Defensive check - handle cases where toolCall might be undefined
   if (!toolCall) {
@@ -69,7 +71,7 @@ export function ExpandMessageToolView({
   }
 
   const name = toolCall.function_name.replace(/_/g, '-').toLowerCase();
-  const toolTitle = getToolTitle(name) || 'Message Expansion';
+  const toolTitle = getToolTitle(name) || t('title');
   
   const {
     messageId,
@@ -130,12 +132,12 @@ export function ExpandMessageToolView({
                   <MessageSquareText className="h-8 w-8 text-zinc-500 dark:text-zinc-400" />
                 </div>
                 <h3 className="text-lg font-medium text-foreground mb-2">
-                  {actualIsSuccess ? 'No Message Content' : 'Expansion Failed'}
+                  {actualIsSuccess ? t('noContent') : t('failed')}
                 </h3>
                 <p className="text-sm text-muted-foreground max-w-md">
                   {actualIsSuccess 
-                    ? 'The expanded message does not contain any displayable content.'
-                    : 'Unable to expand the requested message. It may not exist or you may not have access to it.'}
+                    ? t('noContentDescription')
+                    : t('failedDescription')}
                 </p>
               </div>
             ) : null}
@@ -147,7 +149,7 @@ export function ExpandMessageToolView({
         <div className="h-full flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
           <Badge className="h-6 py-0.5 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700" variant="outline">
             <Expand className="h-3 w-3 mr-1" />
-            Message Retrieval
+            {t('retrieval')}
           </Badge>
         </div>
 

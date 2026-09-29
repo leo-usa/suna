@@ -1,7 +1,8 @@
 import React from 'react';
 import { Maximize2 } from 'lucide-react';
 import { DobbyLoader } from '@/components/ui/dobby-loader';
-import { getToolIcon, getUserFriendlyToolName, extractPrimaryParam } from '@/components/thread/utils';
+import { getToolIcon, extractPrimaryParam } from '@/components/thread/utils';
+import { useToolNameLabel } from '@/hooks/use-tool-name-label';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ToolCallInput } from '@/components/thread/dobby-computer';
@@ -53,6 +54,7 @@ export const FloatingToolPreview: React.FC<FloatingToolPreviewProps> = ({
   paramsDisplay,
   onAnimationComplete,
 }) => {
+  const { t, toolLabel } = useToolNameLabel();
   const currentToolCall = toolCalls[currentIndex];
   const totalCalls = toolCalls.length;
 
@@ -105,7 +107,7 @@ export const FloatingToolPreview: React.FC<FloatingToolPreviewProps> = ({
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
                 <h4 className="text-sm font-medium text-foreground truncate">
-                  {getUserFriendlyToolName(toolName)}
+                  {toolLabel(toolName)}
                 </h4>
               </div>
               {displayParams && (
@@ -142,10 +144,10 @@ export const FloatingToolPreview: React.FC<FloatingToolPreviewProps> = ({
                     : "text-red-500"
               )}>
                 {isStreaming
-                  ? `${agentName || 'Dobby'} is working...`
+                  ? t('agentWorking', { name: agentName || 'Dobby' })
                   : isSuccess
-                    ? "Success"
-                    : "Failed"
+                    ? t('statusSuccess')
+                    : t('statusFailed')
                 }
               </span>
             </div>

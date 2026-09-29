@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   CheckCircle2,
   CheckCircle,
@@ -44,6 +45,7 @@ export function CompleteToolView({
   totalCalls,
 }: CompleteToolViewProps) {
   // All hooks must be called unconditionally at the top
+  const t = useTranslations('toolViews.complete');
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
@@ -106,7 +108,7 @@ export function CompleteToolView({
 
   const actualIsSuccess = toolResult?.success !== undefined ? toolResult.success : isSuccess;
 
-  const toolTitle = getToolTitle(name) || 'Task Complete';
+  const toolTitle = getToolTitle(name) || t('taskComplete');
 
   const handleFileClick = (filePath: string) => {
     if (onFileClick) {
@@ -160,7 +162,7 @@ export function CompleteToolView({
               <div className="space-y-4">
                 <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
                   <Paperclip className="h-4 w-4" />
-                  Files ({attachments.length})
+                  {t('files', { count: attachments.length })}
                 </div>
 
                 <div className={cn(
@@ -239,7 +241,7 @@ export function CompleteToolView({
               <div className="space-y-3">
                 <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
                   <ListChecks className="h-4 w-4" />
-                  Tasks Completed
+                  {t('tasksCompleted')}
                 </div>
                 <div className="space-y-2">
                   {tasksCompleted.map((task, index) => (
@@ -267,7 +269,7 @@ export function CompleteToolView({
               <div className="space-y-3">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">
-                    Completing task...
+                    {t('completingTask')}
                   </span>
                   <span className="text-muted-foreground text-xs">
                     {progress}%
@@ -284,10 +286,10 @@ export function CompleteToolView({
                   <CheckCircle2 className="h-8 w-8 text-muted-foreground" />
                 </div>
                 <h3 className="text-lg font-medium text-foreground mb-2">
-                  Task Completed
+                  {t('taskCompleted')}
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                  No additional details provided
+                  {t('noDetails')}
                 </p>
               </div>
             )}
@@ -314,7 +316,7 @@ export function CompleteToolView({
       >
         <Badge className="h-6 py-0.5" variant="outline">
           <CheckCircle2 className="h-3 w-3 mr-1" />
-          Task Completion
+          {t('taskCompletion')}
         </Badge>
       </ToolViewFooter>
     </Card>

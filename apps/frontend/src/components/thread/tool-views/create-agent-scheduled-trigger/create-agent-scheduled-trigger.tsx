@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Clock,
   CheckCircle,
@@ -27,6 +28,8 @@ export default function CreateAgentScheduledTriggerToolView({
   isSuccess = true,
   isStreaming = false,
 }: ToolViewProps) {
+  const t = useTranslations('toolViews.createScheduledTrigger');
+  const tCommon = useTranslations('toolViews.common');
   // Defensive check - ensure toolCall is defined
   if (!toolCall) {
     console.warn('CreateAgentScheduledTriggerToolView: toolCall is undefined. Tool views should use structured props.');
@@ -56,16 +59,16 @@ export default function CreateAgentScheduledTriggerToolView({
 
   const formatCronExpression = (cron: string): string => {
     const cronMap: Record<string, string> = {
-      '0 0 * * *': 'Daily at midnight',
-      '0 9 * * *': 'Daily at 9:00 AM',
-      '30 3 * * *': 'Daily at 3:30 AM',
-      '0 8 * * 1': 'Every Monday at 8:00 AM',
-      '0 18 * * 5': 'Every Friday at 6:00 PM',
-      '*/30 * * * *': 'Every 30 minutes',
-      '0 */6 * * *': 'Every 6 hours',
+      '0 0 * * *': t('cron.dailyMidnight'),
+      '0 9 * * *': t('cron.daily9am'),
+      '30 3 * * *': t('cron.daily330am'),
+      '0 8 * * 1': t('cron.monday8am'),
+      '0 18 * * 5': t('cron.friday6pm'),
+      '*/30 * * * *': t('cron.every30min'),
+      '0 */6 * * *': t('cron.every6h'),
     };
     
-    return cronMap[cron] || `Custom schedule: ${cron}`;
+    return cronMap[cron] || t('cron.custom', { cron });
   };
 
   return (
@@ -98,7 +101,7 @@ export default function CreateAgentScheduledTriggerToolView({
               ) : (
                 <AlertTriangle className="h-3 w-3" />
               )}
-              {actualIsSuccess ? 'Trigger created' : 'Creation failed'}
+              {actualIsSuccess ? tCommon('triggerCreated') : tCommon('creationFailed')}
             </Badge>
           )}
         </div>
@@ -110,7 +113,7 @@ export default function CreateAgentScheduledTriggerToolView({
             icon={Clock}
             iconColor="text-zinc-500 dark:text-zinc-400"
             bgColor="bg-gradient-to-b from-zinc-100 to-zinc-50 shadow-inner dark:from-zinc-800/40 dark:to-zinc-900/60 dark:shadow-zinc-950/20"
-            title="Creating scheduled trigger"
+            title={t('creating')}
             filePath={triggerName ? `"${triggerName}"` : undefined}
             showProgress={true}
           />
@@ -133,7 +136,7 @@ export default function CreateAgentScheduledTriggerToolView({
                   <div className="flex items-center gap-2">
                     <Badge variant="outline" className="text-xs">
                       <Play className="h-3 w-3 mr-1" />
-                      {trigger.is_active ? 'Active' : 'Inactive'}
+                      {trigger.is_active ? tCommon('active') : tCommon('inactive')}
                     </Badge>
                     <Badge variant="outline" className="text-xs border-zinc-200 text-zinc-700 bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:bg-zinc-800">
                       <Bot className="h-3 w-3 mr-1" />
@@ -146,7 +149,7 @@ export default function CreateAgentScheduledTriggerToolView({
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <p className="text-sm font-medium text-foreground">Schedule</p>
+                    <p className="text-sm font-medium text-foreground">{t('schedule')}</p>
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4 text-muted-foreground" />
                       <div>
@@ -158,12 +161,11 @@ export default function CreateAgentScheduledTriggerToolView({
                     </div>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-sm font-medium text-foreground">Created</p>
+                    <p className="text-sm font-medium text-foreground">{tCommon('created')}</p>
                     <div className="flex items-center gap-2">
                       <Clock className="h-4 w-4 text-muted-foreground" />
                       <p className="text-sm text-muted-foreground">
-                        {new Date(trigger.created_at).toLocaleDateString()} at{' '}
-                        {new Date(trigger.created_at).toLocaleTimeString()}
+                        {t('dateAtTime', { date: new Date(trigger.created_at).toLocaleDateString(), time: new Date(trigger.created_at).toLocaleTimeString() })}
                       </p>
                     </div>
                   </div>
@@ -174,7 +176,7 @@ export default function CreateAgentScheduledTriggerToolView({
                   <>
                     <Separator />
                     <div className="space-y-3">
-                      <p className="text-sm font-medium text-foreground">Worker Prompt</p>
+                      <p className="text-sm font-medium text-foreground">{t('workerPrompt')}</p>
                       <div className="p-3 bg-muted border border-border rounded-lg text-sm text-foreground">
                         {agent_prompt}
                       </div>
@@ -185,7 +187,7 @@ export default function CreateAgentScheduledTriggerToolView({
                 <div className="pt-2 border-t border-border">
                   <div className="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-400">
                     <div className="w-2 h-2 bg-zinc-500 rounded-full" />
-                    The scheduled trigger is now active and will run automatically according to the schedule.
+                    {t('nowActive')}
                   </div>
                 </div>
               </div>
@@ -195,8 +197,8 @@ export default function CreateAgentScheduledTriggerToolView({
           <div className="p-4 text-center">
             <div className="space-y-2">
               <AlertTriangle className="h-8 w-8 text-red-500 mx-auto" />
-              <p className="text-sm font-medium text-foreground">Failed to create scheduled trigger</p>
-              <p className="text-xs text-muted-foreground">Please check the trigger configuration and try again.</p>
+              <p className="text-sm font-medium text-foreground">{t('failed')}</p>
+              <p className="text-xs text-muted-foreground">{t('checkConfig')}</p>
             </div>
           </div>
         )}

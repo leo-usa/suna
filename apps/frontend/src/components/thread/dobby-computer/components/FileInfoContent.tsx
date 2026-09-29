@@ -1,6 +1,7 @@
 'use client';
 
 import { memo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Folder, File, Calendar, MapPin, Copy, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getFileIconByName } from './Icons';
@@ -19,8 +20,10 @@ interface FileInfoContentProps {
   fileInfo: FileInfo;
 }
 
-const formatDate = (dateStr?: string): string => {
-  if (!dateStr) return 'Unknown';
+type Translator = ReturnType<typeof useTranslations>;
+
+const formatDate = (dateStr: string | undefined, t: Translator): string => {
+  if (!dateStr) return t('unknown');
   
   try {
     const date = new Date(dateStr);
@@ -36,11 +39,11 @@ const formatDate = (dateStr?: string): string => {
   }
 };
 
-const getFileType = (name: string, isDirectory: boolean): string => {
-  if (isDirectory) return 'Folder';
+const getFileType = (name: string, isDirectory: boolean, t: Translator): string => {
+  if (isDirectory) return t('folder');
   
   const ext = name.includes('.') ? name.split('.').pop()?.toLowerCase() : null;
-  if (!ext) return 'File';
+  if (!ext) return t('file');
   
   const typeMap: Record<string, string> = {
     'js': 'JavaScript File',
@@ -104,22 +107,24 @@ const getFileType = (name: string, isDirectory: boolean): string => {
     'kanvax': 'Dobby Canvas',
   };
   
-  return typeMap[ext] || `${ext.toUpperCase()} File`;
+  if (typeMap[ext]) return t.has(`types.${ext}`) ? t(`types.${ext}`) : typeMap[ext];
+  return t('genericFile', { ext: ext.toUpperCase() });
 };
 
 export const FileInfoContent = memo(function FileInfoContent({
   fileInfo,
 }: FileInfoContentProps) {
+  const t = useTranslations('dobbyComputer.fileInfo');
   const [copiedPath, setCopiedPath] = useState(false);
   
   const handleCopyPath = () => {
     navigator.clipboard.writeText(fileInfo.path);
     setCopiedPath(true);
-    toast.success('Path copied to clipboard');
+    toast.success(t('pathCopied'));
     setTimeout(() => setCopiedPath(false), 2000);
   };
 
-  const fileType = getFileType(fileInfo.name, fileInfo.isDirectory);
+  const fileType = getFileType(fileInfo.name, fileInfo.isDirectory, t);
 
   return (
     <div className="h-full overflow-auto p-6">
@@ -154,7 +159,7 @@ export const FileInfoContent = memo(function FileInfoContent({
                 <Calendar className="w-4 h-4 text-white" />
               </div>
               <div className="min-w-0 flex-1">
-                <span className="text-sm text-foreground font-medium">{formatDate(fileInfo.modTime)}</span>
+                <span className="text-sm text-foreground font-medium">{formatDate(fileInfo.modTime, t)}</span>
               </div>
             </div>
           )}

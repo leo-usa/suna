@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Settings,
   CheckCircle,
@@ -32,6 +33,8 @@ export function ConfigureAgentIntegrationToolView({
   isStreaming = false,
 }: ToolViewProps) {
   // All hooks must be called unconditionally at the top
+  const t = useTranslations('toolViews.configureAgentIntegration');
+  const tCommon = useTranslations('toolViews.common');
   // Extract data safely - handle undefined toolCall
   const extractedData = toolCall ? extractConfigureAgentIntegrationData(
     null, // assistantContent - legacy format
@@ -106,7 +109,7 @@ export function ConfigureAgentIntegrationToolView({
             icon={Settings}
             iconColor="text-teal-500 dark:text-teal-400"
             bgColor="bg-gradient-to-b from-teal-100 to-teal-50 shadow-inner dark:from-teal-800/40 dark:to-teal-900/60 dark:shadow-teal-950/20"
-            title="Configuring integration"
+            title={t('configuring')}
             filePath={integration_name ? `"${integration_name}"` : undefined}
             showProgress={true}
           />
@@ -120,7 +123,7 @@ export function ConfigureAgentIntegrationToolView({
                       {iconData?.icon_url ? (
                         <img
                           src={iconData.icon_url}
-                          alt={`${integration_name} logo`}
+                          alt={t('logoAlt', { name: String(integration_name) })}
                           className="w-8 h-8 object-cover rounded"
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
@@ -137,7 +140,7 @@ export function ConfigureAgentIntegrationToolView({
                     </div>
                     <div>
                       <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">
-                        {display_name || integration_name || 'Integration'}
+                        {display_name || integration_name || t('integration')}
                       </h3>
                     </div>
                   </div>
@@ -149,7 +152,7 @@ export function ConfigureAgentIntegrationToolView({
                     </Badge>
                     <Badge variant="secondary" className="text-xs bg-zinc-50 text-zinc-700 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700">
                       <Shield className="w-3 h-3 mr-1" />
-                      Active
+                      {tCommon('active')}
                     </Badge>
                   </div>
                 </div>
@@ -160,11 +163,11 @@ export function ConfigureAgentIntegrationToolView({
                   <div className="space-y-2">
                     <h4 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
                       <Wrench className="w-4 h-4" />
-                      Tools Configuration
+                      {t('toolsConfiguration')}
                     </h4>
                     <div className="space-y-1 text-sm text-zinc-600 dark:text-zinc-400">
-                      <div>Enabled: {enabled_tools_count}</div>
-                      <div>Status: Configured</div>
+                      <div>{t('enabledCount', { count: enabled_tools_count })}</div>
+                      <div>{t('statusConfigured')}</div>
                     </div>
                   </div>
                 </div>
@@ -174,7 +177,7 @@ export function ConfigureAgentIntegrationToolView({
                 <div className="border rounded-xl p-4 space-y-3">
                   <h4 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
                     <Zap className="w-4 h-4" />
-                    Enabled Tools ({enabled_tools_count})
+                    {t('enabledTools', { count: enabled_tools_count })}
                   </h4>
                   <div className="flex flex-wrap gap-2">
                     {enabled_tools.map((tool) => (
@@ -192,7 +195,7 @@ export function ConfigureAgentIntegrationToolView({
           <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg m-4">
             <p className="text-sm text-red-800 dark:text-red-200 flex items-center gap-2">
               <AlertTriangle className="h-4 w-4" />
-              Failed to configure integration. Please check the profile and try again.
+              {t('failed')}
             </p>
           </div>
         )}

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Card,
   CardContent,
@@ -34,6 +35,7 @@ export function DeletePresentationToolView({
   isStreaming = false,
   project,
 }: ToolViewProps) {
+  const t = useTranslations('toolViews.presentation');
   // Defensive check - handle cases where toolCall might be undefined
   if (!toolCall) {
     console.warn('DeletePresentationToolView: toolCall is undefined. Tool views should use structured props.');
@@ -59,7 +61,7 @@ export function DeletePresentationToolView({
             const deletedPath = toolCall.arguments?.presentation_name || 
                               toolCall.arguments?.path || 
                               output.match(/['"]([^'"]+)['"]/)?.[1] || 
-                              'Unknown';
+                              t('unknown');
             deleteData = {
               message: output,
               deleted_path: deletedPath,
@@ -70,7 +72,7 @@ export function DeletePresentationToolView({
           const deletedPath = toolCall.arguments?.presentation_name || 
                             toolCall.arguments?.path || 
                             output.match(/['"]([^'"]+)['"]/)?.[1] || 
-                            'Unknown';
+                            t('unknown');
           deleteData = {
             message: output,
             deleted_path: deletedPath,
@@ -83,10 +85,10 @@ export function DeletePresentationToolView({
         if (!deleteData.deleted_path && toolCall.arguments) {
           deleteData.deleted_path = toolCall.arguments.presentation_name || 
                                    toolCall.arguments.path || 
-                                   'Unknown';
+                                   t('unknown');
         }
         if (!deleteData.message && typeof output === 'object') {
-          deleteData.message = (output as any).message || 'Presentation deleted successfully';
+          deleteData.message = (output as any).message || t('presentationDeletedSuccessfully');
         }
       }
     } else {
@@ -94,9 +96,9 @@ export function DeletePresentationToolView({
       if (toolCall.arguments) {
         const deletedPath = toolCall.arguments.presentation_name || 
                            toolCall.arguments.path || 
-                           'Unknown';
+                           t('unknown');
         deleteData = {
-          message: 'Presentation deleted successfully',
+          message: t('presentationDeletedSuccessfully'),
           deleted_path: deletedPath,
         };
       }
@@ -107,25 +109,25 @@ export function DeletePresentationToolView({
     if (toolCall.arguments) {
       const deletedPath = toolCall.arguments.presentation_name || 
                          toolCall.arguments.path || 
-                         'Unknown';
+                         t('unknown');
       deleteData = {
-        message: 'Presentation deleted',
+        message: t('presentationDeleted'),
         deleted_path: deletedPath,
       };
     } else {
-      error = 'Failed to parse delete data';
+      error = t('failedToParseDeleteData');
     }
   }
 
   const presentationName = deleteData?.deleted_path?.split('/').pop() || 
                           toolCall.arguments?.presentation_name?.split('/').pop() || 
-                          'Unknown';
+                          t('unknown');
 
   return (
     <Card className="gap-0 flex border-0 shadow-none p-0 py-0 rounded-none flex-col h-full overflow-hidden bg-card">
       <CardHeader className="h-14 bg-zinc-50/80 dark:bg-zinc-900/80 backdrop-blur-sm border-b p-2 px-4 space-y-2">
         <div className="flex flex-row items-center justify-between">
-          <ToolViewIconTitle icon={FolderX} title="Delete Presentation" subtitle={deleteData ? presentationName : undefined} />
+          <ToolViewIconTitle icon={FolderX} title={t('deletePresentation')} subtitle={deleteData ? presentationName : undefined} />
         </div>
       </CardHeader>
 
@@ -135,8 +137,8 @@ export function DeletePresentationToolView({
             icon={FolderX}
             iconColor="text-red-500 dark:text-red-400"
             bgColor="bg-gradient-to-b from-red-100 to-red-50 shadow-inner dark:from-red-800/40 dark:to-red-900/60 dark:shadow-red-950/20"
-            title="Deleting presentation"
-            filePath="Removing all files..."
+            title={t('deletingPresentation')}
+            filePath={t('removingAllFiles')}
             showProgress={true}
           />
         ) : error || !deleteData ? (
@@ -145,10 +147,10 @@ export function DeletePresentationToolView({
               <AlertTriangle className="h-10 w-10 text-rose-400 dark:text-rose-600" />
             </div>
             <h3 className="text-xl font-semibold mb-2 text-zinc-900 dark:text-zinc-100">
-              {error || 'Failed to delete presentation'}
+              {error || t('failedToDeletePresentation')}
             </h3>
             <p className="text-sm text-zinc-500 dark:text-zinc-400 text-center max-w-md">
-              There was an error deleting the presentation. Please try again.
+              {t('errorDeletingPresentation')}
             </p>
           </div>
         ) : (
@@ -157,7 +159,7 @@ export function DeletePresentationToolView({
               <CheckCircle className="h-10 w-10 text-zinc-500 dark:text-zinc-400" />
             </div>
             <h3 className="text-xl font-semibold mb-2 text-zinc-900 dark:text-zinc-100">
-              Presentation deleted successfully
+              {t('presentationDeletedSuccessfully')}
             </h3>
             <p className="text-sm text-zinc-500 dark:text-zinc-400 text-center max-w-md mb-6">
               {deleteData.message}
@@ -170,7 +172,7 @@ export function DeletePresentationToolView({
                 </div>
                 <div className="flex-1">
                   <h4 className="font-medium text-zinc-900 dark:text-zinc-100 mb-1">
-                    Deleted Path
+                    {t('deletedPath')}
                   </h4>
                   <p className="text-sm text-zinc-600 dark:text-zinc-400 font-mono">
                     {deleteData.deleted_path}
@@ -180,7 +182,7 @@ export function DeletePresentationToolView({
             </Card>
             
             <p className="text-xs text-zinc-400 dark:text-zinc-500 text-center mt-4">
-              All slides and metadata have been permanently removed
+              {t('allSlidesRemoved')}
             </p>
           </div>
         )}

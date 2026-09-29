@@ -5,6 +5,8 @@ import { getToolIcon } from '../../utils';
 import { CheckCircle, AlertCircle, AlertTriangle } from 'lucide-react';
 import { DobbyLoader } from '@/components/ui/dobby-loader';
 import { cn } from '@/lib/utils';
+import { useTranslations } from 'next-intl';
+import { useToolTitleLabel } from '@/hooks/use-tool-name-label';
 
 export interface ToolViewWrapperProps extends ToolViewProps {
   children: React.ReactNode;
@@ -40,7 +42,9 @@ export function ToolViewWrapper({
 }: ToolViewWrapperProps) {
   // Derive name from toolCall.function_name
   const name = toolCall?.function_name?.replace(/_/g, '-').toLowerCase() || 'unknown';
-  const toolTitle = getToolTitle(name);
+  const t = useTranslations('toolViews.shared');
+  const titleLabel = useToolTitleLabel();
+  const toolTitle = titleLabel(getToolTitle(name));
   const Icon = getToolIcon(name);
 
   return (
@@ -60,7 +64,7 @@ export function ToolViewWrapper({
             {isStreaming && (
               <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700">
                 <div className="w-1.5 h-1.5 rounded-full bg-zinc-500 animate-pulse" />
-                <span className="text-[10px] font-medium text-zinc-700 dark:text-zinc-400">Running</span>
+                <span className="text-[10px] font-medium text-zinc-700 dark:text-zinc-400">{t('running')}</span>
               </div>
             )}
             {headerContent}
@@ -91,8 +95,8 @@ export function ToolViewWrapper({
                 )}
                 <span className={cn(!isSuccess && "font-medium")}>
                   {isSuccess
-                    ? customStatus?.success || "Completed successfully"
-                    : customStatus?.failure || "Execution failed"}
+                    ? customStatus?.success || t('completedSuccessfully')
+                    : customStatus?.failure || t('executionFailed')}
                 </span>
               </div>
             )}
@@ -100,7 +104,7 @@ export function ToolViewWrapper({
             {isStreaming && showStatus && (
               <div className="flex items-center gap-2">
                 <DobbyLoader customSize={14} />
-                <span>{customStatus?.streaming || "Processing..."}</span>
+                <span>{customStatus?.streaming || t('processing')}</span>
               </div>
             )}
 

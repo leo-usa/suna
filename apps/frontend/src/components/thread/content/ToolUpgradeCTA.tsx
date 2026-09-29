@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 import { DobbyLogo } from '@/components/sidebar/dobby-logo';
 import { usePricingModalStore } from '@/stores/pricing-modal-store';
+import { useToolNameLabel } from '@/hooks/use-tool-name-label';
 
 export interface ToolUpgradeCTAProps {
   toolName: string;
@@ -20,9 +21,10 @@ export const ToolUpgradeCTA: React.FC<ToolUpgradeCTAProps> = ({
   className,
 }) => {
   const { openPricingModal } = usePricingModalStore();
+  const { t } = useToolNameLabel();
   const handleUpgradeClick = () => {
     openPricingModal({
-      title: 'Upgrade to access this tool',
+      title: t('upgradeModalTitle'),
     });
   };
 
@@ -41,17 +43,19 @@ export const ToolUpgradeCTA: React.FC<ToolUpgradeCTAProps> = ({
 
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold">
-          Upgrade to unlock this feature
+          {t('upgradeTitle')}
         </p>
         <p className="text-xs text-muted-foreground/90 mt-0.5">
-          {currentTierDisplay || 'Your current'} plan doesn't include access to {toolName}
+          {currentTierDisplay
+            ? t('upgradeDescription', { plan: currentTierDisplay, tool: toolName })
+            : t('upgradeDescriptionCurrent', { tool: toolName })}
         </p>
       </div>
 
       <Button
         onClick={handleUpgradeClick}
       >
-        Upgrade
+        {t('upgrade')}
         <ArrowUpRight className="w-3.5 h-3.5" />
       </Button>
     </div>

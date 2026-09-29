@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Palette,
   CheckCircle,
@@ -119,6 +120,7 @@ export function DesignerToolView({
   project,
 }: DesignerToolViewProps) {
   // All hooks must be called unconditionally at the top
+  const t = useTranslations('toolViews.designer');
   const canvasRef = useRef<HTMLDivElement>(null);
   const [selectedElement, setSelectedElement] = useState<string | null>(null);
   const [elements, setElements] = useState<DesignElement[]>([]);
@@ -421,7 +423,7 @@ export function DesignerToolView({
             </div>
             <div>
               <CardTitle className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
-                Designer Canvas
+                {t('designerCanvas')}
               </CardTitle>
               <div className="flex items-center gap-2 mt-1">
                 {platformPreset && platformPreset !== 'custom' && (
@@ -458,7 +460,7 @@ export function DesignerToolView({
                         <ZoomOut className="h-4 w-4" />
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>Zoom Out</TooltipContent>
+                    <TooltipContent>{t('zoomOut')}</TooltipContent>
                   </Tooltip>
 
                   <span className="text-xs px-2 min-w-[50px] text-center">
@@ -476,7 +478,7 @@ export function DesignerToolView({
                         <ZoomIn className="h-4 w-4" />
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>Zoom In</TooltipContent>
+                    <TooltipContent>{t('zoomIn')}</TooltipContent>
                   </Tooltip>
 
                   <Tooltip>
@@ -490,7 +492,7 @@ export function DesignerToolView({
                         <Maximize2 className="h-4 w-4" />
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>Reset View</TooltipContent>
+                    <TooltipContent>{t('resetView')}</TooltipContent>
                   </Tooltip>
                 </div>
               </div>
@@ -506,7 +508,7 @@ export function DesignerToolView({
                       <Grid className="h-4 w-4" />
                     </Toggle>
                   </TooltipTrigger>
-                  <TooltipContent>Toggle Grid</TooltipContent>
+                  <TooltipContent>{t('toggleGrid')}</TooltipContent>
                 </Tooltip>
 
                 <Tooltip>
@@ -531,7 +533,7 @@ export function DesignerToolView({
                       </svg>
                     </Toggle>
                   </TooltipTrigger>
-                  <TooltipContent>Snap to Grid</TooltipContent>
+                  <TooltipContent>{t('snapToGrid')}</TooltipContent>
                 </Tooltip>
               </div>
             </TooltipProvider>
@@ -617,10 +619,10 @@ export function DesignerToolView({
                     <Sparkles className="h-10 w-10 text-zinc-600 dark:text-zinc-400" />
                   </div>
                   <h3 className="text-lg font-medium text-foreground mb-2">
-                    Professional Design Canvas
+                    {t('professionalCanvas')}
                   </h3>
                   <p className="text-sm text-muted-foreground max-w-md">
-                    Your design will appear here. Drag to position, use controls to transform.
+                    {t('emptyDescription')}
                   </p>
                 </div>
               )}
@@ -628,10 +630,10 @@ export function DesignerToolView({
                 <div className="flex flex-col items-center justify-center h-96 text-center">
                   <DobbyLoader size="medium" className="mb-4" />
                   <h3 className="text-lg font-medium text-foreground mb-2">
-                    Generating Design
+                    {t('generatingDesign')}
                   </h3>
                   <p className="text-sm text-muted-foreground max-w-md">
-                    Creating your {platformPreset?.replace(/_/g, ' ')} design...
+                    {t('creatingDesign', { preset: platformPreset?.replace(/_/g, ' ') ?? '' })}
                   </p>
                 </div>
               )}
@@ -646,12 +648,12 @@ export function DesignerToolView({
                 <div>
                   <h3 className="font-medium text-sm mb-3 flex items-center gap-2">
                     <Layers className="h-4 w-4" />
-                    Artboard Properties
+                    {t('artboardProperties')}
                   </h3>
                   
                   {elements.length > 1 && (
                     <div className="mb-4 space-y-2">
-                      <label className="text-xs text-muted-foreground">Artboards ({elements.length})</label>
+                      <label className="text-xs text-muted-foreground">{t('artboardsCount', { count: elements.length })}</label>
                       <div className="space-y-1 max-h-32 overflow-y-auto">
                         {elements.map((el, idx) => (
                           <div
@@ -678,7 +680,7 @@ export function DesignerToolView({
                   
                   <div className="space-y-3">
                     <div className="space-y-2">
-                      <label className="text-xs text-muted-foreground">Position</label>
+                      <label className="text-xs text-muted-foreground">{t('position')}</label>
                       <div className="grid grid-cols-2 gap-2">
                         <div>
                           <label className="text-xs">X</label>
@@ -701,10 +703,10 @@ export function DesignerToolView({
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-xs text-muted-foreground">Size</label>
+                      <label className="text-xs text-muted-foreground">{t('size')}</label>
                       <div className="grid grid-cols-2 gap-2">
                         <div>
-                          <label className="text-xs">Width</label>
+                          <label className="text-xs">{t('width')}</label>
                           <input
                             type="number"
                             value={element.width}
@@ -713,7 +715,7 @@ export function DesignerToolView({
                           />
                         </div>
                         <div>
-                          <label className="text-xs">Height</label>
+                          <label className="text-xs">{t('height')}</label>
                           <input
                             type="number"
                             value={element.height}
@@ -725,7 +727,7 @@ export function DesignerToolView({
                     </div>
                     <div className="space-y-2">
                       <label className="text-xs text-muted-foreground">
-                        Rotation: {element.rotation}°
+                        {t('rotation', { value: element.rotation })}
                       </label>
                       <Slider
                         value={[element.rotation]}
@@ -738,7 +740,7 @@ export function DesignerToolView({
                     </div>
                     <div className="space-y-2">
                       <label className="text-xs text-muted-foreground">
-                        Opacity: {element.opacity}%
+                        {t('opacity', { value: element.opacity })}
                       </label>
                       <Slider
                         value={[element.opacity]}
@@ -750,7 +752,7 @@ export function DesignerToolView({
                       />
                     </div>
                     <div className="flex items-center justify-between">
-                      <label className="text-xs text-muted-foreground">Lock Artboard</label>
+                      <label className="text-xs text-muted-foreground">{t('lockArtboard')}</label>
                       <Toggle
                         pressed={element.locked}
                         onPressedChange={locked => updateElement(element.id, { locked })}
@@ -767,7 +769,7 @@ export function DesignerToolView({
                         onClick={handleOpenInNewTab}
                       >
                         <ExternalLink className="h-4 w-4 mr-1" />
-                        Open
+                        {t('open')}
                       </Button>
                       <Button
                         variant="outline"
@@ -776,7 +778,7 @@ export function DesignerToolView({
                         onClick={handleDownload}
                       >
                         <Download className="h-4 w-4 mr-1" />
-                        Export
+                        {t('export')}
                       </Button>
                     </div>
                   </div>
@@ -790,11 +792,11 @@ export function DesignerToolView({
         <div className="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
           <Badge className="h-6 py-0.5" variant="outline">
             <Wand2 className="h-3 w-3 mr-1" />
-            Designer Canvas
+            {t('designerCanvas')}
           </Badge>
           {elements.length > 0 && (
             <Badge variant="secondary" className="h-6 py-0.5">
-              {elements.length} Artboard{elements.length !== 1 ? 's' : ''}
+              {t('artboardCount', { count: elements.length })}
             </Badge>
           )}
           {selectedElement && (() => {

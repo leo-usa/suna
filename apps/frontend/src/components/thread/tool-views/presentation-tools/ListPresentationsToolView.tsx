@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Card,
   CardContent,
@@ -48,6 +49,7 @@ export function ListPresentationsToolView({
   isStreaming = false,
   project,
 }: ToolViewProps) {
+  const t = useTranslations('toolViews.presentation');
   // Extract from toolResult.output (from metadata)
   let presentationsData: ListPresentationsData | null = null;
   let error: string | null = null;
@@ -60,7 +62,7 @@ export function ListPresentationsToolView({
           presentationsData = JSON.parse(output);
         } catch (e) {
           console.error('Failed to parse tool output:', e);
-          error = 'Failed to parse presentations data';
+          error = t('failedToParsePresentationsData');
         }
       } else {
         presentationsData = output as unknown as ListPresentationsData;
@@ -68,14 +70,14 @@ export function ListPresentationsToolView({
     }
   } catch (e) {
     console.error('Error parsing presentations data:', e);
-    error = 'Failed to parse presentations data';
+    error = t('failedToParsePresentationsData');
   }
 
   const formatDate = (dateString: string) => {
     try {
       return new Date(dateString).toLocaleDateString();
     } catch {
-      return 'Unknown';
+      return t('unknown');
     }
   };
 
@@ -83,7 +85,7 @@ export function ListPresentationsToolView({
     try {
       return new Date(dateString).toLocaleString();
     } catch {
-      return 'Unknown';
+      return t('unknown');
     }
   };
 
@@ -93,8 +95,8 @@ export function ListPresentationsToolView({
         <div className="flex flex-row items-center justify-between">
           <ToolViewIconTitle 
             icon={FolderOpen} 
-            title="All Presentations" 
-            subtitle={presentationsData ? `${presentationsData.presentations.length} presentations found` : undefined} 
+            title={t('allPresentations')} 
+            subtitle={presentationsData ? t('presentationsFound', { count: presentationsData.presentations.length }) : undefined} 
           />
         </div>
       </CardHeader>
@@ -105,8 +107,8 @@ export function ListPresentationsToolView({
             icon={FolderOpen}
             iconColor="text-zinc-500 dark:text-zinc-400"
             bgColor="bg-gradient-to-b from-blue-100 to-blue-50 shadow-inner dark:from-blue-800/40 dark:to-blue-900/60 dark:shadow-blue-950/20"
-            title="Loading presentations"
-            filePath="Scanning workspace..."
+            title={t('loadingPresentations')}
+            filePath={t('scanningWorkspace')}
             showProgress={true}
           />
         ) : error || !presentationsData ? (
@@ -115,10 +117,10 @@ export function ListPresentationsToolView({
               <AlertTriangle className="h-10 w-10 text-rose-400 dark:text-rose-600" />
             </div>
             <h3 className="text-xl font-semibold mb-2 text-zinc-900 dark:text-zinc-100">
-              {error || 'Failed to load presentations'}
+              {error || t('failedToLoadPresentations')}
             </h3>
             <p className="text-sm text-zinc-500 dark:text-zinc-400 text-center max-w-md">
-              There was an error loading the presentations. Please try again.
+              {t('errorLoadingPresentations')}
             </p>
           </div>
         ) : presentationsData.presentations.length === 0 ? (
@@ -127,10 +129,10 @@ export function ListPresentationsToolView({
               <Presentation className="h-10 w-10 text-zinc-500 dark:text-zinc-400" />
             </div>
             <h3 className="text-xl font-semibold mb-2 text-zinc-900 dark:text-zinc-100">
-              No presentations found
+              {t('noPresentationsFound')}
             </h3>
             <p className="text-sm text-zinc-500 dark:text-zinc-400 text-center max-w-md">
-              You haven't created any presentations yet. Use the create_slide tool to start building your first presentation.
+              {t('noPresentationsYet')}
             </p>
           </div>
         ) : (
@@ -174,17 +176,17 @@ export function ListPresentationsToolView({
                             </div>
                             <div className="flex items-center gap-1">
                               <Presentation className="h-3 w-3" />
-                              {presentation.total_slides} slides
+                              {t('slidesCount', { count: presentation.total_slides })}
                             </div>
                             <div className="flex items-center gap-1">
                               <Calendar className="h-3 w-3" />
-                              Created {formatDate(presentation.created_at)}
+                              {t('createdDate', { date: formatDate(presentation.created_at) })}
                             </div>
                           </div>
                           
                           {presentation.updated_at !== presentation.created_at && (
                             <div className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">
-                              Last updated: {formatDateTime(presentation.updated_at)}
+                              {t('lastUpdated', { date: formatDateTime(presentation.updated_at) })}
                             </div>
                           )}
                         </div>
@@ -195,7 +197,7 @@ export function ListPresentationsToolView({
                           variant="outline" 
                           className="h-6 py-0.5 bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300"
                         >
-                          {presentation.total_slides > 0 ? 'Ready' : 'Empty'}
+                          {presentation.total_slides > 0 ? t('ready') : t('empty')}
                         </Badge>
                       </div>
                     </div>

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Search,
   CheckCircle,
@@ -37,6 +38,7 @@ export function SearchMcpServersForAgentToolView({
   isStreaming = false,
 }: ToolViewProps) {
   // All hooks must be called unconditionally at the top
+  const t = useTranslations('toolViews.searchMcpServersForAgent');
   const [isResultsExpanded, setIsResultsExpanded] = useState(true);
 
   // Defensive check - ensure toolCall is defined
@@ -83,7 +85,7 @@ export function SearchMcpServersForAgentToolView({
               ) : (
                 <AlertTriangle className="h-3 w-3" />
               )}
-              {actualIsSuccess ? 'Search completed' : 'Search failed'}
+              {actualIsSuccess ? t('completed') : t('failedBadge')}
             </Badge>
           )}
         </div>
@@ -95,7 +97,7 @@ export function SearchMcpServersForAgentToolView({
             icon={Search}
             iconColor="text-orange-500 dark:text-orange-400"
             bgColor="bg-gradient-to-b from-orange-100 to-orange-50 shadow-inner dark:from-orange-800/40 dark:to-orange-900/60 dark:shadow-orange-950/20"
-            title="Searching MCP servers"
+            title={t('searching')}
             filePath={search_query ? `"${search_query}"` : undefined}
             showProgress={true}
           />
@@ -110,10 +112,10 @@ export function SearchMcpServersForAgentToolView({
                     </div>
                     <div>
                       <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">
-                        Search Results
+                        {t('searchResults')}
                       </h3>
                       <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                        Query: "{search_query}"
+                        {t('queryQuoted', { query: search_query })}
                       </p>
                     </div>
                   </div>
@@ -125,7 +127,7 @@ export function SearchMcpServersForAgentToolView({
                     </Badge>
                     <Badge variant="secondary" className="text-xs bg-zinc-50 text-zinc-700 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700">
                       <Package className="w-3 h-3 mr-1" />
-                      {total_found} found
+                      {t('foundCount', { count: total_found })}
                     </Badge>
                   </div>
                 </div>
@@ -136,22 +138,22 @@ export function SearchMcpServersForAgentToolView({
                   <div className="space-y-2">
                     <h4 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
                       <Search className="w-4 h-4" />
-                      Search Details
+                      {t('searchDetails')}
                     </h4>
                     <div className="space-y-1 text-sm text-zinc-600 dark:text-zinc-400">
-                      <div>Query: {search_query}</div>
-                      <div>Results: {total_found}</div>
+                      <div>{t('queryLabel', { query: search_query })}</div>
+                      <div>{t('resultsLabel', { count: total_found })}</div>
                     </div>
                   </div>
                   
                   <div className="space-y-2">
                     <h4 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
                       <Package className="w-4 h-4" />
-                      Available Services
+                      {t('availableServices')}
                     </h4>
                     <div className="space-y-1 text-sm text-zinc-600 dark:text-zinc-400">
-                      <div>MCP Servers: {toolkits?.length || 0}</div>
-                      <div>Status: Ready for setup</div>
+                      <div>{t('mcpServersLabel', { count: toolkits?.length || 0 })}</div>
+                      <div>{t('statusReady')}</div>
                     </div>
                   </div>
                 </div>
@@ -165,7 +167,7 @@ export function SearchMcpServersForAgentToolView({
                         <div className="flex items-center gap-2">
                           <Package className="w-4 h-4" />
                           <h4 className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                            Found MCP Servers ({total_found})
+                            {t('foundServers', { count: total_found })}
                           </h4>
                         </div>
                         {isResultsExpanded ? (
@@ -192,7 +194,7 @@ export function SearchMcpServersForAgentToolView({
           <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg m-4">
             <p className="text-sm text-red-800 dark:text-red-200 flex items-center gap-2">
               <AlertTriangle className="h-4 w-4" />
-              No MCP servers found{search_query ? ` for "${search_query}"` : ''}. Try a different search term.
+              {search_query ? t('noServersFor', { query: search_query }) : t('noServers')}
             </p>
           </div>
         )}
@@ -202,6 +204,7 @@ export function SearchMcpServersForAgentToolView({
 }
 
 function ToolkitCard({ toolkit }: { toolkit: { name: string; slug: string; description?: string; categories?: string[] } }) {
+  const t = useTranslations('toolViews.searchMcpServersForAgent');
   const { data: iconData } = useComposioToolkitIcon(toolkit.slug, {
     enabled: !!toolkit.slug
   });
@@ -214,7 +217,7 @@ function ToolkitCard({ toolkit }: { toolkit: { name: string; slug: string; descr
             {iconData?.icon_url ? (
               <img
                 src={iconData.icon_url}
-                alt={`${toolkit.name} logo`}
+                alt={t('logoAlt', { name: toolkit.name })}
                 className="w-6 h-6 object-cover rounded"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;

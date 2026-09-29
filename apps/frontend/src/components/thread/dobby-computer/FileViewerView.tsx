@@ -444,16 +444,16 @@ export function FileViewerView({
 
       const versionDate = fileVersions.find(v => v.commit === commit)?.date;
       if (versionDate) {
-        toast.success(`Loaded version from ${new Date(versionDate).toLocaleDateString()}`);
+        toast.success(t('fileViewer.loadedVersionFrom', { date: new Date(versionDate).toLocaleDateString() }));
       }
     } catch (error) {
       console.error('[FileViewerView] Error loading version:', error);
-      setContentError(`Failed to load file version: ${error instanceof Error ? error.message : String(error)}`);
-      toast.error(`Failed to load file version: ${error instanceof Error ? error.message : String(error)}`);
+      setContentError(t('fileViewer.loadVersionFailed', { message: error instanceof Error ? error.message : String(error) }));
+      toast.error(t('fileViewer.loadVersionFailed', { message: error instanceof Error ? error.message : String(error) }));
     } finally {
       setIsLoadingVersionContent(false);
     }
-  }, [filePath, sandboxId, session?.access_token, fileVersions, setGlobalSelectedVersion]);
+  }, [filePath, sandboxId, session?.access_token, fileVersions, setGlobalSelectedVersion, t]);
 
   // Open revert modal and fetch commit info (files changed)
   const openRevertModal = useCallback(async (commit: string) => {
@@ -483,12 +483,12 @@ export function FileViewerView({
       setRevertMode(shouldDefaultSingle ? 'single' : 'commit');
     } catch (error) {
       console.error('Failed to load commit info:', error);
-      toast.error('Failed to load commit info');
+      toast.error(t('fileViewer.loadCommitInfoFailed'));
       setRevertModalOpen(false);
     } finally {
       setRevertLoadingInfo(false);
     }
-  }, [sandboxId, filePath, session?.access_token]);
+  }, [sandboxId, filePath, session?.access_token, t]);
 
   // NOTE: file-selection toggle removed — modal is read-only list with single-file or entire-commit mode
 
@@ -553,14 +553,14 @@ export function FileViewerView({
       console.log('[FileViewerView] Refetching file after restore');
       await refetchFile();
 
-      toast.success('Version restored successfully');
+      toast.success(t('fileViewer.versionRestored'));
     } catch (error) {
       console.error('[FileViewerView] Revert error', error);
-      toast.error(`Failed to restore version: ${error instanceof Error ? error.message : String(error)}`);
+      toast.error(t('fileViewer.restoreFailed', { message: error instanceof Error ? error.message : String(error) }));
     } finally {
       setRevertInProgress(false);
     }
-  }, [revertCommitInfo, revertMode, revertCurrentRelativePath, sandboxId, filePath, session?.access_token, refetchFile, queryClient, clearUnsavedContent, clearGlobalSelectedVersion]);
+  }, [revertCommitInfo, revertMode, revertCurrentRelativePath, sandboxId, filePath, session?.access_token, refetchFile, queryClient, clearUnsavedContent, clearGlobalSelectedVersion, t]);
 
   // Track the last loaded version+path combo to prevent re-loading
   const lastLoadedRef = useRef<{ version: string | null, path: string | null }>({ version: null, path: null });
@@ -605,7 +605,7 @@ export function FileViewerView({
 
     // Handle errors
     if (cachedFileError && !isCachedFileLoading && fileRetryAttempt >= 15) {
-      setContentError(`Failed to load file: ${cachedFileError.message}`);
+      setContentError(t('fileViewer.loadFileFailed', { message: cachedFileError.message }));
       return;
     } else if (cachedFileError && isCachedFileLoading) {
       return;
@@ -645,7 +645,7 @@ export function FileViewerView({
         } else if (isBinaryFile) {
           setTextContentForRenderer(null);
           setBlobUrlForRenderer(null);
-          setContentError('Binary file received in incorrect format. Please try refreshing.');
+          setContentError(t('fileViewer.binaryIncorrectFormat'));
         } else {
           setTextContentForRenderer(cachedFileContent);
           setBlobUrlForRenderer(null);
@@ -661,10 +661,10 @@ export function FileViewerView({
       } else {
         setTextContentForRenderer(null);
         setBlobUrlForRenderer(null);
-        setContentError('Unknown content type received.');
+        setContentError(t('fileViewer.unknownContentType'));
       }
     }
-  }, [filePath, cachedFileContent, isCachedFileLoading, cachedFileError, fileRetryAttempt, getUnsavedContent, canEdit, selectedVersion]);
+  }, [filePath, cachedFileContent, isCachedFileLoading, cachedFileError, fileRetryAttempt, getUnsavedContent, canEdit, selectedVersion, t]);
 
   // Cleanup blob URLs
   useEffect(() => {
@@ -755,10 +755,10 @@ export function FileViewerView({
       console.log('File saved successfully:', filePath);
     } catch (error) {
       console.error('Save error:', error);
-      toast.error(`Failed to save: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      toast.error(t('fileViewer.saveFailed', { message: error instanceof Error ? error.message : t('fileViewer.unknownError') }));
       throw error;
     }
-  }, [filePath, sandboxId, session?.access_token, clearUnsavedContent, queryClient, refetchFile]);
+  }, [filePath, sandboxId, session?.access_token, clearUnsavedContent, queryClient, refetchFile, t]);
 
   // Handle file download
   const handleDownload = async () => {
@@ -779,7 +779,7 @@ export function FileViewerView({
         if (typeof rawContent === 'string') {
           if (rawContent.startsWith('blob:')) {
             if (!sandboxId || sandboxId.trim() === '') {
-              toast.error('Computer is not started yet.');
+              toast.error(t('fileViewer.computerNotStarted'));
               return;
             }
             const response = await fetch(
@@ -807,7 +807,7 @@ export function FileViewerView({
       }
 
       if (!sandboxId || sandboxId.trim() === '') {
-        toast.error('Computer is not started yet.');
+        toast.error(t('fileViewer.computerNotStarted'));
         return;
       }
       const response = await fetch(
@@ -822,7 +822,7 @@ export function FileViewerView({
       downloadBlob(finalBlob, fileName);
 
     } catch (error) {
-      toast.error(`Failed to download file: ${error instanceof Error ? error.message : String(error)}`);
+      toast.error(t('fileViewer.downloadFailed', { message: error instanceof Error ? error.message : String(error) }));
     } finally {
       setIsDownloading(false);
     }
@@ -844,7 +844,7 @@ export function FileViewerView({
       activeDownloadUrls.current.delete(url);
     }, 10000);
 
-    toast.success('Download started');
+    toast.success(t('fileViewer.downloadStarted'));
   };
 
   // Handle fullscreen for presentations
@@ -868,7 +868,7 @@ export function FileViewerView({
     return (
       <div className="h-full flex flex-col items-center justify-center bg-background">
         <DobbyLoader customSize={32} />
-        <p className="text-sm text-muted-foreground mt-4">Checking folder...</p>
+        <p className="text-sm text-muted-foreground mt-4">{t('fileViewer.checkingFolder')}</p>
       </div>
     );
   }
@@ -886,7 +886,7 @@ export function FileViewerView({
         <DobbyComputerHeader
           icon={Home}
           onIconClick={goBackToBrowser}
-          iconTitle="Back to files"
+          iconTitle={t('fileViewer.backToFiles')}
           fileName={presentationName}
           actions={
             <>
@@ -896,7 +896,7 @@ export function FileViewerView({
                     onClick={navigatePrevious}
                     disabled={!canNavigatePrev}
                     className="p-1 rounded hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                    title="Previous file (←)"
+                    title={t('fileViewer.previousFile')}
                   >
                     <ChevronLeft className="h-3.5 w-3.5" />
                   </button>
@@ -907,7 +907,7 @@ export function FileViewerView({
                     onClick={navigateNext}
                     disabled={!canNavigateNext}
                     className="p-1 rounded hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                    title="Next file (→)"
+                    title={t('fileViewer.nextFile')}
                   >
                     <ChevronRight className="h-3.5 w-3.5" />
                   </button>
@@ -919,7 +919,7 @@ export function FileViewerView({
                 size="sm"
                 onClick={handleOpenPresentationFullscreen}
                 className="h-7 w-7 p-0"
-                title="Open fullscreen"
+                title={t('fileViewer.openFullscreen')}
               >
                 <Maximize2 className="h-3.5 w-3.5" />
               </Button>
@@ -958,7 +958,7 @@ export function FileViewerView({
           <div className="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
             <Badge variant="outline" className="py-0.5 h-6">
               <FileText className="h-3 w-3 mr-1" />
-              PRESENTATION
+              {t('fileViewer.presentationBadge')}
             </Badge>
           </div>
           <div className="text-xs text-zinc-500 dark:text-zinc-400">
@@ -984,7 +984,7 @@ export function FileViewerView({
       <DobbyComputerHeader
         icon={Home}
         onIconClick={goBackToBrowser}
-        iconTitle="Back to files"
+        iconTitle={t('fileViewer.backToFiles')}
         fileName={fileName}
         actions={
           <>
@@ -995,7 +995,7 @@ export function FileViewerView({
                 onClick={navigatePrevious}
                 disabled={!canNavigatePrev}
                 className="p-1 rounded hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                title="Previous file (←)"
+                title={t('fileViewer.previousFile')}
               >
                 <ChevronLeft className="h-3.5 w-3.5" />
               </button>
@@ -1006,7 +1006,7 @@ export function FileViewerView({
                 onClick={navigateNext}
                 disabled={!canNavigateNext}
                 className="p-1 rounded hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                title="Next file (→)"
+                title={t('fileViewer.nextFile')}
               >
                 <ChevronRight className="h-3.5 w-3.5" />
               </button>
@@ -1024,7 +1024,7 @@ export function FileViewerView({
                     size="sm"
                     disabled
                     className="h-8 w-8 p-0 bg-transparent border border-border rounded-xl text-muted-foreground"
-                    title="Saving..."
+                    title={t('fileViewer.saving')}
                   >
                     <DobbyLoader size="small" />
                   </Button>
@@ -1034,7 +1034,7 @@ export function FileViewerView({
                     size="sm"
                     disabled
                     className="h-8 w-8 p-0 bg-transparent border border-zinc-500/20 rounded-xl text-zinc-600 dark:text-zinc-400"
-                    title="Saved"
+                    title={t('fileViewer.saved')}
                   >
                     <Check className="h-4 w-4" />
                   </Button>
@@ -1044,7 +1044,7 @@ export function FileViewerView({
                     size="sm"
                     onClick={mdEditorControls.save}
                     className="h-8 w-8 p-0 bg-transparent border border-zinc-500/20 rounded-xl text-zinc-500 hover:text-zinc-600 hover:bg-zinc-50 dark:hover:bg-zinc-950/20"
-                    title="Retry save"
+                    title={t('fileViewer.retrySave')}
                   >
                     <AlertCircle className="h-4 w-4" />
                   </Button>
@@ -1057,16 +1057,16 @@ export function FileViewerView({
                         onClick={mdEditorControls.save}
                         disabled={!mdEditorControls.hasChanges}
                         className="h-8 w-8 p-0 bg-transparent border border-border rounded-xl text-muted-foreground hover:text-foreground hover:bg-accent/50"
-                        title="Save file"
+                        title={t('fileViewer.saveFile')}
                       >
                         <Save className="h-4 w-4" />
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent side="bottom">
                       {mdEditorControls.hasChanges ? (
-                        <>Save changes <kbd className="ml-1.5 px-1 py-0.5 text-[10px] bg-muted rounded font-mono">⌘S</kbd></>
+                        <>{t('fileViewer.saveChanges')} <kbd className="ml-1.5 px-1 py-0.5 text-[10px] bg-muted rounded font-mono">⌘S</kbd></>
                       ) : (
-                        'No changes to save'
+                        t('fileViewer.noChangesToSave')
                       )}
                     </TooltipContent>
                   </Tooltip>
@@ -1185,13 +1185,13 @@ export function FileViewerView({
                                 isCurrent ? 'opacity-90 cursor-default' : 'hover:bg-muted'
                               )}
                               disabled={isCurrent}
-                              title={isCurrent ? 'Current version' : 'Restore this version'}
+                              title={isCurrent ? t('fileViewer.currentVersion') : t('fileViewer.restoreThisVersion')}
                             >
                               {isCurrent ? (
-                                <span className="px-1">Current</span>
+                                <span className="px-1">{t('fileViewer.current')}</span>
                               ) : (
                                 <>
-                                  <span className="text-[11px]">Restore</span>
+                                  <span className="text-[11px]">{t('fileViewer.restore')}</span>
                                 </>
                               )}
                             </Button>
@@ -1199,14 +1199,17 @@ export function FileViewerView({
                         </div>
 
                         <div className="text-xs text-muted-foreground">
-                          {new Date(version.date).toLocaleDateString('en-US', {
+                          {t('fileViewer.dateAtTime', {
+                            date: new Date(version.date).toLocaleDateString('en-US', {
                             month: 'short',
                             day: 'numeric',
                             year: new Date(version.date).getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
-                          })} at {new Date(version.date).toLocaleTimeString('en-US', {
+                          }),
+                            time: new Date(version.date).toLocaleTimeString('en-US', {
                             hour: 'numeric',
                             minute: '2-digit',
                             hour12: true
+                          }),
                           })}
                         </div>
                       </div>
@@ -1225,7 +1228,7 @@ export function FileViewerView({
               onClick={handleDownload}
               disabled={isDownloading || isCachedFileLoading}
               className="h-8 w-8 p-0 bg-transparent border border-border rounded-xl text-muted-foreground hover:text-foreground hover:bg-accent/50"
-              title="Download file"
+              title={t('fileViewer.downloadFile')}
             >
               {isDownloading ? (
                 <DobbyLoader size="small" />
@@ -1274,16 +1277,16 @@ export function FileViewerView({
               <div className="h-full w-full max-w-full flex flex-col items-center justify-center min-w-0">
                 <DobbyLoader size="medium" className="mb-3" />
                 <p className="text-sm text-muted-foreground">
-                  {sandboxStatus === 'STARTING' && (isAutoStarting ? 'Waking up computer...' : 'Computer starting...')}
-                  {sandboxStatus === 'OFFLINE' && 'Computer offline'}
-                  {sandboxStatus === 'FAILED' && 'Computer unavailable'}
-                  {sandboxStatus === 'UNKNOWN' && 'Initializing...'}
+                  {sandboxStatus === 'STARTING' && (isAutoStarting ? t('computerStatus.wakingUp') : t('computerStatus.starting'))}
+                  {sandboxStatus === 'OFFLINE' && t('computerStatus.offline')}
+                  {sandboxStatus === 'FAILED' && t('computerStatus.unavailable')}
+                  {sandboxStatus === 'UNKNOWN' && t('computerStatus.initializing')}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {sandboxStatus === 'STARTING' && 'File will load once the computer is ready.'}
-                  {sandboxStatus === 'OFFLINE' && 'Attempting to start the computer...'}
-                  {sandboxStatus === 'FAILED' && 'There was an issue starting the computer.'}
-                  {sandboxStatus === 'UNKNOWN' && 'Setting up your workspace...'}
+                  {sandboxStatus === 'STARTING' && t('computerStatus.fileWillLoad')}
+                  {sandboxStatus === 'OFFLINE' && t('computerStatus.attemptingStart')}
+                  {sandboxStatus === 'FAILED' && t('computerStatus.issueStarting')}
+                  {sandboxStatus === 'UNKNOWN' && t('computerStatus.settingUp')}
                 </p>
               </div>
             );
@@ -1293,15 +1296,15 @@ export function FileViewerView({
           <div className="h-full w-full max-w-full flex flex-col items-center justify-center min-w-0">
             <DobbyLoader size="medium" className="mb-3" />
             <p className="text-sm text-muted-foreground">
-              {isLoadingVersionContent ? 'Loading version...' : `Loading ${fileName}`}
+              {isLoadingVersionContent ? t('fileViewer.loadingVersion') : t('fileViewer.loadingFile', { name: fileName })}
             </p>
             {(fileRetryAttempt > 0 || (hasError && isStillRetrying)) && !isLoadingVersionContent && (
               <p className="text-xs text-muted-foreground mt-1">
                 {hasError && isStillRetrying
-                  ? `Retrying... (attempt ${fileRetryAttempt + 1})`
+                  ? t('fileViewer.retryingAttempt', { attempt: fileRetryAttempt + 1 })
                   : fileRetryAttempt > 0
-                    ? `Retrying... (attempt ${fileRetryAttempt + 1})`
-                    : 'Loading...'}
+                    ? t('fileViewer.retryingAttempt', { attempt: fileRetryAttempt + 1 })
+                    : t('fileViewer.loading')}
               </p>
             )}
           </div>
@@ -1309,7 +1312,7 @@ export function FileViewerView({
           <div className="h-full w-full flex items-center justify-center p-4">
             <div className="max-w-md p-6 text-center border rounded-lg bg-muted/10">
               <AlertTriangle className="h-10 w-10 text-zinc-500 dark:text-zinc-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium mb-2">Error Loading File</h3>
+              <h3 className="text-lg font-medium mb-2">{t('fileViewer.errorLoadingFile')}</h3>
               <p className="text-sm text-muted-foreground mb-4">{contentError}</p>
               <div className="flex justify-center gap-3">
                 <Button
@@ -1323,10 +1326,10 @@ export function FileViewerView({
                     refetchFile();
                   }}
                 >
-                  Retry
+                  {t('fileViewer.retry')}
                 </Button>
                 <Button variant="outline" onClick={goBackToBrowser}>
-                  Back to Files
+                  {t('fileViewer.backToFilesButton')}
                 </Button>
               </div>
             </div>
@@ -1344,7 +1347,7 @@ export function FileViewerView({
                 return (
                   <div className="h-full w-full flex items-center justify-center">
                     <div className="text-sm text-muted-foreground">
-                      Loading {isPdfFile ? 'PDF' : isImageFile ? 'image' : 'file'}...
+                      {isPdfFile ? t('fileViewer.loadingPdf') : isImageFile ? t('fileViewer.loadingImage') : t('fileViewer.loadingGenericFile')}
                     </div>
                   </div>
                 );
@@ -1405,15 +1408,15 @@ export function FileViewerView({
       <Dialog open={revertModalOpen} onOpenChange={setRevertModalOpen}>
         <DialogContent className="sm:max-w-md rounded-xl bg-background border border-border">
           <DialogHeader>
-            <DialogTitle>Restore Previous Version</DialogTitle>
+            <DialogTitle>{t('fileViewer.restoreDialogTitle')}</DialogTitle>
             <DialogDescription>
-              Choose to restore just this file or all files from this version snapshot.
+              {t('fileViewer.restoreDialogDescription')}
             </DialogDescription>
           </DialogHeader>
 
           <div className="flex items-start gap-2 p-2 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/30">
             <AlertTriangle className="h-4 w-4 text-zinc-600 dark:text-zinc-500 mt-0.5 shrink-0" />
-            <span className="text-xs text-zinc-700 dark:text-zinc-400">This will replace current files with the selected version snapshot. Your current changes will be overwritten.</span>
+            <span className="text-xs text-zinc-700 dark:text-zinc-400">{t('fileViewer.restoreWarning')}</span>
           </div>
 
           {revertLoadingInfo ? (
@@ -1438,14 +1441,14 @@ export function FileViewerView({
                     size="sm"
                     onClick={() => setRevertMode('single')}
                   >
-                    Just this file
+                    {t('fileViewer.justThisFile')}
                   </Button>
                   <Button
                     variant={revertMode === 'commit' ? 'default' : 'outline'}
                     size="sm"
                     onClick={() => setRevertMode('commit')}
                   >
-                    Entire version snapshot
+                    {t('fileViewer.entireSnapshot')}
                   </Button>
                 </div>
               </div>
@@ -1461,14 +1464,14 @@ export function FileViewerView({
                     const match = revertList.find((x: any) => x.path === currentRel) || inCommitList.find((x: any) => x.path === currentRel);
                     const f = match || { path: currentRel, status: 'M', old_path: null, revert_effect: 'will_modify' };
                     const effect = f.revert_effect || f.revertEffect || 'unknown';
-                    const effectLabel = effect === 'will_delete' ? 'Will delete' : effect === 'will_restore' ? 'Will restore' : effect === 'will_modify' ? 'Will modify' : 'Unknown';
+                    const effectLabel = effect === 'will_delete' ? t('fileViewer.willDelete') : effect === 'will_restore' ? t('fileViewer.willRestore') : effect === 'will_modify' ? t('fileViewer.willModify') : t('fileViewer.unknown');
 
                     return (
                       <div key={f.path + (f.old_path || '')} className="flex items-center justify-between gap-2 py-1 px-1 rounded">
                         <div className="flex flex-col min-w-0">
                           <div className="text-sm truncate max-w-[260px]">{f.path}</div>
                           {f.old_path && f.old_path !== f.path && (
-                            <div className="text-[11px] text-muted-foreground mt-0.5 truncate">Renamed from: {f.old_path}</div>
+                            <div className="text-[11px] text-muted-foreground mt-0.5 truncate">{t('fileViewer.renamedFrom', { path: f.old_path })}</div>
                           )}
                         </div>
                         <div className="flex flex-col items-end">
@@ -1483,13 +1486,13 @@ export function FileViewerView({
                   return (revertList.length ? revertList : inCommitList).map((f: any) => {
                     const p = f.path;
                     const effect = f.revert_effect || f.revertEffect || 'unknown';
-                    const effectLabel = effect === 'will_delete' ? 'Will delete' : effect === 'will_restore' ? 'Will restore' : effect === 'will_modify' ? 'Will modify' : 'Unknown';
+                    const effectLabel = effect === 'will_delete' ? t('fileViewer.willDelete') : effect === 'will_restore' ? t('fileViewer.willRestore') : effect === 'will_modify' ? t('fileViewer.willModify') : t('fileViewer.unknown');
                     return (
                       <div key={p + (f.old_path || '')} className="flex items-center justify-between gap-2 py-1 px-1 rounded">
                         <div className="flex flex-col min-w-0">
                           <div className="text-sm truncate max-w-[260px]">{p}</div>
                           {f.old_path && f.old_path !== p && (
-                            <div className="text-[11px] text-muted-foreground mt-0.5 truncate">Renamed from: {f.old_path}</div>
+                            <div className="text-[11px] text-muted-foreground mt-0.5 truncate">{t('fileViewer.renamedFrom', { path: f.old_path })}</div>
                           )}
                         </div>
                         <div className="flex flex-col items-end">
@@ -1503,13 +1506,13 @@ export function FileViewerView({
               </div>
             </div>
           ) : (
-            <div className="py-4">No commit info</div>
+            <div className="py-4">{t('fileViewer.noCommitInfo')}</div>
           )}
 
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setRevertModalOpen(false)} disabled={revertInProgress}>Cancel</Button>
+            <Button variant="ghost" onClick={() => setRevertModalOpen(false)} disabled={revertInProgress}>{t('fileViewer.cancel')}</Button>
             <Button onClick={performRevert} disabled={revertInProgress || (revertMode === 'single' && !revertCurrentRelativePath)}>
-              {revertInProgress ? (<><DobbyLoader size="small" className="mr-2" />Restoring...</>) : 'Restore'}
+              {revertInProgress ? (<><DobbyLoader size="small" className="mr-2" />{t('fileViewer.restoring')}</>) : t('fileViewer.restore')}
             </Button>
           </DialogFooter>
 
@@ -1522,7 +1525,7 @@ export function FileViewerView({
         <div className="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
           <Badge variant="outline" className="py-0.5 h-6">
             <FileText className="h-3 w-3 mr-1" />
-            {fileExtension.toUpperCase() || 'FILE'}
+            {fileExtension.toUpperCase() || t('fileViewer.fileBadge')}
           </Badge>
         </div>
         <div className="text-xs text-zinc-500 dark:text-zinc-400 truncate max-w-[200px]">

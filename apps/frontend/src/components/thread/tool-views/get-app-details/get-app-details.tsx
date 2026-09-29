@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Info,
   CheckCircle,
@@ -37,6 +38,8 @@ export function GetAppDetailsToolView({
   isSuccess = true,
   isStreaming = false,
 }: ToolViewProps) {
+  const t = useTranslations('toolViews.getAppDetails');
+  const tCommon = useTranslations('toolViews.common');
   if (!toolCall) {
     return null;
   }
@@ -89,7 +92,7 @@ export function GetAppDetailsToolView({
             icon={Info}
             iconColor="text-zinc-500 dark:text-zinc-400"
             bgColor="bg-gradient-to-b from-blue-100 to-blue-50 shadow-inner dark:from-blue-800/40 dark:to-blue-900/60 dark:shadow-blue-950/20"
-            title="Loading app details"
+            title={t('loading')}
             filePath={toolkit_slug ? `"${toolkit_slug}"` : undefined}
             showProgress={true}
           />
@@ -103,7 +106,7 @@ export function GetAppDetailsToolView({
                       {toolkit.logo_url ? (
                         <img
                           src={toolkit.logo_url}
-                          alt={`${toolkit.name} logo`}
+                          alt={t('logoAlt', { name: toolkit.name })}
                           className="w-8 h-8 object-cover"
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
@@ -143,7 +146,7 @@ export function GetAppDetailsToolView({
                                   </div>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                  <p>Verified integration</p>
+                                  <p>{t('verified')}</p>
                                 </TooltipContent>
                               </Tooltip>
                             </TooltipProvider>
@@ -163,7 +166,7 @@ export function GetAppDetailsToolView({
                               className={cn("text-xs font-medium", getAuthTypeColor(auth_schemes))}
                             >
                               <AuthIcon className="w-3 h-3 " />
-                              {auth_schemes?.includes('OAUTH2') ? 'OAuth2' : auth_schemes?.includes('BEARER_TOKEN') ? 'Bearer Token' : auth_schemes?.includes('API_KEY') ? 'API Key' : 'Unknown'}
+                              {auth_schemes?.includes('OAUTH2') ? 'OAuth2' : auth_schemes?.includes('BEARER_TOKEN') ? 'Bearer Token' : auth_schemes?.includes('API_KEY') ? 'API Key' : tCommon('unknown')}
                             </Badge>
                           );
                         })()}
@@ -196,7 +199,7 @@ export function GetAppDetailsToolView({
                 <div className="bg-white dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <Tag className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
-                    <h3 className="font-medium text-zinc-900 dark:text-zinc-100">Categories</h3>
+                    <h3 className="font-medium text-zinc-900 dark:text-zinc-100">{t('categories')}</h3>
                   </div>
                   <div className="flex flex-wrap gap-1">
                     {toolkit.categories.map((category, index) => (
@@ -220,10 +223,10 @@ export function GetAppDetailsToolView({
                 <Info className="h-8 w-8 text-zinc-400" />
               </div>
               <h3 className="text-base font-medium text-zinc-900 dark:text-zinc-100 mb-2">
-                No app details found
+                {t('noDetails')}
               </h3>
               <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                {toolkit_slug ? `Unable to load details for "${toolkit_slug}"` : 'App information not available'}
+                {toolkit_slug ? t('unableFor', { slug: toolkit_slug }) : t('notAvailable')}
               </p>
             </div>
           </div>

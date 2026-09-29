@@ -25,7 +25,7 @@ export interface AssistantMessageRendererProps {
   sandboxId?: string;
   project?: Project;
   isLatestMessage?: boolean;
-  t?: (key: string) => string;
+  t?: (key: string, values?: Record<string, string | number>) => string;
   threadId?: string;
   onPromptFill?: (message: string) => void;
 }
@@ -130,8 +130,8 @@ function renderCompleteToolCall(
       {attachments.length > 0 && (
         <div className="mt-4 space-y-3">
           <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-            <span>Task complete</span>
-            <span className="text-xs">({attachments.length} {attachments.length === 1 ? 'file' : 'files'})</span>
+            <span>{t ? t('thread.toolCall.taskComplete') : 'Task complete'}</span>
+            <span className="text-xs">{t ? t('thread.toolCall.taskCompleteFiles', { count: attachments.length }) : `(${attachments.length} ${attachments.length === 1 ? 'file' : 'files'})`}</span>
           </div>
           <FileAttachmentGrid
             attachments={attachments}

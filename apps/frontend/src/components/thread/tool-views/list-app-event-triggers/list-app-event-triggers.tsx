@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Bell,
   CheckCircle,
@@ -39,6 +40,7 @@ export function ListAppEventTriggersToolView({
   isStreaming = false,
 }: ToolViewProps) {
   // All hooks must be called unconditionally at the top
+  const t = useTranslations('toolViews.listAppEventTriggers');
   const [expandedTriggers, setExpandedTriggers] = React.useState<Set<string>>(new Set());
 
   // Defensive check - ensure toolCall is defined
@@ -124,7 +126,7 @@ export function ListAppEventTriggersToolView({
             icon={Bell}
             iconColor="text-orange-500 dark:text-orange-400"
             bgColor="bg-gradient-to-b from-orange-100 to-orange-50 shadow-inner dark:from-orange-800/40 dark:to-orange-900/60 dark:shadow-orange-950/20"
-            title="Loading event triggers"
+            title={t('loading')}
             showProgress={true}
           />
         ) : actualIsSuccess && toolkit ? (
@@ -142,10 +144,10 @@ export function ListAppEventTriggersToolView({
                     )}
                     <div>
                       <h3 className="font-semibold text-lg text-zinc-900 dark:text-zinc-100">
-                        {toolkit.name} Event Triggers
+                        {t('eventTriggersTitle', { name: toolkit.name })}
                       </h3>
                       <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                        {message || `${total} trigger${total !== 1 ? 's' : ''} available`}
+                        {message || t('availableCount', { count: total })}
                       </p>
                     </div>
                   </div>
@@ -210,7 +212,7 @@ export function ListAppEventTriggersToolView({
                               <div className="mt-4 space-y-2">
                                 <div className="flex items-center gap-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
                                   <Info className="w-4 h-4" />
-                                  Instructions
+                                  {t('instructions')}
                                 </div>
                                 <div className="text-sm text-zinc-600 dark:text-zinc-400 whitespace-pre-wrap bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-3">
                                   {trigger.instructions.trim()}
@@ -222,7 +224,7 @@ export function ListAppEventTriggersToolView({
                               <div className="space-y-2">
                                 <div className="flex items-center gap-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
                                   <Settings className="w-4 h-4" />
-                                  Configuration Parameters
+                                  {t('configParams')}
                                 </div>
                                 <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-3 space-y-2">
                                   {Object.entries(trigger.config.properties).map(([key, prop]: [string, any]) => (
@@ -233,7 +235,7 @@ export function ListAppEventTriggersToolView({
                                         </span>
                                         {prop.default !== undefined && (
                                           <Badge variant="secondary" className="text-xs">
-                                            Default: {String(prop.default)}
+                                            {t('defaultValue', { value: String(prop.default) })}
                                           </Badge>
                                         )}
                                       </div>
@@ -244,7 +246,7 @@ export function ListAppEventTriggersToolView({
                                       )}
                                       {prop.examples && prop.examples.length > 0 && (
                                         <div className="text-xs text-zinc-500 dark:text-zinc-500 pl-2">
-                                          Examples: {prop.examples.join(', ')}
+                                          {t('examples', { value: prop.examples.join(', ') })}
                                         </div>
                                       )}
                                     </div>
@@ -257,7 +259,7 @@ export function ListAppEventTriggersToolView({
                               <div className="space-y-2">
                                 <div className="flex items-center gap-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
                                   <Code2 className="w-4 h-4" />
-                                  Payload Structure
+                                  {t('payloadStructure')}
                                 </div>
                                 <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-3 space-y-2">
                                   {Object.entries(trigger.payload.properties).map(([key, prop]: [string, any]) => (
@@ -283,7 +285,7 @@ export function ListAppEventTriggersToolView({
                 <div className="border rounded-xl p-6 text-center">
                   <Bell className="w-12 h-12 mx-auto text-zinc-400 dark:text-zinc-600 mb-3" />
                   <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                    No event triggers found for {toolkit?.name || 'this toolkit'}
+                    {t('noTriggersFor', { name: toolkit?.name || t('thisToolkit') })}
                   </p>
                 </div>
               )}
@@ -293,7 +295,7 @@ export function ListAppEventTriggersToolView({
           <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg m-4">
             <p className="text-sm text-red-800 dark:text-red-200 flex items-center gap-2">
               <AlertTriangle className="h-4 w-4" />
-              Failed to load event triggers. Please try again.
+              {t('failed')}
             </p>
           </div>
         )}

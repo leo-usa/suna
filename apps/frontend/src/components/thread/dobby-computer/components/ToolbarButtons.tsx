@@ -1,6 +1,7 @@
 'use client';
 
 import { memo } from 'react';
+import { useTranslations } from 'next-intl';
 import { X } from 'lucide-react';
 import { motion } from 'framer-motion';
 import {
@@ -19,6 +20,7 @@ export const ToolbarButtons = memo(function ToolbarButtons({
   onClose, 
   isMaximized = false 
 }: ToolbarButtonsProps) {
+  const t = useTranslations('dobbyComputer.window');
   return (
     <div className="flex items-center gap-0.5 p-1 rounded-full bg-muted">
       <Tooltip>
@@ -38,7 +40,7 @@ export const ToolbarButtons = memo(function ToolbarButtons({
           </motion.button>
         </TooltipTrigger>
         <TooltipContent side="bottom">
-          <span>Close</span>
+          <span>{t('close')}</span>
         </TooltipContent>
       </Tooltip>
     </div>

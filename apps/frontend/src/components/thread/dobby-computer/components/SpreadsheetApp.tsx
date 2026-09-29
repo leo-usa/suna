@@ -1,6 +1,7 @@
 'use client';
 
 import { memo, useState, useRef, useCallback, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SpreadsheetComponent } from '@syncfusion/ej2-react-spreadsheet';
 import { registerSyncfusionLicense, SYNCFUSION_SPREADSHEET_SERVICE_URL } from '@/lib/syncfusion';
@@ -78,6 +79,7 @@ const SpreadsheetEditor = memo(function SpreadsheetEditor({
   onUnsavedChange: (hasChanges: boolean) => void;
   onActionsReady?: (handle: SpreadsheetEditorHandle | null) => void;
 }) {
+  const tSheet = useTranslations('dobbyComputer.spreadsheet');
   const ssRef = useRef<SpreadsheetComponent>(null);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -156,7 +158,7 @@ const SpreadsheetEditor = memo(function SpreadsheetEditor({
     }
     
     if (!sandboxId || !filePath || !session?.access_token) {
-      toast.error('Unable to download file');
+      toast.error(tSheet('unableToDownload'));
       return;
     }
 
@@ -182,14 +184,14 @@ const SpreadsheetEditor = memo(function SpreadsheetEditor({
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
       
-      toast.success('File downloaded successfully');
+      toast.success(tSheet('downloadSuccess'));
     } catch (error) {
       console.error('Download error:', error);
-      toast.error('Failed to download file');
+      toast.error(tSheet('downloadFailed'));
     } finally {
       setIsDownloading(false);
     }
-  }, [sandboxId, filePath, fileName, session, isDownloadRestricted, openUpgradeModal]);
+  }, [sandboxId, filePath, fileName, session, isDownloadRestricted, openUpgradeModal, tSheet]);
 
   if (!isActive) return null;
 
@@ -257,6 +259,7 @@ export const SpreadsheetApp = memo(function SpreadsheetApp({
   initialFilePath,
   onFileOpen,
 }: SpreadsheetAppProps) {
+  const tSheet = useTranslations('dobbyComputer.spreadsheet');
   const queryClient = useQueryClient();
   const [tabs, setTabs] = useState<SpreadsheetTab[]>([]);
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
@@ -456,7 +459,7 @@ export const SpreadsheetApp = memo(function SpreadsheetApp({
           )}
         >
           <Home className="w-4 h-4" />
-          <span>Home</span>
+          <span>{tSheet('home')}</span>
         </button>
 
         {tabs.map((tab) => (
@@ -492,7 +495,7 @@ export const SpreadsheetApp = memo(function SpreadsheetApp({
             onClick={() => activeEditorHandle?.forceRefresh()}
             disabled={activeEditorHandle?.isSyncing}
             className="flex items-center justify-center w-10 h-10 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors disabled:opacity-50 shrink-0"
-            title="Refresh spreadsheet"
+            title={tSheet('refresh')}
           >
             {activeEditorHandle?.isSyncing ? <DobbyLoader size="small" /> : <RefreshCw className="w-4 h-4" />}
           </button>
@@ -500,7 +503,7 @@ export const SpreadsheetApp = memo(function SpreadsheetApp({
         <button
           onClick={goToHome}
           className="flex items-center justify-center w-10 h-10 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors shrink-0"
-          title="Open new file"
+          title={tSheet('openNewFile')}
         >
           <Plus className="w-4 h-4" />
         </button>
@@ -521,7 +524,7 @@ export const SpreadsheetApp = memo(function SpreadsheetApp({
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
             <Table className="w-5 h-5 text-white" />
           </div>
-          <span className="font-semibold text-zinc-900 dark:text-white tracking-tight">Spreadsheets</span>
+          <span className="font-semibold text-zinc-900 dark:text-white tracking-tight">{tSheet('title')}</span>
         </div>
 
         <Button
@@ -535,13 +538,13 @@ export const SpreadsheetApp = memo(function SpreadsheetApp({
           ) : (
             <Plus className="w-4 h-4" />
           )}
-          <span className="font-medium">{isCreating ? 'Creating...' : 'New Spreadsheet'}</span>
+          <span className="font-medium">{isCreating ? tSheet('creating') : tSheet('newSpreadsheet')}</span>
         </Button>
 
         <div className="space-y-1">
           <div className="px-3 py-2 rounded-lg bg-zinc-200/50 dark:bg-zinc-800/50 text-zinc-900 dark:text-white text-sm font-medium flex items-center gap-2">
             <Clock className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
-            Recents
+            {tSheet('recents')}
           </div>
         </div>
       </div>
@@ -551,7 +554,7 @@ export const SpreadsheetApp = memo(function SpreadsheetApp({
           <Search className="w-4 h-4 text-zinc-400" />
           <input
             type="text"
-            placeholder="Search spreadsheets..."
+            placeholder={tSheet('searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="flex-1 bg-transparent border-none focus:outline-none text-sm text-zinc-900 dark:text-white placeholder:text-zinc-400"
@@ -561,8 +564,8 @@ export const SpreadsheetApp = memo(function SpreadsheetApp({
         <div className="flex-1 overflow-auto p-6">
           <div className="space-y-2">
             <div className="flex items-center px-4 py-2 text-xs font-medium text-zinc-400 uppercase tracking-wider">
-              <span className="flex-1">Name</span>
-              <span className="w-32">Location</span>
+              <span className="flex-1">{tSheet('name')}</span>
+              <span className="w-32">{tSheet('location')}</span>
             </div>
             
             {(searchQuery ? filteredFiles : spreadsheetFiles).length > 0 ? (
@@ -583,7 +586,7 @@ export const SpreadsheetApp = memo(function SpreadsheetApp({
                       {file.name}
                     </div>
                     <div className="text-xs text-zinc-500 dark:text-zinc-400 truncate">
-                      Last opened {new Date().toLocaleDateString()}
+                      {tSheet('lastOpened', { date: new Date().toLocaleDateString() })}
                     </div>
                   </div>
                   <div className="w-32 text-xs text-zinc-400 truncate">
@@ -596,14 +599,14 @@ export const SpreadsheetApp = memo(function SpreadsheetApp({
                 <div className="w-16 h-16 rounded-2xl bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center mb-4">
                   <FileSpreadsheet className="w-8 h-8 opacity-20" />
                 </div>
-                <p className="text-sm">No spreadsheets found</p>
+                <p className="text-sm">{tSheet('noneFound')}</p>
                 <button
                   onClick={createNewSpreadsheet}
                   disabled={isCreating}
                   className="mt-4 text-zinc-500 hover:text-zinc-600 dark:text-zinc-400 text-sm font-medium disabled:opacity-50 flex items-center gap-2"
                 >
                   {isCreating && <DobbyLoader size="small" />}
-                  {isCreating ? 'Creating...' : 'Create New'}
+                  {isCreating ? tSheet('creating') : tSheet('createNew')}
                 </button>
               </div>
             )}

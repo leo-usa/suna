@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   AlertTriangle,
   Upload,
@@ -45,6 +46,8 @@ export function UploadFileToolView({
   isSuccess = true,
   isStreaming = false,
 }: ToolViewProps) {
+  const t = useTranslations('toolViews.upload');
+  const tCommon = useTranslations('toolViews.common');
   const [copied, setCopied] = useState(false);
 
   if (!toolCall) {
@@ -102,17 +105,17 @@ export function UploadFileToolView({
       await navigator.clipboard.writeText(text);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-      toast.success('Copied to clipboard');
+      toast.success(tCommon('copiedToClipboard'));
     } catch {
-      toast.error('Failed to copy');
+      toast.error(tCommon('copyFailed'));
     }
   };
 
   const getFileName = (filePath: string | null) => {
-    if (!filePath) return 'Unknown file';
+    if (!filePath) return t('unknownFile');
     const fileName = filePath.split('/').pop() || filePath;
     // Trim whitespace, newlines, and other control characters
-    return fileName.trim().replace(/[\r\n]+/g, '').replace(/\s+$/g, '') || 'Unknown file';
+    return fileName.trim().replace(/[\r\n]+/g, '').replace(/\s+$/g, '') || t('unknownFile');
   };
 
   const getFileExtension = (filename: string) => {
@@ -159,7 +162,7 @@ export function UploadFileToolView({
                 {fileName}
               </p>
               <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-                Uploading...
+                {t('uploading')}
               </p>
             </div>
           </div>
@@ -206,7 +209,7 @@ export function UploadFileToolView({
                       className="h-8 text-xs"
                     >
                       <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
-                      Open
+                      {t('open')}
                     </Button>
                     <Button
                       variant="ghost"
@@ -220,12 +223,12 @@ export function UploadFileToolView({
                       {copied ? (
                         <>
                           <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />
-                          Copied
+                          {tCommon('copied')}
                         </>
                       ) : (
                         <>
                           <Copy className="h-3.5 w-3.5 mr-1.5" />
-                          Copy URL
+                          {t('copyUrl')}
                         </>
                       )}
                     </Button>
@@ -243,10 +246,10 @@ export function UploadFileToolView({
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                Upload failed
+                {t('uploadFailed')}
               </p>
               <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 line-clamp-2">
-                {uploadResult?.message || 'The file upload encountered an error.'}
+                {uploadResult?.message || t('uploadError')}
               </p>
             </div>
           </div>

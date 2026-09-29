@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import {
   CheckCircle,
   AlertTriangle,
@@ -31,6 +32,8 @@ export function CheckProfileConnectionToolView({
   isSuccess = true,
   isStreaming = false,
 }: ToolViewProps) {
+  const t = useTranslations('toolViews.checkProfileConnection');
+  const tCommon = useTranslations('toolViews.common');
   // Defensive check
   if (!toolCall) {
     return null;
@@ -83,7 +86,7 @@ export function CheckProfileConnectionToolView({
       color: isConnected
         ? 'bg-zinc-100 text-zinc-700 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700'
         : 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800',
-      text: isConnected ? 'Connected' : 'Not Connected'
+      text: isConnected ? tCommon('connected') : tCommon('notConnected')
     };
   };
 
@@ -119,7 +122,7 @@ export function CheckProfileConnectionToolView({
             icon={Shield}
             iconColor="text-zinc-500 dark:text-zinc-400"
             bgColor="bg-gradient-to-b from-emerald-100 to-emerald-50 shadow-inner dark:from-emerald-800/40 dark:to-emerald-900/60 dark:shadow-emerald-950/20"
-            title="Checking profile connection"
+            title={t('checking')}
             filePath={profile_name ? `"${profile_name}"` : undefined}
             showProgress={true}
           />
@@ -165,7 +168,7 @@ export function CheckProfileConnectionToolView({
                       {connection_count}
                     </div>
                     <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                      {connection_count === 1 ? 'Connection' : 'Connections'}
+                      {t('connectionLabel', { count: connection_count })}
                     </p>
                   </div>
                   <div className="text-center">
@@ -173,7 +176,7 @@ export function CheckProfileConnectionToolView({
                       {tool_count}
                     </div>
                     <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                      Available {tool_count === 1 ? 'Tool' : 'Tools'}
+                      {t('availableToolLabel', { count: tool_count })}
                     </p>
                   </div>
                 </div>
@@ -184,7 +187,7 @@ export function CheckProfileConnectionToolView({
                   <div className="flex items-center gap-2">
                     <Wrench className="w-4 h-4 text-blue-500" />
                     <h3 className="font-medium text-zinc-900 dark:text-zinc-100">
-                      Available Tools
+                      {t('availableTools')}
                     </h3>
                     <Badge variant="outline" className="text-xs">
                       {tool_count}
@@ -219,7 +222,7 @@ export function CheckProfileConnectionToolView({
                   <div className="flex items-center gap-2">
                     <Activity className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
                     <h3 className="font-medium text-zinc-900 dark:text-zinc-100">
-                      Active Connections
+                      {t('activeConnections')}
                     </h3>
                     <Badge variant="outline" className="text-xs">
                       {connection_count}
@@ -249,19 +252,19 @@ export function CheckProfileConnectionToolView({
                                 : "bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-900/20 dark:text-gray-300 dark:border-gray-800"
                             )}
                           >
-                            {connection.is_active ? 'Active' : 'Inactive'}
+                            {connection.is_active ? tCommon('active') : tCommon('inactive')}
                           </Badge>
                         </div>
 
                         <div className="text-xs text-zinc-500 dark:text-zinc-400 space-y-1">
                           <div className="flex items-center gap-2">
                             <Calendar className="w-3 h-3" />
-                            <span>Connected: {formatConnectionTime(connection.created_at)}</span>
+                            <span>{t('connectedAt', { time: formatConnectionTime(connection.created_at) })}</span>
                           </div>
                           {connection.updated_at && connection.updated_at !== connection.created_at && (
                             <div className="flex items-center gap-2">
                               <Activity className="w-3 h-3" />
-                              <span>Updated: {formatConnectionTime(connection.updated_at)}</span>
+                              <span>{t('updatedAt', { time: formatConnectionTime(connection.updated_at) })}</span>
                             </div>
                           )}
                         </div>
@@ -275,10 +278,10 @@ export function CheckProfileConnectionToolView({
                 <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl p-4 text-center">
                   <Wrench className="w-8 h-8 text-yellow-600 dark:text-yellow-400 mx-auto mb-2" />
                   <h3 className="font-medium text-yellow-900 dark:text-yellow-100 mb-1">
-                    No Tools Available
+                    {t('noToolsAvailable')}
                   </h3>
                   <p className="text-sm text-yellow-700 dark:text-yellow-300">
-                    This profile is connected but no tools are currently available for this integration.
+                    {t('noToolsDesc')}
                   </p>
                 </div>
               )}
@@ -287,10 +290,10 @@ export function CheckProfileConnectionToolView({
                 <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 text-center">
                   <Link2Off className="w-8 h-8 text-red-600 dark:text-red-400 mx-auto mb-2" />
                   <h3 className="font-medium text-red-900 dark:text-red-100 mb-1">
-                    Profile Not Connected
+                    {t('profileNotConnected')}
                   </h3>
                   <p className="text-sm text-red-700 dark:text-red-300">
-                    This credential profile needs to be connected before tools become available.
+                    {t('notConnectedDesc')}
                   </p>
                 </div>
               )}
@@ -303,10 +306,10 @@ export function CheckProfileConnectionToolView({
                 <Shield className="h-8 w-8 text-zinc-400" />
               </div>
               <h3 className="text-base font-medium text-zinc-900 dark:text-zinc-100 mb-2">
-                No profile information
+                {t('noProfileInfo')}
               </h3>
               <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                Unable to retrieve connection status for this profile
+                {t('unableToRetrieve')}
               </p>
             </div>
           </div>

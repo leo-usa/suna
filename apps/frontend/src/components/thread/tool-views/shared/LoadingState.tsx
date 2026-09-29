@@ -3,6 +3,8 @@ import { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
 import { DobbyLoader } from '@/components/ui/dobby-loader';
+import { useTranslations } from 'next-intl';
+import { useToolTitleLabel } from '@/hooks/use-tool-name-label';
 
 interface LoadingStateProps {
   icon?: LucideIcon;
@@ -32,6 +34,8 @@ export function LoadingState({
   initialProgress = 0,
   useDobbyLoader = true,
 }: LoadingStateProps): React.JSX.Element {
+  const t = useTranslations('toolViews.shared');
+  const titleLabel = useToolTitleLabel();
   const [progress, setProgress] = useState(initialProgress);
 
   useEffect(() => {
@@ -63,7 +67,7 @@ export function LoadingState({
         </div>
         
         <h3 className="text-xl font-semibold mb-4 text-zinc-900 dark:text-zinc-100">
-          {title}
+          {titleLabel(title)}
         </h3>
         
         {filePath && (
@@ -78,7 +82,7 @@ export function LoadingState({
           <div className="space-y-3">
             <Progress value={Math.min(progress, 100)} className="w-full h-1" />
             <div className="flex justify-center items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
-              <span>{progressText || 'Processing...'}</span>
+              <span>{progressText || t('processing')}</span>
               <span className="font-mono">{Math.round(Math.min(progress, 100))}%</span>
             </div>
           </div>

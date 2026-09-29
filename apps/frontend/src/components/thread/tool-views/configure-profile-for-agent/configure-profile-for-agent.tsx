@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Settings,
   CheckCircle,
@@ -29,6 +30,7 @@ export function ConfigureProfileForAgentToolView({
   isSuccess = true,
   isStreaming = false,
 }: ToolViewProps) {
+  const t = useTranslations('toolViews.configureProfileForAgent');
   // Defensive check
   if (!toolCall) {
     return null;
@@ -65,11 +67,11 @@ export function ConfigureProfileForAgentToolView({
 
   const getToolCategory = (toolName: string) => {
     const upperTool = toolName.toUpperCase();
-    if (upperTool.includes('SCHEDULE') || upperTool.includes('MEETING')) return 'Meeting';
-    if (upperTool.includes('EMAIL') || upperTool.includes('SEND')) return 'Communication';
-    if (upperTool.includes('FILE') || upperTool.includes('DOCUMENT')) return 'Files';
-    if (upperTool.includes('CALENDAR')) return 'Calendar';
-    return 'Integration';
+    if (upperTool.includes('SCHEDULE') || upperTool.includes('MEETING')) return t('category.meeting');
+    if (upperTool.includes('EMAIL') || upperTool.includes('SEND')) return t('category.communication');
+    if (upperTool.includes('FILE') || upperTool.includes('DOCUMENT')) return t('category.files');
+    if (upperTool.includes('CALENDAR')) return t('category.calendar');
+    return t('category.integration');
   };
 
   return (
@@ -102,7 +104,7 @@ export function ConfigureProfileForAgentToolView({
               ) : (
                 <AlertTriangle className="h-3 w-3" />
               )}
-              {actualIsSuccess ? 'Configuration updated' : 'Configuration failed'}
+              {actualIsSuccess ? t('updated') : t('failed')}
             </Badge>
           )}
         </div>
@@ -114,7 +116,7 @@ export function ConfigureProfileForAgentToolView({
             icon={Settings}
             iconColor="text-zinc-500 dark:text-zinc-400"
             bgColor="bg-gradient-to-b from-zinc-100 to-zinc-50 shadow-inner dark:from-zinc-800/40 dark:to-zinc-900/60 dark:shadow-zinc-950/20"
-            title="Configuring profile for worker"
+            title={t('configuring')}
             filePath={display_name ? `"${display_name}"` : undefined}
             showProgress={true}
           />
@@ -128,10 +130,10 @@ export function ConfigureProfileForAgentToolView({
                   </div>
                   <div>
                     <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">
-                      {display_name || 'Worker Profile'}
+                      {display_name || t('workerProfile')}
                     </h3>
                     <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                      Configuration updated successfully
+                      {t('updatedSuccess')}
                     </p>
                   </div>
                 </div>
@@ -143,7 +145,7 @@ export function ConfigureProfileForAgentToolView({
                     {total_tools}
                   </div>
                   <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                    {total_tools === 1 ? 'Tool Configured' : 'Tools Configured'}
+                    {t('toolsConfigured', { count: total_tools })}
                   </p>
                 </div>
               </div>
@@ -153,7 +155,7 @@ export function ConfigureProfileForAgentToolView({
                   <div className="flex items-center gap-2">
                     <Wrench className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
                     <h3 className="font-medium text-zinc-900 dark:text-zinc-100">
-                      Enabled Tools
+                      {t('enabledTools')}
                     </h3>
                     <Badge variant="outline" className="text-xs">
                       {enabled_tools.length}
@@ -197,7 +199,7 @@ export function ConfigureProfileForAgentToolView({
                   <div className="flex items-center gap-2">
                     <GitBranch className="w-4 h-4 text-blue-500" />
                     <h3 className="font-medium text-zinc-900 dark:text-zinc-100">
-                      Version Information
+                      {t('versionInfo')}
                     </h3>
                   </div>
 
@@ -205,7 +207,7 @@ export function ConfigureProfileForAgentToolView({
                     <div className="space-y-2">
                       <div className="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
                         <Package className="w-4 h-4" />
-                        <span>Version Name</span>
+                        <span>{t('versionName')}</span>
                       </div>
                       <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 pl-6">
                         {version_name}
@@ -216,7 +218,7 @@ export function ConfigureProfileForAgentToolView({
                       <div className="space-y-2">
                         <div className="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
                           <Hash className="w-4 h-4" />
-                          <span>Version ID</span>
+                          <span>{t('versionId')}</span>
                         </div>
                         <p className="text-xs font-mono text-zinc-600 dark:text-zinc-400 pl-6 break-all">
                           {version_id}
@@ -235,10 +237,10 @@ export function ConfigureProfileForAgentToolView({
                 <Settings className="h-8 w-8 text-zinc-400" />
               </div>
               <h3 className="text-base font-medium text-zinc-900 dark:text-zinc-100 mb-2">
-                No configuration applied
+                {t('noConfig')}
               </h3>
               <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                No tools were configured for this profile
+                {t('noToolsConfigured')}
               </p>
             </div>
           </div>

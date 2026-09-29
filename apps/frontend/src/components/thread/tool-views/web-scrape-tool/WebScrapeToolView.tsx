@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { motion } from 'framer-motion';
 import {
   Globe,
@@ -31,6 +32,8 @@ export function WebScrapeToolView({
   isSuccess = true,
   isStreaming = false,
 }: ToolViewProps) {
+  const t = useTranslations('toolViews.webScrape');
+  const tCommon = useTranslations('toolViews.common');
   const [copiedFile, setCopiedFile] = useState<string | null>(null);
 
   // Prepare raw arguments for hooks
@@ -95,9 +98,9 @@ export function WebScrapeToolView({
       await navigator.clipboard.writeText(filePath);
       setCopiedFile(filePath);
       setTimeout(() => setCopiedFile(null), 2000);
-      toast.success('Path copied to clipboard');
+      toast.success(t('pathCopied'));
     } catch {
-      toast.error('Failed to copy');
+      toast.error(tCommon('copyFailed'));
     }
   };
 
@@ -144,7 +147,7 @@ export function WebScrapeToolView({
             transition={{ duration: 0.4, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
             className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-6"
           >
-            Scraping webpage{displayUrls.length > 1 ? 's' : ''}
+            {displayUrls.length > 1 ? t('scrapingWebpages') : t('scrapingWebpage')}
           </motion.h3>
 
           {/* URL List */}
@@ -194,7 +197,7 @@ export function WebScrapeToolView({
 
                     {/* Domain text */}
                     <span className="flex-1 text-sm font-medium text-zinc-700 dark:text-zinc-300 truncate">
-                      {domain}
+                      {urlItem === 'Scraping...' ? t('scraping') : domain}
                       {isUrlAnimating && index === 0 && (
                         <span className="animate-pulse text-muted-foreground ml-1">▌</span>
                       )}
@@ -231,7 +234,7 @@ export function WebScrapeToolView({
                 <>
                   {displayUrls.length > 1 && (
                     <div className="text-sm font-medium text-zinc-800 dark:text-zinc-200 mb-3 flex items-center justify-between">
-                      <span>Scraped URLs ({displayUrls.length})</span>
+                      <span>{t('scrapedUrls', { count: displayUrls.length })}</span>
                     </div>
                   )}
 
@@ -261,7 +264,7 @@ export function WebScrapeToolView({
                                 <div className="flex items-center gap-2 mb-1">
                                   <Badge variant="outline" className="text-xs px-2 py-0 h-5 font-normal bg-zinc-50 dark:bg-zinc-800">
                                     <Globe className="h-3 w-3 mr-1 opacity-70" />
-                                    Website
+                                    {t('website')}
                                   </Badge>
                                   {actualIsSuccess && !isStreaming && (
                                     <CheckCircle className="h-3.5 w-3.5 text-zinc-600 dark:text-zinc-400" />
@@ -303,9 +306,9 @@ export function WebScrapeToolView({
               {files.length > 0 && (
                 <div className="space-y-3">
                   <div className="text-sm font-medium text-zinc-800 dark:text-zinc-200 flex items-center justify-between">
-                    <span>Generated Files</span>
+                    <span>{t('generatedFiles')}</span>
                     <Badge variant="outline" className="text-xs font-normal">
-                      {files.length} {files.length === 1 ? 'file' : 'files'}
+                      {t('fileCount', { count: files.length })}
                     </Badge>
                   </div>
 
@@ -343,12 +346,12 @@ export function WebScrapeToolView({
                               {isCopied ? (
                                 <>
                                   <Check className="h-3.5 w-3.5 mr-1.5" />
-                                  Copied
+                                  {tCommon('copied')}
                                 </>
                               ) : (
                                 <>
                                   <Copy className="h-3.5 w-3.5 mr-1.5" />
-                                  Copy
+                                  {tCommon('copy')}
                                 </>
                               )}
                             </Button>
@@ -367,10 +370,10 @@ export function WebScrapeToolView({
               <AlertTriangle className="h-10 w-10 text-zinc-400 dark:text-zinc-600" />
             </div>
             <h3 className="text-xl font-semibold mb-2 text-zinc-900 dark:text-zinc-100">
-              No URL Detected
+              {t('noUrlDetected')}
             </h3>
             <p className="text-sm text-zinc-500 dark:text-zinc-400 text-center">
-              Unable to extract a valid URL from the request
+              {t('noUrlDescription')}
             </p>
           </div>
         )}
@@ -386,12 +389,12 @@ export function WebScrapeToolView({
             {files.length > 0 ? (
               <Badge variant="outline" className="h-6 py-0.5">
                 <FileJson className="h-3 w-3 mr-1" />
-                {files.length} {files.length === 1 ? 'file' : 'files'}
+                {t('fileCount', { count: files.length })}
               </Badge>
             ) : displayUrls.length > 0 && actualIsSuccess && (
               <Badge variant="outline" className="h-6 py-0.5">
                 <Globe className="h-3 w-3 mr-1" />
-                {displayUrls.length} {displayUrls.length === 1 ? 'URL' : 'URLs'} scraped
+                {t('urlsScraped', { count: displayUrls.length })}
               </Badge>
             )}
           </>

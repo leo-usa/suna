@@ -9,6 +9,7 @@ import type { Project } from '@/lib/api/threads';
 import { useQueryClient } from '@tanstack/react-query';
 import { threadKeys } from '@/hooks/threads/keys';
 import { backendApi } from '@/lib/api-client';
+import { useToolNameLabel } from '@/hooks/use-tool-name-label';
 
 /**
  * Optimistically extract a string field from partial/streaming JSON.
@@ -115,6 +116,7 @@ const SlideStreamPreview: React.FC<{
     const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const isEnsuringSandboxRef = useRef(false);
     const queryClient = useQueryClient();
+    const { t } = useToolNameLabel();
 
     // Check if tool is completed
     const isCompleted = toolCall?.completed === true || 
@@ -312,7 +314,7 @@ const SlideStreamPreview: React.FC<{
                             <div className="flex items-center gap-2 mb-2">
                                 <span className="inline-block h-3 w-3 rounded-full border-2 border-muted-foreground/30 border-t-muted-foreground animate-spin" />
                                 <span className="text-sm font-medium">
-                                    {slideNumber ? `Generating Slide ${slideNumber}` : 'Generating Slide...'}
+                                    {slideNumber ? t('generatingSlide', { number: slideNumber }) : t('generatingSlideUnknown')}
                                 </span>
                             </div>
                             {slideTitle && (
@@ -450,6 +452,7 @@ export const ShowToolStream: React.FC<ShowToolStreamProps> = ({
     project
 }) => {
     const containerRef = useRef<HTMLDivElement>(null);
+    const { toolLabel } = useToolNameLabel();
     const [shouldShowContent, setShouldShowContent] = useState(false);
     const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
     const stableStartTimeRef = useRef<number | null>(null);
@@ -894,7 +897,7 @@ export const ShowToolStream: React.FC<ShowToolStreamProps> = ({
     const isToolStreamable = isStreamableTool(toolName);
 
     const IconComponent = getToolIcon(rawToolName || '');
-    const displayName = toolName;
+    const displayName = toolLabel(rawToolName || '');
 
     // Always show tool button, conditionally show content below for streamable tools
     if (showExpanded && isToolStreamable) {

@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Database,
   Search,
@@ -104,6 +105,7 @@ const KbResultDisplay: React.FC<{ operation: KbOperation; toolOutput: any }> = (
   operation,
   toolOutput
 }) => {
+  const t = useTranslations('toolViews.kb');
   if (!toolOutput) return null;
 
   const output = typeof toolOutput === 'string' ? toolOutput : JSON.stringify(toolOutput, null, 2);
@@ -128,7 +130,7 @@ const KbResultDisplay: React.FC<{ operation: KbOperation; toolOutput: any }> = (
         <div className="space-y-2">
           {version && (
             <div className="flex items-center justify-between text-sm">
-              <span className="font-medium text-zinc-700 dark:text-zinc-300">KB Version</span>
+              <span className="font-medium text-zinc-700 dark:text-zinc-300">{t('kbVersion')}</span>
               <span className="text-zinc-900 dark:text-zinc-100 font-mono">{version}</span>
             </div>
           )}
@@ -139,14 +141,14 @@ const KbResultDisplay: React.FC<{ operation: KbOperation; toolOutput: any }> = (
           )}
           {kbDirectory && (
             <div className="flex items-center justify-between text-sm">
-              <span className="font-medium text-zinc-700 dark:text-zinc-300">KB Directory</span>
+              <span className="font-medium text-zinc-700 dark:text-zinc-300">{t('kbDirectory')}</span>
               <span className="text-zinc-900 dark:text-zinc-100 font-mono">{kbDirectory}</span>
             </div>
           )}
           {syncedFiles && (
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
-                <span className="font-medium text-zinc-700 dark:text-zinc-300">Synced Files</span>
+                <span className="font-medium text-zinc-700 dark:text-zinc-300">{t('syncedFiles')}</span>
                 <span className="text-zinc-900 dark:text-zinc-100">{syncedFiles}</span>
               </div>
               {folderStructure && (
@@ -166,7 +168,7 @@ const KbResultDisplay: React.FC<{ operation: KbOperation; toolOutput: any }> = (
                               <span>{fileName}</span>
                             </div>
                           );
-                        }) : `${files?.length || 0} files`}
+                        }) : t('fileCount', { count: files?.length || 0 })}
                       </div>
                     </div>
                   ))}
@@ -208,14 +210,14 @@ const KbResultDisplay: React.FC<{ operation: KbOperation; toolOutput: any }> = (
         <div className="space-y-3">
           {queries.length > 0 && (
             <div className="text-sm">
-              <span className="font-medium text-zinc-700 dark:text-zinc-300">Query: </span>
+              <span className="font-medium text-zinc-700 dark:text-zinc-300">{t('query')} </span>
               <span className="text-zinc-900 dark:text-zinc-100">{queries.join(', ')}</span>
             </div>
           )}
 
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Search Results</span>
-            <span className="text-xs text-zinc-500">{totalHits} matches</span>
+            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{t('searchResults')}</span>
+            <span className="text-xs text-zinc-500">{t('matchCount', { count: totalHits })}</span>
           </div>
 
           <div className="space-y-2">
@@ -238,7 +240,7 @@ const KbResultDisplay: React.FC<{ operation: KbOperation; toolOutput: any }> = (
 
           {operation.data?.path && (
             <div className="text-xs text-zinc-500 dark:text-zinc-400 mt-2">
-              File: {operation.data.path.split('/').pop()}
+              {t('file', { name: operation.data.path.split('/').pop() })}
             </div>
           )}
         </div>
@@ -250,7 +252,7 @@ const KbResultDisplay: React.FC<{ operation: KbOperation; toolOutput: any }> = (
       <div className="space-y-2">
         {queries.length > 0 && (
           <div className="text-sm">
-            <span className="font-medium text-zinc-700 dark:text-zinc-300">Query: </span>
+            <span className="font-medium text-zinc-700 dark:text-zinc-300">{t('query')} </span>
             <span className="text-zinc-900 dark:text-zinc-100">{queries.join(', ')}</span>
           </div>
         )}
@@ -259,7 +261,7 @@ const KbResultDisplay: React.FC<{ operation: KbOperation; toolOutput: any }> = (
         </div>
         {operation.data?.path && (
           <div className="text-xs text-zinc-500 dark:text-zinc-400">
-            File: {operation.data.path.split('/').pop()}
+            {t('file', { name: operation.data.path.split('/').pop() })}
           </div>
         )}
       </div>
@@ -286,15 +288,15 @@ const KbResultDisplay: React.FC<{ operation: KbOperation; toolOutput: any }> = (
           <div className="grid grid-cols-3 gap-4 text-sm">
             <div className="text-center p-2 bg-zinc-50 dark:bg-zinc-900 rounded">
               <div className="font-medium text-zinc-900 dark:text-zinc-100">{totalFolders}</div>
-              <div className="text-xs text-zinc-500">Folders</div>
+              <div className="text-xs text-zinc-500">{t('folders')}</div>
             </div>
             <div className="text-center p-2 bg-zinc-50 dark:bg-zinc-900 rounded">
               <div className="font-medium text-zinc-900 dark:text-zinc-100">{totalFiles}</div>
-              <div className="text-xs text-zinc-500">Files</div>
+              <div className="text-xs text-zinc-500">{t('files')}</div>
             </div>
             <div className="text-center p-2 bg-zinc-50 dark:bg-zinc-900 rounded">
               <div className="font-medium text-zinc-900 dark:text-zinc-100">{totalSize.toFixed(2)} MB</div>
-              <div className="text-xs text-zinc-500">Size</div>
+              <div className="text-xs text-zinc-500">{t('size')}</div>
             </div>
           </div>
 
@@ -308,13 +310,13 @@ const KbResultDisplay: React.FC<{ operation: KbOperation; toolOutput: any }> = (
                   {folderData.description}
                 </div>
                 <div className="text-xs text-zinc-500">
-                  {folderData.files?.length || 0} files
+                  {t('fileCount', { count: folderData.files?.length || 0 })}
                 </div>
               </div>
             ))}
             {Object.keys(parsedOutput.structure).length > 3 && (
               <div className="text-xs text-zinc-500 text-center">
-                +{Object.keys(parsedOutput.structure).length - 3} more folders
+                {t('moreFolders', { count: Object.keys(parsedOutput.structure).length - 3 })}
               </div>
             )}
           </div>
@@ -343,8 +345,8 @@ const KbResultDisplay: React.FC<{ operation: KbOperation; toolOutput: any }> = (
       return (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Indexed Files</span>
-            <span className="text-xs text-zinc-500">{files.length} files</span>
+            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{t('indexedFiles')}</span>
+            <span className="text-xs text-zinc-500">{t('fileCount', { count: files.length })}</span>
           </div>
 
           <div className="space-y-2">
@@ -364,7 +366,7 @@ const KbResultDisplay: React.FC<{ operation: KbOperation; toolOutput: any }> = (
             ))}
             {files.length > 5 && (
               <div className="text-xs text-zinc-500 text-center">
-                +{files.length - 5} more files
+                {t('moreFiles', { count: files.length - 5 })}
               </div>
             )}
           </div>
@@ -377,8 +379,8 @@ const KbResultDisplay: React.FC<{ operation: KbOperation; toolOutput: any }> = (
     return (
       <div className="space-y-2">
         <div className="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex items-center justify-between">
-          <span>{operation.scope === 'global' ? 'Global KB Contents' : 'Local Files'}</span>
-          <span className="text-xs text-zinc-500">{lineCount} items</span>
+          <span>{operation.scope === 'global' ? t('globalContents') : t('localFiles')}</span>
+          <span className="text-xs text-zinc-500">{t('itemCount', { count: lineCount })}</span>
         </div>
         <div className="bg-zinc-50 dark:bg-zinc-900 rounded-lg p-3">
           <pre className="text-xs text-zinc-600 dark:text-zinc-400 whitespace-pre-wrap">
@@ -496,7 +498,7 @@ const KbResultDisplay: React.FC<{ operation: KbOperation; toolOutput: any }> = (
         )}
         {count !== null && (
           <div className="flex items-center justify-between text-sm">
-            <span className="font-medium text-zinc-700 dark:text-zinc-300">Items</span>
+            <span className="font-medium text-zinc-700 dark:text-zinc-300">{t('items')}</span>
             <span className="text-zinc-900 dark:text-zinc-100">{count}</span>
           </div>
         )}
@@ -509,7 +511,7 @@ const KbResultDisplay: React.FC<{ operation: KbOperation; toolOutput: any }> = (
             ))}
             {items.length > 3 && (
               <div className="text-xs text-zinc-500 text-center">
-                +{items.length - 3} more items
+                {t('moreItems', { count: items.length - 3 })}
               </div>
             )}
           </div>
@@ -532,6 +534,7 @@ const KbResultDisplay: React.FC<{ operation: KbOperation; toolOutput: any }> = (
 };
 
 const KbParametersDisplay: React.FC<{ operation: KbOperation }> = ({ operation }) => {
+  const t = useTranslations('toolViews.kb');
   if (!operation.data || Object.keys(operation.data).length === 0) return null;
 
   // Skip parameters for most operations to reduce redundancy - the result tells the story
@@ -542,7 +545,7 @@ const KbParametersDisplay: React.FC<{ operation: KbOperation }> = ({ operation }
   return (
     <div className="space-y-2">
       <div className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-        Parameters
+        {t('parameters')}
       </div>
       <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 rounded-lg p-3">
         <div className="space-y-1 text-xs">
@@ -571,6 +574,7 @@ export function KbToolView({
   isStreaming = false,
 }: ToolViewProps) {
   // All hooks must be called unconditionally at the top
+  const t = useTranslations('toolViews.kb');
   const [copied, setCopied] = React.useState(false);
 
   // Defensive check - handle cases where toolCall might be undefined
@@ -589,7 +593,7 @@ export function KbToolView({
 
   const Icon = getKbIcon(operation);
   const isGlobal = operation.scope === 'global';
-  const scopeLabel = isGlobal ? 'Global KB' : 'Local KB';
+  const scopeLabel = isGlobal ? t('globalKb') : t('localKb');
 
   const copyContent = () => {
     const content = toolResult?.output 
@@ -597,7 +601,7 @@ export function KbToolView({
       : 'No output';
     navigator.clipboard.writeText(content);
     setCopied(true);
-    toast.success('Output copied to clipboard');
+    toast.success(t('outputCopied'));
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -607,15 +611,15 @@ export function KbToolView({
         <div className="flex flex-row items-center justify-between">
           <ToolViewIconTitle 
             icon={Icon} 
-            title={`${operation.type === 'init' ? 'Initialize KB' :
-              operation.type === 'search' ? 'Search Files' :
-                operation.type === 'sync' ? 'Sync KB' :
-                  operation.type === 'list' ? 'List Contents' :
-                    operation.type === 'create' ? 'Create Folder' :
-                      operation.type === 'upload' ? 'Upload File' :
-                        operation.type === 'delete' ? 'Delete Item' :
-                          operation.type === 'enable' ? 'Toggle Item' :
-                            operation.type === 'cleanup' ? 'Cleanup KB' :
+            title={`${operation.type === 'init' ? t('opTitle.init') :
+              operation.type === 'search' ? t('opTitle.search') :
+                operation.type === 'sync' ? t('opTitle.sync') :
+                  operation.type === 'list' ? t('opTitle.list') :
+                    operation.type === 'create' ? t('opTitle.create') :
+                      operation.type === 'upload' ? t('opTitle.upload') :
+                        operation.type === 'delete' ? t('opTitle.delete') :
+                          operation.type === 'enable' ? t('opTitle.enable') :
+                            operation.type === 'cleanup' ? t('opTitle.cleanup') :
                               (operation.type as string).charAt(0).toUpperCase() + (operation.type as string).slice(1)
             } • ${scopeLabel}`}
           />
@@ -665,7 +669,7 @@ export function KbToolView({
         <div className="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
           <Badge variant="outline" className="h-6 py-0.5 bg-zinc-50 dark:bg-zinc-900">
             <Database className="h-3 w-3" />
-            KB Tool
+            {t('kbTool')}
           </Badge>
         </div>
         <div className="text-xs text-zinc-500 dark:text-zinc-400">

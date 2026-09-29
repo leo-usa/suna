@@ -5,6 +5,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -26,6 +27,7 @@ export function FileCarousel({
     children,
     className,
 }: FileCarouselProps) {
+    const t = useTranslations('thread.fileCarousel');
     const canGoPrev = currentIndex > 0;
     const canGoNext = currentIndex < files.length - 1;
     
@@ -73,11 +75,11 @@ export function FileCarousel({
             <div className="flex items-center justify-between mb-3 px-1">
                 <div className="flex items-center gap-2">
                     <div className="text-xs font-medium text-foreground">
-                        {files.length} {files.length === 1 ? 'file' : 'files'}
+                        {t('filesCount', { count: files.length })}
                     </div>
                     <div className="h-1 w-1 rounded-full bg-muted-foreground/40" />
                     <div className="text-xs text-muted-foreground">
-                        Use arrows to navigate
+                        {t('useArrows')}
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -95,7 +97,7 @@ export function FileCarousel({
                                 </Button>
                             </TooltipTrigger>
                             <TooltipContent>
-                                <p>Previous file</p>
+                                <p>{t('previousFile')}</p>
                             </TooltipContent>
                         </Tooltip>
                     </TooltipProvider>
@@ -112,7 +114,7 @@ export function FileCarousel({
                                         ? "w-6 bg-primary"
                                         : "w-2 bg-muted-foreground/30 hover:bg-muted-foreground/50"
                                 )}
-                                aria-label={`Go to file ${idx + 1}`}
+                                aria-label={t('goToFile', { number: idx + 1 })}
                             />
                         ))}
                     </div>
@@ -135,7 +137,7 @@ export function FileCarousel({
                                 </Button>
                             </TooltipTrigger>
                             <TooltipContent>
-                                <p>Next file</p>
+                                <p>{t('nextFile')}</p>
                             </TooltipContent>
                         </Tooltip>
                     </TooltipProvider>

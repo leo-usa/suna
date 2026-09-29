@@ -1,6 +1,7 @@
 'use client';
 
 import { memo, useState, useEffect, useCallback, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Search, 
@@ -54,6 +55,7 @@ export const QuickLaunch = memo(function QuickLaunch({
   onOpenSpreadsheets,
   files = [],
 }: QuickLaunchProps) {
+  const t = useTranslations('dobbyComputer.quickLaunch');
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -173,7 +175,7 @@ export const QuickLaunch = memo(function QuickLaunch({
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder="Search files, actions..."
+                  placeholder={t('searchPlaceholder')}
                   className="flex-1 bg-transparent text-foreground text-lg placeholder:text-muted-foreground outline-none"
                   autoComplete="off"
                   autoCorrect="off"
@@ -188,7 +190,7 @@ export const QuickLaunch = memo(function QuickLaunch({
               <div ref={listRef} className="max-h-[400px] overflow-y-auto p-2">
                 {query.length === 0 && (
                   <div className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Quick Actions
+                    {t('quickActions')}
                   </div>
                 )}
 
@@ -210,7 +212,7 @@ export const QuickLaunch = memo(function QuickLaunch({
                             <Icon className="h-5 w-5 text-primary" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="font-medium text-foreground">{action.name}</div>
+                            <div className="font-medium text-foreground">{t.has(`actions.${action.id}`) ? t(`actions.${action.id}`) : action.name}</div>
                           </div>
                         </button>
                       );
@@ -221,7 +223,7 @@ export const QuickLaunch = memo(function QuickLaunch({
                 {query.length > 0 && filteredFiles.length > 0 && (
                   <>
                     <div className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                      Files
+                      {t('files')}
                     </div>
                     <div className="space-y-1">
                       {filteredFiles.map((file, index) => {
@@ -256,7 +258,7 @@ export const QuickLaunch = memo(function QuickLaunch({
                 {query.length > 0 && filteredFiles.length === 0 && filteredActions.length === 0 && (
                   <div className="px-3 py-8 text-center text-muted-foreground">
                     <Search className="h-10 w-10 mx-auto mb-3 opacity-50" />
-                    <p>No results for "{query}"</p>
+                    <p>{t('noResults', { query })}</p>
                   </div>
                 )}
               </div>
@@ -266,16 +268,16 @@ export const QuickLaunch = memo(function QuickLaunch({
                   <span className="flex items-center gap-1">
                     <kbd className="px-1.5 py-0.5 rounded bg-muted">↑</kbd>
                     <kbd className="px-1.5 py-0.5 rounded bg-muted">↓</kbd>
-                    <span className="ml-1">Navigate</span>
+                    <span className="ml-1">{t('navigate')}</span>
                   </span>
                   <span className="flex items-center gap-1">
                     <kbd className="px-1.5 py-0.5 rounded bg-muted">↵</kbd>
-                    <span className="ml-1">Open</span>
+                    <span className="ml-1">{t('open')}</span>
                   </span>
                 </div>
                 <div className="flex items-center gap-1">
                   <Command className="h-3 w-3" />
-                  <span>/ to search</span>
+                  <span>{t('toSearch')}</span>
                 </div>
               </div>
             </Card>

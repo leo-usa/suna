@@ -1,6 +1,7 @@
 'use client';
 
 import { memo } from 'react';
+import { useTranslations } from 'next-intl';
 import { motion } from 'framer-motion';
 import { Cpu, HardDrive, MemoryStick, MapPin, AlertTriangle, Loader2 } from 'lucide-react';
 import { DobbyLoader } from '@/components/ui/dobby-loader';
@@ -91,19 +92,19 @@ function StatusIndicator({ status }: { status: SandboxStatus }) {
 /**
  * Get helper text for current status
  */
-function getStatusHelperText(status: SandboxStatus): string {
+function getStatusHelperText(status: SandboxStatus, t: (key: string) => string): string {
   switch (status) {
     case 'LIVE':
-      return 'Click on dock items to open windows';
+      return t('helperLive');
     case 'STARTING':
-      return 'Sandbox is starting up...';
+      return t('helperStarting');
     case 'OFFLINE':
-      return 'Sandbox is offline';
+      return t('helperOffline');
     case 'FAILED':
-      return 'Sandbox services are unavailable';
+      return t('helperFailed');
     case 'UNKNOWN':
     default:
-      return 'Checking sandbox status...';
+      return t('helperUnknown');
   }
 }
 
@@ -112,6 +113,8 @@ export const SandboxInfoCard = memo(function SandboxInfoCard({
   sandboxStatus,
   isLoading,
 }: SandboxInfoCardProps) {
+  const t = useTranslations('dobbyComputer.sandboxInfo');
+  const tStatus = useTranslations('dobbyComputer.status');
   // Use sandboxStatus if provided, otherwise fall back to sandboxDetails
   const data: SandboxData = sandboxStatus || sandboxDetails;
   const status = getStatus(data);
@@ -156,7 +159,7 @@ export const SandboxInfoCard = memo(function SandboxInfoCard({
             <div className="flex items-center justify-center gap-2 mt-0.5">
               <StatusIndicator status={status} />
               <span className={cn("text-xs font-medium", getStatusColor(status))}>
-                {getSandboxStatusLabel(status)}
+                {tStatus.has(status) ? tStatus(status) : getSandboxStatusLabel(status)}
               </span>
             </div>
           </div>
@@ -177,7 +180,7 @@ export const SandboxInfoCard = memo(function SandboxInfoCard({
               <span className="text-[10px] text-muted-foreground uppercase tracking-wide">CPU</span>
             </div>
             <p className="text-foreground font-semibold text-lg leading-tight">{data.cpu || 1}</p>
-            <p className="text-[10px] text-muted-foreground/70">cores</p>
+            <p className="text-[10px] text-muted-foreground/70">{t('cores')}</p>
           </div>
 
           <div className="bg-muted/50 rounded-xl p-3 border border-border">
@@ -192,7 +195,7 @@ export const SandboxInfoCard = memo(function SandboxInfoCard({
           <div className="bg-muted/50 rounded-xl p-3 border border-border">
             <div className="flex items-center gap-1.5 mb-1">
               <HardDrive className="w-3.5 h-3.5" />
-              <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Disk</span>
+              <span className="text-[10px] text-muted-foreground uppercase tracking-wide">{t('disk')}</span>
             </div>
             <p className="text-foreground font-semibold text-lg leading-tight">{data.disk || 3}</p>
             <p className="text-[10px] text-muted-foreground/70">GB</p>
@@ -203,14 +206,14 @@ export const SandboxInfoCard = memo(function SandboxInfoCard({
         {data.target && (
           <div className="flex items-center px-3 py-2 bg-muted/50 rounded-lg border border-border">
             <MapPin className="w-3.5 h-3.5 mr-1" />
-            <span className="text-xs text-muted-foreground">Region:</span>
+            <span className="text-xs text-muted-foreground">{t('region')}</span>
             <span className="text-xs text-foreground font-medium uppercase ml-1">{data.target}</span>
           </div>
         )}
 
         {/* Status helper text */}
         <p className="text-[10px] text-muted-foreground text-center mt-4">
-          {getStatusHelperText(status)}
+          {getStatusHelperText(status, t)}
         </p>
       </Card>
     </motion.div>

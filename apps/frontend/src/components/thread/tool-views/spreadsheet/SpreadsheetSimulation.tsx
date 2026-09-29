@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 
 interface SpreadsheetSimulationProps {
   mode?: 'mini' | 'max';
@@ -11,6 +12,7 @@ const ROWS = 10;
 const HEADER_COLOR = '#1F4E79';
 
 export function SpreadsheetSimulation({ mode = 'max' }: SpreadsheetSimulationProps) {
+  const t = useTranslations('toolViews.spreadsheet');
   const [phase, setPhase] = useState(0);
   const [cursorPos, setCursorPos] = useState({ row: 0, col: 0 });
   const [filledCells, setFilledCells] = useState<Set<string>>(new Set());
@@ -129,7 +131,7 @@ export function SpreadsheetSimulation({ mode = 'max' }: SpreadsheetSimulationPro
             animate={{ opacity: [0.5, 1, 0.5] }}
             transition={{ duration: 1.5, repeat: Infinity }}
           >
-            Building spreadsheet...
+            {t('buildingSpreadsheet')}
           </motion.p>
         </div>
       </div>

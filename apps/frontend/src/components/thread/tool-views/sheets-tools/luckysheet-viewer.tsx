@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { useAuth } from '@/components/AuthProvider';
 import { fetchFileContent } from '@/hooks/files/use-file-queries';
 
@@ -141,6 +142,7 @@ export interface LuckysheetViewerProps {
 }
 
 export function LuckysheetViewer({ xlsxPath, sandboxId, className, height }: LuckysheetViewerProps) {
+  const t = useTranslations('toolViews.spreadsheet');
   const { session } = useAuth();
   const wrapperRef = React.useRef<HTMLDivElement | null>(null);
   const containerRef = React.useRef<HTMLDivElement | null>(null);
@@ -473,7 +475,7 @@ export function LuckysheetViewer({ xlsxPath, sandboxId, className, height }: Luc
         if (!disposed) setLoading(false);
       } catch (e: any) {
         if (!disposed) {
-          setError(e?.message || 'Failed to load sheet');
+          setError(e?.message || t('failedToLoadSheet'));
           setLoading(false);
         }
       }
@@ -492,7 +494,7 @@ export function LuckysheetViewer({ xlsxPath, sandboxId, className, height }: Luc
         <div id={containerIdRef.current} ref={containerRef} style={{ height: resolvedHeight, width: '100%' }} />
       )}
       {loading && !error && (
-        <div className="text-xs text-muted-foreground mt-2">Loading formatted viewer…</div>
+        <div className="text-xs text-muted-foreground mt-2">{t('loadingFormattedViewer')}</div>
       )}
     </div>
   );

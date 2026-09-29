@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import { ToolResultData } from '../types';
 import { Phone, User, PhoneCall, PhoneMissed, CheckCircle2, CheckCircle, AlertTriangle } from 'lucide-react';
 import { DobbyLoader } from '@/components/ui/dobby-loader';
@@ -78,6 +79,7 @@ export function MonitorCallToolView({
   isStreaming = false,
 }: ToolViewProps) {
   // All hooks must be called unconditionally at the top
+  const t = useTranslations('toolViews.vapiCall');
   const [liveTranscript, setLiveTranscript] = useState<any[]>([]);
   const [liveStatus, setLiveStatus] = useState('unknown');
   const transcriptEndRef = useRef<HTMLDivElement>(null);
@@ -283,7 +285,7 @@ export function MonitorCallToolView({
   }, [liveStatus, refetch]);
 
   if (!initialData) {
-    return <div className="text-sm text-muted-foreground">No call monitoring data available</div>;
+    return <div className="text-sm text-muted-foreground">{t('noMonitoringData')}</div>;
   }
 
   // Use the live state which is updated by real-time subscription
@@ -310,7 +312,7 @@ export function MonitorCallToolView({
             </div>
             <div className="flex items-center gap-2">
               <CardTitle className="text-base font-medium text-zinc-900 dark:text-zinc-100">
-                Call Monitor
+                {t('callMonitor')}
               </CardTitle>
               {isActive && (
                 <span className="flex h-2 w-2">
@@ -327,7 +329,7 @@ export function MonitorCallToolView({
 
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">
-            <div className="text-xs text-muted-foreground">Call ID</div>
+            <div className="text-xs text-muted-foreground">{t('callId')}</div>
             <div className="text-xs font-mono text-foreground truncate">
               {initialData.call_id}
             </div>
@@ -335,7 +337,7 @@ export function MonitorCallToolView({
 
           {initialData.phone_number && (
             <div className="space-y-1">
-              <div className="text-xs text-muted-foreground">Phone Number</div>
+              <div className="text-xs text-muted-foreground">{t('phoneNumber')}</div>
               <div className="text-sm font-medium text-foreground">
                 {initialData.phone_number}
               </div>
@@ -348,9 +350,9 @@ export function MonitorCallToolView({
             <div className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
               <User className="h-3 w-3" />
               {isActive ? (
-                <span className="text-red-500 font-medium">🔴 LIVE CONVERSATION</span>
+                <span className="text-red-500 font-medium">🔴 {t('liveConversation')}</span>
               ) : (
-                <span>Conversation Transcript</span>
+                <span>{t('conversationTranscript')}</span>
               )}
             </div>
             <div className="space-y-2 bg-muted/30 rounded-lg p-3 border border-border max-h-96 overflow-y-auto">
@@ -366,7 +368,7 @@ export function MonitorCallToolView({
                   )}
                 >
                   <div className="font-medium text-xs text-muted-foreground mb-1">
-                    {msg.role === 'assistant' ? '🤖 AI Assistant' : '👤 Caller'}
+                    {msg.role === 'assistant' ? `🤖 ${t('aiAssistant')}` : `👤 ${t('caller')}`}
                   </div>
                   <div className="text-foreground">{msg.message}</div>
                 </div>
@@ -377,11 +379,11 @@ export function MonitorCallToolView({
         ) : isActive ? (
           <div className="text-center py-8">
             <DobbyLoader customSize={24} className="mx-auto mb-2" />
-            <p className="text-sm text-muted-foreground">Waiting for conversation to start...</p>
+            <p className="text-sm text-muted-foreground">{t('waitingForConversation')}</p>
           </div>
         ) : (
           <div className="text-center py-8 text-sm text-muted-foreground">
-            No transcript available yet
+            {t('noTranscript')}
           </div>
         )}
 

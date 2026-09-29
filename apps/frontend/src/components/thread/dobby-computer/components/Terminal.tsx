@@ -2,6 +2,7 @@
 
 import { memo, useState, useRef, useEffect, useCallback, KeyboardEvent } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 import { backendApi } from '@/lib/api-client';
 import { DobbyLoader } from '@/components/ui/dobby-loader';
@@ -22,10 +23,11 @@ interface TerminalProps {
 const TERMINAL_HISTORY_KEY = 'kortix-terminal-history';
 
 export const Terminal = memo(function Terminal({ sandboxId, className }: TerminalProps) {
+  const t = useTranslations('dobbyComputer.terminal');
   const queryClient = useQueryClient();
   const [lines, setLines] = useState<TerminalLine[]>([
-    { id: '0', type: 'output', content: 'Welcome to Dobby Terminal' },
-    { id: '1', type: 'output', content: 'Type commands below and press Enter to execute.' },
+    { id: '0', type: 'output', content: t('welcome') },
+    { id: '1', type: 'output', content: t('hint') },
     { id: '2', type: 'output', content: '' },
   ]);
   const [currentInput, setCurrentInput] = useState('');
@@ -148,7 +150,7 @@ export const Terminal = memo(function Terminal({ sandboxId, className }: Termina
       );
 
       if (!response.success || response.error) {
-        addLine('error', `Error: ${response.error?.message || 'Command execution failed'}`);
+        addLine('error', t('error', { message: response.error?.message || t('executionFailed') }));
         setIsExecuting(false);
         return;
       }
@@ -161,18 +163,18 @@ export const Terminal = memo(function Terminal({ sandboxId, className }: Termina
           addLine(result.success ? 'output' : 'error', line);
         });
       } else if (!result?.success) {
-        addLine('error', 'Command failed with no output');
+        addLine('error', t('failedNoOutput'));
       } else {
         addLine('output', '');
       }
 
     } catch (error) {
-      addLine('error', `Failed to execute command: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      addLine('error', t('failedToExecute', { message: error instanceof Error ? error.message : t('unknownError') }));
     } finally {
       setIsExecuting(false);
       invalidateFileQueries();
     }
-  }, [sandboxId, cwd, addLine, invalidateFileQueries]);
+  }, [sandboxId, cwd, addLine, invalidateFileQueries, t]);
 
   const handleKeyDown = useCallback((e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !isExecuting) {
@@ -274,7 +276,7 @@ export const Terminal = memo(function Terminal({ sandboxId, className }: Termina
                 "placeholder:text-zinc-400 dark:placeholder:text-[#565f89]",
                 isExecuting && "opacity-50"
               )}
-              placeholder={isExecuting ? "Executing..." : ""}
+              placeholder={isExecuting ? t('executing') : ""}
             />
           </div>
         </div>

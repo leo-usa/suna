@@ -105,6 +105,7 @@ export const DobbyComputer = memo(function DobbyComputer({
   sidePanelRef,
 }: DobbyComputerProps) {
   const t = useTranslations('thread');
+  const tBrowser = useTranslations('dobbyComputer.browser');
   const [dots, setDots] = useState('');
   const [internalIndex, setInternalIndex] = useState(0);
   const [navigationMode, setNavigationMode] = useState<NavigationMode>('live');
@@ -701,10 +702,10 @@ export const DobbyComputer = memo(function DobbyComputer({
             </div>
             <div className="space-y-2">
               <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-                Browser not available
+                {tBrowser('notAvailableTitle')}
               </h3>
               <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed">
-                No active browser session available. The browser will appear here when a sandbox is created and Browser tools are used.
+                {tBrowser('notAvailableDescription')}
               </p>
             </div>
           </div>

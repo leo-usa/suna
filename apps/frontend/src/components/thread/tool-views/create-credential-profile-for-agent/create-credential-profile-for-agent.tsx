@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   UserPlus,
   CheckCircle,
@@ -34,6 +35,8 @@ export function CreateCredentialProfileForAgentToolView({
   isStreaming = false,
 }: ToolViewProps) {
   // All hooks must be called unconditionally at the top
+  const t = useTranslations('toolViews.createCredentialProfileForAgent');
+  const tCommon = useTranslations('toolViews.common');
   const [authCompleted, setAuthCompleted] = useState(false);
 
   // Extract data first (before conditional return) so we can use toolkit_slug in hook
@@ -108,7 +111,7 @@ export function CreateCredentialProfileForAgentToolView({
               ) : (
                 <AlertTriangle className="h-3 w-3" />
               )}
-              {actualIsSuccess ? 'Profile created' : 'Creation failed'}
+              {actualIsSuccess ? tCommon('profileCreated') : tCommon('creationFailed')}
             </Badge>
           )}
         </div>
@@ -120,7 +123,7 @@ export function CreateCredentialProfileForAgentToolView({
             icon={UserPlus}
             iconColor="text-green-500 dark:text-green-400"
             bgColor="bg-gradient-to-b from-green-100 to-green-50 shadow-inner dark:from-green-800/40 dark:to-green-900/60 dark:shadow-green-950/20"
-            title="Creating credential profile"
+            title={t('creating')}
             filePath={profile_name ? `"${profile_name}"` : undefined}
             showProgress={true}
           />
@@ -135,7 +138,7 @@ export function CreateCredentialProfileForAgentToolView({
                       {iconData?.icon_url ? (
                         <img
                           src={iconData.icon_url}
-                          alt={`${toolkit_name} logo`}
+                          alt={t('logoAlt', { name: String(toolkit_name) })}
                           className="w-8 h-8 object-cover rounded"
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
@@ -176,7 +179,7 @@ export function CreateCredentialProfileForAgentToolView({
                       ) : (
                         <Shield className="w-3 h-3 mr-1" />
                       )}
-                      {authCompleted ? 'Authenticated' : 'Pending Auth'}
+                      {authCompleted ? t('authenticated') : t('pendingAuth')}
                     </Badge>
                   </div>
                 </div>
@@ -188,22 +191,22 @@ export function CreateCredentialProfileForAgentToolView({
                   <div className="space-y-2">
                     <h4 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
                       <Key className="w-4 h-4" />
-                      Profile Details
+                      {t('profileDetails')}
                     </h4>
                     <div className="space-y-1 text-sm text-zinc-600 dark:text-zinc-400">
-                      <div>Name: {profile_name}</div>
-                      <div>Service: {toolkit_name || toolkit_slug}</div>
+                      <div>{t('nameLabel', { name: profile_name })}</div>
+                      <div>{t('serviceLabel', { service: String(toolkit_name || toolkit_slug) })}</div>
                     </div>
                   </div>
                   
                   <div className="space-y-2">
                     <h4 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
                       <Shield className="w-4 h-4" />
-                      Authentication
+                      {t('authentication')}
                     </h4>
                     <div className="space-y-1 text-sm text-zinc-600 dark:text-zinc-400">
-                      <div>Required: {requires_authentication ? 'Yes' : 'No'}</div>
-                      <div>Status: {authCompleted ? 'Complete' : 'Pending'}</div>
+                      <div>{t('requiredLabel', { value: requires_authentication ? t('yes') : t('no') })}</div>
+                      <div>{t('statusLabel', { value: authCompleted ? t('complete') : t('pending') })}</div>
                     </div>
                   </div>
                 </div>
@@ -213,18 +216,18 @@ export function CreateCredentialProfileForAgentToolView({
                   <div className="flex items-center gap-2">
                     <Key className="w-5 h-5 text-orange-600 dark:text-orange-400" />
                     <h4 className="font-medium text-zinc-900 dark:text-zinc-100">
-                      Authentication Required
+                      {t('authRequired')}
                     </h4>
                   </div>
                   <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                    Complete the authentication process to activate this credential profile:
+                    {t('authDesc')}
                   </p>
                   <Button 
                       onClick={handleAuthClick}
                       className="w-full"
                       size="sm"
                   >
-                    Authenticate with {toolkit_name || toolkit_slug}
+                    {t('authenticateWith', { service: String(toolkit_name || toolkit_slug) })}
                     <ExternalLink className="w-4 h-4" />
                   </Button>
                 </div>
@@ -235,7 +238,7 @@ export function CreateCredentialProfileForAgentToolView({
           <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg m-4">
             <p className="text-sm text-red-800 dark:text-red-200 flex items-center gap-2">
               <AlertTriangle className="h-4 w-4" />
-              Failed to create credential profile. Please try again.
+              {t('failed')}
             </p>
           </div>
         )}

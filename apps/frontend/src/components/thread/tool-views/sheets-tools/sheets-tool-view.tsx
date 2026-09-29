@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { ToolViewProps } from '../types';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -14,7 +15,7 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 // Lazy load SpreadsheetViewer as it imports Syncfusion (~1-2 MB)
 const SpreadsheetViewer = dynamic(
   () => import('../spreadsheet/SpreadsheetViewer').then((mod) => mod.SpreadsheetViewer),
-  { ssr: false, loading: () => <div className="p-4 text-muted-foreground">Loading spreadsheet...</div> }
+  { ssr: false, loading: function SpreadsheetViewerLoading() { const t = useTranslations('toolViews.spreadsheet'); return <div className="p-4 text-muted-foreground">{t('loadingSpreadsheet')}</div>; } }
 );
 import { useAuth } from '@/components/AuthProvider';
 import { fetchFileContent } from '@/hooks/files/use-file-queries';
@@ -58,6 +59,7 @@ export function SheetsToolView({
   project,
 }: ToolViewProps) {
   // All hooks must be called unconditionally at the top
+  const t = useTranslations('toolViews.spreadsheet');
   const { session } = useAuth();
   
   // Download restriction for free tier users
@@ -100,15 +102,15 @@ export function SheetsToolView({
 
   const sheetTitle = useMemo(() => {
     switch (toolName) {
-      case 'create-sheet': return 'Create Sheet';
-      case 'update-sheet': return 'Update Sheet';
-      case 'view-sheet': return 'View Sheet';
-      case 'analyze-sheet': return 'Analyze Sheet';
-      case 'visualize-sheet': return 'Visualize Sheet';
-      case 'format-sheet': return 'Format Sheet';
-      default: return 'Sheets';
+      case 'create-sheet': return t('createSheet');
+      case 'update-sheet': return t('updateSheet');
+      case 'view-sheet': return t('viewSheet');
+      case 'analyze-sheet': return t('analyzeSheet');
+      case 'visualize-sheet': return t('visualizeSheet');
+      case 'format-sheet': return t('formatSheet');
+      default: return t('sheets');
     }
-  }, [toolName]);
+  }, [toolName, t]);
 
   const sheetIconBgColor = useMemo(() => {
     // All sheet tools use consistent gray styling
@@ -190,10 +192,10 @@ export function SheetsToolView({
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuItem disabled={!primaryXlsx} onClick={() => handleDownload(primaryXlsx, 'sheet.xlsx')}>
-                  <FileSpreadsheet className="h-4 w-4" /> Download XLSX
+                  <FileSpreadsheet className="h-4 w-4" /> {t('downloadXlsx')}
                 </DropdownMenuItem>
                 <DropdownMenuItem disabled={!primaryCsv} onClick={() => handleDownload(primaryCsv, 'sheet.csv')}>
-                  <Download className="h-4 w-4" /> Download CSV
+                  <Download className="h-4 w-4" /> {t('downloadCsv')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -222,7 +224,7 @@ export function SheetsToolView({
                   <div className="space-y-3">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Table className="h-4 w-4" />
-                      Preview (CSV data)
+                      {t('previewCsvData')}
                     </div>
                     <FileAttachment
                       filepath={primaryCsv}
@@ -238,7 +240,7 @@ export function SheetsToolView({
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Table className="h-4 w-4" />
-                      Result preview
+                      {t('resultPreview')}
                     </div>
                     <div className="border rounded-lg overflow-auto">
                       <table className="w-full text-sm">
@@ -266,7 +268,7 @@ export function SheetsToolView({
                     </div>
                   </div>
                 ) : (
-                  <div className="text-sm text-muted-foreground">No preview available yet.</div>
+                  <div className="text-sm text-muted-foreground">{t('noPreviewAvailable')}</div>
                 )}
               </div>
             </ScrollArea>

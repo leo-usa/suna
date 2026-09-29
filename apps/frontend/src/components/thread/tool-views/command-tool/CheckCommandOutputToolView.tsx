@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import {
     Terminal,
     CheckCircle,
@@ -217,6 +218,7 @@ export function CheckCommandOutputToolView({
     isSuccess = true,
     isStreaming = false,
 }: ToolViewProps) {
+    const t = useTranslations('toolViews.command');
     const { resolvedTheme } = useTheme();
     const isDarkTheme = resolvedTheme === 'dark';
     const [showFullOutput, setShowFullOutput] = useState(true);
@@ -326,8 +328,8 @@ export function CheckCommandOutputToolView({
                         icon={Terminal}
                         iconColor="text-zinc-500 dark:text-zinc-400"
                         bgColor="bg-gradient-to-b from-zinc-100 to-zinc-50 shadow-inner dark:from-zinc-800/40 dark:to-zinc-900/60 dark:shadow-zinc-950/20"
-                        title="Checking command output"
-                        filePath={sessionName || 'Processing session...'}
+                        title={t('checkingOutput')}
+                        filePath={sessionName || t('processingSession')}
                         showProgress={true}
                     />
                 ) : sessionName ? (
@@ -338,7 +340,7 @@ export function CheckCommandOutputToolView({
                                 <div className="flex items-center gap-2 mb-2">
                                     <Badge variant="outline" className="text-xs px-1.5 py-0 h-4 font-normal">
                                         <TerminalIcon className="h-2.5 w-2.5 mr-1 opacity-70" />
-                                        Session
+                                        {t('session')}
                                     </Badge>
                                 </div>
                                 <div className="text-xs text-foreground font-mono">
@@ -355,7 +357,7 @@ export function CheckCommandOutputToolView({
                                         <div className="flex items-center gap-2">
                                             <Badge variant="outline" className="text-xs px-1.5 py-0 h-4 font-normal">
                                                 <TerminalIcon className="h-2.5 w-2.5 mr-1 opacity-70" />
-                                                Output
+                                                {t('output')}
                                             </Badge>
                                         </div>
                                     </div>
@@ -376,7 +378,7 @@ export function CheckCommandOutputToolView({
                                             </pre>
                                             {!showFullOutput && hasMoreLines && (
                                                 <div className="text-muted-foreground mt-2 border-t border-border pt-2 text-xs font-mono">
-                                                    + {formattedOutput.length - 10} more lines
+                                                    {t('moreLines', { count: formattedOutput.length - 10 })}
                                                 </div>
                                             )}
                                         </div>
@@ -387,7 +389,7 @@ export function CheckCommandOutputToolView({
                             <div className="flex-1 flex items-center justify-center px-4 pb-4">
                                 <div className="bg-card border border-border rounded-lg p-4 text-center">
                                     <CircleDashed className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                                    <p className="text-sm text-muted-foreground">No output received</p>
+                                    <p className="text-sm text-muted-foreground">{t('noOutput')}</p>
                                 </div>
                             </div>
                         )}
@@ -398,10 +400,10 @@ export function CheckCommandOutputToolView({
                             <Terminal className="h-10 w-10 text-zinc-400 dark:text-zinc-600" />
                         </div>
                         <h3 className="text-xl font-semibold mb-2 text-zinc-900 dark:text-zinc-100">
-                            No Session Found
+                            {t('noSessionFound')}
                         </h3>
                         <p className="text-sm text-zinc-500 dark:text-zinc-400 text-center max-w-md">
-                            No session name was detected. Please provide a valid session name to check.
+                            {t('noSessionDescription')}
                         </p>
                     </div>
                 )}
@@ -412,7 +414,7 @@ export function CheckCommandOutputToolView({
                     {!isStreaming && sessionName && (
                         <Badge variant="outline" className="h-6 py-0.5 bg-zinc-50 dark:bg-zinc-900">
                             <Terminal className="h-3 w-3 mr-1" />
-                            Session
+                            {t('session')}
                         </Badge>
                     )}
                 </div>

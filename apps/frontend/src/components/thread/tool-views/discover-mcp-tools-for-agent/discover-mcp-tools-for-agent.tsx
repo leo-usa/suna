@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Search,
   CheckCircle,
@@ -36,6 +37,8 @@ export function DiscoverMcpToolsForAgentToolView({
   isStreaming = false,
 }: ToolViewProps) {
   // All hooks must be called unconditionally at the top
+  const t = useTranslations('toolViews.discoverMcpTools');
+  const tCommon = useTranslations('toolViews.common');
   const [isToolsExpanded, setIsToolsExpanded] = useState(false);
 
   // Extract data first (before conditional return) so we can use toolkit_slug in hook
@@ -105,7 +108,7 @@ export function DiscoverMcpToolsForAgentToolView({
               ) : (
                 <AlertTriangle className="h-3 w-3" />
               )}
-              {actualIsSuccess ? 'Tools discovered' : 'Discovery failed'}
+              {actualIsSuccess ? tCommon('toolsDiscovered') : tCommon('discoveryFailed')}
             </Badge>
           )}
         </div>
@@ -117,7 +120,7 @@ export function DiscoverMcpToolsForAgentToolView({
             icon={Search}
             iconColor="text-zinc-500 dark:text-zinc-400"
             bgColor="bg-gradient-to-b from-zinc-100 to-zinc-50 shadow-inner dark:from-zinc-800/40 dark:to-zinc-900/60 dark:shadow-zinc-950/20"
-            title="Discovering tools"
+            title={t('discovering')}
             filePath={profile_name ? `"${profile_name}"` : undefined}
             showProgress={true}
           />
@@ -132,7 +135,7 @@ export function DiscoverMcpToolsForAgentToolView({
                       {iconData?.icon_url ? (
                         <img
                           src={iconData.icon_url}
-                          alt={`${toolkit_name} logo`}
+                          alt={t('logoAlt', { name: String(toolkit_name) })}
                           className="w-8 h-8 object-cover rounded"
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
@@ -169,7 +172,7 @@ export function DiscoverMcpToolsForAgentToolView({
                         : "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800"
                     )}>
                       <Shield className="w-3 h-3 mr-1" />
-                      {is_connected ? 'Connected' : 'Disconnected'}
+                      {is_connected ? tCommon('connected') : tCommon('disconnected')}
                     </Badge>
                   </div>
                 </div>
@@ -179,22 +182,22 @@ export function DiscoverMcpToolsForAgentToolView({
                   <div className="space-y-2">
                     <h4 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
                       <Wrench className="w-4 h-4" />
-                      Discovery Results
+                      {t('discoveryResults')}
                     </h4>
                     <div className="space-y-1 text-sm text-zinc-600 dark:text-zinc-400">
-                      <div>Tools Found: {total_tools}</div>
-                      <div>Profile: {profile_name}</div>
+                      <div>{t('toolsFound', { count: total_tools })}</div>
+                      <div>{t('profileLabel', { name: profile_name })}</div>
                     </div>
                   </div>
                   
                   <div className="space-y-2">
                     <h4 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
                       <Shield className="w-4 h-4" />
-                      Connection Status
+                      {t('connectionStatus')}
                     </h4>
                     <div className="space-y-1 text-sm text-zinc-600 dark:text-zinc-400">
-                      <div>Status: {is_connected ? 'Active' : 'Inactive'}</div>
-                      <div>Service: {toolkit_name || toolkit_slug}</div>
+                      <div>{t('statusLabel', { value: is_connected ? tCommon('active') : tCommon('inactive') })}</div>
+                      <div>{t('serviceLabel', { service: String(toolkit_name || toolkit_slug) })}</div>
                     </div>
                   </div>
                 </div>
@@ -207,7 +210,7 @@ export function DiscoverMcpToolsForAgentToolView({
                         <div className="flex items-center gap-2 p-2">
                           <Zap className="w-4 h-4" />
                           <h4 className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                            Available Tools ({total_tools})
+                            {t('availableTools', { count: total_tools })}
                           </h4>
                         </div>
                         {isToolsExpanded ? (
@@ -246,7 +249,7 @@ export function DiscoverMcpToolsForAgentToolView({
           <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg m-4">
             <p className="text-sm text-red-800 dark:text-red-200 flex items-center gap-2">
               <AlertTriangle className="h-4 w-4" />
-              Failed to discover tools. Please ensure the profile is authenticated and try again.
+              {t('failed')}
             </p>
           </div>
         )}

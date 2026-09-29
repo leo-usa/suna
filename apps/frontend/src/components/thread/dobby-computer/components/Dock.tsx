@@ -4,7 +4,8 @@ import { useTranslations } from 'next-intl';
 import { memo, ReactNode, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Folder, Globe, TerminalSquare, Info, Table } from 'lucide-react';
-import { getUserFriendlyToolName, getToolIcon } from '@/components/thread/utils';
+import { getToolIcon } from '@/components/thread/utils';
+import { useToolNameLabel } from '@/hooks/use-tool-name-label';
 import { cn } from '@/lib/utils';
 import { ToolCallInput } from '../DobbyComputer';
 import { AppIcon } from '../../tool-views/shared/AppIcon';
@@ -229,6 +230,8 @@ export const AppDock = memo(function AppDock({
 }: AppDockProps) {
   const tFiles = useTranslations('dobbyComputer.fileBrowser');
   const tNav = useTranslations('dobbyComputer.nav');
+  const tApps = useTranslations('dobbyComputer.apps');
+  const { toolLabel } = useToolNameLabel();
   const [scrollOffset, setScrollOffset] = useState(0);
   const maxVisibleIcons = 12;
   
@@ -309,7 +312,7 @@ export const AppDock = memo(function AppDock({
               )}
               <SystemDockCard
                 icon={Globe}
-                label="Browser"
+                label={tApps('browser')}
                 bgClass="bg-gradient-to-br from-[#38bdf8] to-[#0284c7]"
                 iconColor="text-white"
                 isActive={isBrowserWindowOpen}
@@ -317,7 +320,7 @@ export const AppDock = memo(function AppDock({
               />
               <SystemDockCard
                 icon={TerminalSquare}
-                label="Terminal"
+                label={tApps('terminal')}
                 bgClass="bg-gradient-to-br from-[#3f3f46] to-[#18181b]"
                 iconColor="text-[#4ade80]"
                 isActive={isTerminalWindowOpen}
@@ -325,7 +328,7 @@ export const AppDock = memo(function AppDock({
               />
               <SystemDockCard
                 icon={Info}
-                label="System Info"
+                label={tApps('systemInfo')}
                 bgClass="bg-gradient-to-br from-[#64748B] to-[#475569]"
                 iconColor="text-white"
                 isActive={isInfoWindowOpen}
@@ -333,7 +336,7 @@ export const AppDock = memo(function AppDock({
               />
               <SystemDockCard
                 icon={Table}
-                label="Spreadsheets"
+                label={tApps('spreadsheets')}
                 bgClass="bg-gradient-to-br from-[#10b981] to-[#059669]"
                 iconColor="text-white"
                 isActive={isSpreadsheetWindowOpen}
@@ -349,7 +352,7 @@ export const AppDock = memo(function AppDock({
                 key={`${actualIndex}-${toolName}`}
                 toolCall={toolCallInput.toolCall}
                 toolName={toolName}
-                label={getUserFriendlyToolName(toolName)}
+                label={toolLabel(toolName)}
                 isActive={actualIndex === currentIndex}
                 isRunning={isToolRunning(actualIndex)}
                 isFailed={isToolFailed(actualIndex)}

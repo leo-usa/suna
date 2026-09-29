@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Search,
   CheckCircle,
@@ -29,6 +30,8 @@ export function DiscoverUserMcpServersToolView({
   isSuccess = true,
   isStreaming = false,
 }: ToolViewProps) {
+  const t = useTranslations('toolViews.discoverUserMcpServers');
+  const tCommon = useTranslations('toolViews.common');
   // Defensive check - ensure toolCall is defined
   if (!toolCall) {
     console.warn('DiscoverUserMcpServersToolView: toolCall is undefined. Tool views should use structured props.');
@@ -134,7 +137,7 @@ export function DiscoverUserMcpServersToolView({
               ) : (
                 <AlertTriangle className="h-3 w-3" />
               )}
-              {actualIsSuccess ? 'Tools discovered' : 'Discovery failed'}
+              {actualIsSuccess ? tCommon('toolsDiscovered') : tCommon('discoveryFailed')}
             </Badge>
           )}
         </div>
@@ -145,7 +148,7 @@ export function DiscoverUserMcpServersToolView({
             icon={Search}
             iconColor="text-zinc-500 dark:text-zinc-400"
             bgColor="bg-gradient-to-b from-zinc-100 to-zinc-50 shadow-inner dark:from-zinc-800/40 dark:to-zinc-900/60"
-            title="Discovering MCP tools"
+            title={t('discovering')}
             showProgress={true}
           />
         ) : actualIsSuccess && profile_info ? (
@@ -162,7 +165,7 @@ export function DiscoverUserMcpServersToolView({
                         {profile_info.profile_name}
                       </h3>
                       <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                        {profile_info.toolkit_name} Integration
+                        {t('integrationSuffix', { name: profile_info.toolkit_name })}
                       </p>
                     </div>
                   </div>
@@ -179,9 +182,9 @@ export function DiscoverUserMcpServersToolView({
                       {profile_info.is_connected ? (
                         <>
                           <Link2 className="h-3 w-3 mr-1" />
-                          Connected
+                          {tCommon('connected')}
                         </>
-                      ) : 'Disconnected'}
+                      ) : tCommon('disconnected')}
                     </Badge>
                   </div>
                 </div>
@@ -193,11 +196,11 @@ export function DiscoverUserMcpServersToolView({
                     <div className="flex items-center gap-2">
                       <Wrench className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
                       <h4 className="font-medium text-zinc-900 dark:text-zinc-100">
-                        Discovered Tools
+                        {t('discoveredTools')}
                       </h4>
                     </div>
                     <Badge variant="outline" className="text-xs">
-                      {total_tools} available
+                      {t('availableCount', { count: total_tools })}
                     </Badge>
                   </div>
                   
@@ -213,7 +216,7 @@ export function DiscoverUserMcpServersToolView({
                             <span className="w-5 h-5 flex items-center justify-center">
                               {getCategoryIcon(category)}
                             </span>
-                            <span>{category} Operations</span>
+                            <span>{t('operations', { category: t(`category.${category}`) })}</span>
                             <Badge variant="secondary" className="text-xs ml-auto">
                               {groupedTools[category].length}
                             </Badge>
@@ -249,7 +252,7 @@ export function DiscoverUserMcpServersToolView({
                 <div className="border rounded-xl p-6 text-center">
                   <Package className="w-12 h-12 mx-auto text-zinc-400 dark:text-zinc-600 mb-3" />
                   <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                    No tools discovered for this profile
+                    {t('noTools')}
                   </p>
                 </div>
               )}
@@ -259,7 +262,7 @@ export function DiscoverUserMcpServersToolView({
           <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg m-4">
             <p className="text-sm text-red-800 dark:text-red-200 flex items-center gap-2">
               <AlertTriangle className="h-4 w-4" />
-              Failed to discover MCP tools. Please check the profile configuration.
+              {t('failed')}
             </p>
           </div>
         )}

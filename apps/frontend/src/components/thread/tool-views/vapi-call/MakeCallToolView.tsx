@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import { Phone, CheckCircle, Clock, User, Mic, Brain, AlertTriangle } from 'lucide-react';
 import { DobbyLoader } from '@/components/ui/dobby-loader';
 import { ToolViewProps } from '../types';
@@ -23,6 +24,7 @@ export function MakeCallToolView({
   isStreaming = false,
 }: ToolViewProps) {
   // All hooks must be called unconditionally at the top
+  const t = useTranslations('toolViews.vapiCall');
   // We need to extract callData first to use it in hooks, but we'll handle undefined case
   const callData = toolCall ? extractMakeCallData(toolCall, toolResult) : null;
   const [liveTranscript, setLiveTranscript] = useState<any[]>([]);
@@ -128,7 +130,7 @@ export function MakeCallToolView({
   const toolTitle = getToolTitle(name);
 
   if (!callData) {
-    return <div className="text-sm text-muted-foreground">No call data available</div>;
+    return <div className="text-sm text-muted-foreground">{t('noCallData')}</div>;
   }
 
   const status = liveStatus;
@@ -159,12 +161,12 @@ export function MakeCallToolView({
               animate={isNew ? { scale: [1, 1.2, 1] } : {}}
               transition={{ repeat: isNew ? 2 : 0, duration: 0.5 }}
             />
-            AI Assistant
+            {t('aiAssistant')}
           </>
         ) : (
           <>
             <div className="w-2 h-2 rounded-full bg-muted-foreground" />
-            Caller
+            {t('caller')}
           </>
         )}
       </div>
@@ -259,7 +261,7 @@ export function MakeCallToolView({
                   >
                     <span className="text-xs font-medium text-red-500 uppercase tracking-wider flex items-center gap-1">
                       <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                      Live
+                      {t('live')}
                     </span>
                   </motion.div>
                 </motion.div>
@@ -275,7 +277,7 @@ export function MakeCallToolView({
                     {formatPhoneNumber(callData?.phone_number)}
                   </div>
                   <Badge className={cn("text-xs", statusInfo.color)}>
-                    {statusInfo.label}
+                    {t(`status.${statusInfo.label.replace(/\s/g, '')}`)}
                   </Badge>
                 </div>
               </motion.div>
@@ -315,7 +317,7 @@ export function MakeCallToolView({
                 <div className="space-y-1">
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                     <Phone className="h-3 w-3" />
-                    Phone Number
+                    {t('phoneNumber')}
                   </div>
                   <div className="text-sm font-medium text-foreground">
                     {formatPhoneNumber(callData?.phone_number)}
@@ -326,7 +328,7 @@ export function MakeCallToolView({
                   <div className="space-y-1">
                     <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                       <CheckCircle className="h-3 w-3" />
-                      Call ID
+                      {t('callId')}
                     </div>
                     <div className="text-xs font-mono text-foreground truncate">
                       {callData.call_id}
@@ -338,7 +340,7 @@ export function MakeCallToolView({
                   <div className="space-y-1">
                     <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                       <Brain className="h-3 w-3" />
-                      Model
+                      {t('model')}
                     </div>
                     <div className="text-sm text-foreground">{callData.model}</div>
                   </div>
@@ -348,7 +350,7 @@ export function MakeCallToolView({
                   <div className="space-y-1">
                     <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                       <Mic className="h-3 w-3" />
-                      Voice
+                      {t('voice')}
                     </div>
                     <div className="text-sm text-foreground">{callData.voice}</div>
                   </div>
@@ -357,7 +359,7 @@ export function MakeCallToolView({
 
               {callData?.first_message && (
                 <div className="space-y-2">
-                  <div className="text-xs font-medium text-muted-foreground">First Message</div>
+                  <div className="text-xs font-medium text-muted-foreground">{t('firstMessage')}</div>
                   <div className="text-sm text-foreground bg-muted/50 rounded-lg p-3 border border-border">
                     {callData.first_message}
                   </div>
@@ -366,7 +368,7 @@ export function MakeCallToolView({
               {isActive && liveTranscript.length === 0 && (
                 <div className="text-center py-8">
                   <DobbyLoader customSize={24} className="mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground">Waiting for conversation to start...</p>
+                  <p className="text-sm text-muted-foreground">{t('waitingForConversation')}</p>
                 </div>
               )}
             </motion.div>

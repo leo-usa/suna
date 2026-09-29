@@ -1,4 +1,5 @@
 import type React from "react"
+import { useTranslations } from "next-intl"
 import { Check, ListTodo, X, Circle, CircleCheck } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { DobbyLoader } from "@/components/ui/dobby-loader"
@@ -64,6 +65,7 @@ const SectionHeader: React.FC<{ section: Section }> = ({ section }) => {
 }
 
 const SectionView: React.FC<{ section: Section }> = ({ section }) => {
+  const tTasks = useTranslations('toolViews.taskList')
   return (
     <div className="border-b border-zinc-200 dark:border-zinc-800 last:border-b-0">
       <SectionHeader section={section} />
@@ -73,7 +75,7 @@ const SectionView: React.FC<{ section: Section }> = ({ section }) => {
         ))}
         {section.tasks.length === 0 && (
           <div className="py-6 px-4 text-center">
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">No tasks in this section</p>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">{tTasks('noTasksInSection')}</p>
           </div>
         )}
       </div>
@@ -91,6 +93,7 @@ export const TaskListToolView: React.FC<ToolViewProps> = ({
   isSuccess = true,
   isStreaming = false
 }) => {
+  const tTasks = useTranslations('toolViews.taskList')
   const name = toolCall.function_name.replace(/_/g, '-').toLowerCase();
   const taskData = extractTaskListData(toolCall.arguments, toolResult?.output)
   const toolTitle = getToolTitle(name)
@@ -108,7 +111,7 @@ export const TaskListToolView: React.FC<ToolViewProps> = ({
       <ToolViewHeader icon={ListTodo} title={toolTitle}>
         {!isStreaming && (
           <Badge variant="outline" className="text-xs font-normal">
-            {completedTasks} / {totalTasks} tasks
+            {tTasks('progress', { completed: completedTasks, total: totalTasks })}
           </Badge>
         )}
       </ToolViewHeader>
@@ -120,10 +123,10 @@ export const TaskListToolView: React.FC<ToolViewProps> = ({
               <DobbyLoader size="medium" />
             </div>
             <h3 className="text-xl font-semibold mb-2 text-zinc-900 dark:text-zinc-100">
-              Loading Tasks
+              {tTasks('loading')}
             </h3>
             <p className="text-sm text-zinc-500 dark:text-zinc-400">
-              Preparing your task list...
+              {tTasks('preparing')}
             </p>
           </div>
         ) : hasData ? (
@@ -138,10 +141,10 @@ export const TaskListToolView: React.FC<ToolViewProps> = ({
               <ListTodo className="h-10 w-10 text-zinc-400 dark:text-zinc-500" />
             </div>
             <h3 className="text-xl font-semibold mb-2 text-zinc-900 dark:text-zinc-100">
-              No Tasks Yet
+              {tTasks('noTasks')}
             </h3>
             <p className="text-sm text-zinc-500 dark:text-zinc-400">
-              Your task list will appear here once created
+              {tTasks('noTasksDescription')}
             </p>
           </div>
         )}
@@ -156,12 +159,12 @@ export const TaskListToolView: React.FC<ToolViewProps> = ({
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="h-6 py-0.5">
               <ListTodo className="h-3 w-3" />
-              {sections.length} sections
+              {tTasks('sectionCount', { count: sections.length })}
             </Badge>
             {completedTasks === totalTasks && totalTasks > 0 && (
               <Badge variant="outline" className="h-6 py-0.5 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700">
                 <Check className="h-3 w-3" />
-                All complete
+                {tTasks('allComplete')}
               </Badge>
             )}
           </div>

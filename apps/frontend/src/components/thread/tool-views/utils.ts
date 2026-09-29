@@ -26,103 +26,103 @@ export function formatTimestamp(isoString?: string): string {
   }
 }
 
+// Map of tool names to their display titles
+export const TOOL_TITLES: Record<string, string> = {
+  'execute-command': 'Execute Command',
+  'check-command-output': 'Check Command Output',
+  'list-commands': 'Running Commands',
+  'list_commands': 'Running Commands',
+  'str-replace': 'String Replace',
+  'create-file': 'Create File',
+  'full-file-rewrite': 'Rewrite File',
+  'delete-file': 'Delete File',
+  'web-search': 'Web Search',
+  'image-search': 'Image Search',
+  'crawl-webpage': 'Web Crawl',
+  'scrape-webpage': 'Web Scrape',
+  'browser-navigate-to': 'Browser Navigate',
+  'browser-act': 'Browser Action',
+  'browser-extract-content': 'Browser Extract',
+  'browser-screenshot': 'Browser Screenshot',
+  'computer-screenshot': 'Screen Capture',
+  'computer_screenshot': 'Screen Capture',
+  'computer-click': 'Click',
+  'computer_click': 'Click',
+  'computer-type': 'Type',
+  'computer_type': 'Type',
+  'computer-key': 'Key',
+  'computer_key': 'Key',
+  'computer-scroll': 'Scroll',
+  'computer_scroll': 'Scroll',
+  'computer-open': 'Open',
+  'computer_open': 'Open',
+  'load-image': 'Load Image',
+
+
+  'initialize-tools': 'Mode Activated',
+  'initialize_tools': 'Mode Activated',
+
+  
+  'ask': 'Ask',
+  'complete': 'Task Complete',
+  'search-mcp-servers': 'Search MCP Servers',
+  'get-app-details': 'Get App Details',
+  'create-credential-profile': 'Create Credential Profile',
+  'connect-credential-profile': 'Connect Credential Profile',
+  'check-profile-connection': 'Check Profile Connection',
+  'configure-profile-for-agent': 'Configure Profile For Worker',
+  'get-credential-profiles': 'Get Credential Profiles',
+  'get-current-agent-config': 'Get Current Worker Config',
+  'create-presentation': 'Create Presentation',
+  'export-presentation': 'Export Presentation',
+  'export_presentation': 'Export Presentation',
+  // Legacy tool names (backward compatibility)
+  'export_to_pptx': 'Export to PPTX',
+  'export_to_pdf': 'Export to PDF',
+  'export-to-pptx': 'Export to PPTX',
+  'export-to-pdf': 'Export to PDF',
+  'list-presentation-templates': 'List Presentation Templates',
+  'upload-file': 'Upload File',
+  
+  // Agent Creation Tools
+  'create-new-agent': 'Create New Worker',
+  'update-agent': 'Update Worker',
+  'search-mcp-servers-for-agent': 'Search MCP Servers for Worker',
+  'get-mcp-server-details': 'Get MCP Server Details',
+  'create-credential-profile-for-agent': 'Create Credential Profile for Worker',
+  'discover-mcp-tools-for-agent': 'Discover MCP Tools for Worker',
+  'discover-user-mcp-servers': 'Discovering tools',
+  'configure-agent-integration': 'Configure Worker Integration',
+  'list-available-integrations': 'List Available Integrations',
+  'list-app-event-triggers': 'List Event Triggers',
+  'create-event-trigger': 'Create Event Trigger',
+  'list-account-workers': 'List Account Workers',
+  'create-agent-scheduled-trigger': 'Create Scheduled Trigger',
+  'list-agent-scheduled-triggers': 'List Scheduled Triggers',
+  'delete-agent-scheduled-trigger': 'Delete Scheduled Trigger',
+  'toggle-agent-scheduled-trigger': 'Toggle Scheduled Trigger',
+
+  'make-call': 'Make Call',
+  'make_call': 'Make Call',
+  'end-call': 'End Call',
+  'end_call': 'End Call',
+  'get-call-details': 'Call Details',
+  'get_call_details': 'Call Details',
+  'list-calls': 'Call History',
+  'list_calls': 'Call History',
+
+  'generic-tool': 'Tool',
+  'default': 'Tool',
+};
+
 // Get standardized tool title
 export function getToolTitle(toolName: string): string {
   // Normalize tool name
   const normalizedName = toolName.toLowerCase();
 
-  // Map of tool names to their display titles
-  const toolTitles: Record<string, string> = {
-    'execute-command': 'Execute Command',
-    'check-command-output': 'Check Command Output',
-    'list-commands': 'Running Commands',
-    'list_commands': 'Running Commands',
-    'str-replace': 'String Replace',
-    'create-file': 'Create File',
-    'full-file-rewrite': 'Rewrite File',
-    'delete-file': 'Delete File',
-    'web-search': 'Web Search',
-    'image-search': 'Image Search',
-    'crawl-webpage': 'Web Crawl',
-    'scrape-webpage': 'Web Scrape',
-    'browser-navigate-to': 'Browser Navigate',
-    'browser-act': 'Browser Action',
-    'browser-extract-content': 'Browser Extract',
-    'browser-screenshot': 'Browser Screenshot',
-    'computer-screenshot': 'Screen Capture',
-    'computer_screenshot': 'Screen Capture',
-    'computer-click': 'Click',
-    'computer_click': 'Click',
-    'computer-type': 'Type',
-    'computer_type': 'Type',
-    'computer-key': 'Key',
-    'computer_key': 'Key',
-    'computer-scroll': 'Scroll',
-    'computer_scroll': 'Scroll',
-    'computer-open': 'Open',
-    'computer_open': 'Open',
-    'load-image': 'Load Image',
-
-
-    'initialize-tools': 'Mode Activated',
-    'initialize_tools': 'Mode Activated',
-
-    
-    'ask': 'Ask',
-    'complete': 'Task Complete',
-    'search-mcp-servers': 'Search MCP Servers',
-    'get-app-details': 'Get App Details',
-    'create-credential-profile': 'Create Credential Profile',
-    'connect-credential-profile': 'Connect Credential Profile',
-    'check-profile-connection': 'Check Profile Connection',
-    'configure-profile-for-agent': 'Configure Profile For Worker',
-    'get-credential-profiles': 'Get Credential Profiles',
-    'get-current-agent-config': 'Get Current Worker Config',
-    'create-presentation': 'Create Presentation',
-    'export-presentation': 'Export Presentation',
-    'export_presentation': 'Export Presentation',
-    // Legacy tool names (backward compatibility)
-    'export_to_pptx': 'Export to PPTX',
-    'export_to_pdf': 'Export to PDF',
-    'export-to-pptx': 'Export to PPTX',
-    'export-to-pdf': 'Export to PDF',
-    'list-presentation-templates': 'List Presentation Templates',
-    'upload-file': 'Upload File',
-    
-    // Agent Creation Tools
-    'create-new-agent': 'Create New Worker',
-    'update-agent': 'Update Worker',
-    'search-mcp-servers-for-agent': 'Search MCP Servers for Worker',
-    'get-mcp-server-details': 'Get MCP Server Details',
-    'create-credential-profile-for-agent': 'Create Credential Profile for Worker',
-    'discover-mcp-tools-for-agent': 'Discover MCP Tools for Worker',
-    'discover-user-mcp-servers': 'Discovering tools',
-    'configure-agent-integration': 'Configure Worker Integration',
-    'list-available-integrations': 'List Available Integrations',
-    'list-app-event-triggers': 'List Event Triggers',
-    'create-event-trigger': 'Create Event Trigger',
-    'list-account-workers': 'List Account Workers',
-    'create-agent-scheduled-trigger': 'Create Scheduled Trigger',
-    'list-agent-scheduled-triggers': 'List Scheduled Triggers',
-    'delete-agent-scheduled-trigger': 'Delete Scheduled Trigger',
-    'toggle-agent-scheduled-trigger': 'Toggle Scheduled Trigger',
-
-    'make-call': 'Make Call',
-    'make_call': 'Make Call',
-    'end-call': 'End Call',
-    'end_call': 'End Call',
-    'get-call-details': 'Call Details',
-    'get_call_details': 'Call Details',
-    'list-calls': 'Call History',
-    'list_calls': 'Call History',
-
-    'generic-tool': 'Tool',
-    'default': 'Tool',
-  };
-
   // Return the mapped title or a formatted version of the name
-  if (toolTitles[normalizedName]) {
-    return toolTitles[normalizedName];
+  if (TOOL_TITLES[normalizedName]) {
+    return TOOL_TITLES[normalizedName];
   }
 
   // For browser tools not explicitly mapped

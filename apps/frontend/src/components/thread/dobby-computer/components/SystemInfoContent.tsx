@@ -1,6 +1,7 @@
 'use client';
 
 import { memo } from 'react';
+import { useTranslations } from 'next-intl';
 import { Cpu, HardDrive, MemoryStick, MapPin, AlertTriangle, Loader2 } from 'lucide-react';
 import { DobbyLoader } from '@/components/ui/dobby-loader';
 import { DobbyLogo } from '@/components/sidebar/dobby-logo';
@@ -86,6 +87,8 @@ export const SystemInfoContent = memo(function SystemInfoContent({
   sandboxStatus,
   isLoading,
 }: SystemInfoContentProps) {
+  const t = useTranslations('dobbyComputer.sandboxInfo');
+  const tStatus = useTranslations('dobbyComputer.status');
   if (isLoading) {
     return (
       <div className="h-full flex items-center justify-center">
@@ -100,7 +103,7 @@ export const SystemInfoContent = memo(function SystemInfoContent({
   if (!data) {
     return (
       <div className="h-full flex items-center justify-center text-muted-foreground">
-        No sandbox information available
+        {t('noInfo')}
       </div>
     );
   }
@@ -119,7 +122,7 @@ export const SystemInfoContent = memo(function SystemInfoContent({
           <div className="flex items-center justify-center gap-2 mt-1">
             <StatusIndicator status={status} />
             <span className={cn("text-sm font-medium", getStatusColor(status))}>
-              {getSandboxStatusLabel(status)}
+              {tStatus.has(status) ? tStatus(status) : getSandboxStatusLabel(status)}
             </span>
           </div>
         </div>
@@ -135,7 +138,7 @@ export const SystemInfoContent = memo(function SystemInfoContent({
       {/* Services health info (when available) */}
       {sandboxStatus?.services_health && (
         <div className="mb-6 p-4 bg-muted/50 rounded-xl border border-border">
-          <h4 className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-3">Services</h4>
+          <h4 className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-3">{t('services')}</h4>
           <div className="grid grid-cols-2 gap-2">
             {Object.entries(sandboxStatus.services_health.services).map(([service, serviceStatus]) => (
               <div key={service} className="flex items-center gap-2">
@@ -161,7 +164,7 @@ export const SystemInfoContent = memo(function SystemInfoContent({
             <span className="text-xs text-muted-foreground uppercase tracking-wide font-medium">CPU</span>
           </div>
           <p className="text-foreground font-bold text-2xl leading-tight">{data.cpu || 1}</p>
-          <p className="text-xs text-muted-foreground/70 mt-0.5">cores</p>
+          <p className="text-xs text-muted-foreground/70 mt-0.5">{t('cores')}</p>
         </div>
 
         <div className="bg-muted/50 rounded-xl p-4 border border-border">
@@ -180,7 +183,7 @@ export const SystemInfoContent = memo(function SystemInfoContent({
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center">
               <HardDrive className="w-4 h-4 text-white" />
             </div>
-            <span className="text-xs text-muted-foreground uppercase tracking-wide font-medium">Disk</span>
+            <span className="text-xs text-muted-foreground uppercase tracking-wide font-medium">{t('disk')}</span>
           </div>
           <p className="text-foreground font-bold text-2xl leading-tight">{data.disk || 3}</p>
           <p className="text-xs text-muted-foreground/70 mt-0.5">GB</p>
@@ -193,7 +196,7 @@ export const SystemInfoContent = memo(function SystemInfoContent({
             <MapPin className="w-4 h-4 text-white" />
           </div>
           <div>
-            <span className="text-xs text-muted-foreground block">Region</span>
+            <span className="text-xs text-muted-foreground block">{t('regionLabel')}</span>
             <span className="text-sm text-foreground font-semibold uppercase">{data.target}</span>
           </div>
         </div>

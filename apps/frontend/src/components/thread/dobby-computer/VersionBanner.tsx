@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { useTranslations } from 'next-intl';
 
 interface VersionBannerProps {
   versionDate?: string;
@@ -6,6 +7,7 @@ interface VersionBannerProps {
 }
 
 export function VersionBanner({ versionDate, onReturnToCurrent }: VersionBannerProps) {
+  const t = useTranslations('dobbyComputer.version');
   return (
     <div className="px-4 py-2 bg-muted/50 border-b border-border flex items-center justify-between">
       <div className="flex items-center gap-2">
@@ -13,13 +15,15 @@ export function VersionBanner({ versionDate, onReturnToCurrent }: VersionBannerP
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
         <span className="text-sm text-foreground">
-          Viewing version from {versionDate 
+          {t('viewingVersionFrom', {
+            date: versionDate 
             ? new Date(versionDate).toLocaleDateString('en-US', {
                 month: 'short',
                 day: 'numeric',
                 year: 'numeric'
               })
-            : 'previous snapshot'}
+            : t('previousSnapshot'),
+          })}
         </span>
       </div>
       <Button
@@ -31,7 +35,7 @@ export function VersionBanner({ versionDate, onReturnToCurrent }: VersionBannerP
         <svg className="h-3 w-3 text-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
         </svg>
-        Return to Current
+        {t('returnToCurrent')}
       </Button>
     </div>
   );

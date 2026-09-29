@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Terminal,
   CheckCircle,
@@ -35,6 +36,7 @@ export function ListCommandsToolView({
   isSuccess = true,
   isStreaming = false,
 }: ToolViewProps) {
+  const t = useTranslations('toolViews.command');
   const { resolvedTheme } = useTheme();
   const isDarkTheme = resolvedTheme === 'dark';
 
@@ -92,7 +94,7 @@ export function ListCommandsToolView({
   }
 
   const name = toolCall.function_name.replace(/_/g, '-').toLowerCase();
-  const toolTitle = getToolTitle(name) || 'Running Commands';
+  const toolTitle = getToolTitle(name) || t('runningCommands');
 
   const actualIsSuccess = toolResult?.success !== undefined ? toolResult.success : isSuccess;
 
@@ -110,8 +112,8 @@ export function ListCommandsToolView({
             icon={Terminal}
             iconColor="text-zinc-500 dark:text-zinc-400"
             bgColor="bg-gradient-to-b from-zinc-100 to-zinc-50 shadow-inner dark:from-zinc-800/40 dark:to-zinc-900/60"
-            title="Listing commands"
-            filePath="Retrieving running commands..."
+            title={t('listingCommands')}
+            filePath={t('retrievingCommands')}
             showProgress={true}
           />
         ) : commands.length > 0 ? (
@@ -119,7 +121,7 @@ export function ListCommandsToolView({
             <ScrollArea className="flex-1 min-h-0">
               <div className="p-4 space-y-3">
                 {commands.map((cmd: CommandSession, index: number) => {
-                  const sessionName = cmd.session_name || cmd.sessionName || (typeof cmd === 'string' ? cmd : `Session ${index + 1}`);
+                  const sessionName = cmd.session_name || cmd.sessionName || (typeof cmd === 'string' ? cmd : t('sessionNumber', { number: index + 1 }));
                   const command = cmd.command || cmd.cmd || null;
                   const status = cmd.status || cmd.state || null;
                   const cwd = cmd.cwd || cmd.working_directory || null;
@@ -133,7 +135,7 @@ export function ListCommandsToolView({
                       <div className="flex items-center gap-2 mb-2">
                         <Badge variant="outline" className="text-xs px-1.5 py-0 h-4 font-normal">
                           <TerminalIcon className="h-2.5 w-2.5 mr-1 opacity-70" />
-                          Session
+                          {t('session')}
                         </Badge>
                         {status && (
                           <Badge
@@ -158,7 +160,7 @@ export function ListCommandsToolView({
                           <div className="flex items-center gap-2 mb-1">
                             <Badge variant="outline" className="text-xs px-1.5 py-0 h-4 font-normal">
                               <TerminalIcon className="h-2.5 w-2.5 mr-1 opacity-70" />
-                              Command
+                              {t('command')}
                             </Badge>
                           </div>
                           <div className="font-mono text-xs text-foreground">
@@ -188,10 +190,10 @@ export function ListCommandsToolView({
               <CircleDashed className="h-10 w-10 text-zinc-400 dark:text-zinc-600" />
             </div>
             <h3 className="text-xl font-semibold mb-2 text-zinc-900 dark:text-zinc-100">
-              No Running Commands
+              {t('noRunningCommands')}
             </h3>
             <p className="text-sm text-zinc-500 dark:text-zinc-400 text-center max-w-md">
-              There are currently no running commands or sessions.
+              {t('noRunningCommandsDescription')}
             </p>
           </div>
         )}
@@ -202,7 +204,7 @@ export function ListCommandsToolView({
           {!isStreaming && commands.length > 0 && (
             <Badge variant="outline" className="h-6 py-0.5 bg-zinc-50 dark:bg-zinc-900">
               <Terminal className="h-3 w-3 mr-1" />
-              {commands.length} {commands.length === 1 ? 'Command' : 'Commands'}
+              {t('commandCount', { count: commands.length })}
             </Badge>
           )}
         </div>

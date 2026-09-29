@@ -1,3 +1,4 @@
+import { useTranslations } from 'next-intl';
 import { Cloud, CloudOff, Check, AlertCircle, RefreshCw } from 'lucide-react';
 import { DobbyLoader } from '@/components/ui/dobby-loader';
 import { cn } from '@/lib/utils';
@@ -8,6 +9,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { translateSyncErrorMessage } from './_utils';
 
 type SyncStatus = 'idle' | 'syncing' | 'synced' | 'error' | 'offline' | 'conflict';
 
@@ -21,14 +23,14 @@ interface SyncStatusIndicatorProps {
   className?: string;
 }
 
-function formatRelativeTime(timestamp: number): string {
+function formatRelativeTime(timestamp: number, t: ReturnType<typeof useTranslations>): string {
   const seconds = Math.floor((Date.now() - timestamp) / 1000);
-  if (seconds < 5) return 'just now';
-  if (seconds < 60) return `${seconds}s ago`;
+  if (seconds < 5) return t('justNow');
+  if (seconds < 60) return t('secondsAgo', { count: seconds });
   const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
+  if (minutes < 60) return t('minutesAgo', { count: minutes });
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 24) return t('hoursAgo', { count: hours });
   return new Date(timestamp).toLocaleDateString();
 }
 
@@ -41,6 +43,7 @@ export function SyncStatusIndicator({
   onResolveConflict,
   className,
 }: SyncStatusIndicatorProps) {
+  const t = useTranslations('toolViews.spreadsheet');
   const getStatusConfig = () => {
     // All status indicators use consistent gray styling
     const grayStyle = { color: 'text-zinc-500', bgColor: 'bg-zinc-500/10' };
@@ -49,37 +52,37 @@ export function SyncStatusIndicator({
       case 'syncing':
         return {
           icon: <DobbyLoader customSize={14} />,
-          label: 'Saving...',
+          label: t('saving'),
           ...grayStyle,
         };
       case 'synced':
         return {
           icon: <Check className="w-3.5 h-3.5" />,
-          label: lastSyncedAt ? `Saved ${formatRelativeTime(lastSyncedAt)}` : 'Saved',
+          label: lastSyncedAt ? t('savedAt', { time: formatRelativeTime(lastSyncedAt, t) }) : t('saved'),
           ...grayStyle,
         };
       case 'offline':
         return {
           icon: <CloudOff className="w-3.5 h-3.5" />,
-          label: pendingChanges ? 'Offline - changes pending' : 'Offline',
+          label: pendingChanges ? t('offlineChangesPending') : t('offline'),
           ...grayStyle,
         };
       case 'error':
         return {
           icon: <AlertCircle className="w-3.5 h-3.5" />,
-          label: errorMessage || 'Save failed',
+          label: errorMessage ? translateSyncErrorMessage(errorMessage, t) : t('saveFailed'),
           ...grayStyle,
         };
       case 'conflict':
         return {
           icon: <AlertCircle className="w-3.5 h-3.5" />,
-          label: 'External changes detected',
+          label: t('externalChangesDetected'),
           ...grayStyle,
         };
       default:
         return {
           icon: <Cloud className="w-3.5 h-3.5" />,
-          label: 'Ready',
+          label: t('ready'),
           color: 'text-zinc-400',
           bgColor: 'bg-zinc-500/10',
         };
@@ -106,7 +109,7 @@ export function SyncStatusIndicator({
             onClick={() => onResolveConflict?.(false)}
             className="h-6 px-2 text-xs"
           >
-            Load External
+            {t('loadExternal')}
           </Button>
           <Button
             variant="ghost"
@@ -114,7 +117,7 @@ export function SyncStatusIndicator({
             onClick={() => onResolveConflict?.(true)}
             className="h-6 px-2 text-xs"
           >
-            Keep Mine
+            {t('keepMine')}
           </Button>
         </div>
       </div>
@@ -141,7 +144,7 @@ export function SyncStatusIndicator({
           <div className="flex flex-col gap-1">
             <span>{config.label}</span>
             {pendingChanges && status !== 'syncing' && (
-              <span className="text-amber-400">Unsaved changes</span>
+              <span className="text-amber-400">{t('unsavedChanges')}</span>
             )}
             {status === 'error' && onRefresh && (
               <Button
@@ -151,7 +154,7 @@ export function SyncStatusIndicator({
                 className="h-6 px-2 text-xs mt-1"
               >
                 <RefreshCw className="w-3 h-3 mr-1" />
-                Retry
+                {t('retry')}
               </Button>
             )}
           </div>

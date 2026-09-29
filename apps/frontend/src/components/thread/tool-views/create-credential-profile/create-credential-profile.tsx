@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import {
   UserPlus,
   CheckCircle,
@@ -32,6 +33,8 @@ export function CreateCredentialProfileToolView({
   isSuccess = true,
   isStreaming = false,
 }: ToolViewProps) {
+  const t = useTranslations('toolViews.createCredentialProfile');
+  const tCommon = useTranslations('toolViews.common');
   if (!toolCall) {
     return null;
   }
@@ -80,7 +83,7 @@ export function CreateCredentialProfileToolView({
       color: isConnected 
         ? 'bg-zinc-100 text-zinc-700 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700'
         : 'bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-300 dark:border-yellow-800',
-      text: isConnected ? 'Connected' : 'Not Connected'
+      text: isConnected ? tCommon('connected') : tCommon('notConnected')
     };
   };
 
@@ -104,7 +107,7 @@ export function CreateCredentialProfileToolView({
               ) : (
                 <AlertTriangle className="h-3 w-3" />
               )}
-              {actualIsSuccess ? 'Profile created' : 'Creation failed'}
+              {actualIsSuccess ? tCommon('profileCreated') : tCommon('creationFailed')}
             </Badge>
           )}
         </div>
@@ -116,7 +119,7 @@ export function CreateCredentialProfileToolView({
             icon={UserPlus}
             iconColor="text-zinc-500 dark:text-zinc-400"
             bgColor="bg-gradient-to-b from-green-100 to-green-50 shadow-inner dark:from-green-800/40 dark:to-green-900/60 dark:shadow-green-950/20"
-            title="Creating credential profile"
+            title={t('creating')}
             filePath={profile_name ? `"${profile_name}"` : undefined}
             showProgress={true}
           />
@@ -130,7 +133,7 @@ export function CreateCredentialProfileToolView({
                       {logoUrl ? (
                         <img
                           src={logoUrl}
-                          alt={`${profile.toolkit_name} logo`}
+                          alt={t('logoAlt', { name: String(profile.toolkit_name) })}
                           className="w-8 h-8 object-cover rounded"
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
@@ -174,7 +177,7 @@ export function CreateCredentialProfileToolView({
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
                       <BadgeIcon className="w-4 h-4" />
-                      <span>Profile Name</span>
+                      <span>{t('profileName')}</span>
                     </div>
                     <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 pl-6">
                       {profile.profile_name}
@@ -184,7 +187,7 @@ export function CreateCredentialProfileToolView({
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
                       <Server className="w-4 h-4" /> 
-                      <span>Toolkit Slug</span>
+                      <span>{t('toolkitSlug')}</span>
                     </div>
                     <p className="text-sm font-mono text-zinc-700 dark:text-zinc-300 pl-6">
                       {profile.toolkit_slug}
@@ -198,10 +201,10 @@ export function CreateCredentialProfileToolView({
                       <Settings className="w-4 h-4 text-zinc-600 dark:text-zinc-400 mt-0.5" />
                       <div>
                         <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 mb-1">
-                          Setup Required
+                          {t('setupRequired')}
                         </p>
                         <p className="text-xs text-zinc-700 dark:text-zinc-300">
-                          This credential profile needs to be connected before it can be used. Follow the authentication flow to complete the setup.
+                          {t('setupDesc')}
                         </p>
                       </div>
                     </div>
@@ -217,10 +220,10 @@ export function CreateCredentialProfileToolView({
                 <UserPlus className="h-8 w-8 text-zinc-400" />
               </div>
               <h3 className="text-base font-medium text-zinc-900 dark:text-zinc-100 mb-2">
-                Profile not created
+                {t('notCreated')}
               </h3>
               <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                {toolkit_slug ? `Failed to create profile for "${toolkit_slug}"` : 'Credential profile creation failed'}
+                {toolkit_slug ? t('failedFor', { slug: toolkit_slug }) : t('failedGeneric')}
               </p>
             </div>
           </div>

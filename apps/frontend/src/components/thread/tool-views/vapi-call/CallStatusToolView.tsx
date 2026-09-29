@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { Phone, Clock, MessageSquare, DollarSign, CheckCircle, AlertTriangle, Bot, User } from 'lucide-react';
 import { ToolViewProps } from '../types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,6 +18,7 @@ export function CallStatusToolView({
   isSuccess = true,
   isStreaming = false,
 }: ToolViewProps) {
+  const t = useTranslations('toolViews.vapiCall');
   // Defensive check - ensure toolCall is defined
   if (!toolCall) {
     console.warn('CallStatusToolView: toolCall is undefined. Tool views should use structured props.');
@@ -28,7 +30,7 @@ export function CallStatusToolView({
   const callData = extractCallStatusData(toolResult);
 
   if (!callData) {
-    return <div className="text-sm text-muted-foreground">No call status data available</div>;
+    return <div className="text-sm text-muted-foreground">{t('noStatusData')}</div>;
   }
 
   const statusInfo = statusConfig[callData.status as keyof typeof statusConfig] || statusConfig.queued;
@@ -48,7 +50,7 @@ export function CallStatusToolView({
           <div className="space-y-1">
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <Phone className="h-3 w-3" />
-              Phone Number
+              {t('phoneNumber')}
             </div>
             <div className="text-sm font-medium text-foreground">
               {formatPhoneNumber(callData.phone_number)}
@@ -58,7 +60,7 @@ export function CallStatusToolView({
           <div className="space-y-1">
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <Clock className="h-3 w-3" />
-              Duration
+              {t('duration')}
             </div>
             <div className="text-sm font-medium text-foreground">
               {formatDuration(callData.duration_seconds)}
@@ -67,7 +69,7 @@ export function CallStatusToolView({
 
           {callData.started_at && (
             <div className="space-y-1">
-              <div className="text-xs text-muted-foreground">Started At</div>
+              <div className="text-xs text-muted-foreground">{t('startedAt')}</div>
               <div className="text-sm text-foreground">
                 {new Date(callData.started_at).toLocaleTimeString()}
               </div>
@@ -76,7 +78,7 @@ export function CallStatusToolView({
 
           {callData.ended_at && (
             <div className="space-y-1">
-              <div className="text-xs text-muted-foreground">Ended At</div>
+              <div className="text-xs text-muted-foreground">{t('endedAt')}</div>
               <div className="text-sm text-foreground">
                 {new Date(callData.ended_at).toLocaleTimeString()}
               </div>
@@ -87,7 +89,7 @@ export function CallStatusToolView({
             <div className="space-y-1">
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <DollarSign className="h-3 w-3" />
-                Cost
+                {t('cost')}
               </div>
               <div className="text-sm font-medium text-foreground">
                 ${callData.cost.toFixed(4)}
@@ -96,7 +98,7 @@ export function CallStatusToolView({
           )}
 
           <div className="space-y-1">
-            <div className="text-xs text-muted-foreground">Call ID</div>
+            <div className="text-xs text-muted-foreground">{t('callId')}</div>
             <div className="text-xs font-mono text-foreground truncate">
               {callData.call_id}
             </div>
@@ -107,7 +109,7 @@ export function CallStatusToolView({
           <div className="space-y-2">
             <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
               <MessageSquare className="h-3 w-3" />
-              Conversation Transcript
+              {t('conversationTranscript')}
             </div>
             <div className="space-y-3 bg-muted/50 rounded-lg p-3 border border-border max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/30 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/50">
               {callData.transcript!.map((msg, idx) => (
@@ -124,12 +126,12 @@ export function CallStatusToolView({
                     {msg.role === 'assistant' ? (
                       <>
                         <Bot className="w-3 h-3 text-primary" />
-                        AI Assistant
+                        {t('aiAssistant')}
                       </>
                     ) : (
                       <>
                         <User className="w-3 h-3 text-muted-foreground" />
-                        Caller
+                        {t('caller')}
                       </>
                     )}
                   </div>

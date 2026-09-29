@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Link2,
   CheckCircle,
@@ -31,6 +32,7 @@ export function ConnectCredentialProfileToolView({
   isStreaming = false,
 }: ToolViewProps) {
   // All hooks must be called unconditionally at the top
+  const t = useTranslations('toolViews.connectCredentialProfile');
   const [copiedLink, setCopiedLink] = useState(false);
   const [timeUntilExpiry, setTimeUntilExpiry] = useState<string>('');
 
@@ -171,7 +173,7 @@ export function ConnectCredentialProfileToolView({
               ) : (
                 <AlertTriangle className="h-3 w-3" />
               )}
-              {actualIsSuccess ? 'Link generated' : 'Generation failed'}
+              {actualIsSuccess ? t('linkGenerated') : t('generationFailed')}
             </Badge>
           )}
         </div>
@@ -183,7 +185,7 @@ export function ConnectCredentialProfileToolView({
             icon={Link2}
             iconColor="text-blue-500 dark:text-blue-400"
             bgColor="bg-gradient-to-b from-blue-100 to-blue-50 shadow-inner dark:from-blue-800/40 dark:to-blue-900/60 dark:shadow-blue-950/20"
-            title="Generating connection link"
+            title={t('generating')}
             filePath={profile_name ? `"${profile_name}"` : undefined}
             showProgress={true}
           />
@@ -196,7 +198,7 @@ export function ConnectCredentialProfileToolView({
                     {logoUrl ? (
                       <img
                         src={logoUrl}
-                        alt={`${app_name} logo`}
+                        alt={t('logoAlt', { name: String(app_name) })}
                         className="w-6 h-6 object-cover rounded"
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
@@ -236,7 +238,7 @@ export function ConnectCredentialProfileToolView({
               <div className="border rounded-xl p-4 space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="font-medium text-zinc-900 dark:text-zinc-100">
-                    Connection Link
+                    {t('connectionLink')}
                   </h3>
                   
                   {expires_at && (
@@ -250,7 +252,7 @@ export function ConnectCredentialProfileToolView({
                             ? "text-green-600 dark:text-green-400"
                             : "text-yellow-600 dark:text-yellow-400"
                       )}>
-                        {isExpired ? 'Expired' : `Expires in ${timeUntilExpiry}`}
+                        {isExpired ? t('expired') : t('expiresIn', { time: timeUntilExpiry })}
                       </span>
                     </div>
                   )}
@@ -271,7 +273,7 @@ export function ConnectCredentialProfileToolView({
                       )}
                     >
                       <ExternalLink className="w-4 h-4" />
-                      {isExpired ? 'Link Expired' : 'Connect Account'}
+                      {isExpired ? t('linkExpired') : t('connectAccount')}
                     </Button>
                     
                     <Button
@@ -292,7 +294,7 @@ export function ConnectCredentialProfileToolView({
                 {expires_at && (
                   <div className="text-xs text-zinc-500 dark:text-zinc-400 flex items-center gap-1">
                     <AlertCircle className="w-3 h-3" />
-                    Link expires on {formatExpiryTime(expires_at)}
+                    {t('linkExpiresOn', { date: formatExpiryTime(expires_at) })}
                   </div>
                 )}
 
@@ -302,10 +304,10 @@ export function ConnectCredentialProfileToolView({
                       <AlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400 mt-0.5" />
                       <div>
                         <p className="text-sm font-medium text-red-900 dark:text-red-100 mb-1">
-                          Connection Link Expired
+                          {t('connectionLinkExpired')}
                         </p>
                         <p className="text-xs text-red-700 dark:text-red-300">
-                          This connection link has expired. You'll need to generate a new one to connect your account.
+                          {t('expiredDesc')}
                         </p>
                       </div>
                     </div>
@@ -321,10 +323,10 @@ export function ConnectCredentialProfileToolView({
                 <Link2 className="h-8 w-8 text-zinc-400" />
               </div>
               <h3 className="text-base font-medium text-zinc-900 dark:text-zinc-100 mb-2">
-                No connection link generated
+                {t('noLink')}
               </h3>
               <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                {profile_name ? `Failed to generate link for "${profile_name}"` : 'Connection link generation failed'}
+                {profile_name ? t('failedFor', { name: profile_name }) : t('generationFailedDesc')}
               </p>
             </div>
           </div>

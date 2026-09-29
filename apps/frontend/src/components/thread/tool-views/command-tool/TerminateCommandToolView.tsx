@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Terminal,
   CheckCircle,
@@ -31,6 +32,8 @@ export function TerminateCommandToolView({
   isSuccess = true,
   isStreaming = false,
 }: ToolViewProps) {
+  const t = useTranslations('toolViews.command');
+  const tCommon = useTranslations('toolViews.common');
   const { resolvedTheme } = useTheme();
   const isDarkTheme = resolvedTheme === 'dark';
   const [progress, setProgress] = useState(0);
@@ -53,7 +56,7 @@ export function TerminateCommandToolView({
   const finalSessionName = sessionName || toolCall.arguments?.session_name || null;
 
   const name = toolCall.function_name.replace(/_/g, '-').toLowerCase();
-  const toolTitle = getToolTitle(name) || 'Terminate Session';
+  const toolTitle = getToolTitle(name) || t('terminateSession');
 
   const terminationSuccess = React.useMemo(() => {
     if (!output) return false;
@@ -133,10 +136,10 @@ export function TerminateCommandToolView({
                 <DobbyLoader customSize={32} />
               </div>
               <h3 className="text-lg font-medium text-zinc-900 dark:text-zinc-100 mb-2">
-                Terminating session
+                {t('terminatingSession')}
               </h3>
               <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6">
-                <span className="font-mono text-xs break-all">{finalSessionName || 'Processing termination...'}</span>
+                <span className="font-mono text-xs break-all">{finalSessionName || t('processingTermination')}</span>
               </p>
               <Progress value={progress} className="w-full h-1" />
               <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-2">{progress}%</p>
@@ -150,7 +153,7 @@ export function TerminateCommandToolView({
                 <div className="flex items-center gap-2 mb-2">
                   <Badge variant="outline" className="text-xs px-1.5 py-0 h-4 font-normal">
                     <Power className="h-2.5 w-2.5 mr-1 opacity-70" />
-                    Session
+                    {t('session')}
                   </Badge>
                 </div>
                 <div className="font-mono text-xs text-foreground flex gap-2">
@@ -166,7 +169,7 @@ export function TerminateCommandToolView({
                     <div className="flex items-center gap-2">
                       <Badge variant="outline" className="text-xs px-1.5 py-0 h-4 font-normal">
                         <ArrowRight className="h-2.5 w-2.5 mr-1 opacity-70" />
-                        Result
+                        {t('result')}
                       </Badge>
                     </div>
                     <Badge
@@ -177,7 +180,7 @@ export function TerminateCommandToolView({
                           : "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-400"
                       )}
                     >
-                      {terminationSuccess ? 'Success' : 'Failed'}
+                      {terminationSuccess ? tCommon('success') : tCommon('failed')}
                     </Badge>
                   </div>
                 </div>
@@ -192,12 +195,12 @@ export function TerminateCommandToolView({
                     <div className="flex items-center gap-2">
                       <Badge variant="outline" className="text-xs px-1.5 py-0 h-4 font-normal">
                         <TerminalIcon className="h-2.5 w-2.5 mr-1 opacity-70" />
-                        Output
+                        {t('output')}
                       </Badge>
                       {!terminationSuccess && (
                         <Badge variant="outline" className="text-xs h-4 px-1.5 border-red-700/30 text-red-400">
                           <AlertTriangle className="h-2.5 w-2.5 mr-1" />
-                          Error
+                          {t('error')}
                         </Badge>
                       )}
                     </div>
@@ -218,7 +221,7 @@ export function TerminateCommandToolView({
                       </pre>
                       {!showFullOutput && hasMoreLines && (
                         <div className="text-muted-foreground mt-2 border-t border-border pt-2 text-xs font-mono">
-                          + {formattedOutput.length - 10} more lines
+                          {t('moreLines', { count: formattedOutput.length - 10 })}
                         </div>
                       )}
                     </div>
@@ -229,7 +232,7 @@ export function TerminateCommandToolView({
               <div className="flex-1 flex items-center justify-center px-4 pb-4">
                 <div className="bg-card border border-border rounded-lg p-4 text-center">
                   <CircleDashed className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground">No output received</p>
+                  <p className="text-sm text-muted-foreground">{t('noOutput')}</p>
                 </div>
               </div>
             ) : null}
@@ -240,10 +243,10 @@ export function TerminateCommandToolView({
               <StopCircle className="h-10 w-10 text-zinc-400 dark:text-zinc-600" />
             </div>
             <h3 className="text-xl font-semibold mb-2 text-zinc-900 dark:text-zinc-100">
-              No Session Found
+              {t('noSessionFound')}
             </h3>
             <p className="text-sm text-zinc-500 dark:text-zinc-400 text-center max-w-md">
-              No session name was detected. Please provide a valid session to terminate.
+              {t('noSessionToTerminate')}
             </p>
           </div>
         )}
@@ -254,7 +257,7 @@ export function TerminateCommandToolView({
           {!isStreaming && finalSessionName && (
             <Badge variant="outline" className="h-6 py-0.5 bg-zinc-50 dark:bg-zinc-900">
               <StopCircle className="h-3 w-3 mr-1" />
-              Terminate
+              {t('terminate')}
             </Badge>
           )}
         </div>

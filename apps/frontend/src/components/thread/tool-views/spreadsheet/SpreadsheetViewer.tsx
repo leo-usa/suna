@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState, useEffect, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { SpreadsheetComponent } from '@syncfusion/ej2-react-spreadsheet';
 import { registerSyncfusionLicense, SYNCFUSION_SPREADSHEET_SERVICE_URL } from '@/lib/syncfusion';
 import { FileSpreadsheet, Download, RefreshCw, Cloud, CloudOff, AlertCircle } from 'lucide-react';
@@ -13,6 +14,7 @@ import { toast } from '@/lib/toast';
 import { useDownloadRestriction } from '@/hooks/billing';
 import { SpreadsheetLoader } from './SpreadsheetLoader';
 import { SpreadsheetSheetBar } from './SpreadsheetSheetBar';
+import { translateSyncErrorMessage } from './_utils';
 
 import '../../../../../node_modules/@syncfusion/ej2-base/styles/material.css';
 import '../../../../../node_modules/@syncfusion/ej2-inputs/styles/material.css';
@@ -76,6 +78,7 @@ export function SpreadsheetViewer({
   onDownloadReady,
   onDownloadingChange,
 }: SpreadsheetViewerProps) {
+  const t = useTranslations('toolViews.spreadsheet');
   const ssRef = useRef<SpreadsheetComponent>(null);
   const { session } = useAuth();
   const [isDownloading, setIsDownloading] = useState(false);
@@ -186,7 +189,7 @@ export function SpreadsheetViewer({
         resolvedFilePath,
         hasSession: !!session?.access_token
       });
-      toast.error('Unable to download file');
+      toast.error(t('unableToDownloadFile'));
       return;
     }
 
@@ -218,14 +221,14 @@ export function SpreadsheetViewer({
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
       
-      toast.success('File downloaded successfully');
+      toast.success(t('fileDownloadedSuccessfully'));
     } catch (error) {
       console.error('[SpreadsheetViewer] Download error:', error);
-      toast.error('Failed to download file');
+      toast.error(t('failedToDownloadFile'));
     } finally {
       setIsDownloading(false);
     }
-  }, [resolvedSandboxId, resolvedFilePath, fileName, session, isDownloadRestricted, openUpgradeModal]);
+  }, [resolvedSandboxId, resolvedFilePath, fileName, session, isDownloadRestricted, openUpgradeModal, t]);
 
   useEffect(() => {
     if (onDownloadReady) {
@@ -265,8 +268,8 @@ export function SpreadsheetViewer({
             <FileSpreadsheet className="h-8 w-8 text-muted-foreground" />
           </div>
           <div>
-            <h3 className="text-lg font-medium text-foreground">No file path provided</h3>
-            <p className="text-xs text-muted-foreground">FilePath is required to load the spreadsheet</p>
+            <h3 className="text-lg font-medium text-foreground">{t('noFilePathProvided')}</h3>
+            <p className="text-xs text-muted-foreground">{t('filePathRequired')}</p>
           </div>
         </div>
       </div>
@@ -281,10 +284,10 @@ export function SpreadsheetViewer({
             <FileSpreadsheet className="h-8 w-8 text-muted-foreground" />
           </div>
           <div>
-            <h3 className="text-lg font-medium text-foreground">Failed to load spreadsheet</h3>
-            <p className="text-xs text-muted-foreground">{syncState.errorMessage || 'Unknown error'}</p>
+            <h3 className="text-lg font-medium text-foreground">{t('failedToLoadSpreadsheet')}</h3>
+            <p className="text-xs text-muted-foreground">{syncState.errorMessage ? translateSyncErrorMessage(syncState.errorMessage, t) : t('unknownError')}</p>
             {resolvedFilePath && (
-              <p className="text-xs text-muted-foreground mt-1">Path: {resolvedFilePath}</p>
+              <p className="text-xs text-muted-foreground mt-1">{t('pathLabel', { path: resolvedFilePath })}</p>
             )}
             <Button
               onClick={actions.forceRefresh}
@@ -293,7 +296,7 @@ export function SpreadsheetViewer({
               className="mt-3"
             >
               <RefreshCw className="w-3 h-3 mr-2" />
-              Retry
+              {t('retry')}
             </Button>
           </div>
         </div>

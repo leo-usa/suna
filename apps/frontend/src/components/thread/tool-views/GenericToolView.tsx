@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import {
   CheckCircle,
   AlertTriangle,
@@ -32,6 +33,8 @@ export function GenericToolView({
   isSuccess = true,
   isStreaming = false,
 }: ToolViewProps) {
+  const t = useTranslations('toolViews.generic');
+  const tCommon = useTranslations('toolViews.common');
   const parseContent = React.useCallback((content: any): any => {
     if (!content) return null;
 
@@ -136,9 +139,9 @@ export function GenericToolView({
     setIsCopyingInput(true);
     const success = await copyToClipboard(formattedAssistantContent);
     if (success) {
-      toast.success('File content copied to clipboard');
+      toast.success(t('contentCopied'));
     } else {
-      toast.error('Failed to copy file content');
+      toast.error(t('copyFailed'));
     }
     setTimeout(() => setIsCopyingInput(false), 500);
   }, [formattedAssistantContent, copyToClipboard]);
@@ -149,9 +152,9 @@ export function GenericToolView({
     setIsCopyingOutput(true);
     const success = await copyToClipboard(formattedToolContent);
     if (success) {
-      toast.success('File content copied to clipboard');
+      toast.success(t('contentCopied'));
     } else {
-      toast.error('Failed to copy file content');
+      toast.error(t('copyFailed'));
     }
     setTimeout(() => setIsCopyingOutput(false), 500);
   }, [formattedToolContent, copyToClipboard]);
@@ -176,8 +179,8 @@ export function GenericToolView({
     if (toolResult?.error) return String(toolResult.error);
     if (typeof toolResult?.output === 'string') return toolResult.output;
     
-    return 'Tool execution failed';
-  }, [isError, toolResult]);
+    return t('executionFailedMessage');
+  }, [isError, toolResult, t]);
 
   if (!toolCall || !toolCall.function_name) {
     console.warn('GenericToolView: toolCall is undefined or missing function_name. Tool views should use structured props.');
@@ -185,12 +188,12 @@ export function GenericToolView({
       <Card className="gap-0 flex border-0 shadow-none p-0 py-0 rounded-none flex-col h-full overflow-hidden bg-card">
         <CardHeader className="h-14 bg-zinc-50/80 dark:bg-zinc-900/80 backdrop-blur-sm border-b p-2 px-4">
           <CardTitle className="text-base font-medium text-zinc-900 dark:text-zinc-100">
-            Tool View Error
+            {t('viewError')}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-4">
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            This tool view requires structured metadata. Please update the component to use toolCall and toolResult props.
+            {t('viewErrorDescription')}
           </p>
         </CardContent>
       </Card>
@@ -235,7 +238,7 @@ export function GenericToolView({
                 <AlertCircle className="h-5 w-5 text-red-500 dark:text-red-400 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-red-800 dark:text-red-200">
-                    Tool Execution Failed
+                    {t('executionFailed')}
                   </p>
                   {errorMessage && (
                     <p className="text-xs text-red-600 dark:text-red-400 mt-0.5 truncate">
@@ -253,14 +256,14 @@ export function GenericToolView({
                   {formattedAssistantContent && (
                     <div className="space-y-2">
                       <div className="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex items-center justify-between">
-                        <div className="flex items-center">Input</div>
+                        <div className="flex items-center">{t('input')}</div>
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={handleCopyInput}
                           disabled={isCopyingInput}
                           className="h-6 w-6 p-0"
-                          title="Copy file content"
+                          title={t('copyContent')}
                         >
                           {isCopyingInput ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
                         </Button>
@@ -284,7 +287,7 @@ export function GenericToolView({
                       <div className="text-sm font-medium text-red-700 dark:text-red-300 flex items-center justify-between">
                         <div className="flex items-center gap-1.5">
                           <XCircle className="h-4 w-4" />
-                          Error Output
+                          {t('errorOutput')}
                         </div>
                         <Button
                           variant="ghost"
@@ -292,7 +295,7 @@ export function GenericToolView({
                           onClick={handleCopyOutput}
                           disabled={isCopyingOutput}
                           className="h-6 w-6 p-0"
-                          title="Copy error output"
+                          title={t('copyErrorOutput')}
                         >
                           {isCopyingOutput ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
                         </Button>
@@ -321,7 +324,7 @@ export function GenericToolView({
                 <div className="space-y-2">
                   <div className="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex items-center justify-between">
                     <div className="flex items-center">
-                      Input
+                      {t('input')}
                     </div>
                     <Button
                       variant="ghost"
@@ -329,7 +332,7 @@ export function GenericToolView({
                       onClick={handleCopyInput}
                       disabled={isCopyingInput}
                       className="h-6 w-6 p-0"
-                      title="Copy file content"
+                      title={t('copyContent')}
                     >
                       {isCopyingInput ? (
                         <Check className="h-3 w-3" />
@@ -357,7 +360,7 @@ export function GenericToolView({
                 <div className="space-y-2">
                   <div className="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex items-center justify-between">
                     <div className="flex items-center">
-                      Output
+                      {t('output')}
                     </div>
                     <Button
                       variant="ghost"
@@ -365,7 +368,7 @@ export function GenericToolView({
                       onClick={handleCopyOutput}
                       disabled={isCopyingOutput}
                       className="h-6 w-6 p-0"
-                      title="Copy file content"
+                      title={t('copyContent')}
                     >
                       {isCopyingOutput ? (
                         <Check className="h-3 w-3" />
@@ -395,10 +398,10 @@ export function GenericToolView({
               <Wrench className="h-10 w-10 text-zinc-400 dark:text-zinc-600" />
             </div>
             <h3 className="text-xl font-semibold mb-2 text-zinc-900 dark:text-zinc-100">
-              No Content Available
+              {t('noContent')}
             </h3>
             <p className="text-sm text-zinc-500 dark:text-zinc-400 text-center max-w-md">
-              This tool execution did not produce any input or output content to display.
+              {t('noContentDescription')}
             </p>
           </div>
         )}
@@ -410,12 +413,12 @@ export function GenericToolView({
             isError ? (
               <Badge variant="outline" className="h-6 py-0.5 bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800/50 text-red-700 dark:text-red-300">
                 <AlertCircle className="h-3 w-3" />
-                Failed
+                {tCommon('failed')}
               </Badge>
             ) : (
               <Badge variant="outline" className="h-6 py-0.5 bg-zinc-50 dark:bg-zinc-900">
                 <CheckCircle className="h-3 w-3 text-green-600 dark:text-green-400" />
-                Completed
+                {tCommon('completed')}
               </Badge>
             )
           )}

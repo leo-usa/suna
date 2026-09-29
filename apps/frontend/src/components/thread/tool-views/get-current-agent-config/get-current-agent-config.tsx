@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Settings,
   CheckCircle,
@@ -30,6 +31,8 @@ export function GetCurrentAgentConfigToolView({
   isSuccess = true,
   isStreaming = false,
 }: ToolViewProps) {
+  const t = useTranslations('toolViews.getCurrentAgentConfig');
+  const tCommon = useTranslations('toolViews.common');
   // Defensive check - ensure toolCall is defined
   if (!toolCall) {
     console.warn('GetCurrentAgentConfigToolView: toolCall is undefined. Tool views should use structured props.');
@@ -124,7 +127,7 @@ export function GetCurrentAgentConfigToolView({
               ) : (
                 <AlertTriangle className="h-3 w-3" />
               )}
-              Configuration Loaded
+              {t('loaded')}
             </Badge>
           )}
         </div>
@@ -136,7 +139,7 @@ export function GetCurrentAgentConfigToolView({
             icon={Settings}
             iconColor="text-zinc-500 dark:text-zinc-400"
             bgColor="bg-gradient-to-b from-zinc-100 to-zinc-50 shadow-inner dark:from-zinc-800/40 dark:to-zinc-900/60"
-            title="Loading agent configuration"
+            title={t('loading')}
             showProgress={true}
           />
         ) : configuration ? (
@@ -163,7 +166,7 @@ export function GetCurrentAgentConfigToolView({
                     <div className="space-y-1">
                       <div className="flex items-center gap-2 text-zinc-500 dark:text-zinc-400">
                         <Calendar className="w-3 h-3" />
-                        <span>Created</span>
+                        <span>{tCommon('created')}</span>
                       </div>
                       <p className="text-zinc-700 dark:text-zinc-300 pl-5">
                         {formatConfigTime(configuration.created_at)}
@@ -173,7 +176,7 @@ export function GetCurrentAgentConfigToolView({
                     <div className="space-y-1">
                       <div className="flex items-center gap-2 text-zinc-500 dark:text-zinc-400">
                         <Clock className="w-3 h-3" />
-                        <span>Last Updated</span>
+                        <span>{t('lastUpdated')}</span>
                       </div>
                       <p className="text-zinc-700 dark:text-zinc-300 pl-5">
                         {formatConfigTime(configuration.updated_at)}
@@ -190,15 +193,15 @@ export function GetCurrentAgentConfigToolView({
                       </div>
                       <div>
                         <h4 className="font-medium text-zinc-900 dark:text-zinc-100">
-                          AgentPress Tools
+                          {t('agentPressTools')}
                         </h4>
                         <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                          Core system capabilities
+                          {t('coreCapabilities')}
                         </p>
                       </div>
                     </div>
                     <Badge variant="outline" className="text-xs">
-                      {getEnabledToolsCount(configuration.agentpress_tools)} enabled
+                      {t('enabledCount', { count: getEnabledToolsCount(configuration.agentpress_tools) })}
                     </Badge>
                   </div>
 
@@ -225,7 +228,7 @@ export function GetCurrentAgentConfigToolView({
                               : "bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-900/20 dark:text-gray-300 dark:border-gray-800"
                           )}
                         >
-                          {tool.enabled ? 'Enabled' : 'Disabled'}
+                          {tool.enabled ? t('enabled') : t('disabled')}
                         </Badge>
                       </div>
                     ))}
@@ -241,19 +244,19 @@ export function GetCurrentAgentConfigToolView({
                         </div>
                         <div>
                           <h4 className="font-medium text-zinc-900 dark:text-zinc-100">
-                            Integrations
+                            {t('integrations')}
                           </h4>
                           <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                            External service connections
+                            {t('externalConnections')}
                           </p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
                         <Badge variant="outline" className="text-xs">
-                          {configuration.custom_mcps.length} {configuration.custom_mcps.length === 1 ? 'integration' : 'integrations'}
+                          {t('integrationCount', { count: configuration.custom_mcps.length })}
                         </Badge>
                         <Badge variant="outline" className="text-xs">
-                          {getTotalMcpToolsCount(configuration.custom_mcps)} tools
+                          {t('toolsCount', { count: getTotalMcpToolsCount(configuration.custom_mcps) })}
                         </Badge>
                       </div>
                     </div>
@@ -271,12 +274,12 @@ export function GetCurrentAgentConfigToolView({
                                   {mcp.name}
                                 </h5>
                                 <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                                  Type: {mcp.type}
+                                  {t('typeLabel', { type: mcp.type })}
                                 </p>
                               </div>
                             </div>
                             <Badge variant="outline" className="text-xs">
-                              {mcp.enabledTools.length} tools
+                              {t('toolsCount', { count: mcp.enabledTools.length })}
                             </Badge>
                           </div>
 
@@ -305,10 +308,10 @@ export function GetCurrentAgentConfigToolView({
                 <Settings className="h-8 w-8 text-zinc-400" />
               </div>
               <h3 className="text-base font-medium text-zinc-900 dark:text-zinc-100 mb-2">
-                No configuration found
+                {t('noConfig')}
               </h3>
               <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                Unable to load agent configuration details
+                {t('unableToLoad')}
               </p>
             </div>
           </div>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import {
   ExternalLink,
   CheckCircle,
@@ -27,6 +28,7 @@ export function ExposePortToolView({
   assistantTimestamp,
   toolTimestamp,
 }: ToolViewProps) {
+  const t = useTranslations('toolViews.exposePort');
   // Defensive check - ensure toolCall is defined
   if (!toolCall) {
     console.warn('ExposePortToolView: toolCall is undefined. Tool views should use structured props.');
@@ -34,12 +36,12 @@ export function ExposePortToolView({
       <Card className="gap-0 flex border-0 shadow-none p-0 py-0 rounded-none flex-col h-full overflow-hidden bg-card">
         <CardHeader className="h-14 bg-zinc-50/80 dark:bg-zinc-900/80 backdrop-blur-sm border-b p-2 px-4">
           <CardTitle className="text-base font-medium text-zinc-900 dark:text-zinc-100">
-            Port Exposure Tool Error
+            {t('toolError')}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-4">
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            This tool view requires structured metadata. Please update the component to use toolCall and toolResult props.
+            {t('toolErrorDescription')}
           </p>
         </CardContent>
       </Card>
@@ -88,7 +90,7 @@ export function ExposePortToolView({
               <Button variant="outline" size="sm" className="h-8 text-xs bg-white dark:bg-muted/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 shadow-none" asChild>
                 <a href={url} target="_blank" rel="noopener noreferrer">
                   <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
-                  Open in Browser
+                  {t('openInBrowser')}
                 </a>
               </Button>
             )}
@@ -102,7 +104,7 @@ export function ExposePortToolView({
             icon={Computer}
             iconColor="text-zinc-500 dark:text-zinc-400"
             bgColor="bg-gradient-to-b from-zinc-100 to-zinc-50 shadow-inner dark:from-zinc-800/40 dark:to-zinc-900/60"
-            title="Exposing port"
+            title={t('exposing')}
             filePath={port?.toString()}
             showProgress={true}
           />
@@ -113,7 +115,7 @@ export function ExposePortToolView({
               <div className="flex flex-col space-y-3">
                 <div className="flex-1">
                   <h3 className="text-sm font-medium text-zinc-800 dark:text-zinc-200 mb-2">
-                    Exposed URL
+                    {t('exposedUrl')}
                   </h3>
                   <a
                     href={url}
@@ -142,14 +144,14 @@ export function ExposePortToolView({
               
               <div className="text-xs bg-zinc-50 dark:bg-zinc-900/30 border border-zinc-200 dark:border-zinc-700/50 rounded-md p-3 text-zinc-700 dark:text-zinc-300 flex items-start gap-2 mt-3">
                 <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5" />
-                <span>This URL is temporarily available and may expire after some time.</span>
+                <span>{t('temporaryUrl')}</span>
               </div>
             </div>
             {/* Iframe Preview */}
             <div className="flex-1 bg-white dark:bg-zinc-950">
               <iframe
                 src={url}
-                title={`Port ${port} Preview`}
+                title={t('portPreview', { port: String(port) })}
                 className="w-full h-full border-0"
                 sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-downloads"
               />
@@ -161,10 +163,10 @@ export function ExposePortToolView({
               <Computer className="h-10 w-10 text-zinc-500 dark:text-zinc-400" />
             </div>
             <h3 className="text-xl font-semibold mb-2 text-zinc-900 dark:text-zinc-100">
-              No Port Information
+              {t('noPortInfo')}
             </h3>
             <p className="text-sm text-zinc-500 dark:text-zinc-400 text-center max-w-md">
-              No port exposure information is available yet. Use the expose-port command to share a local port.
+              {t('noPortInfoDescription')}
             </p>
           </div>
         )}
@@ -178,7 +180,7 @@ export function ExposePortToolView({
         {!isStreaming && port && (
           <Badge variant="outline" className="h-6 py-0.5 bg-zinc-50 dark:bg-zinc-900">
             <Computer className="h-3 w-3 mr-1" />
-            Port {port}
+            {t('port', { port: String(port) })}
           </Badge>
         )}
       </ToolViewFooter>

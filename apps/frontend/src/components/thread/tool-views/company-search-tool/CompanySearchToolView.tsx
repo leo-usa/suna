@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 import {
   Building2,
@@ -31,6 +32,7 @@ export function CompanySearchToolView({
   isSuccess = true,
   isStreaming = false,
 }: ToolViewProps) {
+  const t = useTranslations('toolViews.companySearch');
   // Defensive check - handle cases where toolCall might be undefined
   if (!toolCall) {
     console.warn('CompanySearchToolView: toolCall is undefined. Tool views should use structured props.');
@@ -94,7 +96,7 @@ export function CompanySearchToolView({
             icon={Building2}
             iconColor="text-primary"
             bgColor="bg-primary/10"
-            title="Searching for companies"
+            title={t('searching')}
             filePath={query}
             showProgress={true}
           />
@@ -103,7 +105,7 @@ export function CompanySearchToolView({
             <TooltipProvider>
               <div className="p-4">
                 <div className="text-sm font-medium text-zinc-800 dark:text-zinc-200 mb-3 flex items-center justify-between">
-                  <span>Found {total_results} companies</span>
+                  <span>{t('foundCompanies', { count: total_results })}</span>
                 </div>
 
                 <div className="space-y-3">
@@ -146,7 +148,7 @@ export function CompanySearchToolView({
                             <div className="flex items-start justify-between gap-2">
                               <div className="min-w-0">
                                 <h3 className="font-medium text-sm text-foreground truncate">
-                                  {result.company_name || 'Unknown Company'}
+                                  {result.company_name || t('unknownCompany')}
                                 </h3>
                                 <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
                                   {result.company_industry && (
@@ -179,7 +181,7 @@ export function CompanySearchToolView({
                                     </TooltipTrigger>
                                     <TooltipContent className="max-w-xs">
                                       <div className="space-y-1">
-                                        <p className="font-medium text-xs">Criteria match:</p>
+                                        <p className="font-medium text-xs">{t('criteriaMatch')}</p>
                                         {evaluations.map((evaluation, evalIdx) => (
                                           <div key={evalIdx} className="text-xs flex items-center gap-2">
                                             <div className={cn(
@@ -206,7 +208,7 @@ export function CompanySearchToolView({
                                     href={result.url}
                                     target="_blank" 
                                     rel="noopener noreferrer"
-                                    title="View company details"
+                                    title={t('viewDetails')}
                                   >
                                     <ExternalLink className="h-3 w-3" />
                                   </a>
@@ -234,15 +236,15 @@ export function CompanySearchToolView({
               <Building2 className="h-10 w-10 text-muted-foreground" />
             </div>
             <h3 className="text-xl font-semibold mb-2 text-zinc-900 dark:text-zinc-100">
-              No Companies Found
+              {t('noCompaniesFound')}
             </h3>
             <div className="bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-4 w-full max-w-md text-center mb-4">
               <code className="text-sm font-mono text-zinc-700 dark:text-zinc-300 break-all">
-                {query || 'Unknown query'}
+                {query || t('unknownQuery')}
               </code>
             </div>
             <p className="text-sm text-zinc-500 dark:text-zinc-400">
-              Try refining your search criteria for better results
+              {t('tryRefining')}
             </p>
           </div>
         )}
@@ -253,7 +255,7 @@ export function CompanySearchToolView({
           {!isStreaming && results.length > 0 && (
             <Badge variant="outline" className="h-6 py-0.5 text-xs">
               <Building2 className="h-3 w-3 mr-1" />
-              {results.length} results
+              {t('resultsCount', { count: results.length })}
             </Badge>
           )}
         </div>

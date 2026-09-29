@@ -3,6 +3,7 @@
 import React from 'react';
 import { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useToolTitleLabel } from '@/hooks/use-tool-name-label';
 
 export interface ToolViewIconTitleProps {
   /** The icon to display */
@@ -26,6 +27,7 @@ export function ToolViewIconTitle({
   subtitle,
   className,
 }: ToolViewIconTitleProps) {
+  const titleLabel = useToolTitleLabel();
   return (
     <div className={cn("flex items-center gap-2 min-w-0", className)}>
       <div className="relative p-2 rounded-lg border bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 flex-shrink-0">
@@ -33,7 +35,7 @@ export function ToolViewIconTitle({
       </div>
       <div className="min-w-0 flex-1">
         <div className="text-base font-medium text-zinc-900 dark:text-zinc-100 truncate">
-          {title}
+          {titleLabel(title)}
         </div>
         {subtitle && (
           <div className="text-xs text-zinc-500 dark:text-zinc-400 truncate">

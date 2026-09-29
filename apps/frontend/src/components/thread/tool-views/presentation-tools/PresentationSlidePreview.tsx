@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { PresentationSlideCard } from './PresentationSlideCard';
 import { constructHtmlPreviewUrl } from '@/lib/utils/url';
 import { Project } from '@/lib/api/threads';
@@ -43,6 +44,7 @@ export function PresentationSlidePreview({
   className = '',
   initialSlide,
 }: PresentationSlidePreviewProps) {
+  const t = useTranslations('toolViews.presentation');
   const { openPresentation } = usePresentationViewerStore();
   const [metadata, setMetadata] = useState<PresentationMetadata | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -97,11 +99,11 @@ export function PresentationSlidePreview({
           loadMetadata(retry + 1);
         }, delay);
       } else {
-        setError(err instanceof Error ? err.message : 'Failed to load presentation');
+        setError(err instanceof Error ? err.message : t('failedToLoadPresentation'));
         setIsLoading(false);
       }
     }
-  }, [presentationName, project?.sandbox?.sandbox_url]);
+  }, [presentationName, project?.sandbox?.sandbox_url, t]);
 
   useEffect(() => {
     loadMetadata(0);
@@ -118,10 +120,10 @@ export function PresentationSlidePreview({
     return (
       <div className={`flex flex-col items-center justify-center p-8 bg-muted/30 rounded-lg border ${className}`}>
         <DobbyLoader customSize={24} className="mb-2" />
-        <span className="text-sm text-muted-foreground">Loading presentation...</span>
+        <span className="text-sm text-muted-foreground">{t('loadingPresentation')}</span>
         {retryCount > 0 && (
           <span className="text-xs text-muted-foreground/70 mt-1">
-            Attempt {retryCount + 1}
+            {t('attempt', { attempt: retryCount + 1 })}
           </span>
         )}
       </div>
@@ -134,7 +136,7 @@ export function PresentationSlidePreview({
       <div className={`flex flex-col items-center justify-center p-8 bg-muted/30 rounded-lg border ${className}`}>
         <Presentation className="h-10 w-10 text-muted-foreground/50 mb-3" />
         <p className="text-sm text-muted-foreground mb-3">
-          {error || 'Presentation not found'}
+          {error || t('presentationNotFound')}
         </p>
         <Button
           variant="outline"
@@ -143,7 +145,7 @@ export function PresentationSlidePreview({
           className="gap-2"
         >
           <RefreshCw className="h-4 w-4" />
-          Retry
+          {t('retry')}
         </Button>
       </div>
     );

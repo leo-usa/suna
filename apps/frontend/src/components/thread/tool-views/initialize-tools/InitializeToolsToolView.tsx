@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { ToolViewProps } from '../types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -56,6 +57,7 @@ export function InitializeToolsToolView({
   isSuccess = true,
   isStreaming = false,
 }: ToolViewProps) {
+  const t = useTranslations('toolViews.initializeTools');
   // Extract the tool_names from arguments to determine which mode is being activated
   const toolNames = React.useMemo(() => {
     if (!toolCall?.arguments) return [];
@@ -98,7 +100,8 @@ export function InitializeToolsToolView({
   }, [toolNames]);
 
   const Icon = modeConfig.icon;
-  const title = isStreaming ? `Activating ${modeConfig.name}...` : `${modeConfig.name} Activated`;
+  const modeName = modeConfig.name === 'Presentation Mode' ? t('presentationMode') : t('tools');
+  const title = isStreaming ? t('activating', { mode: modeName }) : t('activated', { mode: modeName });
 
   return (
     <Card className="gap-0 flex border-0 shadow-none p-0 py-0 rounded-none flex-col h-full overflow-hidden bg-card">
@@ -122,14 +125,14 @@ export function InitializeToolsToolView({
 
           {/* Title */}
           <h3 className="text-base font-medium mb-1 text-zinc-900 dark:text-zinc-100 tracking-tight">
-            {isStreaming ? `Activating ${modeConfig.name}...` : `${modeConfig.name} Ready`}
+            {isStreaming ? t('activating', { mode: modeName }) : t('modeReady', { mode: modeName })}
           </h3>
           
           {/* Subtitle */}
           <p className="text-xs text-zinc-400 dark:text-zinc-500 text-center mb-4 font-mono">
             {isStreaming 
-              ? 'Preparing...'
-              : `${toolNames.length} tool${toolNames.length !== 1 ? 's' : ''} activated`
+              ? t('preparing')
+              : t('toolsActivated', { count: toolNames.length })
             }
           </p>
 
@@ -179,7 +182,7 @@ export function InitializeToolsToolView({
       >
         {!isStreaming && (
           <Badge variant="outline" className="h-5 py-0 px-2 bg-zinc-100 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800">
-            <span className="text-[10px] font-mono text-zinc-600 dark:text-zinc-400 uppercase tracking-wider">Ready</span>
+            <span className="text-[10px] font-mono text-zinc-600 dark:text-zinc-400 uppercase tracking-wider">{t('ready')}</span>
           </Badge>
         )}
       </ToolViewFooter>

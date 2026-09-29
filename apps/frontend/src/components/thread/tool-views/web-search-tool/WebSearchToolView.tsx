@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Search,
   CheckCircle,
@@ -37,6 +38,7 @@ export function WebSearchToolView({
   isSuccess = true,
   isStreaming = false,
 }: ToolViewProps) {
+  const t = useTranslations('toolViews.webSearch');
   const [expandedResults, setExpandedResults] = useState<Record<number, boolean>>({});
   const [currentQueryIndex, setCurrentQueryIndex] = useState(0);
 
@@ -105,20 +107,20 @@ export function WebSearchToolView({
     
     // Guard against undefined/null values
     if (!url || !title) {
-      return { icon: Globe, label: 'Website' };
+      return { icon: Globe, label: t('website') };
     }
 
     const urlLower = url.toLowerCase();
     const titleLower = title.toLowerCase();
 
     if (urlLower.includes('news') || urlLower.includes('article') || titleLower.includes('news')) {
-      return { icon: FileText, label: 'Article' };
+      return { icon: FileText, label: t('article') };
     } else if (urlLower.includes('wiki')) {
-      return { icon: BookOpen, label: 'Wiki' };
+      return { icon: BookOpen, label: t('wiki') };
     } else if (urlLower.includes('blog')) {
-      return { icon: CalendarDays, label: 'Blog' };
+      return { icon: CalendarDays, label: t('blog') };
     } else {
-      return { icon: Globe, label: 'Website' };
+      return { icon: Globe, label: t('website') };
     }
   };
 
@@ -153,10 +155,10 @@ export function WebSearchToolView({
                   }
                   return [rawQuery];
                 }
-                return query ? [query] : ['Searching...'];
+                return query ? [query] : [t('searching')];
               })()
             }
-            title={name === 'image-search' ? "Searching for images" : "Searching the web"}
+            title={name === 'image-search' ? t('searchingImages') : t('searchingWeb')}
           />
         ) : searchResults.length > 0 || answer || images.length > 0 ? (
           <ScrollArea className="h-full w-full">
@@ -167,7 +169,7 @@ export function WebSearchToolView({
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-xs font-medium text-muted-foreground">
-                        Query {safeQueryIndex + 1} of {batchResults.length}
+                        {t('queryOf', { current: safeQueryIndex + 1, total: batchResults.length })}
                       </span>
                       {currentBatchItem.success ? (
                         <CheckCircle className="h-3.5 w-3.5 text-zinc-600 dark:text-zinc-400" />
@@ -176,7 +178,7 @@ export function WebSearchToolView({
                       )}
                       {name === 'image-search' && currentBatchItem.images?.length > 0 && (
                         <Badge variant="outline" className="text-xs font-normal h-4 px-1.5">
-                          {currentBatchItem.images.length} images
+                          {t('imageCount', { count: currentBatchItem.images.length })}
                         </Badge>
                       )}
                       {name !== 'image-search' && currentBatchItem.results?.length > 0 && (
@@ -217,14 +219,14 @@ export function WebSearchToolView({
                 <div className="mb-6">
                   <h3 className="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-3 flex items-center">
                     <ImageIcon className="h-4 w-4 mr-2 opacity-70" />
-                    Images {name === 'image-search' && isBatch && currentBatchItem
+                    {t('images')} {name === 'image-search' && isBatch && currentBatchItem
                       ? `(${currentBatchItem.images?.length || 0})`
                       : name === 'image-search'
                         ? `(${images.length})`
                         : ''}
                     {isBatch && batchResults && (
                       <span className="ml-2 text-xs text-muted-foreground">
-                        (Query {safeQueryIndex + 1} of {batchResults.length})
+                        ({t('queryOf', { current: safeQueryIndex + 1, total: batchResults.length })})
                       </span>
                     )}
                   </h3>
@@ -255,7 +257,7 @@ export function WebSearchToolView({
                               >
                                 <img
                                   src={imageUrl}
-                                  alt={image.title || `Search result ${idx + 1}`}
+                                  alt={image.title || t('searchResultAlt', { number: idx + 1 })}
                                   className="object-cover w-full h-32 group-hover:opacity-90 transition-opacity"
                                   onError={(e) => {
                                     const target = e.target as HTMLImageElement;
@@ -301,13 +303,13 @@ export function WebSearchToolView({
                                   <p className="text-xs text-muted-foreground flex items-center gap-1">
                                     <Maximize2 className="h-3 w-3" />
                                     {image.width} × {image.height}px
-                                    {orientation && <span className="text-xs">({orientation})</span>}
+                                    {orientation && <span className="text-xs">({t(`orientation.${orientation}`)})</span>}
                                   </p>
                                 )}
                                 {hasDescription && (
                                   <div className="text-xs">
                                     <p className="text-muted-foreground flex items-center gap-1 mb-0.5">
-                                      <Type className="h-3 w-3" /> Description:
+                                      <Type className="h-3 w-3" /> {t('description')}
                                     </p>
                                     <p className="text-foreground bg-muted/50 rounded px-1.5 py-1 font-mono text-[10px] max-h-20 overflow-auto">
                                       {truncateString(image.description || '', 150)}
@@ -315,7 +317,7 @@ export function WebSearchToolView({
                                   </div>
                                 )}
                                 {image.source && (
-                                  <p className="text-xs text-muted-foreground">Source: {image.source}</p>
+                                  <p className="text-xs text-muted-foreground">{t('source', { source: image.source })}</p>
                                 )}
                               </div>
                             </TooltipContent>
@@ -331,7 +333,7 @@ export function WebSearchToolView({
                       : images;
                     return currentImages.length > 6 && (
                     <Button variant="outline" size="sm" className="mt-2 text-xs">
-                        View {currentImages.length - 6} more images
+                        {t('viewMoreImages', { count: currentImages.length - 6 })}
                     </Button>
                     );
                   })()}
@@ -413,7 +415,7 @@ export function WebSearchToolView({
                               </div>
                             ) : (
                               <div className="text-sm text-muted-foreground italic py-4 text-center">
-                                No results found for this query
+                                {t('noResultsForQuery')}
                               </div>
                             )}
                           </div>
@@ -425,7 +427,7 @@ export function WebSearchToolView({
                     <>
                       {searchResults.length > 0 && (
                 <div className="text-sm font-medium text-zinc-800 dark:text-zinc-200 mb-4 flex items-center justify-between">
-                  <span>Search Results ({searchResults.length})</span>
+                  <span>{t('searchResultsCount', { count: searchResults.length })}</span>
                   <Badge variant="outline" className="text-xs font-normal">
                     <Clock className="h-3 w-3 mr-1.5 opacity-70" />
                     {new Date().toLocaleDateString()}
@@ -487,7 +489,7 @@ export function WebSearchToolView({
                       {isExpanded && (
                         <div className="bg-zinc-50 px-4 dark:bg-zinc-800/50 border-t border-zinc-200 dark:border-zinc-800 p-3 flex justify-between items-center">
                           <div className="text-xs text-zinc-500 dark:text-zinc-400">
-                            Source: {cleanUrl(result.url)}
+                            {t('source', { source: cleanUrl(result.url) })}
                           </div>
                           <Button
                             variant="outline"
@@ -497,7 +499,7 @@ export function WebSearchToolView({
                           >
                             <a href={result.url} target="_blank" rel="noopener noreferrer">
                               <ExternalLink className="h-3 w-3" />
-                              Visit Site
+                              {t('visitSite')}
                             </a>
                           </Button>
                         </div>
@@ -522,19 +524,19 @@ export function WebSearchToolView({
               )}
             </div>
             <h3 className="text-xl font-semibold mb-2 text-zinc-900 dark:text-zinc-100">
-              {name === 'image-search' ? 'No Images Found' : 'No Results Found'}
+              {name === 'image-search' ? t('noImagesFound') : t('noResultsFound')}
             </h3>
             {query && (
             <div className="bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-4 w-full max-w-md text-center mb-4 shadow-sm">
               <code className="text-sm font-mono text-zinc-700 dark:text-zinc-300 break-all">
-                  {typeof query === 'string' ? query : Array.isArray(query) ? (query as string[]).join(', ') : 'Unknown query'}
+                  {typeof query === 'string' ? query : Array.isArray(query) ? (query as string[]).join(', ') : t('unknownQuery')}
               </code>
             </div>
             )}
             <p className="text-sm text-zinc-500 dark:text-zinc-400">
               {name === 'image-search' 
-                ? 'Try refining your image search query for better results'
-                : 'Try refining your search query for better results'}
+                ? t('refineImageQuery')
+                : t('refineQuery')}
             </p>
           </div>
         )}
@@ -552,12 +554,12 @@ export function WebSearchToolView({
                 {isBatch && batchResults ? (
                   <Badge variant="outline" className="h-6 py-0.5">
                     <ImageIcon className="h-3 w-3" />
-                    {batchResults.length} queries • {images.length} images
+                    {t('queryCount', { count: batchResults.length })} • {t('imageCount', { count: images.length })}
                   </Badge>
                 ) : images.length > 0 && (
                   <Badge variant="outline" className="h-6 py-0.5">
                     <ImageIcon className="h-3 w-3" />
-                    {images.length} images
+                    {t('imageCount', { count: images.length })}
                   </Badge>
                 )}
               </>
@@ -567,12 +569,12 @@ export function WebSearchToolView({
                 {isBatch && batchResults ? (
                   <Badge variant="outline" className="h-6 py-0.5">
                     <Globe className="h-3 w-3" />
-                    {batchResults.length} queries • {searchResults.length} results
+                    {t('queryCount', { count: batchResults.length })} • {t('resultCount', { count: searchResults.length })}
                   </Badge>
                 ) : searchResults.length > 0 && (
                   <Badge variant="outline" className="h-6 py-0.5">
                     <Globe className="h-3 w-3" />
-                    {searchResults.length} results
+                    {t('resultCount', { count: searchResults.length })}
                   </Badge>
                 )}
               </>

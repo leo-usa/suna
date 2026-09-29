@@ -33,8 +33,13 @@ import { cn } from '@/lib/utils';
 // Lazy load SpreadsheetViewer as it imports Syncfusion (~1-2 MB)
 const SpreadsheetViewer = dynamic(
   () => import('../spreadsheet/SpreadsheetViewer').then((mod) => mod.SpreadsheetViewer),
-  { ssr: false, loading: () => <div className="p-4 text-muted-foreground">Loading spreadsheet...</div> }
+  { ssr: false, loading: () => <SpreadsheetLoading /> }
 );
+
+function SpreadsheetLoading() {
+  const tFileView = useTranslations('tools.fileOperationView');
+  return <div className="p-4 text-muted-foreground">{tFileView('loadingSpreadsheet')}</div>;
+}
 import { useTheme } from 'next-themes';
 import { constructHtmlPreviewUrl } from '@/lib/utils/url';
 import {
@@ -118,14 +123,16 @@ const UnifiedDiffView: React.FC<{ lineDiff: LineDiff[]; fileName?: string }> = (
   </div>
 );
 
-const SplitDiffView: React.FC<{ lineDiff: LineDiff[] }> = ({ lineDiff }) => (
+const SplitDiffView: React.FC<{ lineDiff: LineDiff[] }> = ({ lineDiff }) => {
+  const tFileView = useTranslations('tools.fileOperationView');
+  return (
   <div className="font-mono text-[13px] leading-relaxed grid grid-cols-2 divide-x divide-zinc-200 dark:divide-zinc-800">
     {/* Left side - Removed */}
     <div>
       <div className="px-3 py-2 bg-red-50/50 dark:bg-red-950/20 border-b border-zinc-200 dark:border-zinc-800">
         <span className="text-[11px] font-medium text-red-600 dark:text-red-400 uppercase tracking-wide flex items-center gap-1.5">
           <Minus className="h-3 w-3" />
-          Before
+          {tFileView('before')}
         </span>
       </div>
       {lineDiff.map((line, i) => (
@@ -157,7 +164,7 @@ const SplitDiffView: React.FC<{ lineDiff: LineDiff[] }> = ({ lineDiff }) => (
       <div className="px-3 py-2 bg-zinc-50/50 dark:bg-zinc-900/20 border-b border-zinc-200 dark:border-zinc-800">
         <span className="text-[11px] font-medium text-zinc-600 dark:text-zinc-400 uppercase tracking-wide flex items-center gap-1.5">
           <Plus className="h-3 w-3" />
-          After
+          {tFileView('after')}
         </span>
       </div>
       {lineDiff.map((line, i) => (
@@ -185,7 +192,8 @@ const SplitDiffView: React.FC<{ lineDiff: LineDiff[] }> = ({ lineDiff }) => (
       ))}
     </div>
   </div>
-);
+  );
+};
 
 function isPresentationSlideFile(filepath: string): boolean {
   const presentationPattern = /presentations\/([^\/]+)\/slide_\d+\.html$/i;
@@ -849,9 +857,9 @@ export function FileOperationToolView({
     setIsCopyingContent(true);
     const success = await copyToClipboard(fileContent);
     if (success) {
-      toast.success('File content copied to clipboard');
+      toast.success(tFileView('contentCopied'));
     } else {
-      toast.error('Failed to copy file content');
+      toast.error(tFileView('copyFailed'));
     }
     setTimeout(() => setIsCopyingContent(false), 500);
   };
@@ -921,7 +929,7 @@ export function FileOperationToolView({
         <div className="flex items-center justify-center h-full p-12 bg-white dark:bg-zinc-900">
           <div className="text-center">
             <FileIcon className="h-12 w-12 mx-auto mb-4 text-zinc-400" />
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">No content to preview</p>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">{tFileView('noContentToPreview')}</p>
           </div>
         </div>
       );
@@ -995,15 +1003,15 @@ export function FileOperationToolView({
         <Icon className={cn("h-10 w-10", config.color)} />
       </div>
       <h3 className="text-xl font-semibold mb-6 text-zinc-900 dark:text-zinc-100">
-        File Deleted
+        {tFileView('fileDeleted')}
       </h3>
       <div className="bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-4 w-full max-w-md text-center mb-4 shadow-sm">
         <code className="text-sm font-mono text-zinc-700 dark:text-zinc-300 break-all">
-          {processedFilePath || 'Unknown file path'}
+          {processedFilePath || tFileView('unknownFilePath')}
         </code>
       </div>
       <p className="text-sm text-zinc-500 dark:text-zinc-400">
-        This file has been permanently removed
+        {tFileView('permanentlyRemoved')}
       </p>
     </div>
   );
@@ -1014,7 +1022,7 @@ export function FileOperationToolView({
         <div className="flex items-center justify-center h-full p-12 bg-white dark:bg-zinc-900">
           <div className="text-center">
             <FileIcon className="h-12 w-12 mx-auto mb-4 text-zinc-400" />
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">No source code to display</p>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">{tFileView('noSourceCode')}</p>
           </div>
         </div>
       );
@@ -1042,7 +1050,7 @@ export function FileOperationToolView({
   const headerGradientBg = config.gradientBg;
   const headerBorderColor = config.borderColor;
   const displayTitle = isPresentationSlide && presentationName 
-    ? `${toolTitle} - ${presentationName}${slideNumber ? ` (Slide ${slideNumber})` : ''}`
+    ? `${toolTitle} - ${presentationName}${slideNumber ? tFileView('slideSuffix', { number: slideNumber }) : ''}`
     : toolTitle;
 
   const hasDiffData = ((operation === 'edit' || isStrReplace) && oldStr && newStr);
@@ -1103,7 +1111,7 @@ export function FileOperationToolView({
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent side="bottom">
-                      {isStreaming ? 'Available when complete' : 'Copy file content'}
+                      {isStreaming ? tFileView('availableWhenComplete') : tFileView('copyFileContent')}
                     </TooltipContent>
                   </Tooltip>
                 )}
@@ -1120,7 +1128,7 @@ export function FileOperationToolView({
                       </span>
                     </TooltipTrigger>
                     <TooltipContent side="bottom">
-                      {isStreaming ? 'Available when complete' : 'Download file'}
+                      {isStreaming ? tFileView('availableWhenComplete') : tFileView('downloadFile')}
                     </TooltipContent>
                   </Tooltip>
                 )}
@@ -1139,7 +1147,7 @@ export function FileOperationToolView({
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent side="bottom">
-                      {isStreaming ? 'Available when complete' : tFileView('editTooltip')}
+                      {isStreaming ? tFileView('availableWhenComplete') : tFileView('editTooltip')}
                     </TooltipContent>
                   </Tooltip>
                 )}
@@ -1163,7 +1171,7 @@ export function FileOperationToolView({
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent side="bottom">
-                      {isStreaming ? 'Available when complete' : 'Open presentation fullscreen'}
+                      {isStreaming ? tFileView('availableWhenComplete') : tFileView('openPresentationFullscreen')}
                     </TooltipContent>
                   </Tooltip>
                 )}
@@ -1180,9 +1188,9 @@ export function FileOperationToolView({
                   icon={Icon}
                   iconColor={config.color}
                   bgColor={config.bgColor}
-                  title={config.progressMessage}
-                  filePath={processedFilePath || 'Processing file...'}
-                  subtitle="Please wait while the file is being processed"
+                  title={tFileView(`progressMessage.${operation}`)}
+                  filePath={processedFilePath || tFileView('processingFile')}
+                  subtitle={tFileView('pleaseWaitProcessing')}
                   showProgress={false}
                 />
               ) : !fileContent && !hasRawContent && isStreaming ? (
@@ -1193,11 +1201,11 @@ export function FileOperationToolView({
                     <Icon className={cn("h-10 w-10", config.color)} />
                   </div>
                   <h3 className="text-xl font-semibold mb-6 text-zinc-900 dark:text-zinc-100">
-                    Delete Operation
+                    {tFileView('deleteOperation')}
                   </h3>
                   <div className="bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-4 w-full max-w-md text-center">
                     <code className="text-sm font-mono text-zinc-700 dark:text-zinc-300 break-all">
-                      {processedFilePath || 'Unknown file path'}
+                      {processedFilePath || tFileView('unknownFilePath')}
                     </code>
                   </div>
                 </div>
@@ -1227,9 +1235,9 @@ export function FileOperationToolView({
                     icon={Icon}
                     iconColor={config.color}
                     bgColor={config.bgColor}
-                    title={config.progressMessage}
-                    filePath={processedFilePath || 'Processing file...'}
-                    subtitle="Please wait while the file is being processed"
+                    title={tFileView(`progressMessage.${operation}`)}
+                    filePath={processedFilePath || tFileView('processingFile')}
+                    subtitle={tFileView('pleaseWaitProcessing')}
                     showProgress={false}
                   />
                 ) : !fileContent && isStreaming ? (
@@ -1251,7 +1259,7 @@ export function FileOperationToolView({
                     <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4 mx-auto bg-gradient-to-b from-zinc-100 to-zinc-50 dark:from-zinc-800/40 dark:to-zinc-900/60">
                       <FileDiff className="h-8 w-8 text-zinc-500 dark:text-zinc-400" />
                     </div>
-                    <p className="text-sm text-zinc-500 dark:text-zinc-400">Processing changes...</p>
+                    <p className="text-sm text-zinc-500 dark:text-zinc-400">{tFileView('processingChanges')}</p>
                   </div>
                 </div>
               ) : (
@@ -1261,12 +1269,12 @@ export function FileOperationToolView({
                       <div className="flex items-center gap-2 text-xs font-medium">
                         <span className="flex items-center gap-1 text-zinc-600 dark:text-zinc-400">
                           <Plus className="h-3.5 w-3.5" />
-                          {diffStats.additions} added
+                          {tFileView('added', { count: diffStats.additions })}
                         </span>
                         <span className="text-zinc-300 dark:text-zinc-700">·</span>
                         <span className="flex items-center gap-1 text-red-600 dark:text-red-400">
                           <Minus className="h-3.5 w-3.5" />
-                          {diffStats.deletions} removed
+                          {tFileView('removed', { count: diffStats.deletions })}
                         </span>
                       </div>
                     </div>
@@ -1280,7 +1288,7 @@ export function FileOperationToolView({
                             : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300"
                         )}
                       >
-                        Unified
+                        {tFileView('unified')}
                       </button>
                       <button
                         onClick={() => setDiffViewMode('split')}
@@ -1291,7 +1299,7 @@ export function FileOperationToolView({
                             : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300"
                         )}
                       >
-                        Split
+                        {tFileView('split')}
                       </button>
                     </div>
                   </div>
@@ -1307,7 +1315,7 @@ export function FileOperationToolView({
                   {isStreaming && oldStr && newStr && (
                     <div className="px-4 py-2 bg-zinc-50 dark:bg-zinc-950/30 border-t border-zinc-200 dark:border-zinc-700 flex items-center gap-2">
                       <DobbyLoader customSize={14} />
-                      <span className="text-xs text-zinc-600 dark:text-zinc-400">Streaming changes...</span>
+                      <span className="text-xs text-zinc-600 dark:text-zinc-400">{tFileView('streamingChanges')}</span>
                     </div>
                   )}
                 </>

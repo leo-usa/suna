@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Card,
   CardContent,
@@ -37,6 +38,7 @@ export function DeleteSlideToolView({
   isStreaming = false,
   project,
 }: ToolViewProps) {
+  const t = useTranslations('toolViews.presentation');
   // Extract from toolResult.output (from metadata)
   let deleteData: DeleteSlideData | null = null;
   let error: string | null = null;
@@ -49,7 +51,7 @@ export function DeleteSlideToolView({
           deleteData = JSON.parse(output);
         } catch (e) {
           console.error('Failed to parse tool output:', e);
-          error = 'Failed to parse delete data';
+          error = t('failedToParseDeleteData');
         }
       } else {
         deleteData = output as unknown as DeleteSlideData;
@@ -57,14 +59,14 @@ export function DeleteSlideToolView({
     }
   } catch (e) {
     console.error('Error parsing delete data:', e);
-    error = 'Failed to parse delete data';
+    error = t('failedToParseDeleteData');
   }
 
   return (
     <Card className="gap-0 flex border-0 shadow-none p-0 py-0 rounded-none flex-col h-full overflow-hidden bg-card">
       <CardHeader className="h-14 bg-zinc-50/80 dark:bg-zinc-900/80 backdrop-blur-sm border-b p-2 px-4 space-y-2">
         <div className="flex flex-row items-center justify-between">
-          <ToolViewIconTitle icon={Trash2} title="Delete Slide" subtitle={deleteData?.deleted_title} />
+          <ToolViewIconTitle icon={Trash2} title={t('deleteSlide')} subtitle={deleteData?.deleted_title} />
         </div>
       </CardHeader>
 
@@ -74,8 +76,8 @@ export function DeleteSlideToolView({
             icon={Trash2}
             iconColor="text-red-500 dark:text-red-400"
             bgColor="bg-gradient-to-b from-red-100 to-red-50 shadow-inner dark:from-red-800/40 dark:to-red-900/60 dark:shadow-red-950/20"
-            title="Deleting slide"
-            filePath="Removing slide file..."
+            title={t('deletingSlide')}
+            filePath={t('removingSlideFile')}
             showProgress={true}
           />
         ) : error || !deleteData ? (
@@ -84,10 +86,10 @@ export function DeleteSlideToolView({
               <AlertTriangle className="h-10 w-10 text-rose-400 dark:text-rose-600" />
             </div>
             <h3 className="text-xl font-semibold mb-2 text-zinc-900 dark:text-zinc-100">
-              {error || 'Failed to delete slide'}
+              {error || t('failedToDeleteSlide')}
             </h3>
             <p className="text-sm text-zinc-500 dark:text-zinc-400 text-center max-w-md">
-              There was an error deleting the slide. Please try again.
+              {t('errorDeletingSlide')}
             </p>
           </div>
         ) : (
@@ -96,7 +98,7 @@ export function DeleteSlideToolView({
               <CheckCircle className="h-10 w-10 text-zinc-500 dark:text-zinc-400" />
             </div>
             <h3 className="text-xl font-semibold mb-2 text-zinc-900 dark:text-zinc-100">
-              Slide deleted successfully
+              {t('slideDeletedSuccessfully')}
             </h3>
             <p className="text-sm text-zinc-500 dark:text-zinc-400 text-center max-w-md mb-6">
               {deleteData.message}
@@ -106,7 +108,7 @@ export function DeleteSlideToolView({
               <Card className="p-4 text-center">
                 <div className="flex items-center justify-center gap-2 mb-2">
                   <Hash className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium">Deleted Slide</span>
+                  <span className="text-sm font-medium">{t('deletedSlide')}</span>
                 </div>
                 <p className="text-lg font-semibold text-red-600 dark:text-red-400">
                   #{deleteData.deleted_slide}
@@ -116,7 +118,7 @@ export function DeleteSlideToolView({
               <Card className="p-4 text-center">
                 <div className="flex items-center justify-center gap-2 mb-2">
                   <FileText className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium">Remaining</span>
+                  <span className="text-sm font-medium">{t('remaining')}</span>
                 </div>
                 <p className="text-lg font-semibold text-zinc-700 dark:text-zinc-300">
                   {deleteData.remaining_slides}

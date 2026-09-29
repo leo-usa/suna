@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Shield,
   CheckCircle2,
@@ -27,6 +28,7 @@ export function RealityDefenderToolView({
   isSuccess = true,
   isStreaming = false,
 }: ToolViewProps) {
+  const t = useTranslations('toolViews.realityDefender');
   const {
     filePath,
     mediaType,
@@ -65,32 +67,32 @@ export function RealityDefenderToolView({
   const getMediaTypeLabel = () => {
     switch (mediaType) {
       case 'image':
-        return 'Image';
+        return t('media.image');
       case 'audio':
-        return 'Audio';
+        return t('media.audio');
       case 'video':
-        return 'Video';
+        return t('media.video');
       default:
-        return 'Media';
+        return t('media.media');
     }
   };
 
   const getVerdictInfo = () => {
     if (verdict === 'likely_manipulated' || isDeepfake) {
       return {
-        label: 'Likely Manipulated',
+        label: t('likelyManipulated'),
         icon: AlertTriangle,
         color: 'text-zinc-600 dark:text-zinc-400',
       };
     } else if (verdict === 'likely_authentic') {
       return {
-        label: 'Likely Authentic',
+        label: t('likelyAuthentic'),
         icon: CheckCircle2,
         color: 'text-zinc-600 dark:text-zinc-400',
       };
     } else {
       return {
-        label: 'Uncertain',
+        label: t('uncertain'),
         icon: HelpCircle,
         color: 'text-zinc-600 dark:text-zinc-400',
       };
@@ -125,7 +127,7 @@ export function RealityDefenderToolView({
             icon={Shield}
             iconColor="text-zinc-500 dark:text-zinc-400"
             bgColor="bg-linear-to-b from-blue-100 to-blue-50 shadow-inner dark:from-blue-800/40 dark:to-blue-900/60 dark:shadow-blue-950/20"
-            title="Analyzing media file"
+            title={t('analyzing')}
             filePath=""
             showProgress={true}
           />
@@ -153,13 +155,13 @@ export function RealityDefenderToolView({
               <div className="mb-6">
                 <div className="flex items-center gap-2 mb-3">
                   <VerdictIcon className={`w-5 h-5 ${verdictInfo.color}`} />
-                  <h3 className="text-sm font-medium text-foreground">Detection Result</h3>
+                  <h3 className="text-sm font-medium text-foreground">{t('detectionResult')}</h3>
                 </div>
                 <div className="rounded-lg p-4 border border-border bg-card">
                   <div className="flex items-center justify-between mb-2">
                     <span className={`font-semibold ${verdictInfo.color}`}>{verdictInfo.label}</span>
                     <span className="text-sm text-muted-foreground">
-                      {(confidence * 100).toFixed(1)}% confidence
+                      {t('confidence', { value: (confidence * 100).toFixed(1) })}
                     </span>
                   </div>
                   <Progress 
@@ -174,7 +176,7 @@ export function RealityDefenderToolView({
                 <div className="mb-4">
                   <h3 className="text-sm font-medium text-foreground mb-3 flex items-center">
                     <Info className="h-4 w-4 mr-2 opacity-70" />
-                    Detection Indicators ({indicators.length})
+                    {t('indicators', { count: indicators.length })}
                   </h3>
                   <div className="space-y-2">
                     {indicators.map((indicator, idx) => (
@@ -204,7 +206,7 @@ export function RealityDefenderToolView({
               {/* Analysis ID */}
               {analysisId && (
                 <div className="text-xs text-muted-foreground">
-                  Analysis ID: {analysisId}
+                  {t('analysisId', { id: analysisId })}
                 </div>
               )}
             </div>
@@ -215,7 +217,7 @@ export function RealityDefenderToolView({
               <Shield className="h-10 w-10 text-zinc-400 dark:text-zinc-600" />
             </div>
             <h3 className="text-xl font-semibold mb-2 text-zinc-900 dark:text-zinc-100">
-              {actualIsSuccess ? 'No Analysis Results' : 'Analysis Failed'}
+              {actualIsSuccess ? t('noResults') : t('analysisFailed')}
             </h3>
             {filePath && (
               <div className="bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-4 w-full max-w-md text-center mb-4 shadow-sm">
@@ -226,8 +228,8 @@ export function RealityDefenderToolView({
             )}
             <p className="text-sm text-zinc-500 dark:text-zinc-400 text-center max-w-sm">
               {actualIsSuccess
-                ? 'No detection results available for this file'
-                : 'Failed to analyze the media file. Please check the file format and try again.'}
+                ? t('noResultsDesc')
+                : t('failedDesc')}
             </p>
           </div>
         )}

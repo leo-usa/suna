@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { Phone, Clock, ArrowUpRight, ArrowDownLeft, CheckCircle, AlertTriangle } from 'lucide-react';
 import { ToolViewProps } from '../types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,6 +18,7 @@ export function ListCallsToolView({
   isSuccess = true,
   isStreaming = false,
 }: ToolViewProps) {
+  const t = useTranslations('toolViews.vapiCall');
   // Defensive check - ensure toolCall is defined
   if (!toolCall) {
     console.warn('ListCallsToolView: toolCall is undefined. Tool views should use structured props.');
@@ -28,7 +30,7 @@ export function ListCallsToolView({
   const callsData = extractListCallsData(toolResult);
 
   if (!callsData) {
-    return <div className="text-sm text-muted-foreground">No calls data available</div>;
+    return <div className="text-sm text-muted-foreground">{t('noCallsData')}</div>;
   }
 
   return (
@@ -43,7 +45,7 @@ export function ListCallsToolView({
 
         {callsData.calls.length === 0 ? (
           <div className="text-sm text-muted-foreground text-center py-6">
-            No calls found
+            {t('noCallsFound')}
           </div>
         ) : (
           <div className="space-y-2">
@@ -75,7 +77,7 @@ export function ListCallsToolView({
                             {formatPhoneNumber(call.phone_number)}
                           </span>
                           <Badge className={cn("text-xs", statusInfo.color)}>
-                            {statusInfo.label}
+                            {t(`status.${statusInfo.label.replace(/\s/g, '')}`)}
                           </Badge>
                         </div>
                         

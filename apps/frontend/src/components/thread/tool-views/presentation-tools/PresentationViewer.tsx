@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Card,
   CardContent,
@@ -73,6 +74,7 @@ export function PresentationViewer({
   project,
   showHeader = true,
 }: PresentationViewerProps) {
+  const t = useTranslations('toolViews.presentation');
   const [metadata, setMetadata] = useState<PresentationMetadata | null>(null);
 
   const [isLoadingMetadata, setIsLoadingMetadata] = useState(false);
@@ -206,7 +208,7 @@ export function PresentationViewer({
           } catch (parseError) {
             console.error('Failed to parse tool output as JSON:', parseError);
             console.error('Raw tool output:', output);
-            toolExecutionError = `Failed to parse tool output: ${output}`;
+            toolExecutionError = t('failedToParseToolOutput', { output: String(output) });
           }
         }
       }
@@ -230,7 +232,7 @@ export function PresentationViewer({
       console.error('Failed to process tool output:', e);
       console.error('Tool output type:', typeof toolResult.output);
       console.error('Tool output value:', toolResult.output);
-      toolExecutionError = `Unexpected error processing tool output: ${String(e)}`;
+      toolExecutionError = t('unexpectedErrorProcessingToolOutput', { error: String(e) });
     }
   }
 
@@ -739,7 +741,7 @@ export function PresentationViewer({
                     }
                   }}
                   className="h-8 w-8 p-0"
-                  title="Open in full screen"
+                  title={t('openInFullScreen')}
                 >
                   <ExternalLink className="h-3.5 w-3.5" />
                 </Button>
@@ -750,7 +752,7 @@ export function PresentationViewer({
                       variant="ghost" 
                       size="sm" 
                       className="h-8 w-8 p-0"
-                      title="Export presentation"
+                      title={t('exportPresentationLower')}
                       disabled={isDownloading}
                     >
                       {isDownloading ? (
@@ -848,10 +850,10 @@ export function PresentationViewer({
               <AlertTriangle className="h-10 w-10 text-zinc-500 dark:text-zinc-400" />
             </div>
             <h3 className="text-xl font-semibold mb-2 text-zinc-900 dark:text-zinc-100">
-              Tool Execution Error
+              {t('toolExecutionError')}
             </h3>
             <p className="text-sm text-zinc-500 dark:text-zinc-400 text-center max-w-md mb-4">
-              The presentation tool encountered an error during execution:
+              {t('toolEncounteredError')}
             </p>
             <div className="w-full max-w-2xl">
               <CodeBlockCode 
@@ -884,10 +886,10 @@ export function PresentationViewer({
               <Presentation className="h-10 w-10 text-zinc-500 dark:text-zinc-400" />
             </div>
             <h3 className="text-xl font-semibold mb-2 text-zinc-900 dark:text-zinc-100">
-              No slides found
+              {t('noSlidesFound')}
             </h3>
             <p className="text-sm text-zinc-500 dark:text-zinc-400 text-center max-w-md">
-              This presentation doesn't have any slides yet.
+              {t('noSlidesYet')}
             </p>
           </div>
         ) : (
@@ -918,7 +920,7 @@ export function PresentationViewer({
           {isStreaming ? (
             <span className="flex items-center gap-1.5">
               <span className="inline-block h-2 w-2 rounded-full border border-blue-300 border-t-blue-500 animate-spin" />
-              {streamingSlideNumber ? `Slide ${streamingSlideNumber}` : 'Generating...'}
+              {streamingSlideNumber ? t('slideNumber', { number: streamingSlideNumber }) : t('generating')}
             </span>
           ) : slides.length > 0 && visibleSlide ? (
             <span>{visibleSlide}/{slides.length}</span>

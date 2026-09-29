@@ -85,18 +85,19 @@ function BatteryIcon({ level, charging }: { level: number; charging: boolean }) 
 }
 
 function SandboxStatusIndicator({ status }: { status?: SandboxStatus }) {
+  const t = useTranslations('dobbyComputer.statusIndicator');
   if (!status) return null;
 
   switch (status) {
     case 'LIVE':
       // Solid green dot
       return (
-        <span className="h-2 w-2 rounded-full bg-green-500" title="Live" />
+        <span className="h-2 w-2 rounded-full bg-green-500" title={t('live')} />
       );
     case 'STARTING':
       // Flashing/pulsing green dot
       return (
-        <span className="relative flex h-2 w-2" title="Starting">
+        <span className="relative flex h-2 w-2" title={t('starting')}>
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
           <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
         </span>
@@ -104,17 +105,17 @@ function SandboxStatusIndicator({ status }: { status?: SandboxStatus }) {
     case 'FAILED':
       // Red dot
       return (
-        <span className="h-2 w-2 rounded-full bg-red-500" title="Services unhealthy" />
+        <span className="h-2 w-2 rounded-full bg-red-500" title={t('servicesUnhealthy')} />
       );
     case 'OFFLINE':
       // Gray dot
       return (
-        <span className="h-2 w-2 rounded-full bg-gray-400" title="Offline" />
+        <span className="h-2 w-2 rounded-full bg-gray-400" title={t('offline')} />
       );
     case 'UNKNOWN':
       // Pulsing gray/yellow dot - sandbox may not exist yet or is being created
       return (
-        <span className="relative flex h-2 w-2" title="Initializing">
+        <span className="relative flex h-2 w-2" title={t('initializing')}>
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-50" />
           <span className="relative inline-flex rounded-full h-2 w-2 bg-yellow-500" />
         </span>
@@ -239,6 +240,7 @@ export const PanelHeader = memo(function PanelHeader({
   hideViewToggle = false,
   sandboxStatus,
 }: PanelHeaderProps) {
+  const tWindow = useTranslations('dobbyComputer.window');
   if (variant === 'drawer') {
     return (
       <div className="h-12 flex-shrink-0 px-3 flex items-center justify-between border-b border-border bg-background/95 backdrop-blur-sm">
@@ -275,7 +277,7 @@ export const PanelHeader = memo(function PanelHeader({
             size="icon"
             onClick={onClose}
             className="h-8 w-8 text-muted-foreground hover:text-foreground touch-manipulation"
-            title="Minimize"
+            title={tWindow('minimize')}
           >
             <Minimize2 className="h-4 w-4" />
           </Button>

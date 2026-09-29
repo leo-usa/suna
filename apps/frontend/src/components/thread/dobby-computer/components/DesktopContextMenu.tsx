@@ -1,6 +1,7 @@
 'use client';
 
 import { memo } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   ContextMenu,
   ContextMenuContent,
@@ -43,6 +44,7 @@ export const DesktopContextMenu = memo(function DesktopContextMenu({
   onOpenTerminal,
   onShowInfo,
 }: DesktopContextMenuProps) {
+  const t = useTranslations('dobbyComputer.contextMenu');
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>
@@ -54,21 +56,21 @@ export const DesktopContextMenu = memo(function DesktopContextMenu({
           className="focus:bg-background/10 focus:backdrop-blur-xl rounded-lg gap-2"
         >
           <Folder className="h-4 w-4" />
-          Open Files
+          {t('openFiles')}
         </ContextMenuItem>
         <ContextMenuItem 
           onClick={onOpenBrowser}
           className="focus:bg-background/10 focus:backdrop-blur-xl rounded-lg gap-2"
         >
           <Globe className="h-4 w-4" />
-          Open Browser
+          {t('openBrowser')}
         </ContextMenuItem>
         <ContextMenuItem 
           onClick={onOpenTerminal}
           className="focus:bg-background/10 focus:backdrop-blur-xl rounded-lg gap-2"
         >
           <TerminalSquare className="h-4 w-4" />
-          Open Terminal
+          {t('openTerminal')}
         </ContextMenuItem>
         
         <ContextMenuSeparator className="bg-border/50" />
@@ -78,7 +80,7 @@ export const DesktopContextMenu = memo(function DesktopContextMenu({
           className="focus:bg-background/10 focus:backdrop-blur-xl rounded-lg gap-2"
         >
           <FolderPlus className="h-4 w-4" />
-          New Folder
+          {t('newFolder')}
           <ContextMenuShortcut>⇧⌘N</ContextMenuShortcut>
         </ContextMenuItem>
         
@@ -89,7 +91,7 @@ export const DesktopContextMenu = memo(function DesktopContextMenu({
           className="focus:bg-background/10 focus:backdrop-blur-xl rounded-lg gap-2"
         >
           <Info className="h-4 w-4" />
-          System Info
+          {t('systemInfo')}
           <ContextMenuShortcut>⌘I</ContextMenuShortcut>
         </ContextMenuItem>
       </ContextMenuContent>

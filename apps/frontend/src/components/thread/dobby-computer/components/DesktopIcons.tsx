@@ -1,6 +1,7 @@
 'use client';
 
 import { memo, useState, useCallback, useRef, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { getFileIcon, FolderIcon } from './Icons';
@@ -54,6 +55,7 @@ export const DesktopIcons = memo(function DesktopIcons({
   onNewFolderCreate,
   onNewFolderCancel,
 }: DesktopIconsProps) {
+  const t = useTranslations('dobbyComputer.desktop');
   const [activeContextPath, setActiveContextPath] = useState<string | null>(null);
   const [newFolderName, setNewFolderName] = useState('New Folder');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -81,8 +83,8 @@ export const DesktopIcons = memo(function DesktopIcons({
 
   const handleCopyPath = useCallback((path: string) => {
     navigator.clipboard.writeText(path);
-    toast.success('Path copied to clipboard');
-  }, []);
+    toast.success(t('pathCopied'));
+  }, [t]);
 
   const handleNewFolderKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {

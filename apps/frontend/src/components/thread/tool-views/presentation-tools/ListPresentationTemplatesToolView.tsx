@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { useTranslations } from "next-intl"
 import Image from "next/image"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -32,6 +33,7 @@ export function ListPresentationTemplatesToolView({
   toolTimestamp,
   isStreaming = false,
 }: ToolViewProps) {
+  const t = useTranslations('toolViews.presentation')
   const name = toolCall.function_name.replace(/_/g, '-').toLowerCase();
   const toolTitle = getToolTitle(name)
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null)
@@ -62,7 +64,7 @@ export function ListPresentationTemplatesToolView({
           templatesData = JSON.parse(output)
         } catch (e) {
           console.error("Failed to parse tool output:", e)
-          error = "Failed to parse templates data"
+          error = t('failedToParseTemplatesData')
         }
       } else {
         templatesData = output as unknown as TemplatesData
@@ -75,7 +77,7 @@ export function ListPresentationTemplatesToolView({
     }
   } catch (e) {
     console.error("Error processing tool result:", e)
-    error = "Error processing templates data"
+    error = t('errorProcessingTemplatesData')
   }
 
   // Auto-open template if specified (from load_template_design)
@@ -97,7 +99,7 @@ export function ListPresentationTemplatesToolView({
           <div className="flex flex-row items-center justify-between">
             <ToolViewIconTitle 
               icon={Palette} 
-              title={template?.name.replace(/_/g, " ") || selectedTemplate.replace(/_/g, " ") || "Template Preview"} 
+              title={template?.name.replace(/_/g, " ") || selectedTemplate.replace(/_/g, " ") || t('templatePreview')} 
             />
             {showBackButton && (
               <Button
@@ -107,7 +109,7 @@ export function ListPresentationTemplatesToolView({
                 className="h-8 px-2"
               >
                 <ArrowLeft className="h-4 w-4 mr-1" />
-                Back
+                {t('back')}
               </Button>
             )}
           </div>
@@ -130,7 +132,7 @@ export function ListPresentationTemplatesToolView({
 
         <div className="px-4 py-2 h-9 bg-zinc-50/30 dark:bg-zinc-900/30 border-t border-zinc-200/30 dark:border-zinc-800/30 flex justify-between items-center">
           <div className="text-xs text-zinc-400 dark:text-zinc-500">
-            <span className="font-mono">Template Preview</span>
+            <span className="font-mono">{t('templatePreview')}</span>
           </div>
           <div className="text-xs text-zinc-400 dark:text-zinc-500">
             {formatTimestamp(toolTimestamp)}
@@ -154,8 +156,8 @@ export function ListPresentationTemplatesToolView({
             icon={Palette}
             iconColor="text-orange-500 dark:text-orange-400"
             bgColor="bg-gradient-to-b from-orange-100 to-orange-50 shadow-inner dark:from-orange-800/40 dark:to-orange-900/60 dark:shadow-orange-950/20"
-            title="Loading presentation templates"
-            filePath="Fetching available templates..."
+            title={t('loadingPresentationTemplates')}
+            filePath={t('fetchingAvailableTemplates')}
             showProgress={true}
           />
         ) : !templatesData || !templatesData.templates || templatesData.templates.length === 0 || error ? (
@@ -164,10 +166,10 @@ export function ListPresentationTemplatesToolView({
               <AlertTriangle className="h-10 w-10 text-rose-400 dark:text-rose-600" />
             </div>
             <h3 className="text-xl font-semibold mb-2 text-zinc-900 dark:text-zinc-100">
-              No templates available
+              {t('noTemplatesAvailable')}
             </h3>
             <p className="text-sm text-zinc-500 dark:text-zinc-400 text-center max-w-md">
-              {error || templatesData?.message || "Check back soon for new presentation templates"}
+              {error || templatesData?.message || t('checkBackSoonTemplates')}
             </p>
           </div>
         ) : (
@@ -192,7 +194,7 @@ export function ListPresentationTemplatesToolView({
                               <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-zinc-100 to-zinc-50 dark:from-zinc-800 dark:to-zinc-900 animate-pulse">
                                 <div className="flex flex-col items-center gap-2">
                                   <DobbyLoader customSize={32} />
-                                  <span className="text-xs text-zinc-400 dark:text-zinc-600">Loading...</span>
+                                  <span className="text-xs text-zinc-400 dark:text-zinc-600">{t('loading')}</span>
                                 </div>
                               </div>
                             )}
@@ -233,7 +235,7 @@ export function ListPresentationTemplatesToolView({
       <div className="px-4 py-2 h-9 bg-zinc-50/30 dark:bg-zinc-900/30 border-t border-zinc-200/30 dark:border-zinc-800/30 flex justify-between items-center">
         <div className="text-xs text-zinc-400 dark:text-zinc-500">
           {templates.length > 0 && !isStreaming && (
-            <span className="font-mono">{templates.length} templates</span>
+            <span className="font-mono">{t('templatesCount', { count: templates.length })}</span>
           )}
         </div>
         <div className="text-xs text-zinc-400 dark:text-zinc-500">

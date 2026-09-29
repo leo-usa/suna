@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { FileText, Download, CheckCircle2, AlertCircle } from 'lucide-react';
 import { DobbyLoader } from '@/components/ui/dobby-loader';
 import { ToolViewProps } from '../types';
@@ -21,6 +22,7 @@ export function PdfExportToolView({
   isStreaming = false,
   project,
 }: ToolViewProps) {
+  const t = useTranslations('toolViews.pdfExport');
   const { session } = useAuth();
   const { isRestricted: isDownloadRestricted, openUpgradeModal } = useDownloadRestriction({
     featureName: 'exports',
@@ -64,7 +66,7 @@ export function PdfExportToolView({
     }
 
     if (!outputFile || !project?.sandbox?.id) {
-      toast.error('Unable to download - missing file or sandbox info');
+      toast.error(t('missingInfo'));
       return;
     }
 
@@ -96,10 +98,10 @@ export function PdfExportToolView({
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
 
-      toast.success(`Downloaded ${fileName}`);
+      toast.success(t('downloaded', { fileName }));
     } catch (error) {
       console.error('Download error:', error);
-      toast.error(`Failed to download: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      toast.error(t('downloadFailed', { error: error instanceof Error ? error.message : t('unknownError') }));
     } finally {
       setIsDownloading(false);
     }
@@ -111,7 +113,7 @@ export function PdfExportToolView({
       <Card className="gap-0 flex border-0 shadow-none p-0 rounded-none flex-col h-full overflow-hidden bg-card">
         <CardHeader className="h-14 bg-zinc-50/80 dark:bg-zinc-900/80 border-b p-2 px-4 flex-shrink-0">
           <div className="flex flex-row items-center justify-between">
-            <ToolViewIconTitle icon={FileText} title="Export to PDF" />
+            <ToolViewIconTitle icon={FileText} title={t('exportToPdf')} />
           </div>
         </CardHeader>
         <CardContent className="p-0 flex-1">
@@ -119,9 +121,9 @@ export function PdfExportToolView({
             icon={FileText}
             iconColor="text-zinc-500"
             bgColor="bg-zinc-50 dark:bg-zinc-900"
-            title="Exporting to PDF"
+            title={t('exportingToPdf')}
             filePath={sourceFileName}
-            progressText="Converting HTML to PDF..."
+            progressText={t('converting')}
           />
         </CardContent>
       </Card>
@@ -135,12 +137,12 @@ export function PdfExportToolView({
         <div className="flex flex-row items-center justify-between">
           <ToolViewIconTitle
             icon={FileText}
-            title={`Export: ${sourceFileName}`}
+            title={t('exportTitle', { fileName: sourceFileName })}
           />
           {isSuccess && (
             <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400">
               <CheckCircle2 className="h-3.5 w-3.5" />
-              <span>Ready</span>
+              <span>{t('ready')}</span>
             </div>
           )}
         </div>
@@ -161,7 +163,7 @@ export function PdfExportToolView({
                     {fileName}
                   </p>
                   <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                    PDF Document
+                    {t('pdfDocument')}
                   </p>
                 </div>
               </div>
@@ -177,12 +179,12 @@ export function PdfExportToolView({
                 <>
                   <DobbyLoader customSize={16} variant="white" className="mr-2 dark:hidden" />
                   <DobbyLoader customSize={16} variant="black" className="mr-2 hidden dark:flex" />
-                  <span>Downloading...</span>
+                  <span>{t('downloading')}</span>
                 </>
               ) : (
                 <>
                   <Download className="h-4 w-4 mr-2" />
-                  <span>Download PDF</span>
+                  <span>{t('downloadPdf')}</span>
                 </>
               )}
             </Button>
@@ -191,7 +193,7 @@ export function PdfExportToolView({
           <div className="flex items-center gap-3 p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 rounded-lg">
             <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
             <p className="text-sm text-red-600 dark:text-red-400">
-              {message || 'Export failed'}
+              {message || t('exportFailed')}
             </p>
           </div>
         )}

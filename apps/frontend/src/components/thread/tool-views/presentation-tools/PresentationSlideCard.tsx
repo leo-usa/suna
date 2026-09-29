@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Maximize2, Presentation } from 'lucide-react';
@@ -30,6 +31,7 @@ export function PresentationSlideCard({
   showFullScreenButton = true,
   refreshTimestamp,
 }: PresentationSlideCardProps) {
+  const t = useTranslations('toolViews.presentation');
   const [containerRef, setContainerRef] = useState<HTMLDivElement | null>(null);
   const [scale, setScale] = useState(1);
 
@@ -98,7 +100,7 @@ export function PresentationSlideCard({
         <div className="flex items-center justify-center h-48 bg-muted/30">
           <div className="text-center">
             <Presentation className="h-12 w-12 mx-auto mb-4 text-zinc-400" />
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">No slide content to preview</p>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">{t('noSlideContentToPreview')}</p>
           </div>
         </div>
       </div>
@@ -127,7 +129,7 @@ export function PresentationSlideCard({
             size="sm"
             onClick={() => onFullScreenClick?.(slide.number)}
             className="h-8 w-8 p-0 opacity-60 group-hover:opacity-100 transition-opacity"
-            title="Open in full screen"
+            title={t('openInFullScreen')}
             disabled={!onFullScreenClick}
           >
             <Maximize2 className="h-4 w-4" />
@@ -152,7 +154,7 @@ export function PresentationSlideCard({
             <iframe
               key={`slide-${slide.number}-${refreshTimestamp || slide.file_path}`}
               src={slidePreviewUrl}
-              title={`Slide ${slide.number}: ${slide.title}`}
+              title={t('slideIframeTitle', { number: slide.number, title: slide.title })}
               className="border-0 rounded-xl"
               sandbox="allow-same-origin allow-scripts"
               style={{

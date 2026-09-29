@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import { AlertTriangle, Play, Pause, Wand2, CheckCircle, Download, Video as VideoIcon, Image as ImageIcon } from 'lucide-react';
 import { ToolViewProps } from '../types';
 import { extractImageEditGenerateData } from './_utils';
@@ -77,6 +78,7 @@ function ImageDisplay({ filePath, sandboxId }: { filePath: string; sandboxId?: s
 }
 
 function VideoDisplay({ filePath, sandboxId }: { filePath: string; sandboxId?: string }) {
+  const t = useTranslations('toolViews.imageEditGenerate');
   const [isPlaying, setIsPlaying] = useState(false);
   const [isVideoLoading, setIsVideoLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
@@ -123,7 +125,7 @@ function VideoDisplay({ filePath, sandboxId }: { filePath: string; sandboxId?: s
     return (
       <div className="aspect-video flex flex-col items-center justify-center p-4 text-center rounded-2xl border border-neutral-200 dark:border-neutral-700/50 bg-muted/30">
         <AlertTriangle className="h-8 w-8 text-destructive mb-2" />
-        <p className="text-destructive font-medium text-sm">Failed to load video</p>
+        <p className="text-destructive font-medium text-sm">{t('failedToLoadVideo')}</p>
       </div>
     );
   }
@@ -188,6 +190,7 @@ function useVideoContent(
 // Full featured video renderer component for tool view (Computer)
 // Uses the full VideoRenderer with all controls (slider, volume, etc.)
 function VideoRendererFull({ filePath, sandboxId }: { filePath: string; sandboxId?: string }) {
+  const t = useTranslations('toolViews.imageEditGenerate');
   const [hasVideoError, setHasVideoError] = useState(false);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
 
@@ -231,10 +234,10 @@ function VideoRendererFull({ filePath, sandboxId }: { filePath: string; sandboxI
       <div className="aspect-video flex flex-col items-center justify-center p-6 text-center rounded-2xl border border-neutral-200 dark:border-neutral-700/50 bg-muted/30">
         <AlertTriangle className="h-10 w-10 text-zinc-500 dark:text-zinc-400 mb-3" />
         <h3 className="text-base font-medium text-zinc-900 dark:text-zinc-100 mb-2">
-          Failed to load video
+          {t('failedToLoadVideo')}
         </h3>
         <p className="text-sm text-zinc-600 dark:text-zinc-400">
-          {fetchError ? String(fetchError) : 'The video could not be loaded'}
+          {fetchError ? String(fetchError) : t('videoCouldNotLoad')}
         </p>
       </div>
     );
@@ -246,10 +249,10 @@ function VideoRendererFull({ filePath, sandboxId }: { filePath: string; sandboxI
       <div className="aspect-video flex flex-col items-center justify-center p-6 text-center rounded-2xl border border-neutral-200 dark:border-neutral-700/50 bg-muted/30">
         <AlertTriangle className="h-10 w-10 text-zinc-500 dark:text-zinc-400 mb-3" />
         <h3 className="text-base font-medium text-zinc-900 dark:text-zinc-100 mb-2">
-          Failed to load video
+          {t('failedToLoadVideo')}
         </h3>
         <p className="text-sm text-zinc-600 dark:text-zinc-400">
-          Could not create video URL
+          {t('couldNotCreateUrl')}
         </p>
       </div>
     );
@@ -261,10 +264,10 @@ function VideoRendererFull({ filePath, sandboxId }: { filePath: string; sandboxI
       <div className="aspect-video flex flex-col items-center justify-center p-6 text-center rounded-2xl border border-neutral-200 dark:border-neutral-700/50 bg-muted/30">
         <AlertTriangle className="h-10 w-10 text-zinc-500 dark:text-zinc-400 mb-3" />
         <h3 className="text-base font-medium text-zinc-900 dark:text-zinc-100 mb-2">
-          Failed to play video
+          {t('failedToPlay')}
         </h3>
         <p className="text-sm text-zinc-600 dark:text-zinc-400">
-          The video file may be corrupted or in an unsupported format
+          {t('corruptedVideo')}
         </p>
       </div>
     );
@@ -290,6 +293,7 @@ export function ImageEditGenerateToolView({
   isStreaming = false,
   project,
 }: ImageEditGenerateToolViewProps) {
+  const t = useTranslations('toolViews.imageEditGenerate');
   const {
     generatedImagePaths,
     generatedVideoPaths,
@@ -375,7 +379,7 @@ export function ImageEditGenerateToolView({
             </div>
             <div>
               <CardTitle className="text-base font-medium text-zinc-900 dark:text-zinc-100">
-                Generate Media
+                {t('generateMedia')}
               </CardTitle>
             </div>
           </div>
@@ -389,7 +393,7 @@ export function ImageEditGenerateToolView({
               className="h-8 gap-1.5 px-2"
             >
               <Download className="h-3.5 w-3.5" />
-              <span className="text-xs hidden sm:inline">Download</span>
+              <span className="text-xs hidden sm:inline">{t('download')}</span>
             </Button>
           )}
         </div>
@@ -406,10 +410,10 @@ export function ImageEditGenerateToolView({
               <AlertTriangle className="h-8 w-8 text-zinc-500 dark:text-zinc-400" />
             </div>
             <h3 className="text-base font-medium text-zinc-900 dark:text-zinc-100 mb-2">
-              Processing Failed
+              {t('processingFailed')}
             </h3>
             <p className="text-sm text-zinc-600 dark:text-zinc-400 max-w-md">
-              {error || batchResults[0]?.error || 'An error occurred during processing.'}
+              {error || batchResults[0]?.error || t('processingError')}
             </p>
           </div>
         ) : videoPath ? (

@@ -2,6 +2,7 @@
 
 import { memo, useRef, useEffect, useCallback, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
 import { Terminal as XTerm, ITheme } from '@xterm/xterm';
@@ -78,6 +79,7 @@ const getWebSocketUrl = () => {
 let globalConnectionId = 0;
 
 export const SSHTerminal = memo(function SSHTerminal({ sandboxId, className }: SSHTerminalProps) {
+  const t = useTranslations('dobbyComputer.terminal');
   const { session } = useAuth();
   const queryClient = useQueryClient();
   const { resolvedTheme } = useTheme();
@@ -123,10 +125,10 @@ export const SSHTerminal = memo(function SSHTerminal({ sandboxId, className }: S
     if (sshCommand) {
       navigator.clipboard.writeText(sshCommand);
       setCopied(true);
-      toast.success('SSH command copied to clipboard');
+      toast.success(t('sshCopied'));
       setTimeout(() => setCopied(false), 2000);
     }
-  }, [sshCommand]);
+  }, [sshCommand, t]);
 
   const disconnect = useCallback(() => {
     connectionIdRef.current = 0;

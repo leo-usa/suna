@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Image as ImageIcon, ImageOff, CheckCircle, AlertTriangle, Download, ZoomIn, ZoomOut, Trash2 } from 'lucide-react';
 import { DobbyLoader } from '@/components/ui/dobby-loader';
 import { ToolViewProps } from '../types';
@@ -29,6 +30,7 @@ function SafeImage({ src, alt, filePath, className, sandboxId, project }: {
   sandboxId?: string;
   project?: ToolViewProps['project'];
 }) {
+  const t = useTranslations('toolViews.seeImage');
   const [isZoomed, setIsZoomed] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(1);
   const [waitingForSandbox, setWaitingForSandbox] = useState(!sandboxId);
@@ -102,11 +104,11 @@ function SafeImage({ src, alt, filePath, className, sandboxId, project }: {
       <div className="flex py-8 flex-col items-center justify-center w-full h-64 bg-gradient-to-b from-zinc-50 to-zinc-100 dark:from-zinc-900/50 dark:to-zinc-800/30 rounded-lg border-zinc-200 dark:border-zinc-700/50 shadow-inner">
         <DobbyLoader size="large" className="mb-4" />
         <p className="text-xs text-muted-foreground">
-          {waitingForSandbox ? 'Connecting to sandbox...' : 'Loading image...'}
+          {waitingForSandbox ? t('connectingSandbox') : t('loadingImage')}
         </p>
         {!waitingForSandbox && failureCount > 0 && (
           <p className="text-xs text-muted-foreground mt-2">
-            Retrying... (attempt {failureCount + 1})
+            {t('retrying', { attempt: failureCount + 1 })}
           </p>
         )}
       </div>
@@ -120,7 +122,7 @@ function SafeImage({ src, alt, filePath, className, sandboxId, project }: {
         <div className="bg-white dark:bg-black/30 p-3 rounded-full shadow-md mb-3">
           <ImageOff className="h-8 w-8 text-zinc-500 dark:text-zinc-400" />
         </div>
-        <p className="text-sm font-medium">Unable to load image</p>
+        <p className="text-sm font-medium">{t('unableToLoad')}</p>
         <p className="text-xs text-zinc-600/70 dark:text-zinc-400/70 mt-1 max-w-xs text-center break-all">
           {filePath}
         </p>
@@ -133,7 +135,7 @@ function SafeImage({ src, alt, filePath, className, sandboxId, project }: {
     return (
       <div className="flex py-8 flex-col items-center justify-center w-full h-64 bg-gradient-to-b from-zinc-50 to-zinc-100 dark:from-zinc-900/50 dark:to-zinc-800/30 rounded-lg border-zinc-200 dark:border-zinc-700/50 shadow-inner">
         <DobbyLoader size="large" className="mb-4" />
-        <p className="text-xs text-muted-foreground">Preparing image...</p>
+        <p className="text-xs text-muted-foreground">{t('preparing')}</p>
       </div>
     );
   }
@@ -199,7 +201,7 @@ function SafeImage({ src, alt, filePath, className, sandboxId, project }: {
             size="icon"
             className="h-8 w-8 rounded-md bg-white dark:bg-zinc-800"
             onClick={handleDownload}
-            title="Download image"
+            title={t('downloadImage')}
           >
             <Download className="h-4 w-4" />
           </Button>
@@ -219,6 +221,7 @@ export function SeeImageToolView({
   project,
 }: ToolViewProps) {
   // All hooks must be called unconditionally at the top
+  const t = useTranslations('toolViews.seeImage');
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
@@ -302,11 +305,11 @@ export function SeeImageToolView({
             <div>
               <div className="flex items-center">
                 <CardTitle className="text-base font-medium text-zinc-900 dark:text-zinc-100">
-                  {isClearTool ? "Clear Images from Context" : truncateString(filename, 25)}
+                  {isClearTool ? t('clearImagesTitle') : truncateString(filename, 25)}
                 </CardTitle>
                 {!isClearTool && isAnimated && (
                   <Badge variant="outline" className="ml-2 text-[10px] py-0 px-1.5 h-4 border-zinc-300 text-zinc-700 dark:border-zinc-700 dark:text-zinc-400">
-                    ANIMATED
+                    {t('animated')}
                   </Badge>
                 )}
               </div>
@@ -350,11 +353,11 @@ export function SeeImageToolView({
               </div>
 
               <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
-                {actualIsSuccess ? 'Context Cleared' : 'Clear Failed'}
+                {actualIsSuccess ? t('contextCleared') : t('clearFailed')}
               </h3>
 
               <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
-                Images have been cleared from context. They are not deleted and can be loaded again with load image in context tool.
+                {t('clearedDescription')}
               </p>
 
             </div>
@@ -381,12 +384,12 @@ export function SeeImageToolView({
             {isClearTool ? (
               <>
                 <Trash2 className="h-3 w-3 mr-1" />
-                CLEAR
+                {t('clearBadge')}
               </>
             ) : (
               <>
                 <ImageIcon className="h-3 w-3 mr-1" />
-                IMAGE
+                {t('imageBadge')}
               </>
             )}
           </Badge>

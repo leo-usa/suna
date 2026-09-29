@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { Clock, CheckCircle, AlertTriangle, Timer } from 'lucide-react';
 import { DobbyLoader } from '@/components/ui/dobby-loader';
 import { ToolViewProps } from '../types';
@@ -75,6 +76,7 @@ export function WaitToolView({
   isStreaming = false,
   streamingText,
 }: WaitToolViewProps) {
+  const t = useTranslations('toolViews.wait');
   // Defensive check - ensure toolCall is defined
   if (!toolCall) {
     console.warn('WaitToolView: toolCall is undefined.');
@@ -82,12 +84,12 @@ export function WaitToolView({
       <Card className="gap-0 flex border-0 shadow-none p-0 py-0 rounded-none flex-col h-full overflow-hidden bg-card">
         <CardHeader className="h-14 bg-zinc-50/80 dark:bg-zinc-900/80 backdrop-blur-sm border-b p-2 px-4">
           <CardTitle className="text-base font-medium text-zinc-900 dark:text-zinc-100">
-            Wait Tool Error
+            {t('toolError')}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-4">
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            This tool view requires structured metadata.
+            {t('toolErrorDescription')}
           </p>
         </CardContent>
       </Card>
@@ -112,7 +114,7 @@ export function WaitToolView({
     }
   };
 
-  const toolTitle = getToolTitle(toolCall.function_name.replace(/_/g, '-')) || 'Wait';
+  const toolTitle = getToolTitle(toolCall.function_name.replace(/_/g, '-')) || t('wait');
 
   return (
     <Card className="gap-0 flex border-0 shadow-none p-0 py-0 rounded-none flex-col h-full overflow-hidden bg-card">
@@ -141,8 +143,8 @@ export function WaitToolView({
             
             <div className="text-sm text-muted-foreground mb-4">
               {isStreaming 
-                ? `Pausing execution for ${formatDuration(seconds)}...`
-                : `The system paused execution for ${formatDuration(seconds)} as requested.`
+                ? t('pausing', { duration: formatDuration(seconds) })
+                : t('paused', { duration: formatDuration(seconds) })
               }
             </div>
             
@@ -156,10 +158,10 @@ export function WaitToolView({
                 {isStreaming ? (
                   <span className="flex items-center gap-2">
                     <DobbyLoader customSize={12} />
-                    Waiting in progress...
+                    {t('waitingInProgress')}
                   </span>
                 ) : (
-                  'Wait completed successfully'
+                  t('completed')
                 )}
               </div>
             )}
@@ -174,7 +176,7 @@ export function WaitToolView({
       >
         <Badge className="h-6 py-0.5" variant="outline">
           <Clock className="h-3 w-3 mr-1" />
-          Timing Control
+          {t('timingControl')}
         </Badge>
       </ToolViewFooter>
     </Card>

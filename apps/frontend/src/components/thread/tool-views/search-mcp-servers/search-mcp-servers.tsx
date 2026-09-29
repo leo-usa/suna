@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Search,
   CheckCircle,
@@ -35,6 +36,8 @@ export function SearchMcpServersToolView({
   isStreaming = false,
 }: ToolViewProps) {
   // All hooks must be called unconditionally at the top
+  const t = useTranslations('toolViews.searchMcpServers');
+  const tCommon = useTranslations('toolViews.common');
   const [expandedResults, setExpandedResults] = useState<Record<number, boolean>>({});
 
   // Defensive check - ensure toolCall is defined
@@ -78,7 +81,7 @@ export function SearchMcpServersToolView({
     if (authSchemes?.includes('OAUTH2')) return 'OAuth2';
     if (authSchemes?.includes('API_KEY')) return 'API Key';
     if (authSchemes?.includes('BEARER_TOKEN')) return 'Bearer Token';
-    return authSchemes?.[0] || 'Unknown';
+    return authSchemes?.[0] || tCommon('unknown');
   };
 
   return (
@@ -101,7 +104,7 @@ export function SearchMcpServersToolView({
               ) : (
                 <AlertTriangle className="h-3 w-3 " />
               )}
-              {results.length} {results.length === 1 ? 'result' : 'results'}
+              {t('resultCount', { count: results.length })}
             </Badge>
           )}
         </div>
@@ -113,7 +116,7 @@ export function SearchMcpServersToolView({
             icon={Search}
             iconColor="text-zinc-500 dark:text-zinc-400"
             bgColor="bg-gradient-to-b from-zinc-100 to-zinc-50 shadow-inner dark:from-zinc-800/40 dark:to-zinc-900/60 dark:shadow-zinc-950/20"
-            title="Searching MCP servers"
+            title={t('searching')}
             filePath={query ? `"${query}"` : undefined}
             showProgress={true}
           />
@@ -136,7 +139,7 @@ export function SearchMcpServersToolView({
                           {result.logo_url ? (
                             <img
                               src={result.logo_url}
-                              alt={`${result.name} logo`}
+                              alt={t('logoAlt', { name: result.name })}
                               className="w-8 h-8 object-cover"
                               onError={(e) => {
                                 const target = e.target as HTMLImageElement;
@@ -176,7 +179,7 @@ export function SearchMcpServersToolView({
                                       </div>
                                     </TooltipTrigger>
                                     <TooltipContent>
-                                      <p>OAuth2 supported</p>
+                                      <p>{t('oauthSupported')}</p>
                                     </TooltipContent>
                                   </Tooltip>
                                 </TooltipProvider>
@@ -219,10 +222,10 @@ export function SearchMcpServersToolView({
                 <Search className="h-8 w-8 text-zinc-400" />
               </div>
               <h3 className="text-base font-medium text-zinc-900 dark:text-zinc-100 mb-2">
-                No MCP servers found
+                {t('noServers')}
               </h3>
               <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                {query ? `No results found for "${query}"` : 'Try searching with different keywords'}
+                {query ? t('noResultsFor', { query }) : t('tryDifferent')}
               </p>
             </div>
           </div>

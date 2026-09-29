@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Users,
   CheckCircle,
@@ -32,6 +33,7 @@ export function PeopleSearchToolView({
   isSuccess = true,
   isStreaming = false,
 }: ToolViewProps) {
+  const t = useTranslations('toolViews.peopleSearch');
   // Defensive check - handle cases where toolCall might be undefined
   if (!toolCall) {
     console.warn('PeopleSearchToolView: toolCall is undefined. Tool views should use structured props.');
@@ -106,7 +108,7 @@ export function PeopleSearchToolView({
             icon={Users}
             iconColor="text-primary"
             bgColor="bg-primary/10"
-            title="Searching for people"
+            title={t('searching')}
             filePath={query}
             showProgress={true}
           />
@@ -115,7 +117,7 @@ export function PeopleSearchToolView({
             <TooltipProvider>
               <div className="p-3">
                 <div className="text-sm font-medium text-zinc-800 dark:text-zinc-200 mb-3 flex items-center justify-between">
-                  <span>Found {total_results} people</span>
+                  <span>{t('foundPeople', { count: total_results })}</span>
                 </div>
 
                 <div className="grid gap-2">
@@ -154,7 +156,7 @@ export function PeopleSearchToolView({
                               <div className="flex items-center justify-between mb-1">
                                 <div className="flex items-center gap-2">
                                   <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate">
-                                    {result.person_name || 'Unknown Person'}
+                                    {result.person_name || t('unknownPerson')}
                                   </h3>
                                 </div>
                                 
@@ -189,7 +191,7 @@ export function PeopleSearchToolView({
                                       </TooltipTrigger>
                                       <TooltipContent className="max-w-xs">
                                         <div className="space-y-1">
-                                          <p className="font-medium">Evaluation Criteria:</p>
+                                          <p className="font-medium">{t('evaluationCriteria')}</p>
                                           {evaluations.map((evaluation, evalIdx) => (
                                             <div key={evalIdx} className="text-xs flex items-center gap-2">
                                               <div className={cn(
@@ -248,7 +250,7 @@ export function PeopleSearchToolView({
                                       rel="noopener noreferrer"
                                     >
                                       <Globe className="h-3 w-3" />
-                                      View
+                                      {t('view')}
                                       <ExternalLink className="h-3 w-3 ml-1" />
                                     </a>
                                   </Button>
@@ -270,15 +272,15 @@ export function PeopleSearchToolView({
               <Users className="h-10 w-10 text-muted-foreground" />
             </div>
             <h3 className="text-xl font-semibold mb-2 text-zinc-900 dark:text-zinc-100">
-              No People Found
+              {t('noPeopleFound')}
             </h3>
             <div className="bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-4 w-full max-w-md text-center mb-4 shadow-sm">
               <code className="text-sm font-mono text-zinc-700 dark:text-zinc-300 break-all">
-                {query || 'Unknown query'}
+                {query || t('unknownQuery')}
               </code>
             </div>
             <p className="text-sm text-zinc-500 dark:text-zinc-400">
-              Try refining your search criteria for better results
+              {t('tryRefining')}
             </p>
           </div>
         )}
@@ -289,7 +291,7 @@ export function PeopleSearchToolView({
           {!isStreaming && results.length > 0 && (
             <Badge variant="outline" className="h-6 py-0.5 text-xs">
               <Users className="h-3 w-3 mr-1" />
-              {results.length} results
+              {t('resultsCount', { count: results.length })}
             </Badge>
           )}
         </div>

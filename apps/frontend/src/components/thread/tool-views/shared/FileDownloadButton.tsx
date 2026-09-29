@@ -14,6 +14,7 @@ import { exportDocument, type ExportFormat } from '@/lib/utils/document-export';
 import { useDownloadRestriction } from '@/hooks/billing';
 import { toast } from '@/lib/toast';
 import { marked } from 'marked';
+import { useTranslations } from 'next-intl';
 
 interface FileDownloadButtonProps {
   /** The file content to download/export */
@@ -46,6 +47,7 @@ export function FileDownloadButton({
   getHtmlContent,
   sandboxUrl,
 }: FileDownloadButtonProps) {
+  const t = useTranslations('toolViews.shared');
   const [isExporting, setIsExporting] = useState(false);
   
   // Download restriction for free tier users
@@ -77,14 +79,14 @@ export function FileDownloadButton({
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      toast.success(`Downloaded ${fileName}`);
+      toast.success(t('downloaded', { name: fileName }));
     } catch (error) {
       console.error('Download error:', error);
-      toast.error('Failed to download file');
+      toast.error(t('downloadFailed'));
     } finally {
       setIsExporting(false);
     }
-  }, [content, fileName, isExporting, isDownloadRestricted, openUpgradeModal]);
+  }, [content, fileName, isExporting, isDownloadRestricted, openUpgradeModal, t]);
 
   // Handle markdown export to various formats (PDF, Word, HTML, Markdown)
   const handleMarkdownExport = useCallback(async (format: ExportFormat) => {
@@ -109,7 +111,7 @@ export function FileDownloadButton({
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-        toast.success(`Downloaded ${baseFileName}.md`);
+        toast.success(t('downloaded', { name: `${baseFileName}.md` }));
       } else {
         // For PDF, Word, HTML - get HTML content
         // If getHtmlContent is provided (from editor), use it; otherwise convert markdown to HTML
@@ -123,11 +125,11 @@ export function FileDownloadButton({
       }
     } catch (error) {
       console.error('Export error:', error);
-      toast.error('Failed to export file');
+      toast.error(t('exportFailed'));
     } finally {
       setIsExporting(false);
     }
-  }, [content, fileName, isDownloadRestricted, openUpgradeModal, getHtmlContent]);
+  }, [content, fileName, isDownloadRestricted, openUpgradeModal, getHtmlContent, t]);
 
   // Handle HTML file export to various formats (PDF, Word, HTML)
   const handleHtmlExport = useCallback(async (format: ExportFormat) => {
@@ -152,10 +154,10 @@ export function FileDownloadButton({
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-        toast.success(`Downloaded ${baseFileName}.html`);
+        toast.success(t('downloaded', { name: `${baseFileName}.html` }));
       } else if (format === 'pdf' && sandboxUrl) {
         // Use sandbox Playwright for high-quality PDF export
-        const toastId = toast.loading('Exporting to PDF...');
+        const toastId = toast.loading(t('exportingPdf'));
         try {
           const response = await fetch(`${sandboxUrl}/presentation/html-to-pdf`, {
             method: 'POST',
@@ -181,11 +183,11 @@ export function FileDownloadButton({
           document.body.removeChild(a);
           URL.revokeObjectURL(url);
           toast.dismiss(toastId);
-          toast.success('PDF exported');
+          toast.success(t('pdfExported'));
         } catch (error) {
           console.error('Sandbox PDF export error:', error);
           toast.dismiss(toastId);
-          toast.error(`PDF export failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          toast.error(t('pdfExportFailed', { error: error instanceof Error ? error.message : t('unknownError') }));
         }
       } else {
         // For Word or PDF without sandbox - use backend API
@@ -197,11 +199,11 @@ export function FileDownloadButton({
       }
     } catch (error) {
       console.error('Export error:', error);
-      toast.error('Failed to export file');
+      toast.error(t('exportFailed'));
     } finally {
       setIsExporting(false);
     }
-  }, [content, fileName, isDownloadRestricted, openUpgradeModal, sandboxUrl]);
+  }, [content, fileName, isDownloadRestricted, openUpgradeModal, sandboxUrl, t]);
 
   // For markdown files, show dropdown with export options
   if (isMarkdown) {
@@ -213,7 +215,7 @@ export function FileDownloadButton({
             size="sm"
             className={className || "h-8 w-8 p-0"}
             disabled={disabled || isExporting || !content}
-            title="Export file"
+            title={t('exportFile')}
           >
             {isExporting ? (
               <DobbyLoader customSize={16} />
@@ -254,7 +256,7 @@ export function FileDownloadButton({
             size="sm"
             className={className || "h-8 w-8 p-0"}
             disabled={disabled || isExporting || !content}
-            title="Export file"
+            title={t('exportFile')}
           >
             {isExporting ? (
               <DobbyLoader customSize={16} />
@@ -285,7 +287,7 @@ export function FileDownloadButton({
       onClick={handleDirectDownload}
       disabled={disabled || isExporting || !content}
       className={className || "h-8 w-8 p-0"}
-      title="Download file"
+      title={t('downloadFile')}
     >
       {isExporting ? (
         <DobbyLoader customSize={16} />

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Bot,
   CheckCircle,
@@ -27,6 +28,8 @@ export function CreateNewAgentToolView({
   isSuccess = true,
   isStreaming = false,
 }: ToolViewProps) {
+  const t = useTranslations('toolViews.createNewAgent');
+  const tCommon = useTranslations('toolViews.common');
   // Defensive check - ensure toolCall is defined
   if (!toolCall) {
     console.warn('CreateNewAgentToolView: toolCall is undefined. Tool views should use structured props.');
@@ -93,7 +96,7 @@ export function CreateNewAgentToolView({
             icon={Bot}
             iconColor="text-blue-500 dark:text-blue-400"
             bgColor="bg-gradient-to-b from-blue-100 to-blue-50 shadow-inner dark:from-blue-800/40 dark:to-blue-900/60 dark:shadow-blue-950/20"
-            title="Creating worker"
+            title={t('creating')}
             filePath={agentName ? `"${agentName}"` : undefined}
             showProgress={true}
           />
@@ -115,7 +118,7 @@ export function CreateNewAgentToolView({
                         {agentName}
                       </h3>
                       <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                        Custom AI Worker
+                        {tCommon('customAiWorker')}
                       </p>
                     </div>
                   </div>
@@ -123,17 +126,17 @@ export function CreateNewAgentToolView({
                     {is_default && (
                       <Badge variant="outline" className="text-xs">
                         <Sparkles className="w-3 h-3 mr-1" />
-                        Default
+                        {tCommon('default')}
                       </Badge>
                     )}
                     <Badge variant="secondary" className="text-xs bg-zinc-50 text-zinc-700 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700">
-                      Active
+                      {tCommon('active')}
                     </Badge>
                   </div>
                 </div>
                 {description && (
                   <div>
-                    <h4 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 mb-2">Description</h4>
+                    <h4 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 mb-2">{tCommon('description')}</h4>
                     <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
                       {description}
                     </p>
@@ -145,7 +148,7 @@ export function CreateNewAgentToolView({
                 <div className="border rounded-xl p-4 space-y-3">
                   <h4 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
                     <User className="w-4 h-4" />
-                    System Prompt Preview
+                    {tCommon('systemPromptPreview')}
                   </h4>
                   <div className="bg-muted/50 rounded-lg p-3 text-xs text-zinc-600 dark:text-zinc-400 font-mono max-h-32 overflow-y-auto">
                     {system_prompt.substring(0, 200)}
@@ -159,7 +162,7 @@ export function CreateNewAgentToolView({
           <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg m-4">
             <p className="text-sm text-red-800 dark:text-red-200 flex items-center gap-2">
               <AlertTriangle className="h-4 w-4" />
-              Failed to create Worker. Please try again.
+              {t('failed')}
             </p>
           </div>
         )}

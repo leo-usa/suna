@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Users,
   CheckCircle,
@@ -29,6 +30,8 @@ export function GetCredentialProfilesToolView({
   isSuccess = true,
   isStreaming = false,
 }: ToolViewProps) {
+  const t = useTranslations('toolViews.getCredentialProfiles');
+  const tCommon = useTranslations('toolViews.common');
   // Defensive check - ensure toolCall is defined
   if (!toolCall) {
     console.warn('GetCredentialProfilesToolView: toolCall is undefined. Tool views should use structured props.');
@@ -60,7 +63,7 @@ export function GetCredentialProfilesToolView({
       color: isConnected 
         ? 'bg-green-100 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800'
         : 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800',
-      text: isConnected ? 'Connected' : 'Not Connected'
+      text: isConnected ? tCommon('connected') : tCommon('notConnected')
     };
   };
 
@@ -80,7 +83,7 @@ export function GetCredentialProfilesToolView({
               </CardTitle>
               {toolkit_slug && (
                 <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-                  Toolkit: {toolkit_slug}
+                  {t('toolkitLabel', { slug: toolkit_slug })}
                 </p>
               )}
             </div>
@@ -101,7 +104,7 @@ export function GetCredentialProfilesToolView({
               ) : (
                 <AlertTriangle className="h-3 w-3" />
               )}
-              {total_count} {total_count === 1 ? 'profile' : 'profiles'}
+              {t('profileCount', { count: total_count })}
             </Badge>
           )}
         </div>
@@ -113,7 +116,7 @@ export function GetCredentialProfilesToolView({
             icon={Users}
             iconColor="text-blue-500 dark:text-blue-400"
             bgColor="bg-gradient-to-b from-blue-100 to-blue-50 shadow-inner dark:from-blue-800/40 dark:to-blue-900/60 dark:shadow-blue-950/20"
-            title="Loading credential profiles"
+            title={t('loading')}
             filePath={toolkit_slug ? `"${toolkit_slug}"` : undefined}
             showProgress={true}
           />
@@ -149,7 +152,7 @@ export function GetCredentialProfilesToolView({
                                 className="text-xs border border-yellow-300 dark:border-yellow-800 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300"
                               >
                                 <Crown className="w-2.5 h-2.5" />
-                                Default
+                                {tCommon('default')}
                               </Badge>
                             )}
                           </div>
@@ -195,10 +198,10 @@ export function GetCredentialProfilesToolView({
                 <Users className="h-8 w-8 text-zinc-400" />
               </div>
               <h3 className="text-base font-medium text-zinc-900 dark:text-zinc-100 mb-2">
-                No profiles found
+                {t('noProfiles')}
               </h3>
               <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                {toolkit_slug ? `No credential profiles found for "${toolkit_slug}"` : 'No credential profiles available'}
+                {toolkit_slug ? t('noProfilesFor', { slug: toolkit_slug }) : t('noProfilesAvailable')}
               </p>
             </div>
           </div>

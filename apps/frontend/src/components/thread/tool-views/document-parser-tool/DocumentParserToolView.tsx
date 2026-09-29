@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import {
   FileText,
   CheckCircle,
@@ -32,6 +33,7 @@ export function DocumentParserToolView({
   isSuccess = true,
   isStreaming = false,
 }: ToolViewProps) {
+  const t = useTranslations('toolViews.documentParser');
   // Defensive check - handle cases where toolCall might be undefined
   if (!toolCall) {
     console.warn('DocumentParserToolView: toolCall is undefined. Tool views should use structured props.');
@@ -105,7 +107,7 @@ export function DocumentParserToolView({
             icon={FileText}
             iconColor="text-primary"
             bgColor="bg-primary/10"
-            title="Processing document"
+            title={t('processing')}
             filePath={url}
             showProgress={true}
           />
@@ -118,7 +120,7 @@ export function DocumentParserToolView({
                     <Hash className="w-4 h-4 text-muted-foreground" />
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">Pages</p>
+                    <p className="text-xs text-muted-foreground">{t('pages')}</p>
                     <p className="text-sm font-medium">{result.summary.total_pages}</p>
                   </div>
                 </div>
@@ -127,7 +129,7 @@ export function DocumentParserToolView({
                     <List className="w-4 h-4 text-muted-foreground" />
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">Sections</p>
+                    <p className="text-xs text-muted-foreground">{t('sections')}</p>
                     <p className="text-sm font-medium">{result.summary.text_sections}</p>
                   </div>
                 </div>
@@ -136,7 +138,7 @@ export function DocumentParserToolView({
                     <BookOpen className="w-4 h-4 text-muted-foreground" />
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">Headings</p>
+                    <p className="text-xs text-muted-foreground">{t('headings')}</p>
                     <p className="text-sm font-medium">{result.summary.headings_count}</p>
                   </div>
                 </div>
@@ -145,7 +147,7 @@ export function DocumentParserToolView({
                     <FileSpreadsheet className="w-4 h-4 text-muted-foreground" />
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">Tables</p>
+                    <p className="text-xs text-muted-foreground">{t('tables')}</p>
                     <p className="text-sm font-medium">{result.summary.tables_count}</p>
                   </div>
                 </div>
@@ -158,9 +160,9 @@ export function DocumentParserToolView({
                     <div>
                       <div className="flex items-center gap-2 mb-3">
                         <FileText className="w-4 h-4 text-muted-foreground" />
-                        <h4 className="font-medium">Content</h4>
+                        <h4 className="font-medium">{t('content')}</h4>
                         <Badge variant="secondary" className="text-xs">
-                          {result.text_content.length} sections
+                          {t('sectionCount', { count: result.text_content.length })}
                         </Badge>
                       </div>
                       <div className="space-y-4">
@@ -168,7 +170,7 @@ export function DocumentParserToolView({
                           <Card key={idx} className="p-4">
                             <div className="flex items-center justify-between">
                               <Badge variant="outline" className="text-xs">
-                                Section {idx + 1} • Page {item.page}
+                                {t('sectionPage', { section: idx + 1, page: item.page })}
                               </Badge>
                               <Tooltip>
                                 <TooltipTrigger asChild>
@@ -181,7 +183,7 @@ export function DocumentParserToolView({
                                     <Copy className="h-3 w-3" />
                                   </Button>
                                 </TooltipTrigger>
-                                <TooltipContent>Copy text</TooltipContent>
+                                <TooltipContent>{t('copyText')}</TooltipContent>
                               </Tooltip>
                             </div>
                             <div className="bg-muted/70 rounded-md p-3">
@@ -199,9 +201,9 @@ export function DocumentParserToolView({
                     <div>
                       <div className="flex items-center gap-2 mb-3">
                         <FileSpreadsheet className="w-4 h-4 text-muted-foreground" />
-                        <h4 className="font-medium">Tables</h4>
+                        <h4 className="font-medium">{t('tables')}</h4>
                         <Badge variant="secondary" className="text-xs">
-                          {result.tables.length} found
+                          {t('foundCount', { count: result.tables.length })}
                         </Badge>
                       </div>
                       <div className="space-y-4">
@@ -209,9 +211,9 @@ export function DocumentParserToolView({
                           <Card key={idx} className="p-4">
                             <div className="flex items-center justify-between mb-3">
                               <div className="flex items-center gap-2">
-                                <span className="font-medium">Table {idx + 1}</span>
+                                <span className="font-medium">{t('tableNumber', { number: idx + 1 })}</span>
                                 <Badge variant="outline" className="text-xs">
-                                  Page {table.page}
+                                  {t('page', { page: table.page })}
                                 </Badge>
                               </div>
                               <Tooltip>
@@ -225,7 +227,7 @@ export function DocumentParserToolView({
                                     <Copy className="h-3 w-3" />
                                   </Button>
                                 </TooltipTrigger>
-                                <TooltipContent>Copy table</TooltipContent>
+                                <TooltipContent>{t('copyTable')}</TooltipContent>
                               </Tooltip>
                             </div>
                             <div className="bg-muted/50 rounded-md p-3">
@@ -255,20 +257,20 @@ export function DocumentParserToolView({
               <FileX className="h-8 w-8 text-muted-foreground" />
             </div>
             <h3 className="text-lg font-semibold mb-2">
-              No Content Extracted
+              {t('noContentExtracted')}
             </h3>
             <div className="bg-muted/50 border rounded-lg p-3 w-full max-w-md text-center mb-4">
-              <p className="text-sm text-muted-foreground mb-1">Document URL:</p>
+              <p className="text-sm text-muted-foreground mb-1">{t('documentUrl')}</p>
               <code className="text-sm font-mono break-all">
-                {url || 'No URL specified'}
+                {url || t('noUrl')}
               </code>
             </div>
             <div className="text-center space-y-1">
               <p className="text-sm text-muted-foreground">
-                The document was processed but no readable content was found
+                {t('noReadableContent')}
               </p>
               <p className="text-xs text-muted-foreground">
-                Try a different document URL or check if the document contains readable text
+                {t('tryDifferent')}
               </p>
             </div>
           </div>
@@ -281,11 +283,11 @@ export function DocumentParserToolView({
             <>
               <Badge variant="outline" className="text-xs">
                 <FileText className="h-3 w-3 mr-1" />
-                {result.summary.text_sections} sections
+                {t('sectionCount', { count: result.summary.text_sections })}
               </Badge>
               {result.summary.total_pages > 1 && (
                 <Badge variant="outline" className="text-xs">
-                  {result.summary.total_pages} pages
+                  {t('pageCount', { count: result.summary.total_pages })}
                 </Badge>
               )}
             </>

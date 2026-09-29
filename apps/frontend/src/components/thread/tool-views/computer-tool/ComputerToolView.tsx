@@ -58,6 +58,7 @@ export function ComputerToolView({
   viewToggle,
 }: ToolViewProps) {
   const t = useTranslations('tools.computerToolView');
+  const tCommon = useTranslations('toolViews.common');
   const [showContext, setShowContext] = React.useState(false);
   const [isImageLoading, setIsImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
@@ -154,8 +155,8 @@ export function ComputerToolView({
         <div className="flex-1 flex h-full items-center overflow-scroll bg-white dark:bg-black">
           {showContext && (result || parameters) ? (
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {parameters && <JsonViewer data={parameters} title="INPUT" defaultExpanded={true} />}
-              {result && <JsonViewer data={result} title="OUTPUT" defaultExpanded={true} />}
+              {parameters && <JsonViewer data={parameters} title={tCommon('inputLabel')} defaultExpanded={true} />}
+              {result && <JsonViewer data={result} title={tCommon('outputLabel')} defaultExpanded={true} />}
             </div>
           ) : screenshotUrl ? (
             <div className="flex items-center justify-center w-full h-full min-h-[600px] relative p-4">

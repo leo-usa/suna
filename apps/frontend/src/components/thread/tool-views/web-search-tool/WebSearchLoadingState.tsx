@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { motion } from 'framer-motion';
 import { 
   Search, 
@@ -239,8 +240,9 @@ interface WebSearchLoadingStateProps {
 
 export function WebSearchLoadingState({
   queries,
-  title = 'Searching the web',
+  title,
 }: WebSearchLoadingStateProps) {
+  const t = useTranslations('toolViews.webSearch');
   // Reverse for bottom-to-top visual ordering
   const reversedQueries = [...queries].reverse();
   
@@ -283,7 +285,7 @@ export function WebSearchLoadingState({
           transition={{ duration: 0.4, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
           className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-6"
         >
-          {title}
+          {title ?? t('searchingWeb')}
         </motion.h3>
 
         {/* Query List - Bottom to top with staggered animation */}

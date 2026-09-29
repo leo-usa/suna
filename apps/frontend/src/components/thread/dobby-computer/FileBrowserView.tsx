@@ -257,6 +257,7 @@ function VideoThumbnail({
   url: string; 
   fallbackIcon: React.ReactNode;
 }) {
+  const t = useTranslations('dobbyComputer.fileBrowser');
   const [thumbnail, setThumbnail] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
@@ -368,7 +369,7 @@ function VideoThumbnail({
     <div className="w-full h-full relative">
       <img
         src={thumbnail}
-        alt="Video thumbnail"
+        alt={t('videoThumbnailAlt')}
         className="w-full h-full object-cover"
       />
       {/* Video play icon overlay */}
@@ -459,6 +460,7 @@ function ThumbnailPreview({
   slideInfo?: { isSlide: boolean; presentationName: string | null; slideNumber: number | null };
   fallbackIcon: React.ReactNode;
 }) {
+  const t = useTranslations('dobbyComputer.fileBrowser');
   const extension = file.name.split('.').pop()?.toLowerCase() || '';
   const isImage = IMAGE_EXTENSIONS.includes(extension);
   const isVideo = VIDEO_EXTENSIONS.includes(extension);
@@ -505,7 +507,7 @@ function ThumbnailPreview({
     return (
       <PresentationSlideSkeleton
         slideNumber={slideInfo.slideNumber}
-        slideTitle={`Slide ${slideInfo.slideNumber}`}
+        slideTitle={t('slideNumber', { number: slideInfo.slideNumber })}
         isGenerating={true}
         className="w-full h-full"
       />
@@ -821,7 +823,7 @@ export function FileBrowserView({
         if (isDirectChildOfPresentations(file.path)) {
           // Presentations not supported in version view
           if (selectedVersion) {
-            toast.info('Cannot view presentations from historical versions');
+            toast.info(t('fileBrowser.cannotViewPresentationsHistorical'));
             return;
           }
           
@@ -843,7 +845,7 @@ export function FileBrowserView({
         openFile(file.path);
       }
     },
-    [navigateToPath, openFile, isDirectChildOfPresentations, selectedVersion, openPresentation, project?.sandbox?.sandbox_url],
+    [navigateToPath, openFile, isDirectChildOfPresentations, selectedVersion, openPresentation, project?.sandbox?.sandbox_url, t],
   );
 
   // Recursive function to discover all files from the current path
@@ -889,17 +891,17 @@ export function FileBrowserView({
 
     try {
       setIsDownloadingAll(true);
-      setDownloadProgress({ current: 0, total: 0, currentFile: 'Discovering files...' });
+      setDownloadProgress({ current: 0, total: 0, currentFile: t('fileBrowser.discoveringFiles') });
 
       const { files } = await discoverAllFiles(currentPath);
 
       if (files.length === 0) {
-        toast.error('No files found to download');
+        toast.error(t('fileBrowser.noFilesToDownload'));
         return;
       }
 
       const zip = new JSZip();
-      setDownloadProgress({ current: 0, total: files.length, currentFile: 'Creating archive...' });
+      setDownloadProgress({ current: 0, total: files.length, currentFile: t('fileBrowser.creatingArchive') });
 
       // Get the base path for relative paths in the zip
       const basePath = currentPath.endsWith('/') ? currentPath : currentPath + '/';
@@ -984,7 +986,7 @@ export function FileBrowserView({
       setDownloadProgress({
         current: files.length,
         total: files.length,
-        currentFile: 'Generating zip file...'
+        currentFile: t('fileBrowser.generatingZip')
       });
 
       const zipBlob = await zip.generateAsync({
@@ -1008,15 +1010,15 @@ export function FileBrowserView({
 
       setTimeout(() => URL.revokeObjectURL(url), 10000);
 
-      toast.success(`Downloaded ${files.length} files as zip archive`);
+      toast.success(t('fileBrowser.downloadedZip', { count: files.length }));
 
     } catch (error) {
-      toast.error(`Failed to create zip archive: ${error instanceof Error ? error.message : String(error)}`);
+      toast.error(t('fileBrowser.zipFailed', { message: error instanceof Error ? error.message : String(error) }));
     } finally {
       setIsDownloadingAll(false);
       setDownloadProgress(null);
     }
-  }, [sandboxId, session?.access_token, isDownloadingAll, discoverAllFiles, isDownloadRestricted, openUpgradeModal, currentPath]);
+  }, [sandboxId, session?.access_token, isDownloadingAll, discoverAllFiles, isDownloadRestricted, openUpgradeModal, currentPath, t]);
 
   // Handle individual file download
   const handleDownloadFile = useCallback(async (filePath: string) => {
@@ -1025,14 +1027,14 @@ export function FileBrowserView({
       return;
     }
     if (!session?.access_token || !sandboxId) {
-      toast.error('Cannot download file');
+      toast.error(t('fileBrowser.cannotDownloadFile'));
       return;
     }
 
     const fileName = filePath.split('/').pop() || 'download';
     
     try {
-      toast.loading(`Downloading ${fileName}...`, { id: 'download-file' });
+      toast.loading(t('fileBrowser.downloading', { name: fileName }), { id: 'download-file' });
       
       const response = await fetch(
         `${API_URL}/sandboxes/${sandboxId}/files/content?path=${encodeURIComponent(filePath)}`,
@@ -1055,12 +1057,12 @@ export function FileBrowserView({
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
       
-      toast.success(`Downloaded ${fileName}`, { id: 'download-file' });
+      toast.success(t('fileBrowser.downloaded', { name: fileName }), { id: 'download-file' });
     } catch (error) {
       console.error('Download failed:', error);
-      toast.error(`Failed to download ${fileName}`, { id: 'download-file' });
+      toast.error(t('fileBrowser.downloadFailed', { name: fileName }), { id: 'download-file' });
     }
-  }, [sandboxId, session?.access_token, isDownloadRestricted, openUpgradeModal]);
+  }, [sandboxId, session?.access_token, isDownloadRestricted, openUpgradeModal, t]);
 
   // Handle file upload
   const handleUpload = useCallback(() => {
@@ -1095,7 +1097,7 @@ export function FileBrowserView({
         }
 
         if (!sandboxId || sandboxId.trim() === '') {
-          toast.error('Computer is not started yet. Please wait for it to be ready.');
+          toast.error(t('fileBrowser.computerNotStartedWait'));
           setIsUploading(false);
           return;
         }
@@ -1123,20 +1125,20 @@ export function FileBrowserView({
         await refetchFiles();
 
         if (wasRenamed) {
-          toast.success(`Uploaded as: ${finalFilename} (renamed to avoid conflict)`);
+          toast.success(t('fileBrowser.uploadedRenamed', { name: finalFilename }));
         } else {
-          toast.success(`Uploaded: ${finalFilename}`);
+          toast.success(t('fileBrowser.uploaded', { name: finalFilename }));
         }
       } catch (error) {
         toast.error(
-          `Upload failed: ${error instanceof Error ? error.message : String(error)}`,
+          t('fileBrowser.uploadFailed', { message: error instanceof Error ? error.message : String(error) }),
         );
       } finally {
         setIsUploading(false);
         if (event.target) event.target.value = '';
       }
     },
-    [sandboxId, refetchFiles],
+    [sandboxId, refetchFiles, t],
   );
 
   // Get file icon - supports 'default', 'large', 'header', 'small', and 'medium' variants
@@ -1305,11 +1307,11 @@ export function FileBrowserView({
       console.log('[FileBrowserView] Loaded workspace history', { count: (data.versions || []).length });
     } catch (error) {
       console.error('[FileBrowserView] Failed to load workspace history', error);
-      toast.error('Failed to load workspace history');
+      toast.error(t('fileBrowser.loadWorkspaceHistoryFailed'));
     } finally {
       setIsLoadingVersions(false);
     }
-  }, [sandboxId, session?.access_token, workspaceVersions.length, selectedVersion, selectedVersionDate, setSelectedVersion]);
+  }, [sandboxId, session?.access_token, workspaceVersions.length, selectedVersion, selectedVersionDate, setSelectedVersion, t]);
 
   // Auto-load workspace history if we have a selected version but no date
   useEffect(() => {
@@ -1350,16 +1352,16 @@ export function FileBrowserView({
       setVersionFiles(data.files || []);
       
       if (showToast && versionDate) {
-        toast.success(`Viewing workspace from ${new Date(versionDate).toLocaleDateString()}`);
+        toast.success(t('fileBrowser.viewingWorkspaceFrom', { date: new Date(versionDate).toLocaleDateString() }));
       }
     } catch (error) {
       console.error('[FileBrowserView] Failed to load files at version:', error);
-      toast.error('Failed to load files at this version');
+      toast.error(t('fileBrowser.loadFilesAtVersionFailed'));
       clearSelectedVersion();
     } finally {
       setIsLoadingVersionFiles(false);
     }
-  }, [sandboxId, currentPath, session?.access_token, workspaceVersions, refetchFiles, setSelectedVersion, clearSelectedVersion]);
+  }, [sandboxId, currentPath, session?.access_token, workspaceVersions, refetchFiles, setSelectedVersion, clearSelectedVersion, t]);
 
   // Reload version files when currentPath changes while viewing a version
   useEffect(() => {
@@ -1386,12 +1388,12 @@ export function FileBrowserView({
       setRevertCommitInfo(data);
     } catch (error) {
       console.error('Failed to load commit info:', error);
-      toast.error('Failed to load commit info');
+      toast.error(t('fileViewer.loadCommitInfoFailed'));
       setRevertModalOpen(false);
     } finally {
       setRevertLoadingInfo(false);
     }
-  }, [sandboxId, session?.access_token]);
+  }, [sandboxId, session?.access_token, t]);
 
   // Perform revert (always entire commit for workspace history)
   const performRevert = useCallback(async () => {
@@ -1431,14 +1433,14 @@ export function FileBrowserView({
       console.log('[FileBrowserView] Refetching files after restore');
       await refetchFiles();
 
-      toast.success('Version restored successfully');
+      toast.success(t('fileViewer.versionRestored'));
     } catch (error) {
       console.error('[FileBrowserView] Revert error', error);
-      toast.error(`Failed to restore version: ${error instanceof Error ? error.message : String(error)}`);
+      toast.error(t('fileViewer.restoreFailed', { message: error instanceof Error ? error.message : String(error) }));
     } finally {
       setRevertInProgress(false);
     }
-  }, [revertCommitInfo, sandboxId, session?.access_token, refetchFiles, clearSelectedVersion]);
+  }, [revertCommitInfo, sandboxId, session?.access_token, refetchFiles, clearSelectedVersion, t]);
 
   // Files view header actions
   const filesHeaderActions = (
@@ -1534,12 +1536,12 @@ export function FileBrowserView({
                       </div>
                       {!isCurrent && (
                         <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); openRevertModal(version.commit); }} className="h-6 px-2 text-[11px] ml-3 shrink-0 rounded-full hover:bg-muted">
-                          <span className="text-[11px]">Restore</span>
+                          <span className="text-[11px]">{t('fileViewer.restore')}</span>
                         </Button>
                       )}
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      {new Date(version.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: new Date(version.date).getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined })} at {new Date(version.date).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+                      {t('fileViewer.dateAtTime', { date: new Date(version.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: new Date(version.date).getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined }), time: new Date(version.date).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }) })}
                     </div>
                   </div>
                 </DropdownMenuItem>
@@ -1563,7 +1565,7 @@ export function FileBrowserView({
           <span>
             {downloadProgress.total > 0
               ? `${downloadProgress.current}/${downloadProgress.total}`
-              : 'Preparing...'
+              : t('fileBrowser.preparing')
             }
           </span>
         </div>
@@ -1575,7 +1577,7 @@ export function FileBrowserView({
         onClick={handleDownloadFolder}
         disabled={isDownloadingAll || isLoadingFiles}
         className="h-8 w-8 p-0 bg-transparent border border-border rounded-xl text-muted-foreground hover:text-foreground hover:bg-accent/50"
-        title="Download folder"
+        title={t('fileBrowser.downloadFolder')}
       >
         {isDownloadingAll ? (
           <DobbyLoader size="small" />
@@ -1590,7 +1592,7 @@ export function FileBrowserView({
         onClick={handleUpload}
         disabled={isUploading || !!selectedVersion}
         className="h-8 w-8 p-0 bg-transparent border border-border rounded-xl text-muted-foreground hover:text-foreground hover:bg-accent/50"
-        title={selectedVersion ? 'Cannot upload while viewing historical version' : 'Upload file'}
+        title={selectedVersion ? t('fileBrowser.cannotUploadHistorical') : t('fileBrowser.uploadFile')}
       >
         {isUploading ? (
           <DobbyLoader size="small" />
@@ -1678,23 +1680,26 @@ export function FileBrowserView({
                               openRevertModal(version.commit);
                             }}
                             className="h-6 px-2 text-[11px] inline-flex items-center rounded-full hover:bg-muted"
-                            title="Restore this version"
+                            title={t('fileViewer.restoreThisVersion')}
                           >
-                            <span className="text-[11px]">Restore</span>
+                            <span className="text-[11px]">{t('fileViewer.restore')}</span>
                           </Button>
                         </div>
                       )}
                     </div>
 
                     <div className="text-xs text-muted-foreground">
-                      {new Date(version.date).toLocaleDateString('en-US', {
+                      {t('fileViewer.dateAtTime', {
+                        date: new Date(version.date).toLocaleDateString('en-US', {
                         month: 'short',
                         day: 'numeric',
                         year: new Date(version.date).getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
-                      })} at {new Date(version.date).toLocaleTimeString('en-US', {
+                      }),
+                        time: new Date(version.date).toLocaleTimeString('en-US', {
                         hour: 'numeric',
                         minute: '2-digit',
                         hour12: true
+                      }),
                       })}
                     </div>
                   </div>
@@ -1811,17 +1816,17 @@ export function FileBrowserView({
                 </div>
                 <div className="space-y-1.5">
                   <h3 className="text-lg font-semibold">
-                    {!hasSandbox ? 'Nothing here yet' : !isComputerStarted ? 'Waking up...' : 'No files yet'}
+                    {!hasSandbox ? t('fileBrowser.nothingHereYet') : !isComputerStarted ? t('fileBrowser.wakingUp') : t('fileBrowser.noFilesYet')}
                   </h3>
                   <p className="text-sm text-muted-foreground">
-                    {!hasSandbox ? 'Your files will appear here once you start a conversation.' : 
-                     !isComputerStarted ? 'Just a moment while things get ready.' :
-                     'Start a conversation to create files.'}
+                    {!hasSandbox ? t('fileBrowser.filesWillAppear') : 
+                     !isComputerStarted ? t('fileBrowser.justAMoment') :
+                     t('fileBrowser.startConversation')}
                   </p>
                 </div>
                 {onNavigateToThread && (
                   <Button onClick={onNavigateToThread} size="sm" className="mt-2">
-                    Go to Chat
+                    {t('fileBrowser.goToChat')}
                   </Button>
                 )}
               </div>
@@ -1852,7 +1857,7 @@ export function FileBrowserView({
                                 variant="secondary" 
                                 className="text-[10px] px-1.5 py-0 bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-400"
                               >
-                                {slideInfo.isSlide ? `Slide ${slideInfo.slideNumber}` : 'Slides'}
+                                {slideInfo.isSlide ? t('fileBrowser.slideNumber', { number: slideInfo.slideNumber }) : t('fileBrowser.slides')}
                               </Badge>
                             )}
                             <DropdownMenu>
@@ -1867,12 +1872,12 @@ export function FileBrowserView({
                               <DropdownMenuContent align="end">
                                 <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleItemClick(file); }}>
                                   <Eye className="mr-2 h-4 w-4" />
-                                  {file.is_dir ? 'Open folder' : 'Open file'}
+                                  {file.is_dir ? t('fileBrowser.openFolder') : t('fileBrowser.openFile')}
                                 </DropdownMenuItem>
                                 {!file.is_dir && (
                                   <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleDownloadFile(file.path); }}>
                                     <Download className="mr-2 h-4 w-4" />
-                                    Download
+                                    {t('fileBrowser.download')}
                                   </DropdownMenuItem>
                                 )}
                               </DropdownMenuContent>
@@ -1926,14 +1931,14 @@ export function FileBrowserView({
         <Dialog open={revertModalOpen} onOpenChange={setRevertModalOpen}>
           <DialogContent className="sm:max-w-md rounded-xl bg-background border border-border">
             <DialogHeader>
-              <DialogTitle>Restore Previous Version</DialogTitle>
+              <DialogTitle>{t('fileViewer.restoreDialogTitle')}</DialogTitle>
               <DialogDescription>
-                This will restore all files from this version snapshot.
+                {t('fileBrowser.restoreAllDescription')}
               </DialogDescription>
             </DialogHeader>
             <div className="flex items-start gap-2 p-2 rounded-lg bg-zinc-50 dark:bg-zinc-950/20 border border-zinc-200 dark:border-zinc-800">
               <AlertTriangle className="h-4 w-4 text-zinc-600 dark:text-zinc-500 mt-0.5 shrink-0" />
-              <span className="text-xs text-zinc-700 dark:text-zinc-400">This will replace current files with the selected version snapshot.</span>
+              <span className="text-xs text-zinc-700 dark:text-zinc-400">{t('fileBrowser.restoreReplaceWarning')}</span>
             </div>
             {revertLoadingInfo ? (
               <div className="py-6 flex items-center justify-center"><DobbyLoader size="medium" /></div>
@@ -1943,7 +1948,7 @@ export function FileBrowserView({
                 <div className="text-xs text-muted-foreground mb-3">
                   {revertCommitInfo.date && new Date(revertCommitInfo.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                 </div>
-                <div className="text-xs text-muted-foreground mb-2">Files that will be affected:</div>
+                <div className="text-xs text-muted-foreground mb-2">{t('fileBrowser.filesAffected')}</div>
                 <div className="max-h-40 overflow-y-auto mb-3 border rounded-2xl p-2">
                   {((revertCommitInfo.revert_files || []).length ? revertCommitInfo.revert_files : revertCommitInfo.files_in_commit || []).map((f: any) => (
                     <div key={f.path + (f.old_path || '')} className="flex items-center justify-between gap-2 py-1 px-1 rounded">
@@ -1953,11 +1958,11 @@ export function FileBrowserView({
                   ))}
                 </div>
               </div>
-            ) : <div className="py-4">No commit info</div>}
+            ) : <div className="py-4">{t('fileViewer.noCommitInfo')}</div>}
             <DialogFooter>
-              <Button variant="ghost" onClick={() => setRevertModalOpen(false)} disabled={revertInProgress}>Cancel</Button>
+              <Button variant="ghost" onClick={() => setRevertModalOpen(false)} disabled={revertInProgress}>{t('fileViewer.cancel')}</Button>
               <Button onClick={performRevert} disabled={revertInProgress}>
-                {revertInProgress ? (<><DobbyLoader size="small" className="mr-2" />Restoring...</>) : 'Restore'}
+                {revertInProgress ? (<><DobbyLoader size="small" className="mr-2" />{t('fileViewer.restoring')}</>) : t('fileViewer.restore')}
               </Button>
             </DialogFooter>
             <DialogClose />
@@ -2007,16 +2012,16 @@ export function FileBrowserView({
               <DobbyLoader size="medium" />
               <div className="space-y-2">
                 <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-                  {sandboxStatus === 'STARTING' && (isAutoStarting ? 'Waking up computer...' : 'Computer starting...')}
-                  {sandboxStatus === 'OFFLINE' && 'Computer offline'}
-                  {sandboxStatus === 'FAILED' && 'Computer unavailable'}
-                  {sandboxStatus === 'UNKNOWN' && 'Initializing...'}
+                  {sandboxStatus === 'STARTING' && (isAutoStarting ? t('computerStatus.wakingUp') : t('computerStatus.starting'))}
+                  {sandboxStatus === 'OFFLINE' && t('computerStatus.offline')}
+                  {sandboxStatus === 'FAILED' && t('computerStatus.unavailable')}
+                  {sandboxStatus === 'UNKNOWN' && t('computerStatus.initializing')}
                 </h3>
                 <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed">
-                  {sandboxStatus === 'STARTING' && 'Files will appear once the computer is ready.'}
-                  {sandboxStatus === 'OFFLINE' && 'The computer is currently stopped. Attempting to start...'}
-                  {sandboxStatus === 'FAILED' && 'There was an issue starting the computer.'}
-                  {sandboxStatus === 'UNKNOWN' && 'Setting up your workspace...'}
+                  {sandboxStatus === 'STARTING' && t('computerStatus.filesWillAppear')}
+                  {sandboxStatus === 'OFFLINE' && t('computerStatus.stoppedAttemptingStart')}
+                  {sandboxStatus === 'FAILED' && t('computerStatus.issueStarting')}
+                  {sandboxStatus === 'UNKNOWN' && t('computerStatus.settingUp')}
                 </p>
               </div>
             </div>
@@ -2025,11 +2030,11 @@ export function FileBrowserView({
           <div className="h-full w-full max-w-full flex flex-col items-center justify-center gap-2 min-w-0">
             <DobbyLoader size="medium" />
             <p className="text-xs text-muted-foreground">
-              {isLoadingVersionFiles ? 'Loading version...' : 'Loading files...'}
+              {isLoadingVersionFiles ? t('fileViewer.loadingVersion') : t('fileBrowser.loadingFiles')}
             </p>
             {!isLoadingVersionFiles && dirRetryAttempt > 0 && (
               <p className="text-xs text-muted-foreground">
-                Retrying... (attempt {dirRetryAttempt + 1})
+                {t('fileViewer.retryingAttempt', { attempt: dirRetryAttempt + 1 })}
               </p>
             )}
           </div>
@@ -2043,23 +2048,23 @@ export function FileBrowserView({
                 {!hasSandbox ? (
                   <>
                     <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-                      {isInlineLibrary ? 'Nothing here yet' : 'Files not available'}
+                      {isInlineLibrary ? t('fileBrowser.nothingHereYet') : t('fileBrowser.filesNotAvailable')}
                     </h3>
                     <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed">
                       {isInlineLibrary
-                        ? 'Your files will appear here once you start a conversation.'
-                        : 'A computer will be created when you start working on this task. Files will appear here once ready.'}
+                        ? t('fileBrowser.filesWillAppear')
+                        : t('fileBrowser.computerWillBeCreated')}
                     </p>
                   </>
                 ) : (
                   <>
                     <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-                      {isInlineLibrary ? 'No files yet' : 'Directory is empty'}
+                      {isInlineLibrary ? t('fileBrowser.noFilesYet') : t('fileBrowser.directoryEmpty')}
                     </h3>
                     <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed">
                       {isInlineLibrary
-                        ? 'Start a conversation to create files.'
-                        : 'This folder doesn\'t contain any files yet.'}
+                        ? t('fileBrowser.startConversation')
+                        : t('fileBrowser.folderEmpty')}
                     </p>
                   </>
                 )}
@@ -2093,7 +2098,7 @@ export function FileBrowserView({
                               variant="secondary" 
                               className="text-[10px] px-1.5 py-0 bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-400"
                             >
-                              {slideInfo.isSlide ? `Slide ${slideInfo.slideNumber}` : 'Slides'}
+                              {slideInfo.isSlide ? t('fileBrowser.slideNumber', { number: slideInfo.slideNumber }) : t('fileBrowser.slides')}
                             </Badge>
                           )}
                           
@@ -2103,7 +2108,7 @@ export function FileBrowserView({
                             <button
                               className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
                               onClick={(e) => { e.stopPropagation(); handleItemClick(file); }}
-                              title={file.is_dir ? 'Open folder' : 'Open file'}
+                              title={file.is_dir ? t('fileBrowser.openFolder') : t('fileBrowser.openFile')}
                             >
                               <Eye className="h-3.5 w-3.5" />
                             </button>
@@ -2113,7 +2118,7 @@ export function FileBrowserView({
                               <button
                                 className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
                                 onClick={(e) => { e.stopPropagation(); handleDownloadFile(file.path); }}
-                                title="Download"
+                                title={t('fileBrowser.download')}
                               >
                                 <Download className="h-3.5 w-3.5" />
                               </button>
@@ -2132,12 +2137,12 @@ export function FileBrowserView({
                               <DropdownMenuContent align="end">
                                 <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleItemClick(file); }}>
                                   <Eye className="mr-2 h-4 w-4" />
-                                  {file.is_dir ? 'Open folder' : 'Open file'}
+                                  {file.is_dir ? t('fileBrowser.openFolder') : t('fileBrowser.openFile')}
                                 </DropdownMenuItem>
                                 {!file.is_dir && (
                                   <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleDownloadFile(file.path); }}>
                                     <Download className="mr-2 h-4 w-4" />
-                                    Download
+                                    {t('fileBrowser.download')}
                                   </DropdownMenuItem>
                                 )}
                               </DropdownMenuContent>
@@ -2203,7 +2208,7 @@ export function FileBrowserView({
                       variant="secondary" 
                       className="absolute top-1 right-1 text-[10px] px-1.5 py-0 bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-400"
                     >
-                      Presentation
+                      {t('fileBrowser.presentation')}
                     </Badge>
                   )}
                   
@@ -2240,15 +2245,15 @@ export function FileBrowserView({
       <Dialog open={revertModalOpen} onOpenChange={setRevertModalOpen}>
         <DialogContent className="sm:max-w-md rounded-xl bg-background border border-border">
           <DialogHeader>
-            <DialogTitle>Restore Previous Version</DialogTitle>
+            <DialogTitle>{t('fileViewer.restoreDialogTitle')}</DialogTitle>
             <DialogDescription>
-              This will restore all files from this version snapshot.
+              {t('fileBrowser.restoreAllDescription')}
             </DialogDescription>
           </DialogHeader>
 
           <div className="flex items-start gap-2 p-2 rounded-lg bg-zinc-50 dark:bg-zinc-950/20 border border-zinc-200 dark:border-zinc-800">
             <AlertTriangle className="h-4 w-4 text-zinc-600 dark:text-zinc-500 mt-0.5 shrink-0" />
-            <span className="text-xs text-zinc-700 dark:text-zinc-400">This will replace current files with the selected version snapshot. Your current changes will be overwritten.</span>
+            <span className="text-xs text-zinc-700 dark:text-zinc-400">{t('fileViewer.restoreWarning')}</span>
           </div>
 
           {revertLoadingInfo ? (
@@ -2266,7 +2271,7 @@ export function FileBrowserView({
                 })}
               </div>
 
-              <div className="text-xs text-muted-foreground mb-2">Files that will be affected:</div>
+              <div className="text-xs text-muted-foreground mb-2">{t('fileBrowser.filesAffected')}</div>
 
               <div className="max-h-40 overflow-y-auto mb-3 border rounded-2xl p-2">
                 {(() => {
@@ -2276,13 +2281,13 @@ export function FileBrowserView({
                   return (revertList.length ? revertList : inCommitList).map((f: any) => {
                     const p = f.path;
                     const effect = f.revert_effect || f.revertEffect || 'unknown';
-                    const effectLabel = effect === 'will_delete' ? 'Will delete' : effect === 'will_restore' ? 'Will restore' : effect === 'will_modify' ? 'Will modify' : 'Unknown';
+                    const effectLabel = effect === 'will_delete' ? t('fileViewer.willDelete') : effect === 'will_restore' ? t('fileViewer.willRestore') : effect === 'will_modify' ? t('fileViewer.willModify') : t('fileViewer.unknown');
                     return (
                       <div key={p + (f.old_path || '')} className="flex items-center justify-between gap-2 py-1 px-1 rounded">
                         <div className="flex flex-col min-w-0">
                           <div className="text-sm truncate max-w-[260px]">{p}</div>
                           {f.old_path && f.old_path !== p && (
-                            <div className="text-[11px] text-muted-foreground mt-0.5 truncate">Renamed from: {f.old_path}</div>
+                            <div className="text-[11px] text-muted-foreground mt-0.5 truncate">{t('fileViewer.renamedFrom', { path: f.old_path })}</div>
                           )}
                         </div>
                         <div className="flex flex-col items-end">
@@ -2296,13 +2301,13 @@ export function FileBrowserView({
               </div>
             </div>
           ) : (
-            <div className="py-4">No commit info</div>
+            <div className="py-4">{t('fileViewer.noCommitInfo')}</div>
           )}
 
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setRevertModalOpen(false)} disabled={revertInProgress}>Cancel</Button>
+            <Button variant="ghost" onClick={() => setRevertModalOpen(false)} disabled={revertInProgress}>{t('fileViewer.cancel')}</Button>
             <Button onClick={performRevert} disabled={revertInProgress}>
-              {revertInProgress ? (<><DobbyLoader size="small" className="mr-2" />Restoring...</>) : 'Restore'}
+              {revertInProgress ? (<><DobbyLoader size="small" className="mr-2" />{t('fileViewer.restoring')}</>) : t('fileViewer.restore')}
             </Button>
           </DialogFooter>
 

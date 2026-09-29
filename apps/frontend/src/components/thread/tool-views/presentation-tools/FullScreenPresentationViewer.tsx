@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -56,6 +57,7 @@ export function FullScreenPresentationViewer({
   sandboxUrl,
   initialSlide = 1,
 }: FullScreenPresentationViewerProps) {
+  const t = useTranslations('toolViews.presentation');
   const [metadata, setMetadata] = useState<PresentationMetadata | null>(null);
   const [currentSlide, setCurrentSlide] = useState(initialSlide);
   const [isLoading, setIsLoading] = useState(false);
@@ -371,7 +373,7 @@ export function FullScreenPresentationViewer({
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
               <Presentation className="h-12 w-12 mx-auto mb-4 text-zinc-400" />
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">No slide content to preview</p>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">{t('noSlideContentToPreview')}</p>
             </div>
           </div>
         );
@@ -398,7 +400,7 @@ export function FullScreenPresentationViewer({
             <iframe
               key={`slide-${slide.number}-${refreshTimestamp}-${showEditor}`} // Key with stable timestamp ensures iframe refreshes when metadata changes
               src={showEditor ? `${sandboxUrl}/api/html/${slide.file_path}/editor` : slideUrlWithCacheBust}
-              title={`Slide ${slide.number}: ${slide.title}`}
+              title={t('slideIframeTitle', { number: slide.number, title: slide.title })}
               className="border-0 rounded-xl"
               sandbox="allow-same-origin allow-scripts allow-modals"
               style={{
@@ -427,7 +429,7 @@ export function FullScreenPresentationViewer({
     
     SlideIframeComponent.displayName = 'SlideIframeComponent';
     return SlideIframeComponent;
-  }, [sandboxUrl, refreshTimestamp, showEditor]);
+  }, [sandboxUrl, refreshTimestamp, showEditor, t]);
 
   // Render slide iframe with proper scaling
   const renderSlide = useMemo(() => {
@@ -454,7 +456,7 @@ export function FullScreenPresentationViewer({
                   {metadata.title || metadata.presentation_name}
                 </h1>
                 <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                  Slide {currentSlide} of {totalSlides}
+                  {t('slideOfTotal', { current: currentSlide, total: totalSlides })}
                 </p>
               </div>
             )}
@@ -466,7 +468,7 @@ export function FullScreenPresentationViewer({
               variant="ghost" 
               size="sm" 
               className="h-8 w-8 p-0"
-              title={showEditor ? "Close editor" : "Edit presentation"}
+              title={showEditor ? t('closeEditor') : t('editPresentation')}
               onClick={() => setShowEditor(!showEditor)}
             >
               {showEditor ? <Presentation className="h-3.5 w-3.5" /> : <Edit className='h-3.5 w-3.5'/>}
@@ -479,7 +481,7 @@ export function FullScreenPresentationViewer({
                   variant="ghost" 
                   size="sm" 
                   className="h-8 w-8 p-0"
-                  title="Export presentation"
+                  title={t('exportPresentationLower')}
                   disabled={isDownloadingPDF || isDownloadingPPTX || isDownloadingGoogleSlides}
                 >
                   {(isDownloadingPDF || isDownloadingPPTX || isDownloadingGoogleSlides) ? (
@@ -523,7 +525,7 @@ export function FullScreenPresentationViewer({
               size="sm"
               onClick={onClose}
               className="h-8 w-8 p-0"
-              title="Close full screen"
+              title={t('closeFullScreen')}
             >
               <X className="h-3.5 w-3.5" />
             </Button>
@@ -537,7 +539,7 @@ export function FullScreenPresentationViewer({
           <div className="text-center">
             <DobbyLoader size="large" className="mx-auto mb-4" />
             <p className="text-zinc-700 dark:text-zinc-300">
-              {retryAttempt > 0 ? `Retrying... (attempt ${retryAttempt + 1})` : 'Loading presentation...'}
+              {retryAttempt > 0 ? t('retryingAttempt', { attempt: retryAttempt + 1 }) : t('loadingPresentation')}
             </p>
           </div>
         ) : currentSlideData ? (
@@ -615,7 +617,7 @@ export function FullScreenPresentationViewer({
           </div>
         ) : (
           <div className="text-center">
-            <p className="text-zinc-700 dark:text-zinc-300">No slide found</p>
+            <p className="text-zinc-700 dark:text-zinc-300">{t('noSlideFound')}</p>
           </div>
         )}
       </div>

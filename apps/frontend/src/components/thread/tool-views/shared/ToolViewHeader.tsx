@@ -4,6 +4,7 @@ import React from 'react';
 import { CardHeader, CardTitle } from '@/components/ui/card';
 import { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useToolTitleLabel } from '@/hooks/use-tool-name-label';
 
 export interface ToolViewHeaderProps {
   /** The icon to display */
@@ -29,6 +30,7 @@ export function ToolViewHeader({
   children,
   className,
 }: ToolViewHeaderProps) {
+  const titleLabel = useToolTitleLabel();
   return (
     <CardHeader className={cn(
       "h-14 bg-zinc-50/80 dark:bg-zinc-900/80 backdrop-blur-sm border-b p-2 px-4 space-y-2",
@@ -41,7 +43,7 @@ export function ToolViewHeader({
           </div>
           <div className="min-w-0 flex-1">
             <CardTitle className="text-base font-medium text-zinc-900 dark:text-zinc-100 truncate">
-              {title}
+              {titleLabel(title)}
             </CardTitle>
             {subtitle && (
               <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">

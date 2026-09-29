@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Users,
   CheckCircle,
@@ -25,6 +26,8 @@ export function ListAccountWorkersToolView({
   isSuccess = true,
   isStreaming = false,
 }: ToolViewProps) {
+  const t = useTranslations('toolViews.listAccountWorkers');
+  const tCommon = useTranslations('toolViews.common');
   if (!toolCall) {
     console.warn('ListAccountWorkersToolView: toolCall is undefined.');
     return null;
@@ -63,8 +66,8 @@ export function ListAccountWorkersToolView({
               </CardTitle>
               {(search || include_kortix) && (
                 <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-                  {search ? `Filter: "${search}"` : 'Showing all workers'}
-                  {include_kortix ? ' (including Dobby)' : ''}
+                  {search ? t('filter', { search }) : t('showingAll')}
+                  {include_kortix ? t('includingDobby') : ''}
                 </p>
               )}
             </div>
@@ -81,7 +84,7 @@ export function ListAccountWorkersToolView({
               )}
             >
               {actualIsSuccess ? <CheckCircle className="h-3 w-3" /> : <AlertTriangle className="h-3 w-3" />}
-              {total} {total === 1 ? 'worker' : 'workers'}
+              {t('workerCount', { count: total })}
             </Badge>
           )}
         </div>
@@ -93,7 +96,7 @@ export function ListAccountWorkersToolView({
             icon={Users}
             iconColor="text-zinc-500 dark:text-zinc-400"
             bgColor="bg-gradient-to-b from-zinc-100 to-zinc-50 shadow-inner dark:from-zinc-800/40 dark:to-zinc-900/60 dark:shadow-zinc-950/20"
-            title="Loading account workers"
+            title={t('loading')}
             showProgress={true}
           />
         ) : actualIsSuccess ? (
@@ -109,7 +112,7 @@ export function ListAccountWorkersToolView({
                         </div>
                         <div className="min-w-0">
                           <h3 className="font-medium text-zinc-900 dark:text-zinc-100 truncate">
-                            {worker.name || 'Untitled Worker'}
+                            {worker.name || t('untitled')}
                           </h3>
                           <p className="text-xs font-mono text-zinc-500 dark:text-zinc-400 break-all">
                             {worker.agent_id}
@@ -121,13 +124,13 @@ export function ListAccountWorkersToolView({
                         {worker.is_current && (
                           <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800">
                             <Compass className="w-3 h-3 mr-1" />
-                            Current
+                            {t('current')}
                           </Badge>
                         )}
                         {worker.is_default && (
                           <Badge variant="outline" className="text-xs bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-300 dark:border-yellow-800">
                             <Crown className="w-3 h-3 mr-1" />
-                            Default
+                            {tCommon('default')}
                           </Badge>
                         )}
                         {worker.is_kortix && (
@@ -141,7 +144,7 @@ export function ListAccountWorkersToolView({
                     {worker.created_at && (
                       <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
                         <Calendar className="w-3 h-3" />
-                        Created {formatTimestamp(worker.created_at)}
+                        {t('createdAt', { time: formatTimestamp(worker.created_at) })}
                       </div>
                     )}
                   </div>
@@ -155,10 +158,10 @@ export function ListAccountWorkersToolView({
                   <Users className="h-8 w-8 text-zinc-400" />
                 </div>
                 <h3 className="text-base font-medium text-zinc-900 dark:text-zinc-100 mb-2">
-                  No workers found
+                  {t('noWorkers')}
                 </h3>
                 <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                  {message || 'No workers available in this account.'}
+                  {message || t('noWorkersDesc')}
                 </p>
               </div>
             </div>
@@ -167,7 +170,7 @@ export function ListAccountWorkersToolView({
           <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg m-4">
             <p className="text-sm text-red-800 dark:text-red-200 flex items-center gap-2">
               <AlertTriangle className="h-4 w-4" />
-              {errorMessage || 'Failed to list account workers.'}
+              {errorMessage || t('failed')}
             </p>
           </div>
         )}

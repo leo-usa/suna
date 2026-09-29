@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, Download, RefreshCw } from 'lucide-react';
 import { DobbyLoader } from '@/components/ui/dobby-loader';
 import { useMemo, useState, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { SpreadsheetSimulation } from './SpreadsheetSimulation';
 import { SpreadsheetViewer, SyncState } from './SpreadsheetViewer';
 import { SyncStatusIndicator } from './SyncStatusIndicator';
@@ -15,6 +16,7 @@ export function SpreadsheetToolView({
   isStreaming = false,
   project,
 }: ToolViewProps) {
+  const t = useTranslations('toolViews.spreadsheet');
   const [syncState, setSyncState] = useState<SyncState>({ 
     status: 'idle', 
     lastSyncedAt: null, 
@@ -102,7 +104,7 @@ export function SpreadsheetToolView({
                 {toolTitle}
               </CardTitle>
               {isStreaming && (
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">Updating...</p>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">{t('updating')}</p>
               )}
             </div>
           </div>
@@ -123,7 +125,7 @@ export function SpreadsheetToolView({
                   onClick={handleDownload}
                   disabled={!filePath || isDownloading}
                   className="h-7 px-2"
-                  title="Download file"
+                  title={t('downloadFile')}
                 >
                   {isDownloading ? (
                     <DobbyLoader customSize={12} />

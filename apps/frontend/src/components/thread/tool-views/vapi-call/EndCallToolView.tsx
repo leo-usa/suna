@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { PhoneOff, CheckCircle, AlertTriangle } from 'lucide-react';
 import { ToolViewProps } from '../types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,6 +17,7 @@ export function EndCallToolView({
   isSuccess = true,
   isStreaming = false,
 }: ToolViewProps) {
+  const t = useTranslations('toolViews.vapiCall');
   // Defensive check - ensure toolCall is defined
   if (!toolCall) {
     console.warn('EndCallToolView: toolCall is undefined. Tool views should use structured props.');
@@ -27,7 +29,7 @@ export function EndCallToolView({
   const callData = extractEndCallData(toolResult);
 
   if (!callData) {
-    return <div className="text-sm text-muted-foreground">No end call data available</div>;
+    return <div className="text-sm text-muted-foreground">{t('noEndCallData')}</div>;
   }
 
   return (
@@ -41,7 +43,7 @@ export function EndCallToolView({
       <CardContent className="p-4 space-y-3">
 
         <div className="space-y-2">
-          <div className="text-xs text-muted-foreground">Call ID</div>
+          <div className="text-xs text-muted-foreground">{t('callId')}</div>
           <div className="text-sm font-mono text-foreground bg-muted/50 rounded p-2 border border-border">
             {callData.call_id}
           </div>

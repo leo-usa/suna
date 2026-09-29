@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { Presentation, FileText, Download } from 'lucide-react';
 import { DobbyLoader } from '@/components/ui/dobby-loader';
 import { ToolViewProps } from '../types';
@@ -28,6 +29,7 @@ export function ExportToolView({
   isStreaming = false,
   project,
 }: ExportToolViewProps) {
+  const t = useTranslations('toolViews.presentation');
   const { session } = useAuth();
   const { isRestricted: isDownloadRestricted, openUpgradeModal } = useDownloadRestriction({
     featureName: 'exports',
@@ -121,7 +123,7 @@ export function ExportToolView({
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
         
-        toast.success(`Downloaded ${filename}`);
+        toast.success(t('downloadedFile', { name: filename }));
         return;
       } catch (error) {
         console.error('Direct download failed, trying conversion:', error);
@@ -132,7 +134,7 @@ export function ExportToolView({
     
     // Fallback to conversion endpoint
     if (!project?.sandbox?.sandbox_url || !presentationName) {
-      toast.error('Unable to download - missing sandbox or presentation info');
+      toast.error(t('unableToDownloadMissingInfo'));
       return;
     }
 
@@ -145,10 +147,10 @@ export function ExportToolView({
         `/workspace/presentations/${presentationName}`, 
         presentationName
       );
-      toast.success(`Downloaded ${format.toUpperCase()}`);
+      toast.success(t('downloadedFile', { name: format.toUpperCase() }));
     } catch (error) {
       console.error(`Download error:`, error);
-      toast.error(`Failed to download: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      toast.error(t('failedToDownload', { error: error instanceof Error ? error.message : t('unknownError') }));
     } finally {
       setDownloadingFormat(null);
     }
@@ -160,7 +162,7 @@ export function ExportToolView({
       <Card className="gap-0 flex border-0 shadow-none p-0 rounded-none flex-col h-full overflow-hidden bg-card">
         <CardHeader className="h-14 bg-zinc-50/80 dark:bg-zinc-900/80 border-b p-2 px-4 flex-shrink-0">
           <div className="flex flex-row items-center justify-between">
-            <ToolViewIconTitle icon={Download} title="Export Presentation" />
+            <ToolViewIconTitle icon={Download} title={t('exportPresentation')} />
           </div>
         </CardHeader>
         <CardContent className="p-0 flex-1">
@@ -168,7 +170,7 @@ export function ExportToolView({
             icon={Download}
             iconColor="text-zinc-500"
             bgColor="bg-zinc-50 dark:bg-zinc-900"
-            title="Exporting"
+            title={t('exporting')}
             filePath={presentationName || 'presentation'}
           />
         </CardContent>
@@ -183,10 +185,10 @@ export function ExportToolView({
         <div className="flex flex-row items-center justify-between">
           <ToolViewIconTitle 
             icon={Download} 
-            title={presentationName ? `Export: ${presentationName}` : 'Export Presentation'} 
+            title={presentationName ? t('exportTitle', { name: presentationName }) : t('exportPresentation')} 
           />
           {totalSlides && (
-            <span className="text-xs text-muted-foreground">{totalSlides} slides</span>
+            <span className="text-xs text-muted-foreground">{t('slidesCount', { count: totalSlides })}</span>
           )}
         </div>
       </CardHeader>
@@ -208,7 +210,7 @@ export function ExportToolView({
             {downloadingFormat === 'pdf' ? (
               <DobbyLoader customSize={16} variant="black" className="mr-2 hidden dark:flex" />
             ) : null}
-            Download PDF
+            {t('downloadPdf')}
           </Button>
 
           {/* PPTX Button */}
@@ -225,14 +227,14 @@ export function ExportToolView({
             {downloadingFormat === 'pptx' ? (
               <DobbyLoader customSize={16} variant="black" className="mr-2 hidden dark:flex" />
             ) : null}
-            Download PPTX
+            {t('downloadPptx')}
           </Button>
         </div>
 
         {/* Show message if no exports available */}
         {!hasPdf && !hasPptx && (
           <p className="text-sm text-muted-foreground text-center mt-3">
-            No export files available yet
+            {t('noExportFiles')}
           </p>
         )}
       </CardContent>

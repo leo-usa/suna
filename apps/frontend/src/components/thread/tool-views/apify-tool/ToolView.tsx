@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import {
   Globe,
@@ -90,6 +91,8 @@ export function ApifyToolView({
   project,
   onFileClick,
 }: ToolViewProps) {
+  const t = useTranslations('toolViews.apify');
+  const tCommon = useTranslations('toolViews.common');
   const params = useParams();
   const threadId = params?.threadId as string || '';
   
@@ -193,14 +196,14 @@ export function ApifyToolView({
         {hasInput && (
           <JsonViewer
             data={inputParams}
-            title="INPUT"
+            title={tCommon('inputLabel')}
             defaultExpanded={true}
           />
         )}
         {hasOutput && (
           <JsonViewer
             data={outputData}
-            title="OUTPUT"
+            title={tCommon('outputLabel')}
             defaultExpanded={true}
           />
         )}
@@ -222,7 +225,7 @@ export function ApifyToolView({
             </div>
             <div>
               <CardTitle className="text-base font-medium text-zinc-900 dark:text-zinc-100">
-                {config.title}
+                {t(`viewTitle.${viewType}`)}
               </CardTitle>
             </div>
           </div>
@@ -245,38 +248,38 @@ export function ApifyToolView({
               {viewType === 'run' ? (
                 <>
                   <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
-                    Running Apify Actor
+                    {t('runningActor')}
                   </h3>
                   {inputParams?.actor_id && (
                     <div className="mb-4 p-3 bg-zinc-50 dark:bg-zinc-900/50 rounded-lg border border-zinc-200 dark:border-zinc-800">
-                      <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-1">Actor ID</p>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-1">{t('actorId')}</p>
                       <code className="text-sm font-mono text-zinc-900 dark:text-zinc-100">
                         {inputParams.actor_id}
                       </code>
                     </div>
                   )}
                   <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4">
-                    This may take a few moments depending on the actor's complexity...
+                    {t('mayTakeMoments')}
                   </p>
                 </>
               ) : viewType === 'search' ? (
                 <>
                   <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
-                    Searching Apify Actors
+                    {t('searchingActors')}
                   </h3>
                   {inputParams?.query && (
                     <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4">
-                      Query: <span className="font-medium text-zinc-700 dark:text-zinc-300">"{inputParams.query}"</span>
+                      {t.rich('queryQuoted', { query: String(inputParams.query), q: (chunks) => <span className="font-medium text-zinc-700 dark:text-zinc-300">{chunks}</span> })}
                     </p>
                   )}
                 </>
               ) : (
                 <>
                   <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
-                    Processing...
+                    {t('processing')}
                   </h3>
                   <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                    Please wait
+                    {t('pleaseWait')}
                   </p>
                 </>
               )}
@@ -305,18 +308,18 @@ export function ApifyToolView({
                 <div className="space-y-2 text-xs text-zinc-500 dark:text-zinc-400">
                   <div className="flex items-center gap-2 justify-center">
                     <div className="w-3 h-3 rounded-full border border-zinc-400 border-t-zinc-600 animate-spin" />
-                    <span>Initializing actor run...</span>
+                    <span>{t('initializingRun')}</span>
                   </div>
                   {elapsedTime > 5 && (
                     <div className="flex items-center gap-2 justify-center">
                       <div className="w-3 h-3 rounded-full border border-zinc-400 border-t-zinc-600 animate-spin" />
-                      <span>Executing actor tasks...</span>
+                      <span>{t('executingTasks')}</span>
                     </div>
                   )}
                   {elapsedTime > 15 && (
                     <div className="flex items-center gap-2 justify-center">
                       <div className="w-3 h-3 rounded-full border border-zinc-400 border-t-zinc-600 animate-spin" />
-                      <span>Collecting results...</span>
+                      <span>{t('collectingResults')}</span>
                     </div>
                   )}
                 </div>
@@ -351,7 +354,7 @@ export function ApifyToolView({
                           <Search className="h-5 w-5 text-white drop-shadow-sm" />
                         </div>
                         <div className="flex-1">
-                          <p className="text-sm text-zinc-500 dark:text-zinc-400">Search Query</p>
+                          <p className="text-sm text-zinc-500 dark:text-zinc-400">{t('searchQuery')}</p>
                           <code className="text-sm font-mono font-medium text-zinc-900 dark:text-zinc-100">
                             {searchData.query}
                           </code>
@@ -360,7 +363,7 @@ export function ApifyToolView({
                       {searchData.total > 0 && (
                         <div className="mt-2 pt-2 border-t border-zinc-200 dark:border-zinc-800">
                           <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                            Found {searchData.total} actor{searchData.total !== 1 ? 's' : ''}
+                            {t('foundActors', { count: searchData.total })}
                           </p>
                         </div>
                       )}
@@ -371,11 +374,11 @@ export function ApifyToolView({
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <h4 className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                          Results ({searchData.actors.length})
+                          {t('resultsCount', { count: searchData.actors.length })}
                         </h4>
                         {searchData.total > searchData.actors.length && (
                           <span className="text-xs text-zinc-500 dark:text-zinc-400">
-                            Showing {searchData.actors.length} of {searchData.total.toLocaleString()}
+                            {t('showingOf', { shown: searchData.actors.length, total: searchData.total.toLocaleString() })}
                           </span>
                         )}
                       </div>
@@ -393,19 +396,19 @@ export function ApifyToolView({
                                 <div className="flex items-center gap-1.5 shrink-0">
                                   {actor.is_featured && (
                                     <Badge variant="outline" className="text-xs">
-                                      Featured
+                                      {t('featured')}
                                     </Badge>
                                   )}
                                   {actor.is_premium && (
                                     <Badge variant="outline" className="text-xs">
-                                      Premium
+                                      {t('premium')}
                                     </Badge>
                                   )}
                                 </div>
                               </div>
                               {actor.username && (
                                 <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-2">
-                                  by <span className="font-medium">{actor.username}</span>
+                                  {t.rich('byUser', { user: actor.username, u: (chunks) => <span className="font-medium">{chunks}</span> })}
                                 </p>
                               )}
                             </div>
@@ -427,7 +430,7 @@ export function ApifyToolView({
                               <div className="flex items-center gap-1.5 text-xs text-zinc-600 dark:text-zinc-400">
                                 <Play className="h-3.5 w-3.5" />
                                 <span className="font-medium">{actor.run_count.toLocaleString()}</span>
-                                <span>runs</span>
+                                <span>{t('runs')}</span>
                               </div>
                             )}
                             {actor.pricing_model && (
@@ -437,7 +440,7 @@ export function ApifyToolView({
                             )}
                             {!actor.pricing_model && (
                               <span className="text-xs text-zinc-500 dark:text-zinc-400 italic">
-                                Pricing varies
+                                {t('pricingVaries')}
                               </span>
                             )}
                           </div>
@@ -450,7 +453,7 @@ export function ApifyToolView({
                         <Search className="h-6 w-6 text-zinc-400" />
                       </div>
                       <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                        No actors found
+                        {t('noActorsFound')}
                       </p>
                     </div>
                   )}
@@ -465,7 +468,7 @@ export function ApifyToolView({
                     {detailsData.imageUrl ? (
                       <img
                         src={detailsData.imageUrl}
-                        alt={detailsData.title || detailsData.name || 'Actor'}
+                        alt={detailsData.title || detailsData.name || t('actor')}
                         className="w-16 h-16 rounded-lg object-cover border-2 border-zinc-200 dark:border-zinc-700"
                         onError={(e) => {
                           (e.target as HTMLImageElement).style.display = 'none';
@@ -482,7 +485,7 @@ export function ApifyToolView({
                     )}
                     <div className="flex-1 min-w-0">
                       <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 text-lg mb-1">
-                        {detailsData.title || detailsData.name || detailsData.actor_id || 'Actor'}
+                        {detailsData.title || detailsData.name || detailsData.actor_id || t('actor')}
                       </h3>
                       {detailsData.actor_id && (
                         <p className="text-sm text-zinc-500 dark:text-zinc-400 font-mono">
@@ -496,7 +499,7 @@ export function ApifyToolView({
                   <div className="grid grid-cols-2 gap-3">
                     {detailsData.username && (
                       <div className="p-3 bg-zinc-50 dark:bg-zinc-900/50 rounded-lg border border-zinc-200 dark:border-zinc-800">
-                        <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-1">Creator</p>
+                        <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-1">{t('creator')}</p>
                         <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                           {detailsData.username}
                         </p>
@@ -504,7 +507,7 @@ export function ApifyToolView({
                     )}
                     {detailsData.stats?.totalRuns !== undefined && (
                       <div className="p-3 bg-zinc-50 dark:bg-zinc-900/50 rounded-lg border border-zinc-200 dark:border-zinc-800">
-                        <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-1">Total Runs</p>
+                        <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-1">{t('totalRuns')}</p>
                         <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                           {detailsData.stats.totalRuns.toLocaleString()}
                         </p>
@@ -517,29 +520,29 @@ export function ApifyToolView({
                     <div className="p-4 bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800">
                       <h4 className="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-3 flex items-center gap-2">
                         <DollarSign className="h-4 w-4" />
-                        Pricing
+                        {t('pricing')}
                       </h4>
                       <div className="space-y-2">
                         {detailsData.pricingInfos.map((pricing: any, idx: number) => {
                           const pricePerUnit = pricing.pricePerUnitUsd || 0;
                           const pricePer1K = pricePerUnit * 1000;
-                          const model = pricing.pricingModel || 'Unknown';
+                          const model = pricing.pricingModel || t('unknown');
                           
                           return (
                             <div key={idx} className="p-3 bg-zinc-50 dark:bg-zinc-900/50 rounded-lg border border-zinc-200 dark:border-zinc-800">
                               <div className="flex items-center justify-between mb-1">
                                 <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                                  {pricing.unitName || 'Per Unit'}
+                                  {pricing.unitName || t('perUnit')}
                                 </span>
                                 <Badge variant="outline" className="text-xs">
                                   {model.replace(/_/g, ' ')}
                                 </Badge>
                               </div>
                               <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                                ${pricePer1K.toFixed(2)} / 1K {pricing.unitName?.toLowerCase() || 'units'}
+                                ${pricePer1K.toFixed(2)} / 1K {pricing.unitName?.toLowerCase() || t('units')}
                                 {pricePerUnit > 0 && (
                                   <span className="text-xs text-zinc-500 dark:text-zinc-500 ml-1">
-                                    (${pricePerUnit.toFixed(6)} per unit)
+                                    {t('perUnitPrice', { price: pricePerUnit.toFixed(6) })}
                                   </span>
                                 )}
                               </p>
@@ -570,7 +573,7 @@ export function ApifyToolView({
                   {detailsData.description && (
                     <div className="p-4 bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800">
                       <h4 className="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-                        Description
+                        {t('description')}
                       </h4>
                       <div 
                         className="text-sm text-zinc-600 dark:text-zinc-400 whitespace-pre-wrap"
@@ -583,12 +586,12 @@ export function ApifyToolView({
                   {detailsData.stats && (
                     <div className="p-4 bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800">
                       <h4 className="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-3">
-                        Statistics
+                        {t('statistics')}
                       </h4>
                       <div className="grid grid-cols-2 gap-3">
                         {detailsData.stats.totalUsers !== undefined && (
                           <div>
-                            <p className="text-xs text-zinc-500 dark:text-zinc-400">Total Users</p>
+                            <p className="text-xs text-zinc-500 dark:text-zinc-400">{t('totalUsers')}</p>
                             <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                               {detailsData.stats.totalUsers.toLocaleString()}
                             </p>
@@ -596,12 +599,12 @@ export function ApifyToolView({
                         )}
                         {detailsData.stats.actorReviewRating !== undefined && (
                           <div>
-                            <p className="text-xs text-zinc-500 dark:text-zinc-400">Rating</p>
+                            <p className="text-xs text-zinc-500 dark:text-zinc-400">{t('rating')}</p>
                             <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                               {detailsData.stats.actorReviewRating.toFixed(1)} ⭐
                               {detailsData.stats.actorReviewCount && (
                                 <span className="text-xs text-zinc-500 dark:text-zinc-500 ml-1">
-                                  ({detailsData.stats.actorReviewCount} reviews)
+                                  {t('reviewsCount', { count: detailsData.stats.actorReviewCount })}
                                 </span>
                               )}
                             </p>
@@ -609,28 +612,28 @@ export function ApifyToolView({
                         )}
                         {detailsData.stats.publicActorRunStats30Days && (
                           <div className="col-span-2">
-                            <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-2">Last 30 Days</p>
+                            <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-2">{t('last30Days')}</p>
                             <div className="grid grid-cols-4 gap-2 text-xs">
                               <div>
-                                <p className="text-zinc-500 dark:text-zinc-400">Total</p>
+                                <p className="text-zinc-500 dark:text-zinc-400">{t('total')}</p>
                                 <p className="font-medium text-zinc-900 dark:text-zinc-100">
                                   {detailsData.stats.publicActorRunStats30Days.TOTAL?.toLocaleString() || 0}
                                 </p>
                               </div>
                               <div>
-                                <p className="text-zinc-600 dark:text-zinc-400">Succeeded</p>
+                                <p className="text-zinc-600 dark:text-zinc-400">{t('succeeded')}</p>
                                 <p className="font-medium text-zinc-900 dark:text-zinc-100">
                                   {detailsData.stats.publicActorRunStats30Days.SUCCEEDED?.toLocaleString() || 0}
                                 </p>
                               </div>
                               <div>
-                                <p className="text-red-600 dark:text-red-400">Failed</p>
+                                <p className="text-red-600 dark:text-red-400">{t('failed')}</p>
                                 <p className="font-medium text-zinc-900 dark:text-zinc-100">
                                   {detailsData.stats.publicActorRunStats30Days.FAILED?.toLocaleString() || 0}
                                 </p>
                               </div>
                               <div>
-                                <p className="text-zinc-600 dark:text-zinc-400">Aborted</p>
+                                <p className="text-zinc-600 dark:text-zinc-400">{t('aborted')}</p>
                                 <p className="font-medium text-zinc-900 dark:text-zinc-100">
                                   {detailsData.stats.publicActorRunStats30Days.ABORTED?.toLocaleString() || 0}
                                 </p>
@@ -647,7 +650,7 @@ export function ApifyToolView({
                     <div className="p-4 bg-zinc-50 dark:bg-zinc-900/10 rounded-lg border border-zinc-200 dark:border-zinc-800">
                       <h4 className="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-3 flex items-center gap-2">
                         <Settings className="h-4 w-4" />
-                        Input Schema Properties
+                        {t('inputSchemaProperties')}
                       </h4>
                       <div className="space-y-3">
                         {Object.entries(detailsData.inputSchema.properties).map(([key, prop]: [string, any]) => {
@@ -677,7 +680,7 @@ export function ApifyToolView({
                                       )}
                                       {prop.required && (
                                         <Badge variant="outline" className="text-xs bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border-red-300 dark:border-red-700">
-                                          Required
+                                          {t('required')}
                                         </Badge>
                                       )}
                                     </div>
@@ -694,7 +697,7 @@ export function ApifyToolView({
                                     )}
                                     {prop.default !== undefined && (
                                       <div className="text-xs text-zinc-500 dark:text-zinc-500 mt-1">
-                                        <span className="font-medium">Default:</span>{' '}
+                                        <span className="font-medium">{t('defaultLabel')}</span>{' '}
                                         <code className="bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded">
                                           {typeof prop.default === 'object' ? JSON.stringify(prop.default) : String(prop.default)}
                                         </code>
@@ -702,7 +705,7 @@ export function ApifyToolView({
                                     )}
                                     {prop.enum && Array.isArray(prop.enum) && (
                                       <div className="text-xs text-zinc-500 dark:text-zinc-500 mt-1">
-                                        <span className="font-medium">Options:</span>{' '}
+                                        <span className="font-medium">{t('optionsLabel')}</span>{' '}
                                         <span className="text-zinc-600 dark:text-zinc-400">
                                           {prop.enum.join(', ')}
                                         </span>
@@ -710,7 +713,7 @@ export function ApifyToolView({
                                     )}
                                     {prop.minimum !== undefined && (
                                       <div className="text-xs text-zinc-500 dark:text-zinc-500 mt-1">
-                                        <span className="font-medium">Min:</span> {prop.minimum}
+                                        <span className="font-medium">{t('minLabel')}</span> {prop.minimum}
                                       </div>
                                     )}
                                   </div>
@@ -762,7 +765,7 @@ export function ApifyToolView({
                           <div className="flex items-center gap-2 mb-1">
                             <DollarSign className="h-3.5 w-3.5 text-zinc-500 dark:text-zinc-400" />
                             <h4 className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
-                              Cost
+                              {t('cost')}
                             </h4>
                           </div>
                           <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
@@ -775,7 +778,7 @@ export function ApifyToolView({
                           <div className="flex items-center gap-2 mb-1">
                             <Database className="h-3.5 w-3.5 text-zinc-500 dark:text-zinc-400" />
                             <h4 className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
-                              Items
+                              {t('items')}
                             </h4>
                           </div>
                           <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
@@ -791,10 +794,10 @@ export function ApifyToolView({
                     <div className="space-y-3">
                       <div className="flex items-center gap-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
                         <FileJson className="h-4 w-4" />
-                        <span>Results File</span>
+                        <span>{t('resultsFile')}</span>
                         {runData.total_items > 0 && (
                           <Badge variant="outline" className="text-xs">
-                            {runData.total_items.toLocaleString()} items
+                            {t('itemsCount', { count: runData.total_items.toLocaleString() })}
                           </Badge>
                         )}
                       </div>
@@ -825,14 +828,14 @@ export function ApifyToolView({
                   {!runData.saved_to_disk && runData.results.length > 0 && (
                     <div className="space-y-3">
                       <h4 className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                        Results Preview ({Math.min(runData.results.length, 5)} of {runData.total_items})
+                        {t('resultsPreview', { shown: Math.min(runData.results.length, 5), total: runData.total_items })}
                       </h4>
                       <div className="space-y-2">
                         {runData.results.slice(0, 5).map((result, idx) => (
                           <details key={idx} className="group">
                             <summary className="flex items-center gap-2 text-sm cursor-pointer hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors p-3 bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800">
                               <Database className="h-4 w-4 text-zinc-400" />
-                              <span className="text-zinc-600 dark:text-zinc-400">Item {idx + 1}</span>
+                              <span className="text-zinc-600 dark:text-zinc-400">{t('itemN', { n: idx + 1 })}</span>
                               <ChevronRight className="h-3 w-3 ml-auto text-zinc-400 group-open:rotate-90 transition-transform" />
                             </summary>
                             <div className="mt-2 p-3 bg-zinc-900 dark:bg-zinc-950 rounded-lg border border-zinc-200 dark:border-zinc-800">
@@ -844,7 +847,7 @@ export function ApifyToolView({
                         ))}
                         {runData.results.length > 5 && (
                           <div className="text-center text-xs text-zinc-500 dark:text-zinc-400 py-2">
-                            ... and {runData.results.length - 5} more items
+                            {t('andMoreItems', { count: runData.results.length - 5 })}
                           </div>
                         )}
                       </div>
@@ -864,7 +867,7 @@ export function ApifyToolView({
                     <div className="p-3 bg-zinc-50 dark:bg-zinc-900/50 rounded-lg border border-zinc-200 dark:border-zinc-800">
                       <div className="flex items-center gap-2 text-sm">
                         <Database className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
-                        <span className="text-zinc-600 dark:text-zinc-400">Dataset ID:</span>
+                        <span className="text-zinc-600 dark:text-zinc-400">{t('datasetId')}</span>
                         <code className="font-mono text-xs text-zinc-900 dark:text-zinc-100">{runData.dataset_id}</code>
                       </div>
                     </div>
@@ -885,12 +888,12 @@ export function ApifyToolView({
                     </div>
                     <div className="flex-1">
                       <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">
-                        Run Results
+                        {t('runResults')}
                       </h3>
                       <p className="text-sm text-zinc-500 dark:text-zinc-400">
                         {resultsData.item_count > 0 
-                          ? `${resultsData.item_count.toLocaleString()} items saved to disk`
-                          : 'Results saved to disk'}
+                          ? t('itemsSaved', { count: resultsData.item_count.toLocaleString() })
+                          : t('resultsSaved')}
                       </p>
                     </div>
                   </div>
@@ -900,10 +903,10 @@ export function ApifyToolView({
                     <div className="space-y-3">
                       <div className="flex items-center gap-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
                         <FileJson className="h-4 w-4" />
-                        <span>Results File</span>
+                        <span>{t('resultsFile')}</span>
                         {resultsData.item_count > 0 && (
                           <Badge variant="outline" className="text-xs">
-                            {resultsData.item_count.toLocaleString()} items
+                            {t('itemsCount', { count: resultsData.item_count.toLocaleString() })}
                           </Badge>
                         )}
                       </div>
@@ -934,7 +937,7 @@ export function ApifyToolView({
                         <Database className="h-6 w-6 text-zinc-400" />
                       </div>
                       <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                        {resultsData.message || 'No results file found'}
+                        {resultsData.message || t('noResultsFile')}
                       </p>
                     </div>
                   )}

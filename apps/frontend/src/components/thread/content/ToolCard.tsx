@@ -8,6 +8,7 @@ import { PresentationSlidePreview } from '../tool-views/presentation-tools/Prese
 import { PresentationSlideSkeleton } from '../tool-views/presentation-tools/PresentationSlideSkeleton';
 import { ToolUpgradeCTA, parseToolAccessError } from './ToolUpgradeCTA';
 import type { Project } from '@/lib/api/threads';
+import { useToolNameLabel } from '@/hooks/use-tool-name-label';
 
 export interface SlideInfo {
   presentationName: string;
@@ -82,6 +83,8 @@ export const ToolCard: React.FC<ToolCardProps> = ({
   project,
 }) => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const { t, localizeDisplayName } = useToolNameLabel();
+  const label = localizeDisplayName(toolName, displayName);
   const favicons = websiteUrls?.slice(0, 4).map(getFavicon).filter(Boolean) as string[] || [];
   const visibleImages = imageUrls?.slice(0, MAX_VISIBLE_IMAGES) || [];
   const remainingCount = (imageUrls?.length || 0) - MAX_VISIBLE_IMAGES;
@@ -139,7 +142,7 @@ export const ToolCard: React.FC<ToolCardProps> = ({
             isStreaming && !effectiveIsError && "shimmer-text-fancy"
           )}
         >
-          {showUpgradeCTA ? `Tool unavailable` : isError ? `${displayName} failed` : displayName}
+          {showUpgradeCTA ? t('unavailable') : isError ? t('failed', { name: label }) : label}
           {isStreaming && !isError && (
             <style>{`
               .shimmer-text-fancy {
@@ -211,7 +214,7 @@ export const ToolCard: React.FC<ToolCardProps> = ({
       </button>
       {showUpgradeCTA && (
         <ToolUpgradeCTA
-          toolName={displayName}
+          toolName={label}
           currentTier={accessError.currentTier}
           currentTierDisplay={accessError.currentTierDisplay}
           className="mt-2"
@@ -275,7 +278,7 @@ export const ToolCard: React.FC<ToolCardProps> = ({
           hideCloseButton
         >
           <VisuallyHidden>
-            <DialogTitle>Image Viewer</DialogTitle>
+            <DialogTitle>{t('imageViewer')}</DialogTitle>
           </VisuallyHidden>
           {selectedImage && (
             <div className="relative flex flex-col items-center">
@@ -283,14 +286,14 @@ export const ToolCard: React.FC<ToolCardProps> = ({
                 <button
                   onClick={(e) => handleDownload(selectedImage, e)}
                   className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors text-white"
-                  title="Download"
+                  title={t('download')}
                 >
                   <Download className="w-5 h-5" />
                 </button>
                 <button
                   onClick={() => setSelectedImage(null)}
                   className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors text-white"
-                  title="Close"
+                  title={t('close')}
                 >
                   <X className="w-5 h-5" />
                 </button>

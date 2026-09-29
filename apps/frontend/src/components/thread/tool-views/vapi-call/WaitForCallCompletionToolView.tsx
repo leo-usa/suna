@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { Phone, Clock, DollarSign, MessageSquare, CheckCircle, AlertTriangle } from 'lucide-react';
 import { ToolViewProps } from '../types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,6 +18,7 @@ export function WaitForCallCompletionToolView({
   isSuccess = true,
   isStreaming = false,
 }: ToolViewProps) {
+  const t = useTranslations('toolViews.vapiCall');
   // Defensive check - ensure toolCall is defined
   if (!toolCall) {
     console.warn('WaitForCallCompletionToolView: toolCall is undefined. Tool views should use structured props.');
@@ -28,7 +30,7 @@ export function WaitForCallCompletionToolView({
   const data = extractWaitForCallCompletionData(toolResult);
 
   if (!data) {
-    return <div className="text-sm text-muted-foreground">No call completion data available</div>;
+    return <div className="text-sm text-muted-foreground">{t('noCompletionData')}</div>;
   }
 
   const statusInfo = statusConfig[data.final_status as keyof typeof statusConfig] || statusConfig.completed;
@@ -45,9 +47,9 @@ export function WaitForCallCompletionToolView({
 
         <div className="bg-muted/30 rounded-lg p-4 border border-border space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-foreground">Final Status</span>
+            <span className="text-sm font-medium text-foreground">{t('finalStatus')}</span>
             <Badge className={cn("text-xs", statusInfo.color)}>
-              {statusInfo.label}
+              {t(`status.${statusInfo.label.replace(/\s/g, '')}`)}
             </Badge>
           </div>
 
@@ -55,7 +57,7 @@ export function WaitForCallCompletionToolView({
             <div className="space-y-1">
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <Phone className="h-3 w-3" />
-                Call ID
+                {t('callId')}
               </div>
               <div className="text-xs font-mono text-foreground truncate">
                 {data.call_id}
@@ -66,7 +68,7 @@ export function WaitForCallCompletionToolView({
               <div className="space-y-1">
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                   <Clock className="h-3 w-3" />
-                  Duration
+                  {t('duration')}
                 </div>
                 <div className="text-sm font-medium text-foreground">
                   {formatDuration(data.duration_seconds)}
@@ -78,10 +80,10 @@ export function WaitForCallCompletionToolView({
               <div className="space-y-1">
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                   <MessageSquare className="h-3 w-3" />
-                  Transcript Messages
+                  {t('transcriptMessages')}
                 </div>
                 <div className="text-sm font-medium text-foreground">
-                  {data.transcript_messages} messages
+                  {t('messageCount', { count: data.transcript_messages })}
                 </div>
               </div>
             )}
@@ -90,7 +92,7 @@ export function WaitForCallCompletionToolView({
               <div className="space-y-1">
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                   <DollarSign className="h-3 w-3" />
-                  Total Cost
+                  {t('totalCost')}
                 </div>
                 <div className="text-sm font-medium text-foreground">
                   ${data.cost.toFixed(4)}

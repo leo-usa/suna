@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { 
   FolderOpen, 
   Folder,
@@ -272,6 +273,8 @@ const FileExplorer: React.FC<{
   previewUrl,
   language 
 }) => {
+  const t = useTranslations('toolViews.projectStructure');
+  const tCommon = useTranslations('toolViews.common');
   const [isCopying, setIsCopying] = useState(false);
 
   const handleCopyCode = async () => {
@@ -280,10 +283,10 @@ const FileExplorer: React.FC<{
     try {
       await navigator.clipboard.writeText(fileContent);
       setIsCopying(true);
-      toast.success('Code copied to clipboard');
+      toast.success(t('codeCopied'));
       setTimeout(() => setIsCopying(false), 2000);
     } catch (err) {
-      toast.error('Failed to copy code');
+      toast.error(t('copyCodeFailed'));
     }
   };
 
@@ -294,7 +297,7 @@ const FileExplorer: React.FC<{
           <div className="flex items-center gap-2 px-2">
             <Package className="w-4 h-4 text-zinc-500" />
             <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-              Explorer
+              {t('explorer')}
             </span>
             {projectData && (
               <span className="text-xs text-zinc-500 dark:text-zinc-400 ml-auto">
@@ -342,7 +345,7 @@ const FileExplorer: React.FC<{
                     ) : (
                       <Copy className="w-3 h-3" />
                     )}
-                    {isCopying ? 'Copied' : 'Copy'}
+                    {isCopying ? tCommon('copied') : tCommon('copy')}
                   </Button>
                 )}
                 {previewUrl && (
@@ -354,7 +357,7 @@ const FileExplorer: React.FC<{
                   >
                     <a href={previewUrl} target="_blank" rel="noopener noreferrer">
                       <ExternalLink className="w-3 h-3 mr-1" />
-                      Preview
+                      {t('preview')}
                     </a>
                   </Button>
                 )}
@@ -378,7 +381,7 @@ const FileExplorer: React.FC<{
                 </ScrollArea>
               ) : (
                 <div className="flex items-center justify-center h-full p-8 text-zinc-400">
-                  <p className="text-sm">Unable to load file content</p>
+                  <p className="text-sm">{t('unableToLoad')}</p>
                 </div>
               )}
             </div>
@@ -387,7 +390,7 @@ const FileExplorer: React.FC<{
           <div className="flex-1 flex items-center justify-center text-zinc-400">
             <div className="text-center">
               <File className="w-12 h-12 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">Select a file to view its contents</p>
+              <p className="text-sm">{t('selectFile')}</p>
             </div>
           </div>
         )}
@@ -515,6 +518,7 @@ export function GetProjectStructureView({
   project,
 }: ToolViewProps) {
   // All hooks must be called unconditionally at the top
+  const t = useTranslations('toolViews.projectStructure');
   const [selectedFile, setSelectedFile] = useState<string | undefined>();
   const [fileContent, setFileContent] = useState<string>('');
   const [loadingFile, setLoadingFile] = useState(false);
@@ -575,18 +579,18 @@ export function GetProjectStructureView({
           const content = await response.text();
           setFileContent(content);
         } else {
-          setFileContent('// Failed to load file content');
+          setFileContent(t('failedToLoadComment'));
         }
       } else {
-        setFileContent('// Unable to construct file URL');
+        setFileContent(t('unableToConstructComment'));
       }
     } catch (error) {
       console.error('Error loading file:', error);
-      setFileContent('// Error loading file content');
+      setFileContent(t('errorLoadingComment'));
     } finally {
       setLoadingFile(false);
     }
-  }, [project, projectData]);
+  }, [project, projectData, t]);
 
   const isHtmlFile = selectedFile?.endsWith('.html');
   const previewUrl = isHtmlFile && project?.sandbox?.sandbox_url && projectData
@@ -607,9 +611,9 @@ export function GetProjectStructureView({
     } else {
       toast.info(
         <div>
-          <p className="font-medium">Application not running</p>
+          <p className="font-medium">{t('appNotRunning')}</p>
           <p className="text-sm text-muted-foreground mt-1">
-            For best performance, build and run in production mode:
+            {t('buildForProduction')}
           </p>
           <div className="text-sm text-muted-foreground mt-1 space-y-1">
             {projectData?.isNextJs && (
@@ -635,7 +639,7 @@ export function GetProjectStructureView({
             )}
           </div>
           <p className="text-sm text-muted-foreground mt-1">
-            Then use the <code className="bg-muted px-1 rounded">expose_port</code> tool
+            {t.rich('thenUseExposePort', { code: (chunks) => <code className="bg-muted px-1 rounded">{chunks}</code> })}
           </p>
         </div>,
         { duration: 8000 }
@@ -667,14 +671,14 @@ export function GetProjectStructureView({
                       ) : (
                         <ExternalLink className="h-4 w-4 mr-1" />
                       )}
-                      Preview
+                      {t('preview')}
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
                     <p className="text-xs">
                       {projectPreviewUrl 
-                        ? "Open running application" 
-                        : "Build and start production server first"
+                        ? t('openRunningApp') 
+                        : t('buildFirst')
                       }
                     </p>
                   </TooltipContent>
@@ -695,7 +699,7 @@ export function GetProjectStructureView({
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p className="text-xs">Expand full view</p>
+                    <p className="text-xs">{t('expandFullView')}</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -710,8 +714,8 @@ export function GetProjectStructureView({
               icon={FolderTree}
               iconColor="text-zinc-500 dark:text-zinc-400"
               bgColor="bg-gradient-to-b from-zinc-100 to-zinc-50 shadow-inner dark:from-zinc-800/40 dark:to-zinc-900/60"
-              title="Loading project structure"
-              filePath={projectData?.projectName || 'Processing...'}
+              title={t('loading')}
+              filePath={projectData?.projectName || t('processing')}
               showProgress={true}
             />
           ) : fileTree ? (
@@ -729,7 +733,7 @@ export function GetProjectStructureView({
             />
           ) : (
             <div className="flex items-center justify-center h-full">
-              <p className="text-zinc-500">No project structure available</p>
+              <p className="text-zinc-500">{t('noStructure')}</p>
             </div>
           )}
         </CardContent>
@@ -740,7 +744,7 @@ export function GetProjectStructureView({
           <DialogHeader className="px-6 py-4 border-b flex flex-row items-center justify-between">
             <DialogTitle className="flex items-center gap-2">
               <FolderTree className="w-5 h-5 text-zinc-500 dark:text-zinc-400" />
-              {projectData ? `Project Explorer - ${projectData.projectName}` : 'Project Explorer'}
+              {projectData ? t('projectExplorerNamed', { name: projectData.projectName }) : t('projectExplorer')}
             </DialogTitle>
             {projectData && (
               <Button
@@ -754,7 +758,7 @@ export function GetProjectStructureView({
                 ) : (
                   <Globe className="h-4 w-4 mr-1" />
                 )}
-                Preview Application
+                {t('previewApplication')}
               </Button>
             )}
           </DialogHeader>

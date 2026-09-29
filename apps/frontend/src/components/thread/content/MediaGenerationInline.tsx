@@ -7,6 +7,7 @@ import { useImageContent, useFileContent } from '@/hooks/files';
 import { getToolIcon } from '@/components/thread/utils';
 import { AppIcon } from '@/components/thread/tool-views/shared/AppIcon';
 import type { Project } from '@/lib/api/threads';
+import { useToolNameLabel } from '@/hooks/use-tool-name-label';
 
 interface MediaGenerationInlineProps {
   toolCall: {
@@ -121,6 +122,7 @@ function InlineImage({ filePath, sandboxId }: { filePath: string; sandboxId?: st
 }
 
 function InlineVideo({ filePath, sandboxId }: { filePath: string; sandboxId?: string }) {
+  const { t } = useToolNameLabel();
   const [isPlaying, setIsPlaying] = useState(false);
   const [isVideoLoading, setIsVideoLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
@@ -172,7 +174,7 @@ function InlineVideo({ filePath, sandboxId }: { filePath: string; sandboxId?: st
       )}
       {hasError ? (
         <div className="aspect-video flex flex-col items-center justify-center p-4 text-center">
-          <p className="text-destructive font-medium text-sm">Failed to load video</p>
+          <p className="text-destructive font-medium text-sm">{t('videoLoadFailed')}</p>
         </div>
       ) : (
         <div className="relative group">
@@ -231,6 +233,7 @@ export function MediaGenerationInline({
   sandboxId,
   project,
 }: MediaGenerationInlineProps) {
+  const { toolLabel } = useToolNameLabel();
   const isComplete = !!toolResult;
   const media = isComplete ? extractGeneratedMedia(toolResult?.output) : null;
   
@@ -249,7 +252,7 @@ export function MediaGenerationInline({
         className="inline-flex items-center gap-1.5 h-8 px-2 py-1.5 text-xs text-muted-foreground bg-card hover:bg-card/80 rounded-lg transition-colors cursor-pointer border border-neutral-200 dark:border-neutral-700/50 max-w-full"
       >
         <AppIcon toolCall={toolCall} size={14} className="h-3.5 w-3.5 text-muted-foreground shrink-0" fallbackIcon={IconComponent} />
-        <span className="font-mono text-xs text-foreground truncate">Generate Media</span>
+        <span className="font-mono text-xs text-foreground truncate">{toolLabel('image-edit-or-generate')}</span>
         {!isComplete && <DobbyLoader size="small" className="ml-1" />}
       </button>
 
