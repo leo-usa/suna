@@ -21,6 +21,8 @@ class BedrockConfig:
     GEO_MODEL_IDS = {
         "haiku_4_5": "us.anthropic.claude-haiku-4-5-20251001-v1:0",
         "sonnet_5": "us.anthropic.claude-sonnet-5",
+        # Global CRIS: AWS launched Sonnet 5.5 without a US geo profile.
+        "sonnet_5_5": "global.anthropic.claude-sonnet-5-5",
         "opus_5": "us.anthropic.claude-opus-5",
         "opus_5_5": "us.anthropic.claude-opus-5-5",
         "fable_5": "us.anthropic.claude-fable-5",
@@ -57,6 +59,10 @@ class BedrockConfig:
     @classmethod
     def get_sonnet_5_id(cls) -> str:
         return cls.build_geo_id("sonnet_5")
+
+    @classmethod
+    def get_sonnet_5_5_id(cls) -> str:
+        return cls.build_geo_id("sonnet_5_5")
 
     @classmethod
     def get_opus_5_id(cls) -> str:
@@ -166,6 +172,14 @@ class PricingPresets:
         output_cost_per_million_tokens=10.00,
         cached_read_cost_per_million_tokens=0.20,
         cache_write_5m_cost_per_million_tokens=2.50,
+    )
+
+    CLAUDE_SONNET_5_5 = ModelPricing(
+        input_cost_per_million_tokens=2.00,
+        output_cost_per_million_tokens=10.00,
+        cached_read_cost_per_million_tokens=0.20,
+        cache_write_5m_cost_per_million_tokens=2.50,
+        cache_write_1h_cost_per_million_tokens=4.00,
     )
 
     CLAUDE_OPUS_4_7 = ModelPricing(
@@ -336,7 +350,7 @@ class PricingPresets:
     )
 
 
-FREE_MODEL_ID = "dobby/claude-sonnet-5"
+FREE_MODEL_ID = "dobby/claude-sonnet-5.5"
 PREMIUM_MODEL_ID = "dobby/power"
 IMAGE_MODEL_ID = "dobby/gpt-5.6-luna"
 
@@ -442,8 +456,8 @@ class ModelFactory:
     def create_basic_model(main_llm: str, custom_model: Optional[str] = None) -> Model:
         # Default models per provider
         default_models = {
-            "bedrock": BedrockConfig.get_sonnet_5_id(),
-            "anthropic": "openrouter/anthropic/claude-sonnet-5",
+            "bedrock": BedrockConfig.get_sonnet_5_5_id(),
+            "anthropic": "openrouter/anthropic/claude-sonnet-5.5",
             "grok": "openrouter/x-ai/grok-4.1-fast",
             "openai": "openrouter/openai/gpt-4o-mini",
             "minimax": "openrouter/minimax/minimax-m2.1",
@@ -487,29 +501,30 @@ class ModelFactory:
                     ModelCapability.THINKING,
                     ModelCapability.PROMPT_CACHING,
                 ],
-                pricing=PricingPresets.CLAUDE_SONNET_5,
+                pricing=PricingPresets.CLAUDE_SONNET_5_5,
                 tier_availability=["free", "paid"],
                 priority=102,
                 recommended=True,
                 enabled=True,
                 config=_create_anthropic_model_config(),
-                fallback_litellm_model_id="openrouter/anthropic/claude-sonnet-5",
+                fallback_litellm_model_id="openrouter/anthropic/claude-sonnet-5.5",
             )
         elif main_llm == "anthropic":
             return Model(
                 id="dobby/basic",
                 name="Dobby Basic",
                 litellm_model_id=custom_model or default_models["anthropic"],
-                provider=ModelProvider.ANTHROPIC,
+                provider=ModelProvider.OPENROUTER,
                 aliases=["kortix-basic", "Dobby Basic"],
-                context_window=200_000,
+                context_window=1_000_000,
                 capabilities=[
                     ModelCapability.CHAT,
                     ModelCapability.FUNCTION_CALLING,
                     ModelCapability.VISION,
+                    ModelCapability.THINKING,
                     ModelCapability.PROMPT_CACHING,
                 ],
-                pricing=PricingPresets.HAIKU_4_5,
+                pricing=PricingPresets.CLAUDE_SONNET_5_5,
                 tier_availability=["free", "paid"],
                 priority=102,
                 recommended=True,
@@ -600,8 +615,8 @@ class ModelFactory:
     def create_power_model(main_llm: str, custom_model: Optional[str] = None) -> Model:
         # Default models per provider (same as basic for now)
         default_models = {
-            "bedrock": BedrockConfig.get_sonnet_5_id(),
-            "anthropic": "openrouter/anthropic/claude-sonnet-5",
+            "bedrock": BedrockConfig.get_sonnet_5_5_id(),
+            "anthropic": "openrouter/anthropic/claude-sonnet-5.5",
             "grok": "openrouter/x-ai/grok-4.1-fast",
             "openai": "openrouter/openai/gpt-4o-mini",
             "minimax": "openrouter/minimax/minimax-m2.1",
@@ -645,22 +660,22 @@ class ModelFactory:
                     ModelCapability.THINKING,
                     ModelCapability.PROMPT_CACHING,
                 ],
-                pricing=PricingPresets.CLAUDE_SONNET_5,
+                pricing=PricingPresets.CLAUDE_SONNET_5_5,
                 tier_availability=["paid"],
                 priority=101,
                 recommended=True,
                 enabled=True,
                 config=_create_anthropic_model_config(),
-                fallback_litellm_model_id="openrouter/anthropic/claude-sonnet-5",
+                fallback_litellm_model_id="openrouter/anthropic/claude-sonnet-5.5",
             )
         elif main_llm == "anthropic":
             return Model(
                 id="dobby/power",
                 name="Dobby Advanced Mode",
                 litellm_model_id=custom_model or default_models["anthropic"],
-                provider=ModelProvider.ANTHROPIC,
+                provider=ModelProvider.OPENROUTER,
                 aliases=["kortix-power", "Dobby POWER Mode", "Dobby Power", "Dobby Advanced Mode"],
-                context_window=200_000,
+                context_window=1_000_000,
                 capabilities=[
                     ModelCapability.CHAT,
                     ModelCapability.FUNCTION_CALLING,
@@ -668,7 +683,7 @@ class ModelFactory:
                     ModelCapability.THINKING,
                     ModelCapability.PROMPT_CACHING,
                 ],
-                pricing=PricingPresets.HAIKU_4_5,
+                pricing=PricingPresets.CLAUDE_SONNET_5_5,
                 tier_availability=["paid"],
                 priority=101,
                 recommended=True,
@@ -990,16 +1005,20 @@ class ModelFactory:
         )
 
     @staticmethod
-    def create_claude_sonnet_5() -> Model:
+    def create_claude_sonnet_5_5() -> Model:
         litellm_id, provider, fallback = _claude_gpt_route(
-            "openrouter/anthropic/claude-sonnet-5", "sonnet_5"
+            "openrouter/anthropic/claude-sonnet-5.5", "sonnet_5_5"
         )
         return Model(
-            id="dobby/claude-sonnet-5",
-            name="Claude Sonnet 5",
+            id="dobby/claude-sonnet-5.5",
+            name="Claude Sonnet 5.5",
             litellm_model_id=litellm_id,
             provider=provider,
             aliases=[
+                "claude-sonnet-5.5",
+                "claude-sonnet-5-5",
+                "anthropic/claude-sonnet-5.5",
+                "dobby/claude-sonnet-5",
                 "claude-sonnet-5",
                 "anthropic/claude-sonnet-5",
                 "dobby/claude-sonnet-4.6",
@@ -1015,7 +1034,7 @@ class ModelFactory:
                 ModelCapability.THINKING,
                 ModelCapability.PROMPT_CACHING,
             ],
-            pricing=PricingPresets.CLAUDE_SONNET_5,
+            pricing=PricingPresets.CLAUDE_SONNET_5_5,
             tier_availability=["free", "paid"],
             priority=103,
             recommended=False,
@@ -1742,7 +1761,7 @@ class ModelRegistry:
         self.register(ModelFactory.create_deepseek_v3())
         self.register(ModelFactory.create_deepseek_v4_flash())
         self.register(ModelFactory.create_deepseek_v4_pro())
-        self.register(ModelFactory.create_claude_sonnet_5())
+        self.register(ModelFactory.create_claude_sonnet_5_5())
         self.register(ModelFactory.create_claude_opus_4_7())
         self.register(ModelFactory.create_claude_opus_5())
         self.register(ModelFactory.create_claude_opus_5_5())
@@ -1805,6 +1824,8 @@ class ModelRegistry:
         self._litellm_id_to_pricing["openrouter/deepseek/deepseek-v4-pro"] = PricingPresets.DEEPSEEK_V4_PRO
         self._litellm_id_to_pricing["openrouter/anthropic/claude-sonnet-5"] = PricingPresets.CLAUDE_SONNET_5
         self._litellm_id_to_pricing[BedrockConfig.get_sonnet_5_id()] = PricingPresets.CLAUDE_SONNET_5
+        self._litellm_id_to_pricing["openrouter/anthropic/claude-sonnet-5.5"] = PricingPresets.CLAUDE_SONNET_5_5
+        self._litellm_id_to_pricing[BedrockConfig.get_sonnet_5_5_id()] = PricingPresets.CLAUDE_SONNET_5_5
         self._litellm_id_to_pricing["openrouter/anthropic/claude-opus-4.7"] = PricingPresets.CLAUDE_OPUS_4_7
         self._litellm_id_to_pricing["openrouter/anthropic/claude-opus-5"] = PricingPresets.CLAUDE_OPUS_5
         self._litellm_id_to_pricing[BedrockConfig.get_opus_5_id()] = PricingPresets.CLAUDE_OPUS_5

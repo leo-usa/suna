@@ -376,10 +376,17 @@ class MessageBuilder:
             "created_by_user_id": None
         }
 
-    def build_finish_message(self, finish_reason: str, tools_executed: bool = False) -> Dict[str, Any]:
+    def build_finish_message(
+        self,
+        finish_reason: str,
+        tools_executed: bool = False,
+        empty_output: bool = False,
+    ) -> Dict[str, Any]:
         content = {"status_type": "finish", "finish_reason": finish_reason}
         if tools_executed:
             content["tools_executed"] = True
+        if empty_output:
+            content["empty_output"] = True
 
         return {
             "message_id": str(uuid.uuid4()),

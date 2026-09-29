@@ -27,6 +27,10 @@ class AutoContinueChecker:
 
         finish_reason = content.get("finish_reason") if isinstance(content, dict) else None
 
+        if finish_reason == "length" and content.get("empty_output"):
+            logger.info("[AutoContinue] Max tokens with no reply; stopping")
+            return False, False
+
         if finish_reason in ("tool_calls", "length"):
             return True, False
 

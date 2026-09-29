@@ -536,7 +536,15 @@ class ResponseProcessor:
         accumulated_content = self._state._accumulated_content or ""
         accumulated_reasoning = self._state._accumulated_reasoning or ""
 
-        logger.info(f"[ResponseProcessor] Max tokens reached, saving {len(accumulated_content)} chars of content")
+        empty_output = not accumulated_content.strip() and not tool_calls
+        if empty_output:
+            logger.warning(
+                "[ResponseProcessor] Max tokens reached with no content or tool call; stopping"
+            )
+        else:
+            logger.info(
+                f"[ResponseProcessor] Max tokens reached, saving {len(accumulated_content)} chars of content"
+            )
 
         assistant_message_id = self._state.finalize_assistant_message(
             tool_calls if tool_calls else None,
@@ -559,5 +567,4 @@ class ResponseProcessor:
             {"status_type": "finish", "finish_reason": "length"},
             {"thread_run_id": thread_run_id}
         )
-        yield self._message_builder.build_finish_message("length")
-        
+        yield self._message_builder.build_finish_message("length", empty_output=empty_output)

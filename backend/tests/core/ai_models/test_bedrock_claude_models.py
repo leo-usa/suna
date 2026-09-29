@@ -11,17 +11,19 @@ from core.services.llm import (
     _register_bedrock_gpt_litellm_models,
     _sanitize_llm_params,
     _should_fallback_from_bedrock,
+    default_output_token_limit,
 )
 
 
-def test_sonnet_5_and_fable_5_stay_openrouter_when_bedrock_off():
+def test_sonnet_5_5_and_fable_5_stay_openrouter_when_bedrock_off():
     with patch("core.ai_models.registry._bedrock_claude_gpt_enabled", return_value=False):
-        sonnet = ModelFactory.create_claude_sonnet_5()
+        sonnet = ModelFactory.create_claude_sonnet_5_5()
         fable = ModelFactory.create_claude_fable_5()
 
     assert sonnet.provider == ModelProvider.OPENROUTER
     assert fable.provider == ModelProvider.OPENROUTER
-    assert sonnet.litellm_model_id == "openrouter/anthropic/claude-sonnet-5"
+    assert sonnet.litellm_model_id == "openrouter/anthropic/claude-sonnet-5.5"
+    assert sonnet.name == "Claude Sonnet 5.5"
     assert fable.litellm_model_id == "openrouter/anthropic/claude-fable-5.1"
     assert sonnet.fallback_litellm_model_id is None
     assert fable.fallback_litellm_model_id is None
@@ -31,7 +33,7 @@ def test_sonnet_5_and_fable_5_stay_openrouter_when_bedrock_off():
 def test_claude_and_gpt_use_bedrock_geo_ids_when_enabled():
     with patch("core.ai_models.registry._bedrock_claude_gpt_enabled", return_value=True):
         haiku = ModelFactory.create_anthropic_haiku(use_bedrock=True)
-        sonnet = ModelFactory.create_claude_sonnet_5()
+        sonnet = ModelFactory.create_claude_sonnet_5_5()
         opus = ModelFactory.create_claude_opus_5()
         opus_55 = ModelFactory.create_claude_opus_5_5()
         fable = ModelFactory.create_claude_fable_5()
@@ -48,8 +50,8 @@ def test_claude_and_gpt_use_bedrock_geo_ids_when_enabled():
     assert haiku.fallback_litellm_model_id == "openrouter/anthropic/claude-haiku-4.5"
 
     assert sonnet.provider == ModelProvider.BEDROCK
-    assert sonnet.litellm_model_id == BedrockConfig.get_sonnet_5_id()
-    assert sonnet.fallback_litellm_model_id == "openrouter/anthropic/claude-sonnet-5"
+    assert sonnet.litellm_model_id == BedrockConfig.get_sonnet_5_5_id()
+    assert sonnet.fallback_litellm_model_id == "openrouter/anthropic/claude-sonnet-5.5"
 
     assert opus.litellm_model_id == BedrockConfig.get_opus_5_id()
     assert opus.fallback_litellm_model_id == "openrouter/anthropic/claude-opus-5"
@@ -103,7 +105,35 @@ def test_fable_legacy_alias_still_resolves():
     assert fable_legacy is fable
 
 
+def test_sonnet_5_alias_resolves_to_sonnet_5_5():
+    from core.ai_models.registry import FREE_MODEL_ID
+
+    sonnet = registry.get("dobby/claude-sonnet-5.5")
+    legacy = registry.get("dobby/claude-sonnet-5")
+    assert sonnet is not None
+    assert legacy is sonnet
+    assert sonnet.name == "Claude Sonnet 5.5"
+    assert FREE_MODEL_ID == "dobby/claude-sonnet-5.5"
+    assert registry.get(FREE_MODEL_ID) is sonnet
+    assert "free" in sonnet.tier_availability and "paid" in sonnet.tier_availability
+
+    with patch("core.ai_models.registry._bedrock_claude_gpt_enabled", return_value=True):
+        basic = ModelFactory.create_basic_model("bedrock")
+        power = ModelFactory.create_power_model("bedrock")
+    assert basic.litellm_model_id == BedrockConfig.get_sonnet_5_5_id()
+    assert basic.fallback_litellm_model_id == "openrouter/anthropic/claude-sonnet-5.5"
+    assert "free" in basic.tier_availability
+    assert power.litellm_model_id == BedrockConfig.get_sonnet_5_5_id()
+    assert power.tier_availability == ["paid"]
+
+
 def test_bedrock_geo_pricing_maps():
+    sonnet_55 = registry.get_pricing_for_litellm_id(BedrockConfig.get_sonnet_5_5_id())
+    assert sonnet_55 is not None
+    assert sonnet_55.input_cost_per_million_tokens == 2.00
+    assert sonnet_55.output_cost_per_million_tokens == 10.00
+    assert sonnet_55.cache_write_1h_cost_per_million_tokens == 4.00
+    assert registry.get_pricing_for_litellm_id("openrouter/anthropic/claude-sonnet-5.5") is not None
     assert registry.get_pricing_for_litellm_id(BedrockConfig.get_sonnet_5_id()) is not None
     assert registry.get_pricing_for_litellm_id(BedrockConfig.get_fable_5_1_id()) is not None
     opus_55 = registry.get_pricing_for_litellm_id(BedrockConfig.get_opus_5_5_id())
@@ -214,3 +244,19 @@ def test_bedrock_gpt_converse_ids_advertise_tools():
     )
     assert "tools" in optional
     assert "tool_choice" in optional
+
+
+def test_sonnet_5_5_and_opus_5_5_get_output_room_for_thinking():
+    assert default_output_token_limit("dobby/claude-sonnet-5.5") == 128_000
+    assert default_output_token_limit("dobby/claude-opus-5.5") == 128_000
+    assert default_output_token_limit("dobby/claude-sonnet-5") == 128_000
+    assert default_output_token_limit("global.anthropic.claude-sonnet-5-5") == 128_000
+    assert default_output_token_limit("us.anthropic.claude-opus-5-5") == 128_000
+    assert default_output_token_limit("dobby/basic") == 128_000
+    assert default_output_token_limit("dobby/power") == 128_000
+
+
+def test_models_without_default_thinking_keep_provider_output_cap():
+    assert default_output_token_limit("us.anthropic.claude-sonnet-5") is None
+    assert default_output_token_limit("openai/gpt-5-nano-2025-08-07") is None
+    assert default_output_token_limit("dobby/claude-haiku-4.5") is None

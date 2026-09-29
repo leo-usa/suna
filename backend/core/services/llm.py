@@ -327,6 +327,39 @@ async def _invoke_litellm(
     return response
 
 
+# Sonnet 5.5 and Opus 5.5 think before they answer, and those thinking tokens
+# count toward max_tokens. Agent calls omit max_tokens, so the request falls
+# back to 4096 and the reply never starts. 128k is their output ceiling.
+ADAPTIVE_THINKING_OUTPUT_TOKENS = 128_000
+
+
+def default_output_token_limit(model_name: str) -> Optional[int]:
+    """Output cap to send when the caller did not set one."""
+    if _model_thinks_within_output_limit(model_name):
+        return ADAPTIVE_THINKING_OUTPUT_TOKENS
+    return None
+
+
+def _model_thinks_within_output_limit(model_name: str) -> bool:
+    from core.ai_models import model_manager
+
+    names = [model_name or ""]
+    resolved = model_manager.resolve_model_id(model_name) if model_name else None
+    if resolved:
+        names.append(resolved)
+        model = model_manager.get(resolved)
+        if model is not None:
+            names.append(model.id)
+            if model.litellm_model_id:
+                names.append(model.litellm_model_id)
+            names.extend(model.aliases or [])
+    blob = " ".join(names).lower().replace("_", "-")
+    return any(
+        token in blob
+        for token in ("sonnet-5.5", "sonnet-5-5", "opus-5.5", "opus-5-5")
+    )
+
+
 async def make_llm_api_call(
     messages: List[Dict[str, Any]],
     model_name: str,
@@ -360,11 +393,13 @@ async def make_llm_api_call(
             max_tokens=max_tokens
         )
     
-    logger.info(f"[LLM] call: {model_name} ({len(messages)} msgs)")
     _configure_openai_compatible(model_name, api_key, api_base)
     
     from core.ai_models import model_manager
     resolved_model_name = model_manager.resolve_model_id(model_name) or model_name
+    if max_tokens is None:
+        max_tokens = default_output_token_limit(resolved_model_name)
+    logger.info(f"[LLM] call: {model_name} ({len(messages)} msgs, max_tokens={max_tokens})")
     
     override_params = {
         "messages": messages,
