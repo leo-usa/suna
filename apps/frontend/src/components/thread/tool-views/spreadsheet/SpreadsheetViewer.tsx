@@ -12,6 +12,7 @@ import { useAuth } from '@/components/AuthProvider';
 import { toast } from '@/lib/toast';
 import { useDownloadRestriction } from '@/hooks/billing';
 import { SpreadsheetLoader } from './SpreadsheetLoader';
+import { SpreadsheetSheetBar } from './SpreadsheetSheetBar';
 
 import '../../../../../node_modules/@syncfusion/ej2-base/styles/material.css';
 import '../../../../../node_modules/@syncfusion/ej2-inputs/styles/material.css';
@@ -139,6 +140,10 @@ export function SpreadsheetViewer({
   const {
     syncState,
     isLoading,
+    loadFailed,
+    sheetTabs,
+    activeSheetIndex,
+    selectSheet,
     handlers,
     actions,
   } = useSpreadsheetSync({
@@ -268,7 +273,7 @@ export function SpreadsheetViewer({
     );
   }
 
-  if (syncState.status === 'error' && isLoading) {
+  if (syncState.status === 'error' && (isLoading || loadFailed)) {
     return (
       <div className={cn('w-full h-full flex items-center justify-center', className)}>
         <div className="text-center space-y-3">
@@ -298,9 +303,11 @@ export function SpreadsheetViewer({
 
   return (
     <div className={cn('w-full h-full relative flex flex-col', className)}>
-      <div className="flex-1 relative">
+      <div className="flex-1 min-h-0 relative">
+        <div className="absolute inset-0 overflow-hidden">
         <SpreadsheetComponent
           ref={ssRef}
+          height="100%"
           openUrl={`${SYNCFUSION_SPREADSHEET_SERVICE_URL}/open`}
           saveUrl={`${SYNCFUSION_SPREADSHEET_SERVICE_URL}/save`}
           showRibbon={!compact && allowEditing}
@@ -336,12 +343,18 @@ export function SpreadsheetViewer({
           openComplete={handlers.handleOpenComplete}
           openFailure={handlers.handleOpenFailure}
         />
+        </div>
         {isLoading && (
           <div className="absolute inset-0 z-50 bg-background/95 backdrop-blur-sm">
             <SpreadsheetLoader mode="max" />
           </div>
         )}
       </div>
+      <SpreadsheetSheetBar
+        sheets={sheetTabs}
+        activeSheetIndex={activeSheetIndex}
+        onSelect={selectSheet}
+      />
     </div>
   );
 }

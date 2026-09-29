@@ -25,6 +25,7 @@ import JSZip from 'jszip';
 import { useSpreadsheetSync } from '../../tool-views/spreadsheet/useSpreadsheetSync';
 import { SyncStatusIndicator } from '../../tool-views/spreadsheet/SyncStatusIndicator';
 import { SpreadsheetLoader } from '../../tool-views/spreadsheet/SpreadsheetLoader';
+import { SpreadsheetSheetBar } from '../../tool-views/spreadsheet/SpreadsheetSheetBar';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/components/AuthProvider';
 import { toast } from '@/lib/toast';
@@ -93,6 +94,9 @@ const SpreadsheetEditor = memo(function SpreadsheetEditor({
   const {
     syncState,
     isLoading: isSyncLoading,
+    sheetTabs,
+    activeSheetIndex,
+    selectSheet,
     handlers: syncHandlers,
     actions
   } = useSpreadsheetSync({
@@ -191,9 +195,11 @@ const SpreadsheetEditor = memo(function SpreadsheetEditor({
 
   return (
     <div className="h-full flex flex-col">
-      <div className="flex-1 relative">
+      <div className="flex-1 min-h-0 relative">
+        <div className="absolute inset-0 overflow-hidden">
         <SpreadsheetComponent
           ref={ssRef}
+          height="100%"
           openUrl={`${SYNCFUSION_SPREADSHEET_SERVICE_URL}/open`}
           saveUrl={`${SYNCFUSION_SPREADSHEET_SERVICE_URL}/save`}
           showRibbon={true}
@@ -229,6 +235,7 @@ const SpreadsheetEditor = memo(function SpreadsheetEditor({
           openComplete={syncHandlers.handleOpenComplete}
           openFailure={syncHandlers.handleOpenFailure}
         />
+        </div>
 
         {showLoader && (
           <div className="absolute inset-0 z-50 bg-background/95 backdrop-blur-sm">
@@ -236,6 +243,11 @@ const SpreadsheetEditor = memo(function SpreadsheetEditor({
           </div>
         )}
       </div>
+      <SpreadsheetSheetBar
+        sheets={sheetTabs}
+        activeSheetIndex={activeSheetIndex}
+        onSelect={selectSheet}
+      />
     </div>
   );
 });

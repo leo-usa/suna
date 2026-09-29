@@ -11,6 +11,11 @@ interface SyncState {
   retryCount: number;
 }
 
+export interface SpreadsheetSheetTab {
+  name: string;
+  index: number;
+}
+
 interface UseSpreadsheetSyncOptions {
   sandboxId: string | undefined;
   filePath: string | null;
@@ -103,6 +108,9 @@ export function useSpreadsheetSync({
 
   const [isLoading, setIsLoading] = useState(true);
   const [isComponentReady, setIsComponentReady] = useState(false);
+  const [sheetTabs, setSheetTabs] = useState<SpreadsheetSheetTab[]>([]);
+  const [activeSheetIndex, setActiveSheetIndex] = useState(0);
+  const [loadFailed, setLoadFailed] = useState(false);
 
   // Keep refs in sync with state for polling
   useEffect(() => {
@@ -128,6 +136,10 @@ export function useSpreadsheetSync({
   const initialLoadDoneRef = useRef(false);
   const pendingChangesRef = useRef(false);
   const isLoadingRef = useRef(false);
+  const loadAttemptsRef = useRef(0);
+  const loadRetryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const openWatchdogRef = useRef<NodeJS.Timeout | null>(null);
+  const loadFromServerRef = useRef<() => Promise<boolean>>(async () => false);
 
   const cacheKey = sandboxId && filePath ? `${sandboxId}:${filePath}` : null;
 
@@ -167,8 +179,48 @@ export function useSpreadsheetSync({
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
       if (retryTimeoutRef.current) clearTimeout(retryTimeoutRef.current);
       if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+      if (loadRetryTimeoutRef.current) clearTimeout(loadRetryTimeoutRef.current);
+      if (openWatchdogRef.current) clearTimeout(openWatchdogRef.current);
     };
   }, []);
+
+  const clearOpenWatchdog = () => {
+    if (openWatchdogRef.current) {
+      clearTimeout(openWatchdogRef.current);
+      openWatchdogRef.current = null;
+    }
+  };
+
+  // The first open can fail on a cold sandbox or a slow Syncfusion /open call.
+  // Retry before showing the error screen.
+  const retryInitialLoad = (errorMessage: string) => {
+    clearOpenWatchdog();
+    if (hasInitiallyLoadedRef.current) return;
+    initialLoadDoneRef.current = false;
+    if (loadAttemptsRef.current < maxRetries) {
+      const delay = 1000 * loadAttemptsRef.current;
+      if (loadRetryTimeoutRef.current) clearTimeout(loadRetryTimeoutRef.current);
+      loadRetryTimeoutRef.current = setTimeout(() => {
+        loadRetryTimeoutRef.current = null;
+        loadFromServerRef.current();
+      }, delay);
+      return;
+    }
+    setLoadFailed(true);
+    setIsLoading(false);
+    setSyncState(prev => ({ ...prev, status: 'error', errorMessage }));
+  };
+
+  const openFile = (file: File) => {
+    clearOpenWatchdog();
+    if (!hasInitiallyLoadedRef.current) {
+      openWatchdogRef.current = setTimeout(() => {
+        openWatchdogRef.current = null;
+        retryInitialLoad('Timed out opening file');
+      }, 20000);
+    }
+    spreadsheetRef.current?.open({ file });
+  };
 
   const generateHash = async (blob: Blob): Promise<string> => {
     const buffer = await blob.arrayBuffer();
@@ -178,12 +230,21 @@ export function useSpreadsheetSync({
   };
 
   const loadFromServer = useCallback(async (): Promise<boolean> => {
-    if (!sandboxId || !filePath || !spreadsheetRef.current) {
+    if (!sandboxId || !filePath) {
+      return false;
+    }
+
+    if (!spreadsheetRef.current) {
+      if (!hasInitiallyLoadedRef.current) {
+        loadAttemptsRef.current += 1;
+        retryInitialLoad('Spreadsheet was not ready');
+      }
       return false;
     }
 
     if (!initialLoadDoneRef.current) {
       setIsLoading(true);
+      loadAttemptsRef.current += 1;
     }
 
     try {
@@ -221,7 +282,7 @@ export function useSpreadsheetSync({
       }
 
       const file = new File([fileBlob], fileName, { type: mimeType });
-      spreadsheetRef.current.open({ file });
+      openFile(file);
 
       setSyncState({
         status: 'synced',
@@ -258,6 +319,11 @@ export function useSpreadsheetSync({
         }
       }
 
+      if (!hasInitiallyLoadedRef.current) {
+        retryInitialLoad(error?.message || 'Failed to load spreadsheet');
+        return false;
+      }
+
       setSyncState(prev => ({
         ...prev,
         status: 'error',
@@ -268,6 +334,8 @@ export function useSpreadsheetSync({
       return false;
     }
   }, [sandboxId, filePath, spreadsheetRef, cacheKey]);
+
+  loadFromServerRef.current = loadFromServer;
 
   const saveToServer = useCallback(async (blob: Blob): Promise<boolean> => {
     if (!sandboxId || !filePath) return false;
@@ -446,6 +514,17 @@ export function useSpreadsheetSync({
     scheduleAutoSave();
   }, [scheduleAutoSave]);
 
+  const SHEET_TAB_ACTIONS = useMemo(() => new Set([
+    'insertSheet',
+    'deleteSheet',
+    'renameSheet',
+    'moveSheet',
+    'duplicateSheet',
+    'hideSheet',
+    'showSheet',
+    'gotoSheet',
+  ]), []);
+
   const SAVE_TRIGGERING_ACTIONS = useMemo(() => new Set([
     'cellSave',
     'cellDelete',
@@ -498,14 +577,49 @@ export function useSpreadsheetSync({
     'unlockCells',
   ]), []);
 
+  const refreshSheetTabs = useCallback(() => {
+    const spreadsheet = spreadsheetRef.current;
+    const sheets = spreadsheet?.sheets ?? [];
+    setSheetTabs(sheets.flatMap((sheet, index) => {
+      const state = (sheet as { state?: string }).state;
+      if (state === 'Hidden' || state === 'VeryHidden') return [];
+      const name = (sheet as { name?: string }).name?.trim() || `Sheet${index + 1}`;
+      return [{ name, index }];
+    }));
+    setActiveSheetIndex(spreadsheet?.activeSheetIndex ?? 0);
+  }, [spreadsheetRef]);
+
+  const selectSheet = useCallback((index: number) => {
+    const spreadsheet = spreadsheetRef.current;
+    if (!spreadsheet) return;
+    if (spreadsheet.activeSheetIndex !== index) {
+      spreadsheet.activeSheetIndex = index;
+    }
+    setActiveSheetIndex(index);
+  }, [spreadsheetRef]);
+
   const handleActionComplete = useCallback((args: any) => {
     const action = args?.action;
     if (action && SAVE_TRIGGERING_ACTIONS.has(action) && hasInitiallyLoadedRef.current) {
       scheduleAutoSave();
     }
-  }, [scheduleAutoSave, SAVE_TRIGGERING_ACTIONS]);
+    if (action && SHEET_TAB_ACTIONS.has(action)) {
+      refreshSheetTabs();
+    }
+  }, [scheduleAutoSave, SAVE_TRIGGERING_ACTIONS, refreshSheetTabs, SHEET_TAB_ACTIONS]);
+
+  const resizeSpreadsheet = useCallback(() => {
+    try {
+      spreadsheetRef.current?.resize();
+    } catch {
+      // The sheet tab bar is measured after layout. A resize before mount is ignored.
+    }
+  }, [spreadsheetRef]);
 
   const handleOpenComplete = useCallback(() => {
+    clearOpenWatchdog();
+    loadAttemptsRef.current = 0;
+    setLoadFailed(false);
     setIsLoading(false);
     hasInitiallyLoadedRef.current = true;
     setSyncState(prev => ({
@@ -513,10 +627,19 @@ export function useSpreadsheetSync({
       status: isOnlineRef.current ? 'synced' : 'offline',
       lastSyncedAt: Date.now(),
     }));
-  }, []);
+    refreshSheetTabs();
+    requestAnimationFrame(() => {
+      refreshSheetTabs();
+      resizeSpreadsheet();
+    });
+  }, [refreshSheetTabs, resizeSpreadsheet]);
 
   const handleOpenFailure = useCallback((args: any) => {
     console.error('[SpreadsheetSync] Open failure:', args);
+    if (!hasInitiallyLoadedRef.current) {
+      retryInitialLoad('Failed to open file');
+      return;
+    }
     setIsLoading(false);
     setSyncState(prev => ({
       ...prev,
@@ -527,7 +650,16 @@ export function useSpreadsheetSync({
 
   const handleCreated = useCallback(() => {
     setIsComponentReady(true);
-  }, []);
+    requestAnimationFrame(resizeSpreadsheet);
+  }, [resizeSpreadsheet]);
+
+  useEffect(() => {
+    const parent = spreadsheetRef.current?.element?.parentElement;
+    if (!isComponentReady || !parent || typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(() => resizeSpreadsheet());
+    observer.observe(parent);
+    return () => observer.disconnect();
+  }, [isComponentReady, resizeSpreadsheet, spreadsheetRef]);
 
   useEffect(() => {
     if (sandboxId && filePath && isComponentReady && enabled && !initialLoadDoneRef.current) {
@@ -637,6 +769,9 @@ export function useSpreadsheetSync({
     }
     initialLoadDoneRef.current = false;
     hasInitiallyLoadedRef.current = false;
+    loadAttemptsRef.current = 0;
+    if (loadRetryTimeoutRef.current) clearTimeout(loadRetryTimeoutRef.current);
+    setLoadFailed(false);
     setIsLoading(true);
     setSyncState(prev => ({ ...prev, pendingChanges: false, status: 'idle' }));
     return loadFromServer();
@@ -678,6 +813,10 @@ export function useSpreadsheetSync({
     syncState,
     isLoading,
     isComponentReady,
+    loadFailed,
+    sheetTabs,
+    activeSheetIndex,
+    selectSheet,
     handlers: memoizedHandlers,
     actions: memoizedActions,
   };
