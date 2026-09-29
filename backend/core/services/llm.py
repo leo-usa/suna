@@ -286,6 +286,9 @@ def _params_for_openrouter_fallback(params: Dict[str, Any], fallback_id: str) ->
     fallback_params.pop("aws_region_name", None)
     extra_body = dict(fallback_params.get("extra_body") or {})
     extra_body.setdefault("app", getattr(config, "OR_APP_NAME", None) or "Dobby.now")
+    output_config = fallback_params.pop("output_config", None)
+    if isinstance(output_config, dict) and output_config.get("effort"):
+        extra_body["reasoning"] = {"effort": output_config["effort"]}
     fallback_params["extra_body"] = extra_body
     return fallback_params
 

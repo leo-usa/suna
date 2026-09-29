@@ -113,8 +113,10 @@ def test_sonnet_5_alias_resolves_to_sonnet_5_5():
     assert sonnet is not None
     assert legacy is sonnet
     assert sonnet.name == "Claude Sonnet 5.5"
-    assert FREE_MODEL_ID == "dobby/claude-sonnet-5.5"
-    assert registry.get(FREE_MODEL_ID) is sonnet
+    assert FREE_MODEL_ID == "dobby/basic"
+    basic = registry.get(FREE_MODEL_ID)
+    assert basic.litellm_model_id == sonnet.litellm_model_id
+    assert basic.fallback_litellm_model_id == sonnet.fallback_litellm_model_id
     assert "free" in sonnet.tier_availability and "paid" in sonnet.tier_availability
 
     with patch("core.ai_models.registry._bedrock_claude_gpt_enabled", return_value=True):
@@ -259,6 +261,35 @@ def test_default_thinking_claude_models_get_output_room():
     assert default_output_token_limit("us.anthropic.claude-fable-5-1") == 128_000
     assert default_output_token_limit("dobby/basic") == 128_000
     assert default_output_token_limit("dobby/power") == 128_000
+
+
+def test_basic_runs_low_effort_and_power_runs_high():
+    with patch("core.ai_models.registry._bedrock_claude_gpt_enabled", return_value=True):
+        basic = ModelFactory.create_basic_model("bedrock")
+        power = ModelFactory.create_power_model("bedrock")
+    assert basic.get_litellm_params()["output_config"] == {"effort": "low"}
+    assert power.get_litellm_params()["output_config"] == {"effort": "high"}
+
+    openrouter_basic = ModelFactory.create_basic_model("anthropic")
+    params = openrouter_basic.get_litellm_params()
+    assert "output_config" not in params
+    assert params["extra_body"]["reasoning"] == {"effort": "low"}
+
+    assert registry.format_model_info("dobby/basic")["effort"] == "low"
+    assert registry.format_model_info("dobby/power")["effort"] == "high"
+    assert registry.format_model_info("dobby/claude-sonnet-5.5")["effort"] is None
+    assert "output_config" not in registry.get_litellm_params("dobby/claude-sonnet-5.5")
+
+
+def test_openrouter_fallback_keeps_effort():
+    params = {
+        "model": BedrockConfig.get_sonnet_5_5_id(),
+        "output_config": {"effort": "low"},
+        "messages": [],
+    }
+    fallback = _params_for_openrouter_fallback(params, "openrouter/anthropic/claude-sonnet-5.5")
+    assert "output_config" not in fallback
+    assert fallback["extra_body"]["reasoning"] == {"effort": "low"}
 
 
 def test_models_without_default_thinking_keep_provider_output_cap():

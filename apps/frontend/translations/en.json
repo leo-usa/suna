@@ -796,7 +796,13 @@
       "selectModel": "Select model",
       "poweredBy": "Uses {model}",
       "upgradePaidModel": "Upgrade to use {model}",
-      "pricePerMillion": "in/out per 1M"
+      "pricePerMillion": "in/out per 1M",
+      "withEffort": "{model} · {effort}",
+      "effort": {
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High"
+      }
     },
     "playback": {
       "skipToEnd": "Skip to end",

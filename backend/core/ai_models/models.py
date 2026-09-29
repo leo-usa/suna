@@ -74,6 +74,8 @@ class ModelConfig:
     performance_config: Optional[Dict[str, str]] = None
     reasoning: Optional[ReasoningSettings] = None
     extra_body: Optional[Dict[str, Any]] = None
+    # Claude thinking effort: "low", "medium", or "high".
+    effort: Optional[str] = None
 
 
 @dataclass
@@ -166,6 +168,13 @@ class Model:
         
         if self.config.extra_body:
             params["extra_body"] = self.config.extra_body.copy()
+
+        if self.config.effort:
+            if (self.litellm_model_id or "").startswith("openrouter/"):
+                extra_body = params.setdefault("extra_body", {})
+                extra_body["reasoning"] = {"effort": self.config.effort}
+            else:
+                params["output_config"] = {"effort": self.config.effort}
     
     def _apply_provider_config(self, params: Dict[str, Any], provider: 'ProviderConfig'):
         extra_params = provider.get_extra_params(self.litellm_model_id or self.id)

@@ -788,7 +788,13 @@
       "selectModel": "选择模型",
       "poweredBy": "使用 {model}",
       "upgradePaidModel": "升级后可使用 {model}",
-      "pricePerMillion": "输入/输出·每百万"
+      "pricePerMillion": "输入/输出·每百万",
+      "withEffort": "{model} · {effort}",
+      "effort": {
+        "low": "低",
+        "medium": "中",
+        "high": "高"
+      }
     },
     "playback": {
       "skipToEnd": "跳到结尾",

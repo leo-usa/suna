@@ -180,13 +180,18 @@ export const ModeIndicator = memo(function ModeIndicator() {
   const isPowerSelected = powerModel && selectedModel === powerModel.id;
   const isBasicSelected = basicModel && selectedModel === basicModel.id;
 
+  const withEffort = useCallback(
+    (label: string | null, effort: ModelOption['effort']) =>
+      label && effort ? t('withEffort', { model: label, effort: t(`effort.${effort}`) }) : label,
+    [t],
+  );
   const basicUnderlyingLabel = useMemo(
-    () => resolveUnderlyingModelLabel(basicModel, modelOptions),
-    [basicModel, modelOptions],
+    () => withEffort(resolveUnderlyingModelLabel(basicModel, modelOptions), basicModel?.effort),
+    [basicModel, modelOptions, withEffort],
   );
   const advancedUnderlyingLabel = useMemo(
-    () => resolveUnderlyingModelLabel(powerModel, modelOptions),
-    [powerModel, modelOptions],
+    () => withEffort(resolveUnderlyingModelLabel(powerModel, modelOptions), powerModel?.effort),
+    [powerModel, modelOptions, withEffort],
   );
   const selectedUnderlyingLabel = isPowerSelected
     ? advancedUnderlyingLabel

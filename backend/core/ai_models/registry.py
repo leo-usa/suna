@@ -1,3 +1,4 @@
+from dataclasses import replace
 from typing import Dict, List, Optional, Tuple, Any
 from .models import Model, ModelProvider, ModelCapability, ModelPricing, ModelConfig, ReasoningSettings
 from .providers import provider_registry
@@ -350,13 +351,16 @@ class PricingPresets:
     )
 
 
-FREE_MODEL_ID = "dobby/claude-sonnet-5.5"
+# Basic runs Sonnet 5.5 at low effort; free users run Basic.
+FREE_MODEL_ID = "dobby/basic"
+# Basic copies its route and pricing from this model.
+BASIC_ENGINE_MODEL_ID = "dobby/claude-sonnet-5.5"
 PREMIUM_MODEL_ID = "dobby/power"
 IMAGE_MODEL_ID = "dobby/gpt-5.6-luna"
 
 
-def _create_anthropic_model_config() -> ModelConfig:
-    return ModelConfig()
+def _create_anthropic_model_config(effort: Optional[str] = None) -> ModelConfig:
+    return ModelConfig(effort=effort)
 
 
 def _create_minimax_model_config() -> ModelConfig:
@@ -506,7 +510,7 @@ class ModelFactory:
                 priority=102,
                 recommended=True,
                 enabled=True,
-                config=_create_anthropic_model_config(),
+                config=_create_anthropic_model_config(effort="low"),
                 fallback_litellm_model_id="openrouter/anthropic/claude-sonnet-5.5",
             )
         elif main_llm == "anthropic":
@@ -529,7 +533,7 @@ class ModelFactory:
                 priority=102,
                 recommended=True,
                 enabled=True,
-                config=_create_anthropic_model_config(),
+                config=_create_anthropic_model_config(effort="low"),
             )
         elif main_llm == "grok":
             return Model(
@@ -665,7 +669,7 @@ class ModelFactory:
                 priority=101,
                 recommended=True,
                 enabled=True,
-                config=_create_anthropic_model_config(),
+                config=_create_anthropic_model_config(effort="high"),
                 fallback_litellm_model_id="openrouter/anthropic/claude-sonnet-5.5",
             )
         elif main_llm == "anthropic":
@@ -688,7 +692,7 @@ class ModelFactory:
                 priority=101,
                 recommended=True,
                 enabled=True,
-                config=_create_anthropic_model_config(),
+                config=_create_anthropic_model_config(effort="high"),
             )
         elif main_llm == "grok":
             return Model(
@@ -1794,17 +1798,18 @@ class ModelRegistry:
         self._align_basic_with_free_model()
 
     def _align_basic_with_free_model(self) -> None:
-        free_model = self.get(FREE_MODEL_ID)
+        free_model = self.get(BASIC_ENGINE_MODEL_ID)
         basic_model = self.get("dobby/basic")
         if not free_model or not basic_model or free_model.id == basic_model.id:
             return
 
+        basic_effort = basic_model.config.effort if basic_model.config else None
         basic_model.litellm_model_id = free_model.litellm_model_id
         basic_model.provider = free_model.provider
         basic_model.pricing = free_model.pricing
         basic_model.context_window = free_model.context_window
         basic_model.capabilities = list(free_model.capabilities)
-        basic_model.config = free_model.config
+        basic_model.config = replace(free_model.config or ModelConfig(), effort=basic_effort)
         basic_model.fallback_litellm_model_id = free_model.fallback_litellm_model_id
     
     def _register_pricing_mappings(self):
@@ -2144,6 +2149,7 @@ class ModelRegistry:
             "tier_availability": model.tier_availability,
             "priority": model.priority,
             "recommended": model.recommended,
+            "effort": model.config.effort if model.config else None,
         }
     
     def list_available_models(

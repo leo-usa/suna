@@ -485,6 +485,7 @@ async def _build_account_state(account_id: str, skip_cache: bool = False) -> Dic
             'priority': model.get('priority', 0),
             'recommended': model.get('recommended', False),
             'litellm_model_id': model.get('litellm_model_id'),
+            'effort': model.get('effort'),
         })
     
     # all_limits already fetched above in parallel with Stripe
@@ -726,6 +727,7 @@ async def get_account_state(
                     'priority': model.get('priority', 0),
                     'recommended': model.get('recommended', False),
                     'litellm_model_id': model.get('litellm_model_id'),
+                    'effort': model.get('effort'),
                 }
                 for model in all_models
             ],
