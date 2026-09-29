@@ -327,9 +327,9 @@ async def _invoke_litellm(
     return response
 
 
-# Sonnet 5.5 and Opus 5.5 think before they answer, and those thinking tokens
-# count toward max_tokens. Agent calls omit max_tokens, so the request falls
-# back to 4096 and the reply never starts. 128k is their output ceiling.
+# These Claude models think before they answer, and those thinking tokens count
+# toward max_tokens. Agent calls omit max_tokens, so the request falls back to
+# 4096 and the reply never starts. 128k is their output ceiling.
 ADAPTIVE_THINKING_OUTPUT_TOKENS = 128_000
 
 
@@ -356,7 +356,12 @@ def _model_thinks_within_output_limit(model_name: str) -> bool:
     blob = " ".join(names).lower().replace("_", "-")
     return any(
         token in blob
-        for token in ("sonnet-5.5", "sonnet-5-5", "opus-5.5", "opus-5-5")
+        for token in (
+            "sonnet-5.5",
+            "sonnet-5-5",
+            "opus-5",
+            "fable-5",
+        )
     )
 
 

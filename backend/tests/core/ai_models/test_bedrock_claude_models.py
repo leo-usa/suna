@@ -246,17 +246,23 @@ def test_bedrock_gpt_converse_ids_advertise_tools():
     assert "tool_choice" in optional
 
 
-def test_sonnet_5_5_and_opus_5_5_get_output_room_for_thinking():
+def test_default_thinking_claude_models_get_output_room():
     assert default_output_token_limit("dobby/claude-sonnet-5.5") == 128_000
     assert default_output_token_limit("dobby/claude-opus-5.5") == 128_000
+    assert default_output_token_limit("dobby/claude-opus-5") == 128_000
+    assert default_output_token_limit("dobby/claude-fable-5.1") == 128_000
+    assert default_output_token_limit("dobby/claude-fable-5") == 128_000
     assert default_output_token_limit("dobby/claude-sonnet-5") == 128_000
     assert default_output_token_limit("global.anthropic.claude-sonnet-5-5") == 128_000
     assert default_output_token_limit("us.anthropic.claude-opus-5-5") == 128_000
+    assert default_output_token_limit("us.anthropic.claude-opus-5") == 128_000
+    assert default_output_token_limit("us.anthropic.claude-fable-5-1") == 128_000
     assert default_output_token_limit("dobby/basic") == 128_000
     assert default_output_token_limit("dobby/power") == 128_000
 
 
 def test_models_without_default_thinking_keep_provider_output_cap():
     assert default_output_token_limit("us.anthropic.claude-sonnet-5") is None
+    assert default_output_token_limit("dobby/claude-opus-4.7") is None
     assert default_output_token_limit("openai/gpt-5-nano-2025-08-07") is None
     assert default_output_token_limit("dobby/claude-haiku-4.5") is None
