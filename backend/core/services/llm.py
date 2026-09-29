@@ -139,6 +139,7 @@ def _register_bedrock_gpt_litellm_models() -> None:
         "gpt_5_6_sol",
         "gpt_6_luna",
         "gpt_6_sol",
+        "gpt_6_1_sol",
         "gpt_6_astra",
     ):
         geo_id = BedrockConfig.GEO_MODEL_IDS[geo_key]
