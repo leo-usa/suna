@@ -2769,8 +2769,13 @@
       "descStarting": "可能需要最多约一分钟。",
       "descFailed": "出现问题，请重试。",
       "descOffline": "启动计算机后即可浏览与管理文件。",
+      "titleRemoved": "计算机已被移除",
+      "descRemoved": "这台计算机因一段时间未使用已被移除，上面的文件已经不在了。点击启动计算机即可创建一台新的。",
       "startComputer": "启动计算机",
       "startingUp": "正在启动…"
+    },
+    "fileCard": {
+      "removed": "这个文件已经不在了。保存它的计算机已被移除。"
     },
     "panel": {
       "actions": "操作",

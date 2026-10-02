@@ -65,7 +65,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { fileQueryKeys } from '@/hooks/files/use-file-queries';
 import { VersionBanner } from './VersionBanner';
 import { FileDownloadButton } from '../tool-views/shared/FileDownloadButton';
-import { useSandboxStatusWithAutoStart, isSandboxUsable } from '@/hooks/files/use-sandbox-details';
+import { useSandboxStatusWithAutoStart, isSandboxUsable, isSandboxRemoved } from '@/hooks/files/use-sandbox-details';
+import { SandboxStatusView } from './components/SandboxStatusView';
 
 
 
@@ -155,6 +156,7 @@ export function FileViewerView({
   const { data: sandboxStatusData, isAutoStarting } = useSandboxStatusWithAutoStart(projectId);
   const sandboxStatus = sandboxStatusData?.status;
   const isSandboxReady = sandboxStatus ? isSandboxUsable(sandboxStatus) : false;
+  const sandboxGone = isSandboxRemoved(sandboxStatusData);
 
   // Dobby Computer Store
   const {
@@ -1268,10 +1270,18 @@ export function FileViewerView({
       <div className="flex-1 overflow-hidden max-w-full min-w-0">
         {(() => {
           // Check if we're still retrying - show loading state instead of error
-          const isStillRetrying = fileRetryAttempt < 15;
+          const missingFile = [contentError, cachedFileError].some((error) => {
+            const message = String(error || '');
+            return message.includes('404') || message.toLowerCase().includes('not found');
+          });
+          const isStillRetrying = fileRetryAttempt < 15 && !missingFile;
           const hasError = !!(contentError || cachedFileError);
 
           // Show sandbox status when not ready
+          if (sandboxGone || missingFile) {
+            return <SandboxStatusView projectId={projectId} className="h-full" />;
+          }
+
           if (!isSandboxReady && sandboxStatus) {
             return (
               <div className="h-full w-full max-w-full flex flex-col items-center justify-center min-w-0">

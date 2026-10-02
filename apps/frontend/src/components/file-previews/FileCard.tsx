@@ -4,6 +4,7 @@
  */
 
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { DobbyLoader } from '@/components/ui/dobby-loader';
 import { cn } from '@/lib/utils';
 import { getFileType, getFileIcon, getTypeLabel, getFileSize, getFilename } from '@/lib/utils/file-utils';
@@ -29,6 +30,7 @@ export function FileCard({
     isSandboxDeleted = false,
     alignRight = false,
 }: FileCardProps) {
+    const t = useTranslations('dobbyComputer.fileCard');
     const filename = getFilename(filepath);
     const extension = filename.split('.').pop()?.toLowerCase() || '';
     const fileType = getFileType(filename);
@@ -48,7 +50,7 @@ export function FileCard({
                     "h-[54px] w-fit min-w-[200px] max-w-[300px]",
                     className
                 )}
-                title={`${filename} - Sandbox no longer available`}
+                title={`${filename} - ${t('removed')}`}
             >
                 <div className="w-[54px] h-full flex items-center justify-center flex-shrink-0 bg-muted/50">
                     <IconComponent className="h-5 w-5 text-muted-foreground" />
@@ -58,9 +60,7 @@ export function FileCard({
                         {filename}
                     </div>
                     <div className="text-xs text-muted-foreground flex items-center gap-1 truncate">
-                        <span className="truncate">Unavailable</span>
-                        <span className="flex-shrink-0">·</span>
-                        <span className="flex-shrink-0">Sandbox deleted</span>
+                        <span className="truncate">{t('removed')}</span>
                     </div>
                 </div>
             </div>

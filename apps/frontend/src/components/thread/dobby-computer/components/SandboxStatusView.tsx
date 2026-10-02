@@ -26,20 +26,23 @@ export function SandboxStatusView({ projectId, className }: SandboxStatusViewPro
   const [isStuck, setIsStuck] = useState(false);
 
   const status = sandboxState?.status || 'OFFLINE';
+  const isRemoved =
+    sandboxState?.error === 'SANDBOX_REMOVED' || sandboxState?.daytona_state === 'removed';
 
-  // Reset creating state once the backend reports any post-click status
+  // Keep the starting state until the new computer is actually coming up.
+  // A removed sandbox stays OFFLINE until creation links a machine.
   useEffect(() => {
-    if (
-      isCreating &&
-      (status === 'LIVE' ||
-        status === 'FAILED' ||
-        status === 'STARTING' ||
-        status === 'UNKNOWN' ||
-        status === 'OFFLINE')
-    ) {
+    if (!isCreating) return;
+    if (status === 'LIVE' || status === 'FAILED' || status === 'STARTING') {
       setIsCreating(false);
     }
   }, [status, isCreating]);
+
+  useEffect(() => {
+    if (!isCreating) return;
+    const timer = window.setTimeout(() => setIsCreating(false), 90000);
+    return () => window.clearTimeout(timer);
+  }, [isCreating]);
 
   useEffect(() => {
     if (status !== 'STARTING') {
@@ -118,14 +121,22 @@ export function SandboxStatusView({ projectId, className }: SandboxStatusViewPro
         {/* Text */}
         <div className="space-y-2">
           <h3 className="text-xl font-semibold">
-            {isStarting ? t('titleStarting') : isFailed ? t('titleFailed') : t('titleNotRunning')}
+            {isStarting
+              ? t('titleStarting')
+              : isFailed
+                ? t('titleFailed')
+                : isRemoved
+                  ? t('titleRemoved')
+                  : t('titleNotRunning')}
           </h3>
           <p className="text-sm text-muted-foreground">
             {isStarting
               ? t('descStarting')
               : isFailed
                 ? t('descFailed')
-                : t('descOffline')}
+                : isRemoved
+                  ? t('descRemoved')
+                  : t('descOffline')}
           </p>
         </div>
 

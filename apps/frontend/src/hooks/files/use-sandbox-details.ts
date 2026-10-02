@@ -26,6 +26,10 @@ export {
   getSandboxStatusLabel,
 } from '@agentpress/shared/types/sandbox';
 
+export function isSandboxRemoved(state: { error?: string; daytona_state?: string } | null | undefined): boolean {
+  return state?.error === 'SANDBOX_REMOVED' || state?.daytona_state === 'removed';
+}
+
 // ============================================================================
 // Legacy SandboxDetails (kept for backwards compatibility)
 // ============================================================================
@@ -268,6 +272,7 @@ export function useSandboxStatusWithAutoStart(
     if (!autoStartEnabled) return;
     if (alreadyAttempted || alreadyInProgress) return;
     if (!sandboxState) return;
+    if (isSandboxRemoved(sandboxState)) return;
 
     // Browsers cannot start the Mac runner. Restore the cloud sandbox instead of 503ing.
     if (isLocalSandboxState(sandboxState) && !isLocalRunnerAvailable()) {

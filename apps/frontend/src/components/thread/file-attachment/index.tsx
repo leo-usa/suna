@@ -18,6 +18,7 @@ import { DocxPreview } from '@/components/file-previews/DocxPreview';
 import { FileCarousel } from '@/components/file-layouts/FileCarousel';
 import { FileGrid } from '@/components/file-layouts/FileGrid';
 import { useFileData } from '@/hooks/use-file-data';
+import { isSandboxRemoved, useSandboxStatus } from '@/hooks/files/use-sandbox-details';
 import { getFileType, getFilename } from '@/lib/utils/file-utils';
 import { isImageFile, isPdfExtension, isSpreadsheetExtension, isCsvExtension, isPreviewableFile, isKanvaxFile, isDocxExtension } from '@/lib/utils/file-types';
 import { Project } from '@/lib/api/threads';
@@ -95,21 +96,24 @@ export function FileAttachment({
     const isGridLayout = customStyle?.gridColumn === '1 / -1' || Boolean(customStyle && ('--attachment-height' in customStyle));
     // Images should also show previews, not just previewable files
     const shouldShowPreview = (isPreviewable || isImage) && showPreview && collapsed === false;
+    const { data: sandboxState } = useSandboxStatus(project?.id, { enabled: !!project?.id });
+    const computerRemoved = isSandboxRemoved(sandboxState);
     
     // Call all hooks at the top level before any early returns
     const { error, retryCount } = useFileData(
         sandboxId,
         filepath,
-        { enabled: shouldShowPreview, showPreview: shouldShowPreview }
+        { enabled: shouldShowPreview && !computerRemoved, showPreview: shouldShowPreview }
     );
     
     const { data, isLoading } = useFileData(
         sandboxId,
         filepath,
-        { enabled: shouldShowPreview, showPreview: true }
+        { enabled: shouldShowPreview && !computerRemoved, showPreview: true }
     );
     
-    const isSandboxDeleted = error?.message?.includes('404') || 
+    const isSandboxDeleted = computerRemoved ||
+                             error?.message?.includes('404') || 
                              error?.message?.includes('Sandbox not found') ||
                              error?.message?.includes('no project owns this sandbox');
     const isStillRetrying = retryCount < 15;

@@ -5,7 +5,7 @@ import urllib.parse
 import uuid
 import json
 from typing import Optional, TypeVar, Callable, Awaitable, Dict, List
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 
 import httpx
@@ -975,6 +975,8 @@ async def recover_unlinked_sandbox(client, project_id: str, account_id: Optional
     sandbox_id = sandbox_data.get("sandbox_id") or sandbox_data.get("id")
     if sandbox_id and not str(sandbox_id).startswith("local:"):
         resource = await resource_service.get_resource_by_external_id(sandbox_id, ResourceType.SANDBOX)
+        if resource and resource.get("status") == ResourceStatus.DELETED.value:
+            resource = None
 
     if not resource and account_id and project_data.get("dedicated_at"):
         from core.threads import repo as threads_repo
@@ -983,28 +985,27 @@ async def recover_unlinked_sandbox(client, project_id: str, account_id: Optional
         host_resource_id = (host or {}).get("sandbox_resource_id")
         if host_resource_id and (host or {}).get("project_id") != project_id:
             resource = await resource_service.get_resource_by_id(host_resource_id)
-        if not resource:
-            result = await client.table("resources").select("*").eq(
-                "account_id", account_id
-            ).eq("type", ResourceType.SANDBOX.value).order(
-                "updated_at", desc=True
-            ).limit(5).execute()
-            for row in result.data or []:
-                if row.get("status") == ResourceStatus.POOLED.value:
-                    continue
-                if str(row.get("external_id") or "").startswith("local:"):
-                    continue
-                resource = row
-                break
+            if resource and resource.get("status") == ResourceStatus.DELETED.value:
+                resource = None
 
     if not resource:
         return None
 
-    if resource.get("status") == ResourceStatus.DELETED.value:
-        resource = await resource_service.update_resource(resource["id"], status=ResourceStatus.ACTIVE)
     await resource_service.link_resource_to_project(project_id, resource["id"])
     logger.info(f"Restored sandbox {resource.get('external_id')} for project {project_id}")
     return resource
+
+
+def sandbox_removed_response(project_id: str) -> "SandboxStatusResponse":
+    """Fast status for a project whose Daytona sandbox was deleted."""
+    return SandboxStatusResponse(
+        status=UnifiedSandboxStatus.OFFLINE.value,
+        sandbox_id="",
+        project_id=project_id,
+        daytona_state="removed",
+        last_checked=datetime.now(timezone.utc).isoformat(),
+        error="SANDBOX_REMOVED",
+    )
 
 
 def is_sandbox_live(health: Optional[Dict]) -> bool:
@@ -1072,23 +1073,27 @@ async def get_project_sandbox_status(
 
         resource_service = ResourceService(client)
         sandbox_resource = await resource_service.get_project_sandbox_resource(project_id)
-        if not sandbox_resource:
-            sandbox_resource = await recover_unlinked_sandbox(
-                client,
-                project_id,
-                project_data.get("account_id"),
-                project_data,
-            )
 
         if not sandbox_resource:
-            return SandboxStatusResponse(
-                status=UnifiedSandboxStatus.UNKNOWN.value,
-                sandbox_id="",
-                project_id=project_id,
-                daytona_state="none",
-                last_checked=datetime.now(timezone.utc).isoformat(),
-                error="No sandbox found for this project"
-            )
+            # A project created moments ago has not had a computer yet.
+            # An older project with no sandbox was unlinked after LRU eviction.
+            created_raw = project_data.get("created_at")
+            if created_raw:
+                try:
+                    created = datetime.fromisoformat(str(created_raw).replace("Z", "+00:00"))
+                    if created.tzinfo is None:
+                        created = created.replace(tzinfo=timezone.utc)
+                    if datetime.now(timezone.utc) - created < timedelta(minutes=15):
+                        return SandboxStatusResponse(
+                            status=UnifiedSandboxStatus.OFFLINE.value,
+                            sandbox_id="",
+                            project_id=project_id,
+                            daytona_state="none",
+                            last_checked=datetime.now(timezone.utc).isoformat(),
+                        )
+                except Exception:
+                    pass
+            return sandbox_removed_response(project_id)
 
         sandbox_id = sandbox_resource.get('external_id')
         config = sandbox_resource.get('config', {})
@@ -1101,15 +1106,12 @@ async def get_project_sandbox_status(
                 f"Sandbox {sandbox_id} not found in Daytona; clearing stale resource for project {project_id}"
             )
             await sync_db_after_evicted_sandbox(sandbox_id)
-            return SandboxStatusResponse(
-                status=UnifiedSandboxStatus.UNKNOWN.value,
-                sandbox_id="",
-                project_id=project_id,
-                daytona_state="none",
-                last_checked=datetime.now(timezone.utc).isoformat(),
-                error="Sandbox was removed; a new one will be created when you start the computer.",
-            )
+            return sandbox_removed_response(project_id)
         daytona_state = sandbox.state.value if hasattr(sandbox.state, 'value') else str(sandbox.state)
+
+        if daytona_state.lower() in ("destroyed", "destroying"):
+            await sync_db_after_evicted_sandbox(sandbox_id)
+            return sandbox_removed_response(project_id)
 
         # Only fetch health if Daytona reports started
         services_health = None

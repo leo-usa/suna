@@ -1571,8 +1571,13 @@
       "descStarting": "This may take up to a minute.",
       "descFailed": "Something went wrong. Please try again.",
       "descOffline": "Start the computer to browse and manage files.",
+      "titleRemoved": "Computer was removed",
+      "descRemoved": "This computer was removed because it wasn't used for a while. Files on it are gone. Turn it on to create a new one.",
       "startComputer": "Start Computer",
       "startingUp": "Starting up..."
+    },
+    "fileCard": {
+      "removed": "This file is gone. The computer that stored it was removed."
     },
     "panel": {
       "actions": "Actions",

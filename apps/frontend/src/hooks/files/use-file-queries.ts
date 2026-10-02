@@ -217,8 +217,14 @@ export function useFileContentQuery(
     gcTime: options.gcTime || 10 * 60 * 1000, // 10 minutes
     // Smart retry with exponential backoff and reasonable limits to prevent server overload
     retry: (failureCount, error: any) => {
-      // Don't retry on auth errors
-      if (error?.message?.includes('401') || error?.message?.includes('403')) {
+      const message = String(error?.message || '');
+      // Don't retry on auth errors, or when the computer and its files are gone
+      if (
+        message.includes('401') ||
+        message.includes('403') ||
+        message.includes('404') ||
+        message.toLowerCase().includes('not found')
+      ) {
         return false;
       }
       // Retry up to 15 times (~8-10 minutes total with exponential backoff)

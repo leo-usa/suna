@@ -69,7 +69,8 @@ import { PresentationSlidePreview } from '../tool-views/presentation-tools/Prese
 import { PresentationSlideSkeleton } from '../tool-views/presentation-tools/PresentationSlideSkeleton';
 import { PdfRenderer } from '@/components/file-renderers/pdf-renderer';
 import { UnifiedMarkdown } from '@/components/markdown/unified-markdown';
-import { useSandboxStatusWithAutoStart, isSandboxUsable } from '@/hooks/files/use-sandbox-details';
+import { useSandboxStatusWithAutoStart, isSandboxUsable, isSandboxRemoved } from '@/hooks/files/use-sandbox-details';
+import { SandboxStatusView } from './components/SandboxStatusView';
 
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || '';
 
@@ -690,6 +691,7 @@ export function FileBrowserView({
   const { data: sandboxStatusData, isAutoStarting } = useSandboxStatusWithAutoStart(projectId);
   const sandboxStatus = sandboxStatusData?.status;
   const isSandboxReady = sandboxStatus ? isSandboxUsable(sandboxStatus) : false;
+  const sandboxGone = isSandboxRemoved(sandboxStatusData);
 
   // Use React Query for directory listing - only fetch when sandbox is LIVE
   const {
@@ -2006,7 +2008,9 @@ export function FileBrowserView({
       {/* File Explorer */}
       <div className="flex-1 overflow-hidden max-w-full min-w-0">
         {/* Show sandbox status when not ready */}
-        {hasSandbox && !isSandboxReady && sandboxStatus ? (
+        {sandboxGone ? (
+          <SandboxStatusView projectId={projectId} className="h-full" />
+        ) : hasSandbox && !isSandboxReady && sandboxStatus ? (
           <div className="h-full w-full flex flex-col items-center justify-center p-8 bg-zinc-50 dark:bg-zinc-900/50">
             <div className="flex flex-col items-center space-y-4 max-w-sm text-center">
               <DobbyLoader size="medium" />
