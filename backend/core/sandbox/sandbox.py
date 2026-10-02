@@ -1,5 +1,6 @@
 import asyncio
 import time
+import uuid
 
 from daytona_sdk import AsyncDaytona, DaytonaConfig, CreateSandboxFromSnapshotParams, AsyncSandbox, SessionExecuteRequest, SandboxState, ListSandboxesQuery
 from dotenv import load_dotenv
@@ -32,6 +33,199 @@ else:
     logger.warning("No Daytona target found in environment variables")
 
 daytona = AsyncDaytona(daytona_config)
+
+_SANDBOX_START_LOCKS: dict[str, asyncio.Lock] = {}
+_BACKGROUND_SANDBOX_TASKS: set[asyncio.Task] = set()
+_REPLACING_SANDBOX_IDS: set[str] = set()
+
+_STARTED_STATES = {SandboxState.STARTED}
+_STOPPED_STATES = {SandboxState.STOPPED, SandboxState.ARCHIVED}
+_TRANSITIONAL_STATES = {
+    SandboxState.STARTING,
+    SandboxState.RESTORING,
+    SandboxState.CREATING,
+    SandboxState.PULLING_SNAPSHOT,
+    SandboxState.PENDING_BUILD,
+    SandboxState.ARCHIVING,
+    SandboxState.STOPPING,
+    SandboxState.RESIZING,
+    SandboxState.BUILDING_SNAPSHOT,
+    SandboxState.SNAPSHOTTING,
+    SandboxState.FORKING,
+}
+_ERROR_STATES = {
+    SandboxState.ERROR,
+    SandboxState.BUILD_FAILED,
+    SandboxState.UNKNOWN,
+    SandboxState.UNKNOWN_DEFAULT_OPEN_API,
+}
+_DESTROYED_STATES = {SandboxState.DESTROYED, SandboxState.DESTROYING}
+
+
+def _start_lock_for(sandbox_id: str) -> asyncio.Lock:
+    lock = _SANDBOX_START_LOCKS.get(sandbox_id)
+    if lock is None:
+        lock = asyncio.Lock()
+        _SANDBOX_START_LOCKS[sandbox_id] = lock
+    return lock
+
+
+async def _run_scheduled_sandbox_start(sandbox_id: str, force: bool = False) -> None:
+    try:
+        await get_or_start_sandbox(sandbox_id, force=force)
+    except Exception as e:
+        logger.error(f"Background sandbox start failed for {sandbox_id}: {e}")
+
+
+def schedule_sandbox_start(sandbox_id: str, force: bool = False) -> None:
+    """Start or recover a sandbox in the background without dropping the task."""
+    task = asyncio.create_task(_run_scheduled_sandbox_start(sandbox_id, force=force))
+    _BACKGROUND_SANDBOX_TASKS.add(task)
+    task.add_done_callback(_BACKGROUND_SANDBOX_TASKS.discard)
+
+
+async def _wait_for_states(
+    sandbox_id: str,
+    desired_states: set[SandboxState],
+    timeout: float,
+) -> AsyncSandbox:
+    deadline = time.monotonic() + timeout
+    sandbox = await daytona.get(sandbox_id)
+    while time.monotonic() < deadline:
+        if sandbox.state in desired_states:
+            return sandbox
+        await asyncio.sleep(1)
+        sandbox = await daytona.get(sandbox_id)
+    return sandbox
+
+
+async def _preview_urls_for_sandbox(sandbox: AsyncSandbox) -> tuple[str | None, str | None, str | None]:
+    try:
+        vnc_link = await sandbox.get_preview_link(6080)
+        website_link = await sandbox.get_preview_link(8080)
+        vnc_url = vnc_link.url if hasattr(vnc_link, "url") else None
+        website_url = website_link.url if hasattr(website_link, "url") else None
+        token = vnc_link.token if hasattr(vnc_link, "token") else None
+        return vnc_url, website_url, token
+    except Exception as e:
+        logger.warning(f"Could not get preview links for sandbox {getattr(sandbox, 'id', '?')}: {e}")
+        return None, None, None
+
+
+async def replace_dead_sandbox(sandbox_id: str) -> AsyncSandbox:
+    """Delete an irrecoverable Daytona VM and point the existing resource at a new one."""
+    from core.utils.db_helpers import get_db
+    from core.resources import ResourceService, ResourceType
+    from core.cache.runtime_cache import set_cached_project_metadata
+
+    logger.warning(f"Replacing irrecoverable sandbox {sandbox_id}")
+    _REPLACING_SANDBOX_IDS.add(sandbox_id)
+
+    db = await get_db()
+    client = await db.client
+    resource_service = ResourceService(client)
+    resource = await resource_service.get_resource_by_external_id(sandbox_id, ResourceType.SANDBOX)
+    if not resource:
+        _REPLACING_SANDBOX_IDS.discard(sandbox_id)
+        raise RuntimeError(f"Sandbox {sandbox_id} is irrecoverable and has no resource to replace")
+
+    linked = await client.table("projects").select("project_id").eq(
+        "sandbox_resource_id", resource["id"]
+    ).execute()
+    project_ids = [row["project_id"] for row in (linked.data or []) if row.get("project_id")]
+    project_id = project_ids[0] if project_ids else None
+
+    try:
+        dead = await daytona.get(sandbox_id)
+        await daytona.delete(dead)
+        logger.info(f"Deleted irrecoverable sandbox {sandbox_id}")
+    except Exception as e:
+        logger.warning(f"Could not delete irrecoverable sandbox {sandbox_id}: {e}")
+
+    try:
+        password = (resource.get("config") or {}).get("pass") or str(uuid.uuid4())
+        new_sandbox = await create_sandbox(password, project_id)
+        await asyncio.sleep(2)
+        vnc_url, website_url, token = await _preview_urls_for_sandbox(new_sandbox)
+
+        config = dict(resource.get("config") or {})
+        config["pass"] = password
+        if vnc_url:
+            config["vnc_preview"] = vnc_url
+        if website_url:
+            config["sandbox_url"] = website_url
+        if token:
+            config["token"] = token
+        from core.resources import ResourceStatus
+
+        await resource_service.update_resource(
+            resource["id"],
+            config=config,
+            external_id=new_sandbox.id,
+            status=ResourceStatus.ACTIVE,
+        )
+        for linked_project_id in project_ids:
+            try:
+                await resource_service.link_resource_to_project(linked_project_id, resource["id"])
+            except Exception as e:
+                logger.warning(f"Could not relink sandbox resource to project {linked_project_id}: {e}")
+        for linked_project_id in project_ids:
+            try:
+                await set_cached_project_metadata(linked_project_id, {
+                    "sandbox_id": new_sandbox.id,
+                    "pass": password,
+                    "vnc_preview": vnc_url,
+                    "sandbox_url": website_url,
+                    "token": token,
+                })
+            except Exception as e:
+                logger.warning(f"Could not refresh sandbox cache for project {linked_project_id}: {e}")
+        try:
+            from core.sandbox.dedicated import is_sandbox_id_dedicated, sync_sandbox_dedicated_label
+            if await is_sandbox_id_dedicated(new_sandbox.id):
+                await sync_sandbox_dedicated_label(new_sandbox.id, True)
+        except Exception as e:
+            logger.debug(f"Could not mark replacement sandbox dedicated: {e}")
+        logger.info(
+            f"Replaced sandbox {sandbox_id} with {new_sandbox.id} on resource {resource['id']}"
+        )
+        return new_sandbox
+    finally:
+        _REPLACING_SANDBOX_IDS.discard(sandbox_id)
+
+
+async def refresh_sandbox_preview_urls(sandbox: AsyncSandbox) -> None:
+    """Refresh stored preview URLs after a start/restart so health checks hit the live IP."""
+    try:
+        vnc_link = await sandbox.get_preview_link(6080)
+        website_link = await sandbox.get_preview_link(8080)
+        vnc_url = vnc_link.url if hasattr(vnc_link, "url") else None
+        website_url = website_link.url if hasattr(website_link, "url") else None
+        token = vnc_link.token if hasattr(vnc_link, "token") else None
+        if not website_url and not vnc_url:
+            return
+
+        from core.utils.db_helpers import get_db
+        from core.resources import ResourceService, ResourceType
+
+        db = await get_db()
+        client = await db.client
+        resource_service = ResourceService(client)
+        resource = await resource_service.get_resource_by_external_id(sandbox.id, ResourceType.SANDBOX)
+        if not resource:
+            return
+
+        config = dict(resource.get("config") or {})
+        if vnc_url:
+            config["vnc_preview"] = vnc_url
+        if website_url:
+            config["sandbox_url"] = website_url
+        if token:
+            config["token"] = token
+        await resource_service.update_resource(resource["id"], config=config)
+        logger.info(f"Refreshed preview URLs for sandbox {sandbox.id}")
+    except Exception as e:
+        logger.warning(f"Could not refresh preview URLs for sandbox {getattr(sandbox, 'id', '?')}: {e}")
 
 
 async def download_sandbox_file_bytes(sandbox: AsyncSandbox, path: str, timeout: int = 30 * 60) -> bytes:
@@ -70,11 +264,14 @@ async def sync_db_after_evicted_sandbox(sandbox_id: str) -> None:
         from core.utils.db_helpers import get_db
         from core.resources import ResourceService, ResourceType
 
+        if sandbox_id in _REPLACING_SANDBOX_IDS:
+            logger.info(f"Skipping unlink for {sandbox_id}; a replacement is in progress")
+            return
         db = await get_db()
         client = await db.client
         rs = ResourceService(client)
         resource = await rs.get_resource_by_external_id(sandbox_id, ResourceType.SANDBOX)
-        if not resource:
+        if not resource or resource.get("external_id") != sandbox_id:
             return
         rid = resource["id"]
         await client.table("projects").update({"sandbox_resource_id": None}).eq(
@@ -174,50 +371,100 @@ async def _evict_oldest_deletable_sandboxes_if_over_limit() -> None:
         )
 
 
-async def get_or_start_sandbox(sandbox_id: str) -> AsyncSandbox:
+async def get_or_start_sandbox(sandbox_id: str, force: bool = False) -> AsyncSandbox:
     """Retrieve a sandbox by ID, check its state, and start it if needed."""
     
-    logger.info(f"Getting or starting sandbox with ID: {sandbox_id}")
+    logger.info(f"Getting or starting sandbox with ID: {sandbox_id} force={force}")
 
-    try:
-        sandbox = await daytona.get(sandbox_id)
-        
-        # Check if sandbox needs to be started
-        if sandbox.state in [SandboxState.ARCHIVED, SandboxState.STOPPED, SandboxState.ARCHIVING]:
-            logger.info(f"Sandbox is in {sandbox.state} state. Starting...")
-            try:
-                await daytona.start(sandbox)
-                
-                # Wait for sandbox to reach STARTED state
-                for _ in range(30):
-                    await asyncio.sleep(1)
-                    sandbox = await daytona.get(sandbox_id)
-                    if sandbox.state == SandboxState.STARTED:
-                        break
-                
-                # Start supervisord in a session when restarting
-                await start_supervisord_session(sandbox)
-            except Exception as e:
-                logger.error(f"Error starting sandbox: {e}")
-                raise e
-
-        # LRU: refresh last_used_ts on labels when supported (Daytona SDK)
+    async with _start_lock_for(sandbox_id):
         try:
-            labels = dict(getattr(sandbox, "labels", None) or {})
-            labels["last_used_ts"] = str(time.time())
-            if hasattr(sandbox, "set_labels") and callable(sandbox.set_labels):
-                await sandbox.set_labels(labels)
-            elif hasattr(daytona, "update_labels"):
-                await daytona.update_labels(sandbox, labels)
-        except Exception as e:
-            logger.debug(f"Could not update last_used_ts labels for {sandbox_id}: {e}")
+            sandbox = await daytona.get(sandbox_id)
+            logger.info(f"Sandbox {sandbox_id} current state: {sandbox.state}")
 
-        logger.info(f"Sandbox {sandbox_id} is ready")
-        return sandbox
-        
-    except Exception as e:
-        logger.error(f"Error retrieving or starting sandbox: {str(e)}")
-        raise e
+            if sandbox.state in _DESTROYED_STATES:
+                raise RuntimeError(f"Sandbox {sandbox_id} is {sandbox.state} and cannot be started")
+
+            if sandbox.state in _ERROR_STATES:
+                logger.warning(
+                    f"Sandbox {sandbox_id} is {sandbox.state} and cannot be restarted; replacing it"
+                )
+                sandbox = await replace_dead_sandbox(sandbox_id)
+                logger.info(f"Sandbox {sandbox.id} is ready")
+                return sandbox
+
+            if sandbox.state in _TRANSITIONAL_STATES and not force:
+                logger.info(f"Sandbox {sandbox_id} is {sandbox.state}; waiting for a terminal state")
+                sandbox = await _wait_for_states(
+                    sandbox_id,
+                    _STARTED_STATES | _STOPPED_STATES | _ERROR_STATES | _DESTROYED_STATES,
+                    timeout=45,
+                )
+
+            if sandbox.state in _TRANSITIONAL_STATES:
+                logger.warning(f"Sandbox {sandbox_id} stuck in {sandbox.state}; forcing restart")
+                force = True
+
+            if sandbox.state in _DESTROYED_STATES:
+                raise RuntimeError(f"Sandbox {sandbox_id} is {sandbox.state} and cannot be started")
+
+            if sandbox.state in _ERROR_STATES:
+                logger.warning(
+                    f"Sandbox {sandbox_id} entered {sandbox.state}; replacing it"
+                )
+                sandbox = await replace_dead_sandbox(sandbox_id)
+                logger.info(f"Sandbox {sandbox.id} is ready")
+                return sandbox
+
+            if force and sandbox.state not in _STOPPED_STATES:
+                logger.warning(f"Stopping sandbox {sandbox_id} from {sandbox.state} before restart")
+                try:
+                    await daytona.stop(sandbox)
+                except Exception as e:
+                    logger.warning(f"Could not stop sandbox {sandbox_id} before restart: {e}")
+                sandbox = await _wait_for_states(
+                    sandbox_id,
+                    _STOPPED_STATES | _ERROR_STATES | _DESTROYED_STATES,
+                    timeout=45,
+                )
+
+            if force or sandbox.state in _STOPPED_STATES | {SandboxState.ARCHIVING}:
+                logger.info(f"Sandbox is in {sandbox.state} state. Starting...")
+                try:
+                    await daytona.start(sandbox)
+                    sandbox = await _wait_for_states(sandbox_id, _STARTED_STATES, timeout=60)
+                    if sandbox.state != SandboxState.STARTED:
+                        raise RuntimeError(
+                            f"Sandbox {sandbox_id} failed to reach STARTED, state={sandbox.state}"
+                        )
+                    await start_supervisord_session(sandbox)
+                    await refresh_sandbox_preview_urls(sandbox)
+                except Exception as e:
+                    if "errored state" in str(e).lower():
+                        logger.warning(
+                            f"Sandbox {sandbox_id} cannot start from error; replacing it"
+                        )
+                        sandbox = await replace_dead_sandbox(sandbox_id)
+                    else:
+                        logger.error(f"Error starting sandbox: {e}")
+                        raise e
+
+            # LRU: refresh last_used_ts on labels when supported (Daytona SDK)
+            try:
+                labels = dict(getattr(sandbox, "labels", None) or {})
+                labels["last_used_ts"] = str(time.time())
+                if hasattr(sandbox, "set_labels") and callable(sandbox.set_labels):
+                    await sandbox.set_labels(labels)
+                elif hasattr(daytona, "update_labels"):
+                    await daytona.update_labels(sandbox, labels)
+            except Exception as e:
+                logger.debug(f"Could not update last_used_ts labels for {sandbox_id}: {e}")
+
+            logger.info(f"Sandbox {sandbox_id} is ready")
+            return sandbox
+
+        except Exception as e:
+            logger.error(f"Error retrieving or starting sandbox: {str(e)}")
+            raise e
 
 async def start_supervisord_session(sandbox: AsyncSandbox):
     """Start supervisord in a session."""

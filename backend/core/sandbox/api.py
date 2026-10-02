@@ -22,6 +22,7 @@ from core.sandbox.sandbox import (
     daytona,
     sync_db_after_evicted_sandbox,
     download_sandbox_file_bytes,
+    schedule_sandbox_start,
 )
 from core.utils.logger import logger
 from core.utils.auth_utils import get_optional_user_id, verify_and_get_user_id_from_jwt, verify_sandbox_access, verify_sandbox_access_optional
@@ -877,8 +878,18 @@ def derive_sandbox_status(daytona_state: str, services_health: Optional[Dict] = 
     if state_lower in ('stopped', 'archived'):
         return UnifiedSandboxStatus.OFFLINE.value
 
-    # If archiving or stopping, it's transitioning - treat as STARTING for faster polling
-    if state_lower in ('archiving', 'stopping'):
+    if state_lower in ('destroyed', 'destroying'):
+        return UnifiedSandboxStatus.UNKNOWN.value
+
+    if state_lower in ('error', 'build_failed'):
+        return UnifiedSandboxStatus.FAILED.value
+
+    # Transitional Daytona states - keep polling instead of hanging as UNKNOWN
+    if state_lower in (
+        'starting', 'restoring', 'creating', 'pulling_snapshot',
+        'pending_build', 'archiving', 'stopping', 'resizing',
+        'building_snapshot', 'snapshotting', 'forking',
+    ):
         return UnifiedSandboxStatus.STARTING.value
 
     # Daytona says started - check service health
@@ -951,6 +962,62 @@ async def fetch_sandbox_health(sandbox_url: str, timeout: float = 5.0) -> Option
     return None
 
 
+async def recover_unlinked_sandbox(client, project_id: str, account_id: Optional[str], project_data: Dict) -> Optional[Dict]:
+    """Restore a project whose sandbox link was cleared while its VM was replaced."""
+    from core.cache.runtime_cache import get_cached_project_metadata
+    from core.resources import ResourceService, ResourceType, ResourceStatus
+
+    resource_service = ResourceService(client)
+    resource = None
+
+    cached = await get_cached_project_metadata(project_id)
+    sandbox_data = (cached or {}).get("sandbox") or {}
+    sandbox_id = sandbox_data.get("sandbox_id") or sandbox_data.get("id")
+    if sandbox_id and not str(sandbox_id).startswith("local:"):
+        resource = await resource_service.get_resource_by_external_id(sandbox_id, ResourceType.SANDBOX)
+
+    if not resource and account_id and project_data.get("dedicated_at"):
+        from core.threads import repo as threads_repo
+
+        host = await threads_repo.get_dedicated_project_for_account(account_id)
+        host_resource_id = (host or {}).get("sandbox_resource_id")
+        if host_resource_id and (host or {}).get("project_id") != project_id:
+            resource = await resource_service.get_resource_by_id(host_resource_id)
+        if not resource:
+            result = await client.table("resources").select("*").eq(
+                "account_id", account_id
+            ).eq("type", ResourceType.SANDBOX.value).order(
+                "updated_at", desc=True
+            ).limit(5).execute()
+            for row in result.data or []:
+                if row.get("status") == ResourceStatus.POOLED.value:
+                    continue
+                if str(row.get("external_id") or "").startswith("local:"):
+                    continue
+                resource = row
+                break
+
+    if not resource:
+        return None
+
+    if resource.get("status") == ResourceStatus.DELETED.value:
+        resource = await resource_service.update_resource(resource["id"], status=ResourceStatus.ACTIVE)
+    await resource_service.link_resource_to_project(project_id, resource["id"])
+    logger.info(f"Restored sandbox {resource.get('external_id')} for project {project_id}")
+    return resource
+
+
+def is_sandbox_live(health: Optional[Dict]) -> bool:
+    """True only when the sandbox is actually usable, not merely reachable."""
+    if not health:
+        return False
+    health_status = health.get('status', 'unknown')
+    if health_status in ('healthy', 'legacy'):
+        return True
+    services = health.get('services') or {}
+    return len(services) == 0 and health_status in ('unhealthy', 'unknown')
+
+
 @router.get("/project/{project_id}/sandbox/status")
 async def get_project_sandbox_status(
     project_id: str,
@@ -1005,6 +1072,13 @@ async def get_project_sandbox_status(
 
         resource_service = ResourceService(client)
         sandbox_resource = await resource_service.get_project_sandbox_resource(project_id)
+        if not sandbox_resource:
+            sandbox_resource = await recover_unlinked_sandbox(
+                client,
+                project_id,
+                project_data.get("account_id"),
+                project_data,
+            )
 
         if not sandbox_resource:
             return SandboxStatusResponse(
@@ -1123,6 +1197,10 @@ async def start_project_sandbox(
 
         resource_service = ResourceService(client)
         sandbox_resource = await resource_service.get_project_sandbox_resource(project_id)
+        if not sandbox_resource:
+            sandbox_resource = await recover_unlinked_sandbox(
+                client, project_id, account_id, project_data
+            )
 
         if not sandbox_resource:
             from core.local_runner.service import describe_local_runtime
@@ -1227,28 +1305,74 @@ async def start_project_sandbox(
             sandbox = await daytona.get(sandbox_id)
 
         current_state = sandbox.state.value.lower() if hasattr(sandbox.state, 'value') else str(sandbox.state).lower()
+        logger.info(f"Sandbox {sandbox_id} start requested in state {current_state} for project {project_id}")
+
+        if current_state in ('destroyed', 'destroying'):
+            logger.warning(
+                f"Sandbox {sandbox_id} is {current_state} for project {project_id}; clearing stale DB link"
+            )
+            await sync_db_after_evicted_sandbox(sandbox_id)
+            sandbox_resource = await resource_service.get_project_sandbox_resource(project_id)
+            if not sandbox_resource:
+                async def create_sandbox_background():
+                    try:
+                        sandbox_info = await resolve_sandbox(
+                            project_id=project_id,
+                            account_id=account_id,
+                            db_client=client,
+                            require_started=True
+                        )
+                        if sandbox_info:
+                            logger.info(f"Successfully created sandbox {sandbox_info.sandbox_id} for project {project_id}")
+                        else:
+                            logger.error(f"Failed to create sandbox for project {project_id}")
+                    except Exception as e:
+                        logger.error(f"Error creating sandbox for project {project_id}: {str(e)}")
+
+                asyncio.create_task(create_sandbox_background())
+                return {
+                    "status": "creating",
+                    "sandbox_id": None,
+                    "message": "Sandbox creation initiated. Poll /status for updates."
+                }
+            sandbox_id = sandbox_resource.get('external_id')
+            sandbox = await daytona.get(sandbox_id)
+            current_state = sandbox.state.value.lower() if hasattr(sandbox.state, 'value') else str(sandbox.state).lower()
 
         if current_state == 'started':
-            return {
-                "status": "success",
-                "sandbox_id": sandbox_id,
-                "message": "Sandbox is already running"
-            }
-
-        if current_state in ('stopped', 'archived', 'archiving'):
-            # Start asynchronously (non-blocking)
-            asyncio.create_task(get_or_start_sandbox(sandbox_id))
-
+            sandbox_url = (sandbox_resource.get('config') or {}).get('sandbox_url')
+            health = await fetch_sandbox_health(sandbox_url, timeout=3.0) if sandbox_url else None
+            health_status = (health or {}).get('status') if health else None
+            logger.info(
+                f"Sandbox {sandbox_id} started; health={health_status or 'unreachable'}"
+            )
+            if is_sandbox_live(health):
+                return {
+                    "status": "success",
+                    "sandbox_id": sandbox_id,
+                    "message": "Sandbox is already running"
+                }
+            logger.warning(
+                f"Sandbox {sandbox_id} reports started but is not healthy; restarting"
+            )
+            schedule_sandbox_start(sandbox_id, force=True)
             return {
                 "status": "starting",
                 "sandbox_id": sandbox_id,
                 "message": "Sandbox start initiated. Poll /status for updates."
             }
 
+        force_restart = current_state in (
+            'error', 'build_failed', 'unknown', 'unknown_default_open_api',
+        )
+        logger.info(
+            f"Initiating sandbox start for {sandbox_id} state={current_state} force={force_restart}"
+        )
+        schedule_sandbox_start(sandbox_id, force=force_restart)
         return {
-            "status": "unknown",
+            "status": "starting",
             "sandbox_id": sandbox_id,
-            "message": f"Sandbox is in state: {current_state}"
+            "message": "Sandbox start initiated. Poll /status for updates."
         }
 
     except HTTPException:
@@ -1376,6 +1500,8 @@ async def start_sandbox_by_id(
         sandbox = await daytona.get(sandbox_id)
         current_state = sandbox.state.value.lower() if hasattr(sandbox.state, 'value') else str(sandbox.state).lower()
 
+        logger.info(f"Sandbox {sandbox_id} start requested in state {current_state}")
+
         if current_state == 'started':
             return {
                 "status": "success",
@@ -1383,20 +1509,14 @@ async def start_sandbox_by_id(
                 "message": "Sandbox is already running"
             }
 
-        if current_state in ('stopped', 'archived', 'archiving'):
-            # Start asynchronously (non-blocking)
-            asyncio.create_task(get_or_start_sandbox(sandbox_id))
-
-            return {
-                "status": "starting",
-                "sandbox_id": sandbox_id,
-                "message": "Sandbox start initiated. Poll /sandboxes/{sandbox_id}/status for updates."
-            }
-
+        force_restart = current_state in (
+            'error', 'build_failed', 'unknown', 'unknown_default_open_api',
+        )
+        schedule_sandbox_start(sandbox_id, force=force_restart)
         return {
-            "status": "unknown",
+            "status": "starting",
             "sandbox_id": sandbox_id,
-            "message": f"Sandbox is in state: {current_state}"
+            "message": "Sandbox start initiated. Poll /sandboxes/{sandbox_id}/status for updates."
         }
 
     except Exception as e:

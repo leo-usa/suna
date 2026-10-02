@@ -23,15 +23,32 @@ export function SandboxStatusView({ projectId, className }: SandboxStatusViewPro
   });
   const startSandbox = useStartSandbox();
   const [isCreating, setIsCreating] = useState(false);
+  const [isStuck, setIsStuck] = useState(false);
 
   const status = sandboxState?.status || 'OFFLINE';
 
-  // Reset creating state when status changes to something definitive
+  // Reset creating state once the backend reports any post-click status
   useEffect(() => {
-    if (isCreating && (status === 'LIVE' || status === 'FAILED' || status === 'STARTING')) {
+    if (
+      isCreating &&
+      (status === 'LIVE' ||
+        status === 'FAILED' ||
+        status === 'STARTING' ||
+        status === 'UNKNOWN' ||
+        status === 'OFFLINE')
+    ) {
       setIsCreating(false);
     }
   }, [status, isCreating]);
+
+  useEffect(() => {
+    if (status !== 'STARTING') {
+      setIsStuck(false);
+      return;
+    }
+    const timer = window.setTimeout(() => setIsStuck(true), 45000);
+    return () => window.clearTimeout(timer);
+  }, [status]);
 
   if (!projectId) {
     return (
@@ -58,8 +75,8 @@ export function SandboxStatusView({ projectId, className }: SandboxStatusViewPro
     );
   }
 
-  const isStarting = status === 'STARTING' || isCreating;
-  const isFailed = status === 'FAILED';
+  const isStarting = (status === 'STARTING' || isCreating) && !isStuck;
+  const isFailed = status === 'FAILED' || isStuck;
   const canStart = !isStarting && !startSandbox.isPending;
 
   const handleStart = async () => {
