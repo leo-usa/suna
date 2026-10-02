@@ -46,7 +46,6 @@ import {
   ProjectGroup,
   GroupedByDateThenProject,
   groupThreadsByDateThenProject,
-  groupDedicatedProjects,
   compareProjectGroups,
 } from '@/hooks/sidebar/use-sidebar';
 import {
@@ -56,7 +55,7 @@ import {
 import { threadKeys, projectKeys } from '@/hooks/threads/keys';
 import { useThreadAgentStatuses } from '@/hooks/threads';
 import { formatDateForList } from '@/lib/utils/date-formatting';
-import { createThreadInProject } from '@/lib/api/threads';
+import { createDedicatedProject, createThreadInProject, type Thread } from '@/lib/api/threads';
 import { useThreads } from '@/hooks/threads/use-threads';
 import { useTranslations } from 'next-intl';
 import { useDeleteOperation } from '@/stores/delete-operation-store';
@@ -88,13 +87,83 @@ const DateGroupHeader: React.FC<{ dateGroup: string }> = ({ dateGroup }) => {
   );
 };
 
-const DedicatedGroupHeader: React.FC = () => {
+function toThreadsWithProject(threads: Thread[]): ThreadWithProject[] {
+  const processed: ThreadWithProject[] = [];
+
+  for (const thread of threads) {
+    const projectId = thread.project_id;
+    const project = thread.project;
+
+    if (!projectId) {
+      console.debug('Thread without project_id:', thread.thread_id);
+      continue;
+    }
+
+    const displayName = project?.name || 'Unnamed Project';
+    const iconName = project?.icon_name;
+    const dedicatedAt = project?.dedicated_at ?? null;
+    const updatedAt = thread.updated_at || project?.updated_at || new Date().toISOString();
+    const formattedDate = formatDateForList(updatedAt);
+
+    processed.push({
+      threadId: thread.thread_id,
+      projectId: projectId,
+      projectName: displayName,
+      threadName: thread.name && thread.name.trim() ? thread.name : formattedDate,
+      url: `/projects/${projectId}/thread/${thread.thread_id}`,
+      updatedAt: updatedAt,
+      dedicatedAt,
+      iconName: iconName,
+    });
+  }
+
+  return processed.sort(
+    (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+  );
+}
+
+const DedicatedComputerHeader: React.FC<{
+  projectCount: number;
+  isFilterOn: boolean;
+  onToggleFilter: () => void;
+  onNewProject?: () => void;
+  isCreating?: boolean;
+}> = ({ projectCount, isFilterOn, onToggleFilter, onNewProject, isCreating }) => {
   const t = useTranslations('sidebar');
   return (
-    <div className="py-2 mt-2">
-      <div className="text-xs font-medium text-primary px-2.5">
-        {t('dedicatedComputerSection')}
+    <div
+      className={cn(
+        'flex items-center gap-2 px-2.5 py-2 mb-1 rounded-xl cursor-pointer transition-colors',
+        isFilterOn ? 'bg-primary/10' : 'hover:bg-muted/30'
+      )}
+      onClick={onToggleFilter}
+    >
+      <div className="flex items-center justify-center w-8 h-8 rounded-2xl bg-card border-[1.5px] border-border flex-shrink-0">
+        <Monitor className="h-3.5 w-3.5 text-primary" />
       </div>
+      <div className="flex-1 min-w-0">
+        <div className="text-sm text-foreground/90 truncate">{t('dedicatedComputerSection')}</div>
+        <div className="text-[11px] text-muted-foreground">
+          {t('dedicatedProjectCount', { count: projectCount })}
+        </div>
+      </div>
+      {onNewProject && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground"
+              onClick={(e) => {
+                e.stopPropagation();
+                onNewProject();
+              }}
+              disabled={isCreating}
+            >
+              {isCreating ? <DobbyLoader size="small" /> : <Plus className="h-3.5 w-3.5" />}
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="right">{t('dedicatedNewProject')}</TooltipContent>
+        </Tooltip>
+      )}
     </div>
   );
 };
@@ -113,6 +182,7 @@ interface ThreadItemCardProps {
   onToggleDedicated?: (projectId: string, isDedicated: boolean) => void;
   isCreatingChat?: boolean;
   isDedicating?: boolean;
+  hasDedicatedComputer?: boolean;
   mode: 'chats' | 'library';
 }
 
@@ -130,6 +200,7 @@ const ThreadItemCard: React.FC<ThreadItemCardProps> = ({
   onToggleDedicated,
   isCreatingChat = false,
   isDedicating = false,
+  hasDedicatedComputer = false,
   mode,
 }) => {
   const tMenu = useTranslations('sidebar');
@@ -278,7 +349,9 @@ const ThreadItemCard: React.FC<ThreadItemCardProps> = ({
                     <Monitor className="mr-2 h-4 w-4" />
                     {projectGroup.dedicatedAt
                       ? tMenu('threadMenuRemoveDedicated')
-                      : tMenu('threadMenuMakeDedicated')}
+                      : hasDedicatedComputer
+                        ? tMenu('threadMenuAddToDedicated')
+                        : tMenu('threadMenuMakeDedicated')}
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuSeparator />
@@ -326,6 +399,7 @@ export function SidebarThreadList({ mode }: SidebarThreadListProps) {
   const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
   const [isCreatingChat, setIsCreatingChat] = useState(false);
+  const [dedicatedFilter, setDedicatedFilter] = useState(false);
   
   // Rename state
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
@@ -382,53 +456,29 @@ export function SidebarThreadList({ mode }: SidebarThreadListProps) {
   }, [threadsResponse?.pagination, currentPage]);
 
   // Process threads
-  const combinedThreads: ThreadWithProject[] = useMemo(() => {
-    if (currentThreads.length === 0) {
-      return [];
-    }
-
-    const processed: ThreadWithProject[] = [];
-
-    for (const thread of currentThreads) {
-      const projectId = thread.project_id;
-      const project = thread.project;
-
-      if (!projectId) {
-        console.debug('Thread without project_id:', thread.thread_id);
-        continue;
-      }
-
-      const displayName = project?.name || 'Unnamed Project';
-      const iconName = project?.icon_name;
-      const dedicatedAt = project?.dedicated_at ?? null;
-      const updatedAt = thread.updated_at || project?.updated_at || new Date().toISOString();
-      const formattedDate = formatDateForList(updatedAt);
-
-      processed.push({
-        threadId: thread.thread_id,
-        projectId: projectId,
-        projectName: displayName,
-        threadName: thread.name && thread.name.trim() ? thread.name : formattedDate,
-        url: `/projects/${projectId}/thread/${thread.thread_id}`,
-        updatedAt: updatedAt,
-        dedicatedAt,
-        iconName: iconName,
-      });
-    }
-
-    return processed.sort(
-      (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-    );
-  }, [currentThreads]);
-
-  // Group threads by date, then by project (dedicated projects are pinned above)
-  const dedicatedProjectGroups = useMemo(
-    () => groupDedicatedProjects(combinedThreads),
-    [combinedThreads],
+  const combinedThreads: ThreadWithProject[] = useMemo(
+    () => toThreadsWithProject(currentThreads),
+    [currentThreads],
   );
+
+  const dedicatedThreads: ThreadWithProject[] = useMemo(() => {
+    const fromServer = threadsResponse?.dedicated_threads;
+    return fromServer ? toThreadsWithProject(fromServer) : combinedThreads.filter((t) => t.dedicatedAt);
+  }, [threadsResponse?.dedicated_threads, combinedThreads]);
+
+  const dedicatedProjectCount = useMemo(() => {
+    if (threadsResponse?.dedicated_computer?.project_count != null) {
+      return threadsResponse.dedicated_computer.project_count;
+    }
+    return new Set(dedicatedThreads.filter((t) => t.dedicatedAt).map((t) => t.projectId)).size;
+  }, [threadsResponse?.dedicated_computer?.project_count, dedicatedThreads]);
+
+  const hasDedicatedComputer =
+    Boolean(threadsResponse?.dedicated_computer?.has_computer) || dedicatedProjectCount > 0;
+
   const groupedByDateThenProject: GroupedByDateThenProject = useMemo(
-    () => groupThreadsByDateThenProject(combinedThreads),
-    [combinedThreads],
+    () => groupThreadsByDateThenProject(dedicatedFilter ? dedicatedThreads : combinedThreads),
+    [dedicatedFilter, dedicatedThreads, combinedThreads],
   );
 
   const chatListSections = useMemo(() => {
@@ -437,14 +487,6 @@ export function SidebarThreadList({ mode }: SidebarThreadListProps) {
       header: React.ReactNode;
       projects: ProjectGroup[];
     }[] = [];
-
-    if (dedicatedProjectGroups.length > 0) {
-      sections.push({
-        key: 'dedicated-computer',
-        header: <DedicatedGroupHeader />,
-        projects: dedicatedProjectGroups,
-      });
-    }
 
     for (const [dateGroup, projectsInDate] of Object.entries(
       groupedByDateThenProject,
@@ -457,12 +499,11 @@ export function SidebarThreadList({ mode }: SidebarThreadListProps) {
     }
 
     return sections;
-  }, [dedicatedProjectGroups, groupedByDateThenProject]);
+  }, [groupedByDateThenProject]);
 
   // Initialize expanded projects
   useEffect(() => {
     const allProjectIds = [
-      ...dedicatedProjectGroups.map((p) => p.projectId),
       ...Object.values(groupedByDateThenProject).flatMap((dateGroup) =>
         Object.keys(dateGroup),
       ),
@@ -508,6 +549,28 @@ export function SidebarThreadList({ mode }: SidebarThreadListProps) {
     }
   };
 
+  const handleCreateDedicatedProject = async () => {
+    if (isCreatingChat) return;
+
+    setIsCreatingChat(true);
+    try {
+      const result = await createDedicatedProject();
+
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: threadKeys.all }),
+        queryClient.invalidateQueries({ queryKey: projectKeys.all }),
+      ]);
+
+      router.push(`/projects/${result.project_id}/thread/${result.thread_id}`);
+      toast.success(t('dedicatedNewProjectSuccess'));
+    } catch (error) {
+      console.error('Failed to create dedicated project:', error);
+      toast.error(t('dedicatedNewProjectFailed'));
+    } finally {
+      setTimeout(() => setIsCreatingChat(false), 1000);
+    }
+  };
+
   // Handle rename
   const handleStartRename = (projectId: string, currentName: string) => {
     setRenameProjectId(projectId);
@@ -537,16 +600,18 @@ export function SidebarThreadList({ mode }: SidebarThreadListProps) {
   };
 
   const dedicatedProjectIdElsewhere = useMemo(() => {
-    const dedicated = combinedThreads.find((t) => t.dedicatedAt);
+    const dedicated = dedicatedThreads.find((t) => t.dedicatedAt);
     return dedicated?.projectId ?? null;
-  }, [combinedThreads]);
+  }, [dedicatedThreads]);
 
   const applyDedicateProject = (projectId: string) => {
     dedicateProjectMutation.mutate(
       { projectId, dedicate: true },
       {
         onSuccess: () => {
-          toast.success(t('threadMenuMakeDedicated'));
+          toast.success(
+            hasDedicatedComputer ? t('threadMenuAddToDedicated') : t('threadMenuMakeDedicated'),
+          );
           void queryClient.invalidateQueries({ queryKey: threadKeys.all });
         },
       },
@@ -617,7 +682,11 @@ export function SidebarThreadList({ mode }: SidebarThreadListProps) {
   };
 
   // Track agent running status
-  const threadIds = combinedThreads.map((thread) => thread.threadId);
+  const threadIds = useMemo(() => {
+    const ids = new Set(combinedThreads.map((thread) => thread.threadId));
+    dedicatedThreads.forEach((thread) => ids.add(thread.threadId));
+    return Array.from(ids);
+  }, [combinedThreads, dedicatedThreads]);
   const agentStatusMap = useThreadAgentStatuses(threadIds);
 
   const handleDeletionProgress = (completed: number, total: number) => {
@@ -661,9 +730,12 @@ export function SidebarThreadList({ mode }: SidebarThreadListProps) {
     }
 
     // Cmd/Ctrl+click opens new tab
+    const thread =
+      combinedThreads.find((t) => t.threadId === threadId) ??
+      dedicatedThreads.find((t) => t.threadId === threadId);
+
     if (e.metaKey || e.ctrlKey) {
       if (mode === 'library') {
-        const thread = combinedThreads.find((t) => t.threadId === threadId);
         if (thread) {
           window.open(url, '_blank');
         }
@@ -673,7 +745,6 @@ export function SidebarThreadList({ mode }: SidebarThreadListProps) {
 
     e.preventDefault();
 
-    const thread = combinedThreads.find((t) => t.threadId === threadId);
     if (!thread) return;
 
     if (mode === 'chats') {
@@ -933,7 +1004,7 @@ export function SidebarThreadList({ mode }: SidebarThreadListProps) {
 
       <div
         ref={scrollContainerRef}
-        className="overflow-y-auto max-h-[calc(100vh-280px)] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] pb-16"
+        className="overflow-y-auto max-h-[calc(100vh-280px)] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] pb-28"
       >
         {(state !== 'collapsed' || isMobile) && (
           <>
@@ -947,14 +1018,20 @@ export function SidebarThreadList({ mode }: SidebarThreadListProps) {
                   </div>
                 ))}
               </div>
-            ) : combinedThreads.length > 0 ? (
+            ) : combinedThreads.length > 0 || (dedicatedFilter && hasDedicatedComputer) ? (
               <>
+                {mode === 'chats' && hasDedicatedComputer && (
+                  <DedicatedComputerHeader
+                    projectCount={dedicatedProjectCount}
+                    isFilterOn={dedicatedFilter}
+                    onToggleFilter={() => setDedicatedFilter((prev) => !prev)}
+                    onNewProject={handleCreateDedicatedProject}
+                    isCreating={isCreatingChat}
+                  />
+                )}
                 {chatListSections.map((section) => (
                     <div
                       key={section.key}
-                      className={
-                        section.key === 'dedicated-computer' ? 'mb-1' : undefined
-                      }
                     >
                       {section.header}
                       <div className="space-y-1.5">
@@ -991,6 +1068,7 @@ export function SidebarThreadList({ mode }: SidebarThreadListProps) {
                                 }
                                 isCreatingChat={isCreatingChat}
                                 isDedicating={dedicateProjectMutation.isPending}
+                                hasDedicatedComputer={hasDedicatedComputer}
                                 mode={mode}
                               />
                             );
@@ -1064,7 +1142,9 @@ export function SidebarThreadList({ mode }: SidebarThreadListProps) {
                                             <TooltipContent side="right">
                                               {projectGroup.dedicatedAt
                                                 ? t('threadMenuRemoveDedicated')
-                                                : t('threadMenuMakeDedicated')}
+                                                : hasDedicatedComputer
+                                                  ? t('threadMenuAddToDedicated')
+                                                  : t('threadMenuMakeDedicated')}
                                             </TooltipContent>
                                           </Tooltip>
                                           <Tooltip>
@@ -1225,7 +1305,7 @@ export function SidebarThreadList({ mode }: SidebarThreadListProps) {
                   ))}
 
                 {/* Pagination controls */}
-                {pagination && totalPages > 1 && (
+                {!dedicatedFilter && pagination && totalPages > 1 && (
                   <div className="px-3 py-3 mt-2">
                     <div className="flex items-center justify-center gap-4">
                       <button
@@ -1326,7 +1406,7 @@ export function SidebarThreadList({ mode }: SidebarThreadListProps) {
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction onClick={handleConfirmMoveDedicated}>
-              {t('threadMenuMakeDedicated')}
+              {t('threadMenuAddToDedicated')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

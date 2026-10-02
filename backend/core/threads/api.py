@@ -18,6 +18,24 @@ db = DBConnection()
 router = APIRouter(tags=["threads"])
 
 
+async def _sandbox_id_if_unshared(project_id: str, client) -> Optional[str]:
+    from core.threads import repo as threads_repo
+    from core.resources import ResourceService
+
+    project = await threads_repo.get_project_by_id(project_id)
+    resource_id = (project or {}).get("sandbox_resource_id")
+    if resource_id:
+        others = await threads_repo.count_projects_sharing_resource(
+            resource_id, exclude_project_id=project_id
+        )
+        if others > 0:
+            return None
+
+    resource_service = ResourceService(client)
+    sandbox_resource = await resource_service.get_project_sandbox_resource(project_id)
+    return sandbox_resource.get("external_id") if sandbox_resource else None
+
+
 @router.get("/threads/search", summary="Search Threads", operation_id="search_threads")
 async def search_threads_endpoint(
     request: Request,
@@ -100,7 +118,10 @@ async def get_user_threads(
     page: Optional[int] = Query(1, ge=1, description="Page number (1-based)"),
     limit: Optional[int] = Query(100, ge=1, le=1000, description="Number of items per page (max 1000)")
 ):
-    from core.threads.repo import list_user_threads as repo_list_threads
+    from core.threads.repo import (
+        list_user_threads as repo_list_threads,
+        count_dedicated_projects_for_account,
+    )
 
     logger.debug(f"Fetching threads for user: {user_id} (page={page}, limit={limit})")
     try:
@@ -112,6 +133,9 @@ async def get_user_threads(
 
         total_pages = (total_count + limit - 1) // limit if total_count else 0
 
+        dedicated_threads, _ = await repo_list_threads(user_id, 200, 0, dedicated_only=True)
+        dedicated_project_count = await count_dedicated_projects_for_account(user_id)
+
         # Fire background task to embed any unembedded threads (non-blocking)
         if threads:
             try:
@@ -122,6 +146,11 @@ async def get_user_threads(
 
         return {
             "threads": threads,
+            "dedicated_threads": dedicated_threads,
+            "dedicated_computer": {
+                "has_computer": dedicated_project_count > 0,
+                "project_count": dedicated_project_count,
+            },
             "pagination": {
                 "page": page,
                 "limit": limit,
@@ -259,8 +288,18 @@ async def dedicate_project(
             },
         )
 
-    await threads_repo.clear_account_dedicated_except(account_id, project_id)
-    updated = await threads_repo.set_project_dedicated(project_id, account_id)
+    host = await threads_repo.get_dedicated_project_for_account(account_id)
+    if host and host.get("project_id") != project_id:
+        host_resource_id = host.get("sandbox_resource_id")
+        updated = await threads_repo.attach_project_to_dedicated_computer(
+            project_id, account_id, host_resource_id
+        )
+        if not host_resource_id and project.get("sandbox_resource_id"):
+            await threads_repo.update_project_sandbox_resource(
+                host["project_id"], project["sandbox_resource_id"]
+            )
+    else:
+        updated = await threads_repo.set_project_dedicated(project_id, account_id)
     if not updated:
         raise HTTPException(status_code=404, detail="Project not found")
 
@@ -298,7 +337,10 @@ async def undedicate_project(
     if not updated:
         raise HTTPException(status_code=404, detail="Project not found")
 
-    if sandbox_id:
+    remaining = await threads_repo.count_dedicated_projects_for_account(account_id)
+    if remaining > 0:
+        await threads_repo.update_project_sandbox_resource(project_id, None)
+    elif sandbox_id:
         await sync_sandbox_dedicated_label(sandbox_id, False)
 
     return {"project_id": project_id, "dedicated_at": None}
@@ -517,10 +559,7 @@ async def delete_project(
         thread_ids = [t['thread_id'] for t in (threads_result.data or [])]
         threads_deleted_count = len(thread_ids)
         
-        from core.resources import ResourceService
-        resource_service = ResourceService(client)
-        sandbox_resource = await resource_service.get_project_sandbox_resource(project_id)
-        sandbox_id = sandbox_resource.get('external_id') if sandbox_resource else None
+        sandbox_id = await _sandbox_id_if_unshared(project_id, client)
         if sandbox_id:
             try:
                 logger.debug(f"Deleting sandbox {sandbox_id} for project {project_id}")
@@ -709,9 +748,131 @@ async def get_thread(
         logger.error(f"Error fetching thread {thread_id}: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch thread: {str(e)}")
 
+async def _create_thread_on_dedicated_computer(account_id: str, name: str):
+    from core.threads import repo as threads_repo
+    from core.billing.shared.config import get_dedicated_computer_limit
+    from core.billing.subscriptions.handlers.tier import TierHandler
+
+    tier_info = await TierHandler.get_user_subscription_tier(account_id)
+    limit = get_dedicated_computer_limit(tier_info.get("name", "none"))
+    if limit <= 0:
+        raise HTTPException(
+            status_code=402,
+            detail={
+                "message": "Dedicated computer is available on Pro and Ultra plans.",
+                "error_code": "DEDICATED_COMPUTER_NOT_AVAILABLE",
+            },
+        )
+
+    host = await threads_repo.get_dedicated_project_for_account(account_id)
+    if not host:
+        raise HTTPException(
+            status_code=400,
+            detail="No dedicated computer yet. Make a project dedicated first.",
+        )
+
+    result = await threads_repo.create_new_thread_with_project(
+        account_id,
+        name,
+        dedicated_at=datetime.now(timezone.utc),
+        sandbox_resource_id=host.get("sandbox_resource_id"),
+    )
+    project_id = result["project_id"]
+    thread_id = result["thread_id"]
+
+    if host.get("sandbox_resource_id"):
+        try:
+            from core.cache.runtime_cache import (
+                get_cached_project_metadata,
+                set_cached_project_metadata,
+            )
+            cached = await get_cached_project_metadata(host["project_id"])
+            sandbox_data = (cached or {}).get("sandbox") or cached
+            if sandbox_data:
+                await set_cached_project_metadata(project_id, sandbox_data)
+        except Exception as cache_error:
+            logger.warning(f"Failed to copy dedicated sandbox cache: {cache_error}")
+    else:
+        sandbox_id = None
+        client = await db.client
+        try:
+            sandbox_pass = str(uuid.uuid4())
+            sandbox = await create_sandbox(sandbox_pass, project_id)
+            sandbox_id = sandbox.id
+            vnc_link = await sandbox.get_preview_link(6080)
+            website_link = await sandbox.get_preview_link(8080)
+            vnc_url = vnc_link.url if hasattr(vnc_link, 'url') else str(vnc_link).split("url='")[1].split("'")[0]
+            website_url = website_link.url if hasattr(website_link, 'url') else str(website_link).split("url='")[1].split("'")[0]
+            token = None
+            if hasattr(vnc_link, 'token'):
+                token = vnc_link.token
+            elif "token='" in str(vnc_link):
+                token = str(vnc_link).split("token='")[1].split("'")[0]
+
+            from core.resources import ResourceService, ResourceType, ResourceStatus
+            resource_service = ResourceService(client)
+            resource = await resource_service.create_resource(
+                account_id=account_id,
+                resource_type=ResourceType.SANDBOX,
+                external_id=sandbox_id,
+                config={
+                    'pass': sandbox_pass,
+                    'vnc_preview': vnc_url,
+                    'sandbox_url': website_url,
+                    'token': token,
+                },
+                status=ResourceStatus.ACTIVE,
+            )
+            await resource_service.link_resource_to_project(project_id, resource['id'])
+            await threads_repo.update_project_sandbox_resource(host["project_id"], resource['id'])
+            from core.sandbox.dedicated import sync_sandbox_dedicated_label
+            await sync_sandbox_dedicated_label(sandbox_id, True)
+            try:
+                from core.cache.runtime_cache import set_cached_project_metadata
+                await set_cached_project_metadata(project_id, {
+                    'sandbox_id': sandbox_id,
+                    'pass': sandbox_pass,
+                    'vnc_preview': vnc_url,
+                    'sandbox_url': website_url,
+                    'token': token,
+                })
+            except Exception:
+                pass
+        except Exception as e:
+            logger.error(f"Error creating dedicated sandbox: {str(e)}")
+            await threads_repo.delete_project(project_id)
+            if sandbox_id:
+                try:
+                    await delete_sandbox(sandbox_id)
+                except Exception:
+                    pass
+            raise HTTPException(status_code=500, detail="Failed to create dedicated sandbox")
+
+    await threads_repo.update_thread_name(thread_id, "New Chat")
+    try:
+        from core.agents.pipeline.slot_manager import increment_thread_count, increment_project_count
+        asyncio.create_task(increment_thread_count(account_id))
+        asyncio.create_task(increment_project_count(account_id))
+    except Exception:
+        pass
+    try:
+        from core.cache.runtime_cache import increment_thread_count_cache
+        asyncio.create_task(increment_thread_count_cache(account_id))
+    except Exception:
+        pass
+    try:
+        from core.billing.shared.cache_utils import invalidate_account_state_cache
+        asyncio.create_task(invalidate_account_state_cache(account_id))
+    except Exception:
+        pass
+
+    return {"thread_id": thread_id, "project_id": project_id}
+
+
 @router.post("/threads", response_model=CreateThreadResponse, summary="Create Thread", operation_id="create_thread")
 async def create_thread(
     name: Optional[str] = Form(None),
+    dedicated: bool = Query(False),
     user_id: str = Depends(verify_and_get_user_id_from_jwt)
 ):
     if not name:
@@ -748,6 +909,9 @@ async def create_thread(
                 }
                 logger.warning(f"Project limit exceeded for account {account_id}: {project_check.current_count}/{project_check.limit}")
                 raise HTTPException(status_code=402, detail=error_detail)
+
+        if dedicated:
+            return await _create_thread_on_dedicated_computer(account_id, name or "New Project")
         
         from core.threads import repo as threads_repo
         
@@ -1202,18 +1366,14 @@ async def delete_thread(
             if remaining_thread_count == 0:
                 logger.debug(f"Last thread deleted, cleaning up project {project_id}")
                 
-                from core.resources import ResourceService
-                resource_service = ResourceService(client)
-                sandbox_resource = await resource_service.get_project_sandbox_resource(project_id)
-                if sandbox_resource:
-                    sandbox_id = sandbox_resource.get('external_id')
-                    if sandbox_id:
-                        try:
-                            logger.debug(f"Deleting sandbox {sandbox_id} for project {project_id}")
-                            await delete_sandbox(sandbox_id)
-                            logger.debug(f"Successfully deleted sandbox {sandbox_id}")
-                        except Exception as e:
-                            logger.error(f"Error deleting sandbox {sandbox_id}: {str(e)}")
+                sandbox_id = await _sandbox_id_if_unshared(project_id, client)
+                if sandbox_id:
+                    try:
+                        logger.debug(f"Deleting sandbox {sandbox_id} for project {project_id}")
+                        await delete_sandbox(sandbox_id)
+                        logger.debug(f"Successfully deleted sandbox {sandbox_id}")
+                    except Exception as e:
+                        logger.error(f"Error deleting sandbox {sandbox_id}: {str(e)}")
                 
                 logger.debug(f"Deleting project {project_id}")
                 await repo_delete_project(project_id)

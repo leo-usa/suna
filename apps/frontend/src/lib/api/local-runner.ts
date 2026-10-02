@@ -1,9 +1,10 @@
 import { backendApi } from '../api-client';
 import { handleApiError } from '../error-handler';
 
-export type ExecutionTarget = 'cloud' | 'local';
+export type ExecutionTarget = 'cloud' | 'local' | 'dedicated';
 
-const PREFERRED_TARGET_KEY = 'dobby-run-on-this-computer';
+const PREFERRED_TARGET_KEY = 'dobby-run-target';
+const LEGACY_PREFERRED_TARGET_KEY = 'dobby-run-on-this-computer';
 export const LOCAL_SANDBOX_PREFIX = 'local:';
 
 export function isLocalSandboxId(sandboxId?: string | null): boolean {
@@ -16,13 +17,21 @@ export function isLocalRunnerAvailable(): boolean {
 
 export function getPreferredExecutionTarget(): ExecutionTarget {
   if (typeof window === 'undefined') return 'cloud';
-  if (!isLocalRunnerAvailable()) return 'cloud';
-  return window.localStorage.getItem(PREFERRED_TARGET_KEY) === '1' ? 'local' : 'cloud';
+  const stored = window.localStorage.getItem(PREFERRED_TARGET_KEY);
+  if (stored === 'dedicated' || stored === 'cloud' || stored === 'local') {
+    if (stored === 'local' && !isLocalRunnerAvailable()) return 'cloud';
+    return stored;
+  }
+  if (isLocalRunnerAvailable() && window.localStorage.getItem(LEGACY_PREFERRED_TARGET_KEY) === '1') {
+    return 'local';
+  }
+  return 'cloud';
 }
 
 export function setPreferredExecutionTarget(target: ExecutionTarget) {
   if (typeof window === 'undefined') return;
-  window.localStorage.setItem(PREFERRED_TARGET_KEY, target === 'local' ? '1' : '0');
+  window.localStorage.setItem(PREFERRED_TARGET_KEY, target);
+  window.localStorage.setItem(LEGACY_PREFERRED_TARGET_KEY, target === 'local' ? '1' : '0');
 }
 
 export async function pairLocalRunner(payload?: { name?: string; platform?: string }) {
@@ -39,7 +48,7 @@ export async function pairLocalRunner(payload?: { name?: string; platform?: stri
 
 export async function setProjectExecutionTarget(
   projectId: string,
-  target: ExecutionTarget,
+  target: 'cloud' | 'local',
   deviceId?: string,
 ) {
   const response = await backendApi.post<{

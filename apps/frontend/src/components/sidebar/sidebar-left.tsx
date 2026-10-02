@@ -37,6 +37,7 @@ import { useAdminRole } from '@/hooks/admin';
 import posthog from 'posthog-js';
 import { useDocumentModalStore } from '@/stores/use-document-modal-store';
 import { isLocalMode } from '@/lib/config';
+import { LocalExecutionToggle } from '@/components/thread/local-execution-toggle';
 import { useAccountState, accountStateSelectors } from '@/hooks/billing';
 
 import { getPlanIcon } from '@/components/billing/plan-utils';
@@ -400,7 +401,7 @@ export function SidebarLeft({
         >
           <div className="px-6 pt-4 space-y-4">
             {/* New Chat button */}
-            <div className="w-full">
+            <div className="w-full space-y-1">
               <Button
                 variant="outline"
                 size="sm"
@@ -426,6 +427,7 @@ export function SidebarLeft({
                   </div>
                 </Link>
               </Button>
+              <LocalExecutionToggle className="-ml-1" />
             </div>
 
             {/* Files link */}

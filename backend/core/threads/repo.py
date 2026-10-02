@@ -18,8 +18,16 @@ async def list_user_threads(
     limit: int = 100,
     offset: int = 0,
     order_by: str = "created_at",
+    project_id: Optional[str] = None,
+    dedicated_only: bool = False,
 ) -> Tuple[List[Dict[str, Any]], int]:
     sort_col = "updated_at" if order_by == "updated_at" else "created_at"
+    extra_filters = []
+    if project_id:
+        extra_filters.append("AND t.project_id = :project_id")
+    if dedicated_only:
+        extra_filters.append("AND p.dedicated_at IS NOT NULL")
+    extra_filter = " ".join(extra_filters)
     sql = f"""
     SELECT 
         t.thread_id,
@@ -44,16 +52,19 @@ async def list_user_threads(
     FROM threads t
     LEFT JOIN projects p ON t.project_id = p.project_id
     LEFT JOIN resources r ON p.sandbox_resource_id = r.id
-    WHERE t.account_id = :account_id
+    WHERE t.account_id = :account_id {extra_filter}
     ORDER BY t.{sort_col} DESC
     LIMIT :limit OFFSET :offset
     """
     
-    rows = await execute(sql, {
+    params = {
         "account_id": account_id,
         "limit": limit,
         "offset": offset
-    })
+    }
+    if project_id:
+        params["project_id"] = project_id
+    rows = await execute(sql, params)
     
     if not rows:
         return [], 0
@@ -414,14 +425,68 @@ async def get_project_by_id(project_id: str) -> Optional[Dict[str, Any]]:
 
 async def get_dedicated_project_for_account(account_id: str) -> Optional[Dict[str, Any]]:
     sql = """
-    SELECT project_id, name, dedicated_at
+    SELECT project_id, name, dedicated_at, sandbox_resource_id
     FROM projects
     WHERE account_id = :account_id AND dedicated_at IS NOT NULL
-    ORDER BY dedicated_at DESC
+    ORDER BY dedicated_at ASC
     LIMIT 1
     """
     result = await execute_one(sql, {"account_id": account_id})
     return serialize_row(dict(result)) if result else None
+
+
+async def count_dedicated_projects_for_account(account_id: str) -> int:
+    sql = """
+    SELECT COUNT(*) AS count
+    FROM projects
+    WHERE account_id = :account_id AND dedicated_at IS NOT NULL
+    """
+    result = await execute_one(sql, {"account_id": account_id})
+    return int(result["count"]) if result else 0
+
+
+async def count_projects_sharing_resource(
+    resource_id: str,
+    exclude_project_id: Optional[str] = None,
+) -> int:
+    extra = "AND project_id != :exclude_project_id" if exclude_project_id else ""
+    sql = f"""
+    SELECT COUNT(*) AS count
+    FROM projects
+    WHERE sandbox_resource_id = :resource_id {extra}
+    """
+    params = {"resource_id": resource_id}
+    if exclude_project_id:
+        params["exclude_project_id"] = exclude_project_id
+    result = await execute_one(sql, params)
+    return int(result["count"]) if result else 0
+
+
+async def attach_project_to_dedicated_computer(
+    project_id: str,
+    account_id: str,
+    sandbox_resource_id: Optional[str],
+) -> bool:
+    from datetime import datetime, timezone
+    from core.services.db import execute_mutate
+
+    now = datetime.now(timezone.utc)
+    sql = """
+    UPDATE projects
+    SET dedicated_at = :dedicated_at,
+        sandbox_resource_id = COALESCE(:sandbox_resource_id, sandbox_resource_id),
+        updated_at = :updated_at
+    WHERE project_id = :project_id AND account_id = :account_id
+    RETURNING project_id
+    """
+    result = await execute_mutate(sql, {
+        "project_id": project_id,
+        "account_id": account_id,
+        "dedicated_at": now,
+        "sandbox_resource_id": sandbox_resource_id,
+        "updated_at": now,
+    })
+    return len(result) > 0
 
 
 async def clear_account_dedicated_except(account_id: str, except_project_id: str) -> None:
@@ -754,7 +819,7 @@ async def get_project_for_sandbox(project_id: str) -> Optional[Dict[str, Any]]:
     return dict(result) if result else None
 
 
-async def update_project_sandbox_resource(project_id: str, sandbox_resource_id: str) -> bool:
+async def update_project_sandbox_resource(project_id: str, sandbox_resource_id: Optional[str]) -> bool:
     from core.services.db import execute_mutate
     from datetime import datetime, timezone
     
@@ -1674,7 +1739,9 @@ async def get_thread_agent_runs(thread_id: str) -> List[Dict[str, Any]]:
 
 async def create_new_thread_with_project(
     account_id: str,
-    thread_name: str = "New Project"
+    thread_name: str = "New Project",
+    dedicated_at: Optional[Any] = None,
+    sandbox_resource_id: Optional[str] = None,
 ) -> Dict[str, Any]:
     from datetime import datetime, timezone
     import uuid
@@ -1684,8 +1751,8 @@ async def create_new_thread_with_project(
     now = datetime.now(timezone.utc)
     
     project_sql = """
-    INSERT INTO projects (project_id, account_id, name, created_at, updated_at)
-    VALUES (:project_id, :account_id, :name, :created_at, :updated_at)
+    INSERT INTO projects (project_id, account_id, name, dedicated_at, sandbox_resource_id, created_at, updated_at)
+    VALUES (:project_id, :account_id, :name, :dedicated_at, :sandbox_resource_id, :created_at, :updated_at)
     RETURNING *
     """
     
@@ -1693,6 +1760,8 @@ async def create_new_thread_with_project(
         "project_id": project_id,
         "account_id": account_id,
         "name": thread_name,
+        "dedicated_at": dedicated_at,
+        "sandbox_resource_id": sandbox_resource_id,
         "created_at": now,
         "updated_at": now
     }, commit=True)

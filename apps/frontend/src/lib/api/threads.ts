@@ -45,8 +45,15 @@ export type Message = {
   };
 };
 
+export interface DedicatedComputerSummary {
+  has_computer: boolean;
+  project_count: number;
+}
+
 export interface ThreadsResponse {
   threads: Thread[];
+  dedicated_threads?: Thread[];
+  dedicated_computer?: DedicatedComputerSummary;
   pagination: {
     page: number;
     limit: number;
@@ -378,7 +385,7 @@ export const getThreadsPaginated = async (projectId?: string, page: number = 1, 
       limit: limit.toString(),
     });
     
-    const response = await backendApi.get<{ threads: any[]; pagination: any }>(`/threads?${params.toString()}`, {
+    const response = await backendApi.get<{ threads: any[]; dedicated_threads?: any[]; dedicated_computer?: DedicatedComputerSummary; pagination: any }>(`/threads?${params.toString()}`, {
       showErrors: false,
     });
 
@@ -411,14 +418,16 @@ export const getThreadsPaginated = async (projectId?: string, page: number = 1, 
       };
     }
 
-    let threads = response.data.threads.map((thread: any) => ({
+    const toThread = (thread: any) => ({
       thread_id: thread.thread_id,
       project_id: thread.project_id,
       created_at: thread.created_at,
       updated_at: thread.updated_at,
       metadata: thread.metadata || {},
       project: thread.project, // Preserve project data for getProjects to use
-    }));
+    });
+    let threads = response.data.threads.map(toThread);
+    const dedicatedThreads = (response.data.dedicated_threads || []).map(toThread);
 
     if (projectId) {
       threads = threads.filter((thread: Thread) => thread.project_id === projectId);
@@ -426,6 +435,8 @@ export const getThreadsPaginated = async (projectId?: string, page: number = 1, 
 
     return {
       threads,
+      dedicated_threads: dedicatedThreads,
+      dedicated_computer: response.data.dedicated_computer,
       pagination: response.data.pagination || {
         page,
         limit,
@@ -516,6 +527,31 @@ export const createThread = async (projectId?: string): Promise<Thread> => {
 
   const data = await response.json();
   return data;
+};
+
+export const createDedicatedProject = async (): Promise<{ thread_id: string; project_id: string }> => {
+  const supabase = createClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.access_token) {
+    throw new Error('You must be logged in to create a thread');
+  }
+
+  const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+  const response = await fetch(`${API_URL}/threads?dedicated=true`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session.access_token}`,
+    },
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => 'Unknown error');
+    handleApiError(new Error(errorText), { operation: 'create dedicated project', resource: 'thread' });
+    throw new Error(errorText);
+  }
+
+  return response.json();
 };
 
 export class NoAccessTokenAvailableError extends Error {

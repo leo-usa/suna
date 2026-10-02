@@ -305,6 +305,44 @@ async def _create_agent_run_record(
     return agent_run_id
 
 
+async def _attach_new_project_to_dedicated_computer(project_id: str, account_id: str) -> None:
+    from core.billing.shared.config import get_dedicated_computer_limit
+    from core.billing.subscriptions.handlers.tier import TierHandler
+    from core.threads import repo as threads_repo
+
+    tier_info = await TierHandler.get_user_subscription_tier(account_id)
+    if get_dedicated_computer_limit(tier_info.get("name", "none")) <= 0:
+        raise HTTPException(
+            status_code=402,
+            detail={
+                "message": "Dedicated computer is available on Pro and Ultra plans.",
+                "error_code": "DEDICATED_COMPUTER_NOT_AVAILABLE",
+            },
+        )
+
+    host = await threads_repo.get_dedicated_project_for_account(account_id)
+    if host and host.get("project_id") != project_id:
+        await threads_repo.attach_project_to_dedicated_computer(
+            project_id, account_id, host.get("sandbox_resource_id")
+        )
+        return
+    await threads_repo.set_project_dedicated(project_id, account_id)
+
+
+async def _sync_dedicated_sandbox_after_resolve(project_id: str, account_id: str) -> None:
+    from core.threads import repo as threads_repo
+    from core.sandbox.dedicated import sync_sandbox_dedicated_label
+
+    sandbox_row = await threads_repo.get_project_with_sandbox(project_id)
+    sandbox_id = (sandbox_row or {}).get("resource_external_id")
+    resource_id = (sandbox_row or {}).get("sandbox_resource_id")
+    if sandbox_id:
+        await sync_sandbox_dedicated_label(sandbox_id, True)
+    host = await threads_repo.get_dedicated_project_for_account(account_id)
+    if host and not host.get("sandbox_resource_id") and resource_id and host.get("project_id") != project_id:
+        await threads_repo.update_project_sandbox_resource(host["project_id"], resource_id)
+
+
 async def start_agent_run(
     account_id: str,
     prompt: str,
@@ -394,6 +432,7 @@ async def start_agent_run(
     
     has_files = files_data and len(files_data) > 0
     want_local = (execution_target or "").lower() == "local"
+    want_dedicated = (execution_target or "").lower() == "dedicated"
 
     if is_new_thread:
         placeholder_name = f"{prompt[:30]}..." if len(prompt) > 30 else prompt if prompt else "Untitled"
@@ -407,6 +446,8 @@ async def start_agent_run(
                 await enable_local_execution_for_user(client, project_id, account_id, account_id)
             except ValueError as e:
                 raise HTTPException(status_code=503, detail=str(e))
+        if want_dedicated:
+            await _attach_new_project_to_dedicated_computer(project_id, account_id)
     
     if has_files:
         # WITH FILES: Create sandbox (blocking) and upload files immediately
@@ -436,6 +477,8 @@ async def start_agent_run(
             from core.files.upload_handler import upload_files_to_sandbox
             await upload_files_to_sandbox(project_id, thread_id, files_data, account_id)
             logger.info(f"✅ [AGENT_START] Uploaded {len(files_data)} files to sandbox {sandbox_id}")
+            if want_dedicated:
+                await _sync_dedicated_sandbox_after_resolve(project_id, account_id)
         else:
             logger.warning(f"⚠️ [AGENT_START] Failed to resolve sandbox for file uploads (project {project_id})")
     
@@ -455,6 +498,8 @@ async def start_agent_run(
                 sandbox_info = await resolve_sandbox(proj_id, acc_id, db_client, require_started=True)
                 if sandbox_info:
                     logger.info(f"✅ [BACKGROUND] Created sandbox {sandbox_info.sandbox_id} for project {proj_id}")
+                    if want_dedicated:
+                        await _sync_dedicated_sandbox_after_resolve(proj_id, acc_id)
                 else:
                     logger.warning(f"⚠️ [BACKGROUND] Failed to create sandbox for project {proj_id}")
             except Exception as e:

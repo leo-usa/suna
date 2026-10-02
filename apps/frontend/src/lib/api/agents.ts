@@ -394,7 +394,7 @@ export const optimisticAgentStart = async (options: {
   memory_enabled?: boolean;
   mode?: string;  // Mode: slides, sheets, docs, canvas, video, research
   files?: File[];  // Files to upload with the agent start
-  execution_target?: 'cloud' | 'local';
+  execution_target?: 'cloud' | 'local' | 'dedicated';
 }): Promise<OptimisticAgentStartResponse> => {
   try {
     if (!API_URL) {

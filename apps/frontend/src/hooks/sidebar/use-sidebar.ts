@@ -201,11 +201,6 @@ export const groupThreadsByDateThenProject = (
   startOfToday.setHours(0, 0, 0, 0);
   
   sortedThreads.forEach(thread => {
-    // Dedicated projects live in the pinned section at the top of the sidebar
-    if (thread.dedicatedAt) {
-      return;
-    }
-
     const threadDate = new Date(thread.updatedAt);
     
     // Get start of thread date (midnight)

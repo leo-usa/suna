@@ -33,7 +33,7 @@ export interface OptimisticAgentStartOptions {
   mode?: string;
   /** Files to upload with the agent start */
   files?: File[];
-  executionTarget?: 'cloud' | 'local';
+  executionTarget?: 'cloud' | 'local' | 'dedicated';
 }
 
 export interface OptimisticAgentStartResult {
