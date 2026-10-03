@@ -742,6 +742,10 @@
     "sampleAnswers": "示例答案",
     "samplePrompts": "示例提示",
     "waitingForUserResponse": "您回答后，Dobby将继续自主工作。",
+    "loginHandoffHint": "请先在「浏览器」实时画面里点一下输入框，再键盘输入（不要用「操作」里的截图）。若弹窗被挡住，在远程浏览器里按 Ctrl+- 缩小，或拖动弹窗标题栏。密码只留在浏览器里，完成后回复即可。",
+    "loginHandoffOpenBrowser": "打开实时浏览器",
+    "loginHandoffReopenBrowser": "显示实时浏览器",
+    "loginHandoffWaiting": "登录完成后请回复，Dobby 会继续工作。",
     "taskCompleted": "任务已完成",
     "uploadingFiles": "正在上传 {count} 个文件...",
     "uploadingFilesOne": "正在上传 {count} 个文件...",
@@ -2776,6 +2780,12 @@
     },
     "fileCard": {
       "removed": "这个文件已经不在了。保存它的计算机已被移除。"
+    },
+    "loginHandoff": {
+      "title": "请在这里登录",
+      "description": "在此浏览器中输入用户名和密码，然后在聊天中回复「已登录」。",
+      "preparingTitle": "正在准备浏览器…",
+      "preparingDescription": "正在启动计算机，便于你安全登录。"
     },
     "panel": {
       "actions": "操作",

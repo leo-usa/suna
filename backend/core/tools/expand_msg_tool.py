@@ -276,28 +276,44 @@ class ExpandMessageTool(Tool):
         
         from core.jit.result_types import ActivationSuccess, ActivationError
         
-        guides = []
-        activation_failures = []
+        activation_failures: list[str] = []
+        activation_failure_messages: list[str] = []
         
         for tool_name, result in zip(valid_tool_names, activation_results):
             if isinstance(result, Exception):
                 activation_failures.append(tool_name)
+                activation_failure_messages.append(f"{tool_name}: {result}")
                 logger.warning(f"⚠️  [INIT TOOLS] Failed to activate '{tool_name}': {result}")
             elif isinstance(result, ActivationError):
                 activation_failures.append(tool_name)
+                activation_failure_messages.append(result.to_user_message())
                 logger.warning(f"⚠️  [INIT TOOLS] {result.to_user_message()}")
             elif isinstance(result, ActivationSuccess):
                 logger.debug(f"✅ [INIT TOOLS] {result}")
         
+        successfully_activated = [t for t in valid_tool_names if t not in activation_failures]
+
+        if activation_failures:
+            logger.error(f"❌ [INIT TOOLS] Failed to activate some tools: {activation_failures}")
+
+        # Do not return usage guides for tools that failed to activate — that misleads
+        # the model into calling them (e.g. browser without GEMINI_API_KEY).
+        if not successfully_activated and not already_active:
+            failure_detail = "; ".join(activation_failure_messages) or ", ".join(activation_failures)
+            return self.fail_response(
+                f"Failed to activate tools: {failure_detail}. "
+                "Do not call these tools until the underlying configuration is fixed."
+            )
+
         from core.jit.tool_cache import get_tool_cache
         
         tool_cache = get_tool_cache()
-        cached_guides = await tool_cache.get_multiple(valid_tool_names)
+        cached_guides = await tool_cache.get_multiple(successfully_activated)
         
         guides = []
         guides_to_cache = {}
         
-        for tool_name in valid_tool_names:
+        for tool_name in successfully_activated:
             cached_guide = cached_guides.get(tool_name)
             if cached_guide:
                 guides.append(cached_guide)
@@ -322,19 +338,20 @@ class ExpandMessageTool(Tool):
             await tool_cache.set_multiple(guides_to_cache)
             logger.info(f"💾 [CACHE STORE] Cached {len(guides_to_cache)} new guides")
         
-        if activation_failures:
-            logger.error(f"❌ [INIT TOOLS] Failed to activate some tools: {activation_failures}")
-        
-        successfully_activated = [t for t in valid_tool_names if t not in activation_failures]
         if successfully_activated:
             await self._save_dynamic_tools_to_metadata(successfully_activated)
         
         total_guide_size = sum(len(g) for g in guides)
         total_time = (time.time() - start) * 1000
         logger.info(f"✅ [INIT TOOLS] Returned {len(guides)} guide(s) in {total_time:.1f}ms, total size: {total_guide_size:,} chars")
-        logger.info(f"🎯 [INIT TOOLS] Tools now available for use: {[t for t in valid_tool_names if t not in activation_failures]}")
+        logger.info(f"🎯 [INIT TOOLS] Tools now available for use: {successfully_activated}")
         
         message = f"Loaded {len(guides)} tool guide(s). Tools are now available for use."
+        if activation_failures:
+            message += (
+                f" Failed to activate (do not use): {', '.join(activation_failures)}. "
+                f"Reason: {'; '.join(activation_failure_messages)}"
+            )
         if already_active:
             message += f" Already ready without initialization: {', '.join(already_active)}."
         if computer_already_ready:
@@ -351,7 +368,8 @@ class ExpandMessageTool(Tool):
             "status": "success",
             "message": message,
             "guides": "\n\n---\n\n".join(guides),
-            "activated_tools": [t for t in tool_names if t not in activation_failures],
+            "activated_tools": successfully_activated,
+            "failed_tools": activation_failures,
             "_internal": True
         })
         

@@ -579,7 +579,11 @@
       "pauseReplay": "Pausar",
       "previousMessage": "Mensagem anterior",
       "nextMessage": "Próxima mensagem"
-    }
+    },
+    "loginHandoffHint": "Log in in the live Browser panel (not the Operations screenshot). Your password stays in the browser — reply when you are done.",
+    "loginHandoffOpenBrowser": "Open live browser",
+    "loginHandoffReopenBrowser": "Show live browser",
+    "loginHandoffWaiting": "After you log in, reply so Dobby can continue."
   },
   "agents": {
     "title": "Workers",
@@ -1919,6 +1923,12 @@
       "liveUpdates": "Atualizações ao vivo",
       "prev": "Ant.",
       "next": "Próx."
+    },
+    "loginHandoff": {
+      "title": "Log in here",
+      "description": "Type your username and password in this browser, then reply Logged in in the chat.",
+      "preparingTitle": "Preparing browser...",
+      "preparingDescription": "Starting the computer so you can log in securely."
     }
   },
   "agentConfig": {

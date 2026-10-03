@@ -50,6 +50,9 @@ interface DobbyComputerState {
   // Panel state
   shouldOpenPanel: boolean;
   isSidePanelOpen: boolean;
+
+  // Browser login handoff (user must type credentials in live VNC)
+  loginHandoffActive: boolean;
   
   // Tool navigation state (for external tool click triggers)
   pendingToolNavIndex: number | null;
@@ -94,6 +97,10 @@ interface DobbyComputerState {
   setIsSidePanelOpen: (open: boolean) => void;
   openSidePanel: () => void;
   closeSidePanel: () => void;
+
+  // Login handoff
+  startLoginHandoff: () => void;
+  clearLoginHandoff: () => void;
   
   // Unsaved content management
   setUnsavedContent: (filePath: string, content: string) => void;
@@ -128,6 +135,7 @@ const initialState = {
   ...initialFileState,
   shouldOpenPanel: false,
   isSidePanelOpen: false,
+  loginHandoffActive: false,
   pendingToolNavIndex: null as number | null,
   unsavedFileContent: {} as Record<string, string>,
   unsavedFileState: {} as Record<string, boolean>,
@@ -151,6 +159,7 @@ export const useDobbyComputerStore = create<DobbyComputerState>()(
             // Reset all file state when sandbox changes
             ...initialFileState,
             activeView: 'tools', // Also reset to tools view
+            loginHandoffActive: false,
           });
         }
       },
@@ -163,8 +172,9 @@ export const useDobbyComputerStore = create<DobbyComputerState>()(
       },
       
       setActiveView: (view: ViewType) => {
+        const allowBrowser = !HIDE_BROWSER_TAB || get().loginHandoffActive;
         // If browser tab is hidden and trying to set browser view, default to tools
-        const effectiveView = HIDE_BROWSER_TAB && view === 'browser' ? 'tools' : view;
+        const effectiveView = !allowBrowser && view === 'browser' ? 'tools' : view;
         
         // Clear file selection when switching away from files view
         if (effectiveView !== 'files') {
@@ -177,6 +187,26 @@ export const useDobbyComputerStore = create<DobbyComputerState>()(
         } else {
           set({ activeView: effectiveView });
         }
+      },
+
+      startLoginHandoff: () => {
+        set({
+          loginHandoffActive: true,
+          activeView: 'browser',
+          shouldOpenPanel: true,
+          isSidePanelOpen: true,
+          selectedFilePath: null,
+          filePathList: undefined,
+          currentFileIndex: -1,
+        });
+      },
+
+      clearLoginHandoff: () => {
+        const nextView = get().activeView === 'browser' ? 'tools' : get().activeView;
+        set({
+          loginHandoffActive: false,
+          activeView: nextView,
+        });
       },
       
       openFile: (filePath: string, filePathList?: string[]) => {

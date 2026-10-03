@@ -11,7 +11,7 @@ from enum import Enum
 import httpx
 from fastapi import FastAPI, UploadFile, File, HTTPException, APIRouter, Form, Depends, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import Response
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 from daytona_sdk import AsyncSandbox, SessionExecuteRequest
 from daytona_sdk.common.errors import DaytonaNotFoundError
 
@@ -852,10 +852,14 @@ class SandboxStatusResponse(BaseModel):
     error: Optional[str] = None
     vnc_preview: Optional[str] = None
     sandbox_url: Optional[str] = None
+    # Serialized as "pass" for the VNC iframe client.
+    pass_: Optional[str] = Field(default=None, alias="pass")
     cpu: Optional[int] = None
     memory: Optional[int] = None
     disk: Optional[int] = None
     target: Optional[str] = None
+
+    model_config = ConfigDict(populate_by_name=True)
 
 
 def derive_sandbox_status(daytona_state: str, services_health: Optional[Dict] = None) -> str:
@@ -1143,6 +1147,7 @@ async def get_project_sandbox_status(
             last_checked=datetime.now(timezone.utc).isoformat(),
             vnc_preview=config.get('vnc_preview'),
             sandbox_url=config.get('sandbox_url'),
+            pass_=config.get('pass'),
             cpu=getattr(sandbox, 'cpu', None),
             memory=getattr(sandbox, 'memory', None),
             disk=getattr(sandbox, 'disk', None),
@@ -1465,6 +1470,7 @@ async def get_sandbox_status_by_id(
             last_checked=datetime.now(timezone.utc).isoformat(),
             vnc_preview=config.get('vnc_preview'),
             sandbox_url=config.get('sandbox_url'),
+            pass_=config.get('pass'),
             cpu=getattr(sandbox, 'cpu', None),
             memory=getattr(sandbox, 'memory', None),
             disk=getattr(sandbox, 'disk', None),

@@ -750,6 +750,10 @@
     "sampleAnswers": "Sample answers",
     "samplePrompts": "Sample prompts",
     "waitingForUserResponse": "Dobby will proceed to work autonomously after you answer.",
+    "loginHandoffHint": "Click once inside the live Browser panel, then type. If a popup is cut off, press Ctrl+- in the remote browser or drag the popup title bar up. Do not use the Operations screenshot. Reply when you are done.",
+    "loginHandoffOpenBrowser": "Open live browser",
+    "loginHandoffReopenBrowser": "Show live browser",
+    "loginHandoffWaiting": "After you log in, reply so Dobby can continue.",
     "taskCompleted": "Task completed",
     "uploadingFiles": "Uploading {count} file{plural}...",
     "uploadingFilesOne": "Uploading {count} file...",
@@ -1578,6 +1582,12 @@
     },
     "fileCard": {
       "removed": "This file is gone. The computer that stored it was removed."
+    },
+    "loginHandoff": {
+      "title": "Log in here",
+      "description": "Type your username and password in this browser, then reply Logged in in the chat.",
+      "preparingTitle": "Preparing browser...",
+      "preparingDescription": "Starting the computer so you can log in securely."
     },
     "panel": {
       "actions": "Actions",

@@ -32,6 +32,8 @@ RUN apt-get update && apt-get install -y \
     xvfb \
     x11vnc \
     tigervnc-tools \
+    openbox \
+    xdotool \
     supervisor \
     net-tools \
     procps \

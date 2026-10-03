@@ -81,6 +81,18 @@ class JITLoader:
                 details={'module': module_path, 'class': class_name}
             )
         
+        # Browser/vision Stagehand tools require GEMINI_API_KEY at activate time.
+        # Without this, initialize_tools returns a success guide then navigate fails later.
+        if tool_name in ("browser_tool", "sb_vision_tool"):
+            from core.utils.config import config
+            if not config.GEMINI_API_KEY:
+                logger.warning(f"⚠️  [JIT] Skipping '{tool_name}': GEMINI_API_KEY is not configured")
+                return ActivationError(
+                    error_type=ActivationErrorType.INIT_FAILED,
+                    message="Browser tool is not available. GEMINI_API_KEY is not configured.",
+                    tool_name=tool_name,
+                )
+
         try:
             detector = ParameterDetector()
             init_params = detector.detect_init_parameters(tool_class)

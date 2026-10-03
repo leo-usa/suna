@@ -16,6 +16,8 @@ import { MediaGenerationInline } from '@/components/thread/content/MediaGenerati
 import { constructHtmlPreviewUrl } from '@/lib/utils/url';
 import { InlineCheckout, extractInlineCheckout } from '@/components/thread/content/InlineCheckout';
 import { UpgradeButtonCTA, extractUpgradeButton } from '@/components/thread/content/UpgradeButtonCTA';
+import { LoginHandoffActivator } from '@/components/thread/content/LoginHandoffActivator';
+import { LoginHandoffBanner } from '@/components/thread/content/LoginHandoffBanner';
 
 export interface AssistantMessageRendererProps {
   message: UnifiedMessage;
@@ -50,6 +52,11 @@ function renderAskToolCall(
   const askText = toolCall.arguments?.text || '';
   const attachments = normalizeAttachments(toolCall.arguments?.attachments);
   const followUpAnswers = normalizeArrayValue(toolCall.arguments?.follow_up_answers);
+  const awaitLoginRaw = toolCall.arguments?.await_login;
+  const awaitLogin =
+    awaitLoginRaw === true ||
+    awaitLoginRaw === 1 ||
+    (typeof awaitLoginRaw === 'string' && ['true', '1', 'yes'].includes(awaitLoginRaw.trim().toLowerCase()));
 
   // Extract inline checkout if present
   const { cleanContent: contentAfterCheckout, hasCheckout, options: checkoutOptions } = extractInlineCheckout(askText);
@@ -58,12 +65,14 @@ function renderAskToolCall(
 
   return (
     <div key={`ask-${index}`} className="space-y-3 my-1.5">
+      {awaitLogin && isLatestMessage && <LoginHandoffActivator />}
       <ComposioUrlDetector
         content={cleanContent}
         className="text-sm prose prose-sm dark:prose-invert chat-markdown max-w-none break-words [&>:first-child]:mt-0 prose-headings:mt-3"
       />
       {hasUpgradeButton && <UpgradeButtonCTA />}
       {hasCheckout && <InlineCheckout options={checkoutOptions} />}
+      {awaitLogin && <LoginHandoffBanner />}
       {attachments.length > 0 && (
         <div className="mt-3">
           <FileAttachmentGrid
@@ -81,7 +90,9 @@ function renderAskToolCall(
         <div className="flex items-center gap-2 mt-3">
           <Clock className="h-4 w-4 text-orange-500 flex-shrink-0" />
           <p className="text-sm text-muted-foreground">
-            {t ? t('thread.waitingForUserResponse') : 'Dobby will proceed to work autonomously after you answer.'}
+            {awaitLogin
+              ? (t ? t('thread.loginHandoffWaiting') : 'After you log in, reply so Dobby can continue.')
+              : (t ? t('thread.waitingForUserResponse') : 'Dobby will proceed to work autonomously after you answer.')}
           </p>
         </div>
       )}

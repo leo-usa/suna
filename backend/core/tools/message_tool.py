@@ -30,6 +30,7 @@ Use this tool when you need to ask the user questions during execution. This all
 - Asking for clarification when genuinely needed
 - Presenting intermediate results during complex work
 - Any response that expects or allows further user input
+- **Login handoff:** when the browser hits a login/SSO/CAPTCHA/2FA page, call ask with `await_login=true`. Never ask the user to paste a password in chat.
 
 ### When to Use `complete`
 ONLY when ALL of these are true:
@@ -92,11 +93,13 @@ class MessageTool(Tool):
 2. Clarify ambiguous instructions
 3. Get decisions on implementation choices as you work
 4. Offer choices to the user about what direction to take
+5. Hand off browser login: set await_login=true when the user must enter credentials in the live browser (never ask them to paste a password in chat)
 
 Usage notes:
 - Users will always be able to select "Other" to provide custom text input
 - Use follow_up_answers to allow multiple answer options to be selected for a question
 - If you recommend a specific option, make that the first option in the list and add "(Recommended)" at the end
+- For login handoff: await_login=true, tell them to log in in the Browser panel, and include follow_up_answers like ["Logged in", "I need help"]
 
 CRITICAL: Put ALL content in the text parameter - never duplicate as raw text outside the tool call.""",
             "parameters": {
@@ -117,6 +120,11 @@ CRITICAL: Put ALL content in the text parameter - never duplicate as raw text ou
                         "type": "array",
                         "items": {"type": "string"},
                         "description": "**OPTIONAL** - 2-4 actionable suggestions the user can click. For questions: specific options. For information: suggest what they can do next."
+                    },
+                    "await_login": {
+                        "type": "boolean",
+                        "description": "**OPTIONAL** - Set true when the user must log in manually in the live Browser panel (login/SSO/CAPTCHA/2FA). Opens the browser for them. Never ask for passwords in chat. Default: false.",
+                        "default": False
                     }
                 },
                 "required": ["text"],
@@ -124,12 +132,24 @@ CRITICAL: Put ALL content in the text parameter - never duplicate as raw text ou
             }
         }
     })
-    async def ask(self, text: str, attachments: Optional[Union[str, List[str]]] = None, follow_up_answers: Optional[List[str]] = None) -> ToolResult:
+    async def ask(
+        self,
+        text: str,
+        attachments: Optional[Union[str, List[str]]] = None,
+        follow_up_answers: Optional[List[str]] = None,
+        await_login: bool = False,
+    ) -> ToolResult:
         try:            
             if attachments and isinstance(attachments, str):
                 attachments = [attachments]
-          
-            return self.success_response({"status": "Awaiting user response..."})
+
+            if isinstance(await_login, str):
+                await_login = await_login.strip().lower() in ("true", "1", "yes")
+
+            payload = {"status": "Awaiting user response..."}
+            if await_login:
+                payload["await_login"] = True
+            return self.success_response(payload)
         except Exception as e:
             return self.fail_response(f"Error asking user: {str(e)}")
 

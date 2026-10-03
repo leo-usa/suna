@@ -32,7 +32,7 @@ import { LoadingState } from './components/LoadingState';
 import { AppDock } from './components/Dock';
 import { SandboxDesktop } from './components/Desktop';
 import { getToolNumber } from '@/hooks/messages/tool-tracking';
-import { useSandboxStatusWithAutoStart, isSandboxUsable } from '@/hooks/files/use-sandbox-details';
+import { useSandboxStatusWithAutoStart, useStartSandbox, isSandboxUsable } from '@/hooks/files/use-sandbox-details';
 import { SandboxStatusView } from './components/SandboxStatusView';
 
 export interface ToolCallInput {
@@ -128,10 +128,15 @@ export const DobbyComputer = memo(function DobbyComputer({
     currentPath,
     navigateToPath,
     openFile,
+    loginHandoffActive,
+    clearLoginHandoff,
   } = useDobbyComputerStore();
+  const showBrowserTab = loginHandoffActive || !HIDE_BROWSER_TAB;
   
   const pendingToolNavIndex = useDobbyComputerPendingToolNavIndex();
   const clearPendingToolNav = useDobbyComputerClearPendingToolNav();
+  const startSandbox = useStartSandbox();
+  const tLogin = useTranslations('dobbyComputer.loginHandoff');
 
   // Fetch unified sandbox status (combines Daytona state + service health)
   // Auto-starts OFFLINE sandboxes when detected
@@ -139,6 +144,41 @@ export const DobbyComputer = memo(function DobbyComputer({
   
   // Check if sandbox is usable (LIVE status)
   const isSandboxLive = sandboxStatus ? isSandboxUsable(sandboxStatus.status) : false;
+
+  // End login handoff only after it has settled idle, then the agent starts a NEW run
+  // (user replied). Clearing while the same run is still "running" races startLoginHandoff
+  // and drops the live Browser tab back to a static Operations screenshot.
+  const loginHandoffSettledRef = useRef(false);
+  useEffect(() => {
+    if (loginHandoffActive && agentStatus !== 'running') {
+      loginHandoffSettledRef.current = true;
+    }
+    if (!loginHandoffActive) {
+      loginHandoffSettledRef.current = false;
+    }
+  }, [loginHandoffActive, agentStatus]);
+
+  useEffect(() => {
+    if (loginHandoffActive && agentStatus === 'running' && loginHandoffSettledRef.current) {
+      loginHandoffSettledRef.current = false;
+      clearLoginHandoff();
+    }
+  }, [loginHandoffActive, agentStatus, clearLoginHandoff]);
+
+  // Keep the live Browser view focused while waiting for the user to log in
+  useEffect(() => {
+    if (loginHandoffActive && activeView !== 'browser') {
+      setActiveView('browser');
+    }
+  }, [loginHandoffActive, activeView, setActiveView]);
+
+  // Keep the computer awake while the user is logging in
+  useEffect(() => {
+    if (!loginHandoffActive || !projectId || startSandbox.isPending) return;
+    if (sandboxStatus?.status === 'OFFLINE' || sandboxStatus?.error === 'SANDBOX_REMOVED') {
+      startSandbox.mutate(projectId);
+    }
+  }, [loginHandoffActive, projectId, sandboxStatus?.status, sandboxStatus?.error, startSandbox.isPending, startSandbox.mutate]);
 
   const currentViewRef = useRef(activeView);
 
@@ -175,21 +215,26 @@ export const DobbyComputer = memo(function DobbyComputer({
   }, []);
 
   const persistentVncIframe = useMemo(() => {
-    if (!sandbox || !sandbox.vnc_preview || !sandbox.pass || !sandbox.id) return null;
+    const sandboxId = sandboxStatus?.sandbox_id || sandbox?.id;
+    const vncPreview = sandboxStatus?.vnc_preview || sandbox?.vnc_preview;
+    const pass = (sandboxStatus as { pass?: string } | undefined)?.pass || sandbox?.pass;
+    if (!sandboxId || !vncPreview || !pass) return null;
 
     return (
       <div>
         <HealthCheckedVncIframe
-          key={vncRefreshKey}
+          key={`vnc-input-${vncRefreshKey}`}
+          interactive
+          showInputHint={loginHandoffActive}
           sandbox={{
-            id: sandbox.id,
-            vnc_preview: sandbox.vnc_preview,
-            pass: sandbox.pass
+            id: sandboxId,
+            vnc_preview: vncPreview,
+            pass,
           }}
         />
       </div>
     );
-  }, [sandbox, vncRefreshKey]);
+  }, [sandbox, sandboxStatus?.sandbox_id, sandboxStatus?.vnc_preview, sandboxStatus, vncRefreshKey, loginHandoffActive]);
 
   const isBrowserTool = useCallback((toolName: string | undefined): boolean => {
     if (!toolName) return false;
@@ -203,8 +248,8 @@ export const DobbyComputer = memo(function DobbyComputer({
   }, []);
 
   useEffect(() => {
-    // Skip browser tab switching if flag is enabled
-    if (HIDE_BROWSER_TAB) return;
+    // Skip browser tab switching if flag is enabled (login handoff opens browser itself)
+    if (!showBrowserTab || loginHandoffActive) return;
     
     if (!isInitialized && toolCallSnapshots.length > 0) {
       const streamingSnapshot = toolCallSnapshots.find(snapshot =>
@@ -229,11 +274,11 @@ export const DobbyComputer = memo(function DobbyComputer({
         }
       }
     }
-  }, [toolCallSnapshots, isInitialized, isBrowserTool, agentStatus, setActiveView]);
+  }, [toolCallSnapshots, isInitialized, isBrowserTool, agentStatus, setActiveView, showBrowserTab, loginHandoffActive]);
 
   useEffect(() => {
-    // Skip browser tab switching if flag is enabled
-    if (HIDE_BROWSER_TAB) return;
+    // Skip browser tab switching if flag is enabled (login handoff opens browser itself)
+    if (!showBrowserTab || loginHandoffActive) return;
     
     if (activeView !== 'tools') return;
     
@@ -259,7 +304,7 @@ export const DobbyComputer = memo(function DobbyComputer({
         }
       }
     }
-  }, [toolCallSnapshots, internalIndex, isBrowserTool, agentStatus, activeView, setActiveView]);
+  }, [toolCallSnapshots, internalIndex, isBrowserTool, agentStatus, activeView, setActiveView, showBrowserTab, loginHandoffActive]);
 
   const handleClose = useCallback(() => {
     setIsMaximized(false);
@@ -292,8 +337,8 @@ export const DobbyComputer = memo(function DobbyComputer({
     const hasNewSnapshots = newSnapshots.length > toolCallSnapshots.length;
     setToolCallSnapshots(newSnapshots);
 
-    // Skip browser tab switching if flag is enabled
-    if (!HIDE_BROWSER_TAB && hasNewSnapshots && agentStatus === 'running' && activeView === 'tools') {
+    // Skip browser tab switching if flag is enabled (login handoff opens browser itself)
+    if (showBrowserTab && !loginHandoffActive && hasNewSnapshots && agentStatus === 'running' && activeView === 'tools') {
       const newSnapshot = newSnapshots[newSnapshots.length - 1];
       const toolName = newSnapshot?.toolCall.toolCall?.function_name?.replace(/_/g, '-');
       const isNewBrowserTool = isBrowserTool(toolName);
@@ -352,7 +397,7 @@ export const DobbyComputer = memo(function DobbyComputer({
         setInternalIndex(newSnapshots.length - 1);
       }
     }
-  }, [toolCalls, navigationMode, toolCallSnapshots.length, isInitialized, internalIndex, agentStatus, newSnapshots, isBrowserTool, activeView, setActiveView]);
+  }, [toolCalls, navigationMode, toolCallSnapshots.length, isInitialized, internalIndex, agentStatus, newSnapshots, isBrowserTool, activeView, setActiveView, showBrowserTab, loginHandoffActive]);
 
   useEffect(() => {
     if ((!isInitialized || navigationMode === 'manual') && toolCallSnapshots.length > 0) {
@@ -676,16 +721,23 @@ export const DobbyComputer = memo(function DobbyComputer({
   };
 
   const renderBrowserView = () => {
-    // If browser tab is hidden, don't render browser view
-    if (HIDE_BROWSER_TAB) {
+    if (!showBrowserTab) {
       return null;
     }
+
+    const loginBanner = loginHandoffActive ? (
+      <div className="flex-shrink-0 px-4 py-3 border-b border-amber-500/30 bg-amber-500/10">
+        <p className="text-sm font-medium text-amber-950 dark:text-amber-100">{tLogin('title')}</p>
+        <p className="text-xs text-amber-900/80 dark:text-amber-100/80 mt-1">{tLogin('description')}</p>
+      </div>
+    ) : null;
     
     if (persistentVncIframe) {
       return (
         <div className="h-full flex flex-col overflow-hidden">
+          {loginBanner}
           <BrowserHeader isConnected={true} onRefresh={handleVncRefresh} />
-          <div className="flex-1 overflow-hidden grid items-center">
+          <div className="flex-1 overflow-auto min-h-0">
             {persistentVncIframe}
           </div>
         </div>
@@ -694,6 +746,7 @@ export const DobbyComputer = memo(function DobbyComputer({
 
     return (
       <div className="h-full flex flex-col overflow-hidden">
+        {loginBanner}
         <BrowserHeader isConnected={false} />
         <div className="flex-1 overflow-auto flex flex-col items-center justify-center p-8 bg-zinc-50 dark:bg-zinc-900/50">
           <div className="flex flex-col items-center space-y-4 max-w-sm text-center">
@@ -702,10 +755,10 @@ export const DobbyComputer = memo(function DobbyComputer({
             </div>
             <div className="space-y-2">
               <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-                {tBrowser('notAvailableTitle')}
+                {loginHandoffActive ? tLogin('preparingTitle') : tBrowser('notAvailableTitle')}
               </h3>
               <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed">
-                {tBrowser('notAvailableDescription')}
+                {loginHandoffActive ? tLogin('preparingDescription') : tBrowser('notAvailableDescription')}
               </p>
             </div>
           </div>
@@ -727,6 +780,7 @@ export const DobbyComputer = memo(function DobbyComputer({
             currentView={activeView}
             onViewChange={setActiveView}
             showFilesTab={true}
+            showBrowserTab={showBrowserTab}
             isMaximized={isMaximized}
             isSuiteMode={isSuiteMode}
             sandboxStatus={sandboxStatus?.status}
@@ -753,7 +807,7 @@ export const DobbyComputer = memo(function DobbyComputer({
         <div className="flex-1 overflow-hidden max-w-full max-h-full min-w-0 min-h-0" style={{ contain: 'strict' }}>
           {activeView === 'tools' && renderToolsView()}
           {activeView === 'files' && renderFilesView()}
-          {!HIDE_BROWSER_TAB && activeView === 'browser' && renderBrowserView()}
+          {showBrowserTab && activeView === 'browser' && renderBrowserView()}
         </div>
       </div>
     );
@@ -789,13 +843,14 @@ export const DobbyComputer = memo(function DobbyComputer({
             currentView={activeView}
             onViewChange={setActiveView}
             showFilesTab={true}
+            showBrowserTab={showBrowserTab}
             sandboxStatus={sandboxStatus?.status}
           />
 
           <div className="flex-1 flex flex-col overflow-hidden max-w-full min-w-0 min-h-0" style={{ contain: 'strict' }}>
             {activeView === 'tools' && renderToolsView()}
             {activeView === 'files' && renderFilesView()}
-            {!HIDE_BROWSER_TAB && activeView === 'browser' && renderBrowserView()}
+            {showBrowserTab && activeView === 'browser' && renderBrowserView()}
           </div>
 
           {activeView === 'tools' && (displayTotalCalls > 1 || (isCurrentToolStreaming && totalCompletedCalls > 0)) && (

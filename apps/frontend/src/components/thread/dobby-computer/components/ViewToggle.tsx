@@ -17,18 +17,21 @@ interface ViewToggleProps {
   currentView: ViewType;
   onViewChange: (view: ViewType) => void;
   showFilesTab?: boolean;
+  showBrowserTab?: boolean;
 }
 
 export const ViewToggle = memo(function ViewToggle({ 
   currentView, 
   onViewChange, 
-  showFilesTab = true 
+  showFilesTab = true,
+  showBrowserTab = false,
 }: ViewToggleProps) {
   const t = useTranslations('dobbyComputer.panel');
-  // Hide browser tab if flag is enabled
-  const viewOptions = HIDE_BROWSER_TAB
-    ? (showFilesTab ? ['tools', 'files'] as const : ['tools'] as const)
-    : (showFilesTab ? ['tools', 'files', 'browser'] as const : ['tools', 'browser'] as const);
+  const browserVisible = showBrowserTab || !HIDE_BROWSER_TAB;
+  // Hide browser tab if flag is enabled (unless login handoff needs it)
+  const viewOptions = browserVisible
+    ? (showFilesTab ? ['tools', 'files', 'browser'] as const : ['tools', 'browser'] as const)
+    : (showFilesTab ? ['tools', 'files'] as const : ['tools'] as const);
   
   const getViewIndex = (view: ViewType) => {
     if (!showFilesTab && view === 'files') return 0;
@@ -93,7 +96,7 @@ export const ViewToggle = memo(function ViewToggle({
         </Tooltip>
       )}
 
-      {!HIDE_BROWSER_TAB && (
+      {browserVisible && (
         <Tooltip>
           <TooltipTrigger asChild>
             <Button

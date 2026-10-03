@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { DobbyLoader } from '@/components/ui/dobby-loader';
 import { useVncPreloader } from '@/hooks/files';
+import { cn } from '@/lib/utils';
 
 interface HealthCheckedVncIframeProps {
   sandbox: {
@@ -14,39 +15,75 @@ interface HealthCheckedVncIframeProps {
     pass: string;
   };
   className?: string;
+  /** Prefer 1:1 mapping for login handoff so clicks/keys hit fields correctly. */
+  interactive?: boolean;
+  /** Show a one-line tip about focusing the remote desktop before typing. */
+  showInputHint?: boolean;
 }
 
-export function HealthCheckedVncIframe({ sandbox, className }: HealthCheckedVncIframeProps) {
-  const [iframeKey, setIframeKey] = useState(0);
-  const [isBrowserLoading, setIsBrowserLoading] = useState(true);
+/**
+ * Build noVNC URL.
+ *
+ * IMPORTANT: vnc_lite.html assigns query values directly (no boolean parse).
+ * `view_only=false` is the string "false", which is truthy → view-only ON
+ * (clicks/keys blocked). Omit view_only entirely so the default boolean false applies.
+ */
+function buildVncSrc(vncPreview: string, pass: string, interactive: boolean) {
+  const params = new URLSearchParams({
+    password: pass,
+    autoconnect: 'true',
+  });
+  // Always scale to fit the panel so the full remote desktop is visible
+  // (login modals, phone verification, etc.).
+  params.set('scale', 'true');
+  return `${vncPreview}/vnc_lite.html?${params.toString()}`;
+}
+
+export function HealthCheckedVncIframe({ sandbox, className, interactive = false, showInputHint = false }: HealthCheckedVncIframeProps) {
+  const [iframeKey] = useState(0);
+  const [isBrowserLoading, setIsBrowserLoading] = useState(!interactive);
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
   
-  // Use the enhanced VNC preloader hook
   const { status, retryCount, retry, isPreloaded } = useVncPreloader(sandbox, {
     maxRetries: 5,
     initialDelay: 1000,
     timeoutMs: 5000
   });
 
-  // When iframe is preloaded, show loading overlay for a bit to let browser initialize
-  useEffect(() => {
-    if (isPreloaded && isBrowserLoading) {
-      // Give browser time to initialize and navigate (3-4 seconds)
-      const timer = setTimeout(() => {
-        setIsBrowserLoading(false);
-      }, 4000);
-      return () => clearTimeout(timer);
+  const focusVnc = useCallback(() => {
+    const iframe = iframeRef.current;
+    if (!iframe) return;
+    try {
+      iframe.focus();
+      iframe.contentWindow?.focus();
+    } catch {
+      // Cross-origin; iframe.focus() is enough for keyboard routing
     }
-  }, [isPreloaded, isBrowserLoading]);
+  }, []);
 
-  // Reset loading state when sandbox changes
   useEffect(() => {
-    setIsBrowserLoading(true);
-  }, [sandbox?.id]);
+    if (!interactive) {
+      if (isPreloaded && isBrowserLoading) {
+        const timer = setTimeout(() => setIsBrowserLoading(false), 4000);
+        return () => clearTimeout(timer);
+      }
+      return;
+    }
+    setIsBrowserLoading(false);
+  }, [interactive, isPreloaded, isBrowserLoading]);
 
+  useEffect(() => {
+    if (!interactive) {
+      setIsBrowserLoading(true);
+    }
+  }, [sandbox?.id, interactive]);
 
+  useEffect(() => {
+    if (!interactive || !isPreloaded) return;
+    const timer = setTimeout(focusVnc, 300);
+    return () => clearTimeout(timer);
+  }, [interactive, isPreloaded, iframeKey, focusVnc]);
 
-
-  // VNC URL received but preloading in progress
   if (status === 'loading') {
     return (
       <div className={`overflow-hidden m-2 sm:m-4 relative ${className || ''}`}>
@@ -68,7 +105,6 @@ export function HealthCheckedVncIframe({ sandbox, className }: HealthCheckedVncI
     );
   }
 
-  // VNC preload failed after retries
   if (status === 'error') {
     return (
       <div className={`overflow-hidden m-2 sm:m-4 relative ${className || ''}`}>
@@ -94,15 +130,35 @@ export function HealthCheckedVncIframe({ sandbox, className }: HealthCheckedVncI
   }
 
   if (isPreloaded) {
+    const vncSrc = buildVncSrc(sandbox.vnc_preview, sandbox.pass, interactive);
+    // Interactive: no CSS crop transform (that breaks click mapping).
+    // Preview: crop browser chrome for a cleaner screenshot look.
+    const iframeClassName = interactive
+      ? 'absolute inset-0 w-full h-full border-0'
+      : 'absolute inset-0 w-full h-full border-0 md:w-[102%] md:h-[130%] md:-translate-y-[4.4rem] lg:-translate-y-[4.7rem] xl:-translate-y-[5.4rem] md:left-0 md:-translate-x-2';
+
     return (
-      <div className={`overflow-hidden m-2 sm:m-4 relative ${className || ''}`}>
+      <div className={cn('overflow-hidden m-2 sm:m-4 relative', className)}>
         <Card className="p-0 overflow-hidden border">
-          <div className='relative w-full aspect-[4/3] sm:aspect-[5/3] md:aspect-[16/11] overflow-hidden bg-gray-100 dark:bg-gray-800'>
+          {showInputHint && (
+            <div className="px-3 py-1.5 text-xs text-muted-foreground border-b bg-muted/40">
+              Click once inside the remote desktop, then type. If a popup is cut off, press Ctrl+- in the remote browser to zoom out, or drag the popup title bar up.
+            </div>
+          )}
+          <div
+            className="relative w-full aspect-[4/3] sm:aspect-[5/3] md:aspect-[16/11] overflow-hidden bg-gray-100 dark:bg-gray-800"
+            onMouseDown={focusVnc}
+            onPointerDown={focusVnc}
+          >
             <iframe
+              ref={iframeRef}
               key={iframeKey}
-              src={`${sandbox.vnc_preview}/vnc_lite.html?password=${sandbox.pass}&autoconnect=true&scale=local`}
+              src={vncSrc}
               title="Browser preview"
-              className="absolute inset-0 w-full h-full border-0 md:w-[102%] md:h-[130%] md:-translate-y-[4.4rem] lg:-translate-y-[4.7rem] xl:-translate-y-[5.4rem] md:left-0 md:-translate-x-2"
+              className={iframeClassName}
+              allow="clipboard-read; clipboard-write"
+              tabIndex={0}
+              onLoad={focusVnc}
             />
             {isBrowserLoading && (
               <div className="absolute inset-0 bg-background/95 backdrop-blur-sm flex flex-col items-center justify-center z-10">
@@ -120,6 +176,5 @@ export function HealthCheckedVncIframe({ sandbox, className }: HealthCheckedVncI
     );
   }
 
-  // Should not reach here
   return null;
 }

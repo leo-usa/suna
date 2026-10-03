@@ -115,7 +115,8 @@ export function useVncPreloader(
 
   const retry = useCallback(() => {
     if (sandbox?.vnc_preview && sandbox?.pass) {
-      const vncUrl = `${sandbox.vnc_preview}/vnc_lite.html?password=${sandbox.pass}&autoconnect=true&scale=local`;
+      // Do not pass view_only=false — noVNC treats the string "false" as truthy (view-only ON).
+      const vncUrl = `${sandbox.vnc_preview}/vnc_lite.html?password=${encodeURIComponent(sandbox.pass)}&autoconnect=true&scale=local`;
       setRetryCount(0);
       setStatus('idle');
       startPreloading(vncUrl);
@@ -135,7 +136,8 @@ export function useVncPreloader(
       return;
     }
 
-    const vncUrl = `${sandbox.vnc_preview}/vnc_lite.html?password=${sandbox.pass}&autoconnect=true&scale=local`;
+    // Do not pass view_only=false — noVNC treats the string "false" as truthy (view-only ON).
+    const vncUrl = `${sandbox.vnc_preview}/vnc_lite.html?password=${encodeURIComponent(sandbox.pass)}&autoconnect=true&scale=local`;
 
     // Reset retry counter for new sandbox
     setRetryCount(0);

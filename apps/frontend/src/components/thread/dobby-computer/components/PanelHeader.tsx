@@ -2,12 +2,11 @@
 
 import { useTranslations } from 'next-intl';
 import { memo, useState, useEffect } from 'react';
-import { Minimize2, Wifi, BatteryLow, BatteryMedium, BatteryFull, BatteryCharging, FolderOpen, Activity, Loader2, AlertTriangle } from 'lucide-react';
+import { Minimize2, Wifi, BatteryLow, BatteryMedium, BatteryFull, BatteryCharging, FolderOpen, Activity, Loader2, AlertTriangle, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DrawerTitle } from '@/components/ui/drawer';
 import { ViewType } from '@/stores/dobby-computer-store';
 import { cn } from '@/lib/utils';
-import { ViewToggle } from './ViewToggle';
 import { ToolbarButtons } from './ToolbarButtons';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
@@ -146,19 +145,27 @@ interface ActionFilesSwitcherProps {
   currentView: ViewType;
   onViewChange: (view: ViewType) => void;
   size?: 'sm' | 'md';
+  showBrowserTab?: boolean;
 }
 
-function ActionFilesSwitcher({ currentView, onViewChange, size = 'md' }: ActionFilesSwitcherProps) {
+function ActionFilesSwitcher({
+  currentView,
+  onViewChange,
+  size = 'md',
+  showBrowserTab = false,
+}: ActionFilesSwitcherProps) {
   const t = useTranslations('dobbyComputer.panel');
-  const isAction = currentView === 'tools';
-  const isFiles = currentView === 'files';
+  const views = showBrowserTab
+    ? (['tools', 'files', 'browser'] as const)
+    : (['tools', 'files'] as const);
+  const activeIndex = Math.max(0, views.indexOf(currentView as typeof views[number]));
 
   // Size variants - sm is more compact for mobile
   const config = size === 'sm'
     ? { height: 30, padding: 2, btnWidth: 64, iconSize: 12, fontSize: 11 }
     : { height: 36, padding: 3, btnWidth: 80, iconSize: 14, fontSize: 12 };
 
-  const totalWidth = config.btnWidth * 2 + config.padding * 2;
+  const totalWidth = config.btnWidth * views.length + config.padding * 2;
 
   return (
     <div
@@ -174,7 +181,7 @@ function ActionFilesSwitcher({ currentView, onViewChange, size = 'md' }: ActionF
         className="absolute top-[3px] bottom-[3px] rounded-full bg-white dark:bg-zinc-900 shadow-sm"
         style={{ width: config.btnWidth }}
         initial={false}
-        animate={{ x: isAction ? 0 : config.btnWidth }}
+        animate={{ x: activeIndex * config.btnWidth }}
         transition={{ type: "spring", stiffness: 500, damping: 35 }}
       />
 
@@ -183,7 +190,7 @@ function ActionFilesSwitcher({ currentView, onViewChange, size = 'md' }: ActionF
         onClick={() => onViewChange('tools')}
         className={cn(
           "relative z-10 flex items-center justify-center gap-1.5 rounded-full font-medium transition-colors cursor-pointer",
-          isAction ? "text-zinc-900 dark:text-zinc-100" : "text-zinc-400 dark:text-zinc-500"
+          currentView === 'tools' ? "text-zinc-900 dark:text-zinc-100" : "text-zinc-400 dark:text-zinc-500"
         )}
         style={{ width: config.btnWidth, height: config.height - config.padding * 2, fontSize: config.fontSize }}
       >
@@ -196,13 +203,27 @@ function ActionFilesSwitcher({ currentView, onViewChange, size = 'md' }: ActionF
         onClick={() => onViewChange('files')}
         className={cn(
           "relative z-10 flex items-center justify-center gap-1.5 rounded-full font-medium transition-colors cursor-pointer",
-          isFiles ? "text-zinc-900 dark:text-zinc-100" : "text-zinc-400 dark:text-zinc-500"
+          currentView === 'files' ? "text-zinc-900 dark:text-zinc-100" : "text-zinc-400 dark:text-zinc-500"
         )}
         style={{ width: config.btnWidth, height: config.height - config.padding * 2, fontSize: config.fontSize }}
       >
         <FolderOpen style={{ width: config.iconSize, height: config.iconSize }} strokeWidth={2.5} />
         <span>{t('files')}</span>
       </button>
+
+      {showBrowserTab && (
+        <button
+          onClick={() => onViewChange('browser')}
+          className={cn(
+            "relative z-10 flex items-center justify-center gap-1.5 rounded-full font-medium transition-colors cursor-pointer",
+            currentView === 'browser' ? "text-zinc-900 dark:text-zinc-100" : "text-zinc-400 dark:text-zinc-500"
+          )}
+          style={{ width: config.btnWidth, height: config.height - config.padding * 2, fontSize: config.fontSize }}
+        >
+          <Globe style={{ width: config.iconSize, height: config.iconSize }} strokeWidth={2.5} />
+          <span>{t('browser')}</span>
+        </button>
+      )}
     </div>
   );
 }
@@ -222,6 +243,7 @@ interface PanelHeaderProps {
   onToggleSuiteMode?: () => void;
   hideViewToggle?: boolean;
   sandboxStatus?: SandboxStatus;
+  showBrowserTab?: boolean;
 }
 
 export const PanelHeader = memo(function PanelHeader({
@@ -239,6 +261,7 @@ export const PanelHeader = memo(function PanelHeader({
   onToggleSuiteMode,
   hideViewToggle = false,
   sandboxStatus,
+  showBrowserTab = false,
 }: PanelHeaderProps) {
   const tWindow = useTranslations('dobbyComputer.window');
   if (variant === 'drawer') {
@@ -271,6 +294,7 @@ export const PanelHeader = memo(function PanelHeader({
             currentView={currentView}
             onViewChange={onViewChange}
             size="sm"
+            showBrowserTab={showBrowserTab}
           />
           <Button
             variant="ghost"
@@ -328,6 +352,7 @@ export const PanelHeader = memo(function PanelHeader({
           currentView={currentView}
           onViewChange={onViewChange}
           size={isMaximized ? 'sm' : 'md'}
+          showBrowserTab={showBrowserTab}
         />
         {isMaximized && <StatusBar sandboxStatus={sandboxStatus} />}
       </div>

@@ -11,6 +11,40 @@ import traceback
 from PIL import Image
 from core.utils.config import config
 
+_PASSWORD_ACTION_MARKERS = (
+    "fill in password",
+    "fill password",
+    "type password",
+    "enter password",
+    "password with",
+    "password field",
+    "type the password",
+    "enter the password",
+    "input password",
+    "password input",
+    "fill otp",
+    "type otp",
+    "enter otp",
+    "otp code",
+    "2fa code",
+    "verification code",
+    "one-time code",
+    "one time code",
+    "totp",
+)
+
+
+def _looks_like_secret_entry(action: str, variables: dict = None) -> bool:
+    """True when the agent is trying to type a password or similar secret."""
+    if variables:
+        for key in variables:
+            key_l = str(key).lower()
+            if any(token in key_l for token in ("pass", "otp", "2fa", "totp", "secret", "credential")):
+                return True
+    action_l = (action or "").lower()
+    return any(marker in action_l for marker in _PASSWORD_ACTION_MARKERS)
+
+
 @tool_metadata(
     display_name="Browser",
     description="Interact with web pages using mouse and keyboard, take screenshots, and extract content",
@@ -30,11 +64,21 @@ Use a mouse and keyboard to interact with a web browser, and take screenshots. F
 - **browser_screenshot**: Capture current page state
 
 ### When to Use
-- Interacting with websites that require clicks, forms, logins
+- Interacting with websites that require clicks, forms, and navigation
 - Extracting data from dynamic pages that require JavaScript
-- Filling out forms or completing multi-step web flows
+- Filling out non-secret forms or completing multi-step web flows
 - Verifying website state or visual elements
 - Any task requiring visual inspection of web content
+
+### 🔐 Login / password handoff (CRITICAL)
+NEVER type passwords, OTP/2FA codes, or other secrets into the browser.
+NEVER ask the user to paste a password into chat.
+When you hit a login, sign-in, SSO, CAPTCHA, or 2FA page:
+1. Stop automating credential fields
+2. Call `ask` with `await_login=true` so the live browser opens for the user
+3. Tell them to log in in the Browser panel, then reply (e.g. "Logged in")
+4. After they confirm, continue with browser_screenshot / browser_act
+You may click "Sign in" / "Log in" to reach the form. The user enters credentials.
 
 ### ⚠️ DIRECT URL/WEBSITE RESEARCH (IMPORTANT!)
 When the user mentions a SPECIFIC website/URL to research (e.g. "create a slide deck for example.io"):
@@ -67,7 +111,7 @@ Describe what you want to do in natural language:
 
 **Supports:**
 - Clicking any element (buttons, links, images)
-- Form filling (text, numbers, emails, passwords)
+- Form filling for non-secret fields (text, numbers, emails — NOT passwords)
 - Dropdown selection
 - Scrolling (up, down, to element)
 - Keyboard input (Enter, Tab, Escape)
@@ -88,19 +132,21 @@ Describe what you want to do in natural language:
 # Navigate to site
 browser_navigate_to(url="https://example.com")
 
-# Perform actions
+# Reach login, then hand off — never type the password
 browser_act(action="click the Sign In button")
-browser_act(action="fill in username with john@email.com")
-browser_act(action="fill in password with ***", variables={"password": "actual_pass"})
-browser_act(action="click Submit")
-
-# Extract data
+ask(
+  text="Please log in in the Browser panel, then reply Logged in.",
+  await_login=true,
+  follow_up_answers=["Logged in", "I need help"]
+)
+# After the user confirms:
+browser_screenshot()
 browser_extract_content(instruction="get all product names and prices")
 ```
 
 ### Important Notes
 - Screenshots auto-included with every action - use them to verify
-- Use variables parameter for sensitive data (not logged to LLM providers)
+- Use variables for non-secret templated values only — never for passwords or OTP codes
 - Include filePath for any file upload actions
 - Browser is sandboxed - safe for any site
 """
@@ -450,7 +496,7 @@ class BrowserTool(SandboxToolsBase):
         "type": "function",
         "function": {
             "name": "browser_act",
-            "description": "Perform any browser action using natural language description. CRITICAL: This tool automatically provides a screenshot with every action. For data entry actions (filling forms, entering text, selecting options), you MUST review the provided screenshot to verify that displayed values exactly match what was intended. Report mismatches immediately. CRITICAL FILE UPLOAD RULE: ANY action that involves clicking, interacting with, or locating upload buttons, file inputs, resume upload sections, or any element that might trigger a choose file dialog MUST include the filePath parameter with filePath. This includes actions like 'click upload button', 'locate resume section', 'find file input' etc. Always err on the side of caution - if there's any possibility the action might lead to a file dialog, include filePath. This prevents accidental file dialog triggers without proper file handling. **🚨 PARAMETER NAMES**: Use EXACTLY these parameter names: `action` (REQUIRED), `variables` (optional), `iframes` (optional), `filePath` (optional).",
+            "description": "Perform any browser action using natural language description. CRITICAL SECURITY: NEVER type passwords, OTP/2FA codes, or other secrets. On login/SSO/CAPTCHA/2FA pages, call ask with await_login=true instead. CRITICAL: This tool automatically provides a screenshot with every action. For data entry actions (filling forms, entering text, selecting options), you MUST review the provided screenshot to verify that displayed values exactly match what was intended. Report mismatches immediately. CRITICAL FILE UPLOAD RULE: ANY action that involves clicking, interacting with, or locating upload buttons, file inputs, resume upload sections, or any element that might trigger a choose file dialog MUST include the filePath parameter with filePath. This includes actions like 'click upload button', 'locate resume section', 'find file input' etc. Always err on the side of caution - if there's any possibility the action might lead to a file dialog, include filePath. This prevents accidental file dialog triggers without proper file handling. **🚨 PARAMETER NAMES**: Use EXACTLY these parameter names: `action` (REQUIRED), `variables` (optional), `iframes` (optional), `filePath` (optional).",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -481,6 +527,12 @@ class BrowserTool(SandboxToolsBase):
     })
     async def browser_act(self, action: str, variables: dict = None, iframes: bool = False, filePath: dict = None) -> ToolResult:
         """Perform any browser action using Stagehand."""
+        if _looks_like_secret_entry(action, variables):
+            return self.fail_response(
+                "Do not type passwords or verification codes in the browser. "
+                "Call ask with await_login=true so the user can log in manually in the Browser panel, "
+                "then continue after they confirm."
+            )
         logger.debug(f"Browser acting: {action} (variables={'***' if variables else None}, iframes={iframes}), filePath={filePath}")
         params = {"action": action, "iframes": iframes, "variables": variables}
         if filePath:
