@@ -32,7 +32,33 @@ class BrowserAutomation {
         this.router.post('/act', this.act.bind(this));
         this.router.post('/extract', this.extract.bind(this));
         this.router.post('/convert-svg', this.convertSvg.bind(this));
+        this.router.post('/set-viewport', this.setViewport.bind(this));
 
+    }
+
+    /** Keep page layout size matched to the Xvfb desktop (avoids mid-window scrollbars). */
+    async ensureDesktopViewport(): Promise<void> {
+        if (!this.page || this.page.isClosed()) return;
+        const width = 1400;
+        const height = 1050;
+        try {
+            const current = this.page.viewportSize();
+            if (!current || current.width !== width || current.height !== height) {
+                await this.page.setViewportSize({ width, height });
+            }
+            try {
+                const client = await this.page.context().newCDPSession(this.page);
+                const { windowId } = await client.send('Browser.getWindowForTarget');
+                await client.send('Browser.setWindowBounds', {
+                    windowId,
+                    bounds: { left: 0, top: 0, width, height, windowState: 'normal' },
+                });
+            } catch (cdpErr) {
+                console.error('Failed to set browser window bounds', cdpErr);
+            }
+        } catch (err) {
+            console.error('Failed to ensure desktop viewport', err);
+        }
     }
 
     async init(apiKey: string): Promise<{status: string, message: string}> {
@@ -58,9 +84,11 @@ class BrowserAutomation {
                     },
                     localBrowserLaunchOptions: {
                         headless: false,
+                        // Match sandbox RESOLUTION (1400x1050). A smaller viewport
+                        // leaves black desktop bars around Chrome in the VNC preview.
                         viewport: {
-                            width: 1280,
-                            height: 900
+                            width: 1400,
+                            height: 1050
                         },
                         downloadsPath: '/workspace/downloads',
                         acceptDownloads: true,
@@ -70,6 +98,7 @@ class BrowserAutomation {
                             "--disable-setuid-sandbox",
                             "--disable-dev-shm-usage",
                             "--disable-gpu",
+                            "--start-maximized",
                             "--window-size=1400,1050",
                             "--window-position=0,0"
                         ]
@@ -97,6 +126,8 @@ class BrowserAutomation {
                     } catch (err) {
                         console.error('Failed to attach browser disconnect handler', err);
                     }
+
+                    await this.ensureDesktopViewport();
                 }
 
                 await this.page.goto('https://dobby.now', { waitUntil: 'networkidle', timeout: 30000 });
@@ -152,10 +183,26 @@ class BrowserAutomation {
         }
     }
 
+    async setViewport(req: express.Request, res: express.Response): Promise<void> {
+        try {
+            if (!this.page || !this.browserInitialized) {
+                res.status(500).json({ success: false, message: 'Browser not initialized' });
+                return;
+            }
+            await this.ensureDesktopViewport();
+            const viewport = this.page.viewportSize();
+            res.json({ success: true, viewport });
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ success: false, error: String(error) });
+        }
+    }
+
     async get_stagehand_state() {
         try{
             const health = this.health();
             if (this.page && health.status === "healthy") {
+                await this.ensureDesktopViewport();
                 const screenshot_base64 = await this.page.screenshot({ fullPage: false }).then(buffer => buffer.toString('base64'));
                 const page_info = {
                     url: await this.page.url(),

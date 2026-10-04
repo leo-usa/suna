@@ -27,13 +27,18 @@ interface HealthCheckedVncIframeProps {
  * IMPORTANT: vnc_lite.html assigns query values directly (no boolean parse).
  * `view_only=false` is the string "false", which is truthy → view-only ON
  * (clicks/keys blocked). Omit view_only entirely so the default boolean false applies.
+ *
+ * Sandbox desktop is RESOLUTION 1400x1050 (exactly 4:3). The panel wrapper must
+ * use the same aspect or noVNC scaleViewport pillarboxes with black side bars.
  */
-function buildVncSrc(vncPreview: string, pass: string, interactive: boolean) {
+const VNC_DESKTOP_ASPECT = 'aspect-[4/3]';
+
+function buildVncSrc(vncPreview: string, pass: string) {
   const params = new URLSearchParams({
     password: pass,
     autoconnect: 'true',
   });
-  // Always scale to fit the panel so the full remote desktop is visible
+  // Scale to fit the panel so the full remote desktop is visible
   // (login modals, phone verification, etc.).
   params.set('scale', 'true');
   return `${vncPreview}/vnc_lite.html?${params.toString()}`;
@@ -86,9 +91,9 @@ export function HealthCheckedVncIframe({ sandbox, className, interactive = false
 
   if (status === 'loading') {
     return (
-      <div className={`overflow-hidden m-2 sm:m-4 relative ${className || ''}`}>
+      <div className={cn('overflow-hidden m-2 sm:m-4 relative', className)}>
         <Card className="p-0 overflow-hidden border">
-          <div className='relative w-full aspect-[4/3] sm:aspect-[5/3] md:aspect-[16/11] overflow-hidden bg-background flex flex-col items-center justify-center'>
+          <div className={cn('relative w-full overflow-hidden bg-background flex flex-col items-center justify-center', VNC_DESKTOP_ASPECT)}>
             <DobbyLoader size="medium" className="mb-3" />
             <p className="text-sm font-medium text-center mb-2 text-foreground">Connecting to browser...</p>
             <p className="text-xs text-muted-foreground mb-2 text-center">
@@ -107,9 +112,9 @@ export function HealthCheckedVncIframe({ sandbox, className, interactive = false
 
   if (status === 'error') {
     return (
-      <div className={`overflow-hidden m-2 sm:m-4 relative ${className || ''}`}>
+      <div className={cn('overflow-hidden m-2 sm:m-4 relative', className)}>
         <Card className="p-0 overflow-hidden border">
-          <div className='relative w-full aspect-[4/3] sm:aspect-[5/3] md:aspect-[16/11] overflow-hidden bg-destructive/10 flex flex-col items-center justify-center'>
+          <div className={cn('relative w-full overflow-hidden bg-destructive/10 flex flex-col items-center justify-center', VNC_DESKTOP_ASPECT)}>
             <AlertCircle className="h-8 w-8 text-destructive mb-3" />
             <p className="text-sm font-medium text-center mb-2">Connection Failed</p>
             <p className="text-xs text-muted-foreground mb-4 text-center">
@@ -130,7 +135,7 @@ export function HealthCheckedVncIframe({ sandbox, className, interactive = false
   }
 
   if (isPreloaded) {
-    const vncSrc = buildVncSrc(sandbox.vnc_preview, sandbox.pass, interactive);
+    const vncSrc = buildVncSrc(sandbox.vnc_preview, sandbox.pass);
     // Interactive: no CSS crop transform (that breaks click mapping).
     // Preview: crop browser chrome for a cleaner screenshot look.
     const iframeClassName = interactive
@@ -146,7 +151,10 @@ export function HealthCheckedVncIframe({ sandbox, className, interactive = false
             </div>
           )}
           <div
-            className="relative w-full aspect-[4/3] sm:aspect-[5/3] md:aspect-[16/11] overflow-hidden bg-gray-100 dark:bg-gray-800"
+            className={cn(
+              'relative w-full overflow-hidden bg-gray-100 dark:bg-gray-800',
+              VNC_DESKTOP_ASPECT,
+            )}
             onMouseDown={focusVnc}
             onPointerDown={focusVnc}
           >
