@@ -64,14 +64,12 @@ class FreeTierService:
                     await billing_repo.create_billing_customer(mock_customer_id, account_id, email or f"{account_id}@local.dev")
                     stripe_customer_id = mock_customer_id
 
-                # Create credit account with mock subscription
+                # Create/update free-tier subscription fields only.
+                # Do NOT zero balance/credits — users may already have purchased credits.
                 await billing_repo.upsert_credit_account(account_id, {
                     'tier': 'free',
                     'stripe_subscription_id': mock_subscription_id,
                     'last_grant_date': datetime.now().isoformat(),
-                    'balance': 0,
-                    'expiring_credits': 0,
-                    'non_expiring_credits': 0
                 })
 
                 # Grant initial credits
@@ -169,13 +167,12 @@ class FreeTierService:
                 }
             )
 
+            # Create/update free-tier subscription fields only.
+            # Do NOT zero balance/credits — credit purchases can complete before free-tier setup.
             await billing_repo.upsert_credit_account(account_id, {
                 'tier': 'free',
                 'stripe_subscription_id': subscription.id,
                 'last_grant_date': datetime.now().isoformat(),
-                'balance': 0,
-                'expiring_credits': 0,
-                'non_expiring_credits': 0
             })
             
             from core.services.credits import credit_service
