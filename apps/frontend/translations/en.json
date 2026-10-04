@@ -3307,7 +3307,7 @@
     "computer-scroll": "Scroll",
     "computer-open": "Open",
     "load-image": "Load Image",
-    "initialize-tools": "Mode Activated",
+    "initialize-tools": "Activate Mode",
     "ask": "Ask",
     "complete": "Task Complete",
     "search-mcp-servers": "Search MCP Servers",
@@ -3893,10 +3893,14 @@
       "tools": "Tools",
       "activating": "Activating {mode}...",
       "activated": "{mode} Activated",
+      "activationFailed": "{mode} Activation Failed",
       "modeReady": "{mode} Ready",
+      "modeFailed": "{mode} Unavailable",
       "preparing": "Preparing...",
       "toolsActivated": "{count, plural, one {# tool} other {# tools}} activated",
-      "ready": "Ready"
+      "toolsFailed": "{count, plural, one {# tool} other {# tools}} failed to activate",
+      "ready": "Ready",
+      "failed": "Failed"
     },
     "vapiCall": {
       "noEndCallData": "No end call data available",
@@ -4332,7 +4336,7 @@
   },
   "toolNames": {
     "running": {
-      "initialize-tools": "Mode Activated",
+      "initialize-tools": "Activating Mode",
       "execute-command": "Executing Command",
       "check-command-output": "Checking Command Output",
       "terminate-command": "Terminating Command",

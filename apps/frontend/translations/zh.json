@@ -3299,7 +3299,7 @@
     "computer-scroll": "滚动",
     "computer-open": "打开",
     "load-image": "加载图片",
-    "initialize-tools": "模式已激活",
+    "initialize-tools": "激活模式",
     "ask": "提问",
     "complete": "任务完成",
     "search-mcp-servers": "搜索 MCP 服务器",
@@ -3885,10 +3885,14 @@
       "tools": "工具",
       "activating": "正在激活{mode}...",
       "activated": "{mode}已激活",
+      "activationFailed": "{mode}激活失败",
       "modeReady": "{mode}已就绪",
+      "modeFailed": "{mode}不可用",
       "preparing": "正在准备...",
       "toolsActivated": "已激活 {count} 个工具",
-      "ready": "就绪"
+      "toolsFailed": "{count} 个工具激活失败",
+      "ready": "就绪",
+      "failed": "失败"
     },
     "vapiCall": {
       "noEndCallData": "暂无结束通话数据",
@@ -4324,7 +4328,7 @@
   },
   "toolNames": {
     "running": {
-      "initialize-tools": "模式已激活",
+      "initialize-tools": "正在激活模式",
       "execute-command": "正在执行命令",
       "check-command-output": "正在检查命令输出",
       "terminate-command": "正在终止命令",
