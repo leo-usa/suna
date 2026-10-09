@@ -21,6 +21,7 @@ class BedrockConfig:
     # US geo cross-region inference profiles (not application-inference-profile ARNs).
     GEO_MODEL_IDS = {
         "haiku_4_5": "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+        "haiku_5_5": "us.anthropic.claude-haiku-5-5",
         "sonnet_5": "us.anthropic.claude-sonnet-5",
         # Global CRIS: AWS launched Sonnet 5.5 without a US geo profile.
         "sonnet_5_5": "global.anthropic.claude-sonnet-5-5",
@@ -53,6 +54,10 @@ class BedrockConfig:
     @classmethod
     def get_haiku_geo_id(cls) -> str:
         return cls.build_geo_id("haiku_4_5")
+
+    @classmethod
+    def get_haiku_5_5_id(cls) -> str:
+        return cls.build_geo_id("haiku_5_5")
 
     @classmethod
     def get_sonnet_arn(cls) -> str:
@@ -112,6 +117,15 @@ class PricingPresets:
         cached_read_cost_per_million_tokens=0.10,
         cache_write_5m_cost_per_million_tokens=1.25,
         cache_write_1h_cost_per_million_tokens=2.00,
+    )
+
+    # Base rates for prompts ≤100k tokens (Anthropic / OpenRouter / Bedrock).
+    HAIKU_5_5 = ModelPricing(
+        input_cost_per_million_tokens=0.10,
+        output_cost_per_million_tokens=0.50,
+        cached_read_cost_per_million_tokens=0.01,
+        cache_write_5m_cost_per_million_tokens=0.125,
+        cache_write_1h_cost_per_million_tokens=0.20,
     )
     
     MINIMAX_M2 = ModelPricing(
@@ -431,6 +445,38 @@ class ModelFactory:
             recommended=False,
             enabled=True,
             config=_create_anthropic_model_config(),
+            fallback_litellm_model_id=fallback,
+        )
+
+    @staticmethod
+    def create_claude_haiku_5_5() -> Model:
+        litellm_id, provider, fallback = _claude_gpt_route(
+            "openrouter/anthropic/claude-haiku-5.5", "haiku_5_5"
+        )
+        return Model(
+            id="dobby/claude-haiku-5.5",
+            name="Claude Haiku 5.5",
+            litellm_model_id=litellm_id,
+            provider=provider,
+            aliases=[
+                "claude-haiku-5.5",
+                "claude-haiku-5-5",
+                "anthropic/claude-haiku-5.5",
+                "anthropic/claude-haiku-5-5",
+            ],
+            context_window=1_000_000,
+            capabilities=[
+                ModelCapability.CHAT,
+                ModelCapability.FUNCTION_CALLING,
+                ModelCapability.VISION,
+                ModelCapability.THINKING,
+                ModelCapability.PROMPT_CACHING,
+            ],
+            pricing=PricingPresets.HAIKU_5_5,
+            tier_availability=["free", "paid"],
+            priority=101,
+            recommended=False,
+            enabled=True,
             fallback_litellm_model_id=fallback,
         )
     
@@ -1783,6 +1829,7 @@ class ModelRegistry:
         self.register(ModelFactory.create_basic_model(main_llm, custom_model))
         self.register(ModelFactory.create_power_model(main_llm, custom_model))
         self.register(ModelFactory.create_anthropic_haiku(use_bedrock))
+        self.register(ModelFactory.create_claude_haiku_5_5())
         self.register(ModelFactory.create_grok_4_1_fast())
         self.register(ModelFactory.create_grok_4())
         self.register(ModelFactory.create_grok_4_5())
@@ -1849,6 +1896,8 @@ class ModelRegistry:
     def _register_pricing_mappings(self):
         self._litellm_id_to_pricing[BedrockConfig.get_haiku_arn()] = PricingPresets.HAIKU_4_5
         self._litellm_id_to_pricing[BedrockConfig.get_haiku_geo_id()] = PricingPresets.HAIKU_4_5
+        self._litellm_id_to_pricing["openrouter/anthropic/claude-haiku-5.5"] = PricingPresets.HAIKU_5_5
+        self._litellm_id_to_pricing[BedrockConfig.get_haiku_5_5_id()] = PricingPresets.HAIKU_5_5
         self._litellm_id_to_pricing["minimax/minimax-m2.1"] = PricingPresets.MINIMAX_M2
         self._litellm_id_to_pricing["openrouter/minimax/minimax-m2.1"] = PricingPresets.MINIMAX_M2
         self._litellm_id_to_pricing["openrouter/x-ai/grok-4.1-fast"] = PricingPresets.GROK_4_1_FAST

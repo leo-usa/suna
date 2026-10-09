@@ -7,6 +7,7 @@ from core.agentpress.error_processor import (
 from core.ai_models.models import ModelCapability, ModelProvider
 from core.ai_models.registry import BedrockConfig, ModelFactory, registry
 from core.services.llm import (
+    ADAPTIVE_THINKING_OUTPUT_TOKENS,
     _params_for_openrouter_fallback,
     _register_bedrock_gpt_litellm_models,
     _sanitize_llm_params,
@@ -17,9 +18,14 @@ from core.services.llm import (
 
 def test_sonnet_5_5_and_fable_5_stay_openrouter_when_bedrock_off():
     with patch("core.ai_models.registry._bedrock_claude_gpt_enabled", return_value=False):
+        haiku_55 = ModelFactory.create_claude_haiku_5_5()
         sonnet = ModelFactory.create_claude_sonnet_5_5()
         fable = ModelFactory.create_claude_fable_5()
 
+    assert haiku_55.provider == ModelProvider.OPENROUTER
+    assert haiku_55.litellm_model_id == "openrouter/anthropic/claude-haiku-5.5"
+    assert haiku_55.name == "Claude Haiku 5.5"
+    assert haiku_55.fallback_litellm_model_id is None
     assert sonnet.provider == ModelProvider.OPENROUTER
     assert fable.provider == ModelProvider.OPENROUTER
     assert sonnet.litellm_model_id == "openrouter/anthropic/claude-sonnet-5.5"
@@ -33,6 +39,7 @@ def test_sonnet_5_5_and_fable_5_stay_openrouter_when_bedrock_off():
 def test_claude_and_gpt_use_bedrock_geo_ids_when_enabled():
     with patch("core.ai_models.registry._bedrock_claude_gpt_enabled", return_value=True):
         haiku = ModelFactory.create_anthropic_haiku(use_bedrock=True)
+        haiku_55 = ModelFactory.create_claude_haiku_5_5()
         sonnet = ModelFactory.create_claude_sonnet_5_5()
         opus = ModelFactory.create_claude_opus_5()
         opus_55 = ModelFactory.create_claude_opus_5_5()
@@ -48,6 +55,10 @@ def test_claude_and_gpt_use_bedrock_geo_ids_when_enabled():
     assert haiku.provider == ModelProvider.BEDROCK
     assert haiku.litellm_model_id == BedrockConfig.get_haiku_geo_id()
     assert haiku.fallback_litellm_model_id == "openrouter/anthropic/claude-haiku-4.5"
+
+    assert haiku_55.provider == ModelProvider.BEDROCK
+    assert haiku_55.litellm_model_id == BedrockConfig.get_haiku_5_5_id()
+    assert haiku_55.fallback_litellm_model_id == "openrouter/anthropic/claude-haiku-5.5"
 
     assert sonnet.provider == ModelProvider.BEDROCK
     assert sonnet.litellm_model_id == BedrockConfig.get_sonnet_5_5_id()
@@ -297,3 +308,9 @@ def test_models_without_default_thinking_keep_provider_output_cap():
     assert default_output_token_limit("dobby/claude-opus-4.7") is None
     assert default_output_token_limit("openai/gpt-5-nano-2025-08-07") is None
     assert default_output_token_limit("dobby/claude-haiku-4.5") is None
+
+
+def test_haiku_5_5_gets_adaptive_thinking_output_cap():
+    assert default_output_token_limit("dobby/claude-haiku-5.5") == ADAPTIVE_THINKING_OUTPUT_TOKENS
+    assert default_output_token_limit("us.anthropic.claude-haiku-5-5") == ADAPTIVE_THINKING_OUTPUT_TOKENS
+    assert default_output_token_limit("openrouter/anthropic/claude-haiku-5.5") == ADAPTIVE_THINKING_OUTPUT_TOKENS

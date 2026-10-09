@@ -365,6 +365,8 @@ def _model_thinks_within_output_limit(model_name: str) -> bool:
             "sonnet-5-5",
             "opus-5",
             "fable-5",
+            "haiku-5.5",
+            "haiku-5-5",
         )
     )
 

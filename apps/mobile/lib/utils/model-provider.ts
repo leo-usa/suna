@@ -35,7 +35,10 @@ export function isKortixMode(modelId: string): boolean {
     return true;
   }
   // Legacy: Dobby Basic (Haiku 4.5)
-  if (modelId.includes('claude-haiku-4-5') || modelId.includes('heol2zyy5v48')) {
+  if (
+    (modelId.includes('claude-haiku-4-5') || modelId.includes('heol2zyy5v48')) &&
+    !modelId.includes('claude-haiku-5')
+  ) {
     return true;
   }
   // Legacy: Dobby Advanced Mode (Sonnet 4.5)
