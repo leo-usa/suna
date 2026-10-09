@@ -101,11 +101,11 @@ async def list_memories(
         
         memories = [
             MemoryResponse(
-                memory_id=mem.memory_id,
+                memory_id=str(mem.memory_id),
                 content=mem.content,
                 memory_type=mem.memory_type.value,
                 confidence_score=mem.confidence_score,
-                source_thread_id=mem.source_thread_id,
+                source_thread_id=str(mem.source_thread_id) if mem.source_thread_id else None,
                 metadata=mem.metadata,
                 created_at=mem.created_at.isoformat() if mem.created_at else None,
                 updated_at=mem.updated_at.isoformat() if mem.updated_at else None
@@ -293,11 +293,11 @@ async def create_memory(
         created = new_memory.data[0]
         
         return MemoryResponse(
-            memory_id=created['memory_id'],
+            memory_id=str(created['memory_id']),
             content=created['content'],
             memory_type=created['memory_type'],
             confidence_score=created['confidence_score'],
-            source_thread_id=created.get('source_thread_id'),
+            source_thread_id=str(created['source_thread_id']) if created.get('source_thread_id') else None,
             metadata=created.get('metadata', {}),
             created_at=created.get('created_at'),
             updated_at=created.get('updated_at')

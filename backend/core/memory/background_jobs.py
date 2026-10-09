@@ -36,6 +36,14 @@ async def run_memory_extraction(
         from core.billing.shared.config import is_memory_enabled
         
         client = await _db.client
+
+        from core.threads import repo as threads_repo
+        if not await threads_repo.get_user_memory_enabled(account_id):
+            logger.debug(f"Memory extraction skipped: disabled by user {account_id}")
+            return
+        if not await threads_repo.get_thread_memory_enabled(thread_id):
+            logger.debug(f"Memory extraction skipped: disabled for thread {thread_id}")
+            return
         
         tier_info = await subscription_service.get_user_subscription_tier(account_id)
         if not is_memory_enabled(tier_info['name']):
@@ -137,6 +145,27 @@ def start_memory_extraction(thread_id: str, account_id: str, message_ids: List[s
     """Start memory extraction as background task."""
     asyncio.create_task(run_memory_extraction(thread_id, account_id, message_ids))
     logger.debug(f"Started memory extraction for thread {thread_id}")
+
+
+async def schedule_memory_extraction_for_thread(thread_id: str, account_id: str) -> None:
+    """Queue extraction for the latest user/assistant messages in a thread."""
+    from core.utils.config import config
+
+    if not config.ENABLE_MEMORY or not thread_id or not account_id:
+        return
+
+    from core.threads import repo as threads_repo
+
+    if not await threads_repo.get_user_memory_enabled(account_id):
+        return
+    if not await threads_repo.get_thread_memory_enabled(thread_id):
+        return
+
+    message_ids = await threads_repo.get_recent_conversation_message_ids(thread_id)
+    if not message_ids:
+        return
+
+    start_memory_extraction(thread_id, account_id, message_ids)
 
 
 def start_memory_embedding(account_id: str, thread_id: str, extracted_memories: List[Dict[str, Any]]) -> None:

@@ -31,6 +31,12 @@ class MemoryItem:
     def __post_init__(self):
         if self.metadata is None:
             self.metadata = {}
+        if self.memory_id is not None:
+            self.memory_id = str(self.memory_id)
+        if self.account_id is not None:
+            self.account_id = str(self.account_id)
+        if self.source_thread_id is not None:
+            self.source_thread_id = str(self.source_thread_id)
         if isinstance(self.memory_type, str):
             self.memory_type = MemoryType(self.memory_type)
         if isinstance(self.created_at, str):

@@ -196,6 +196,13 @@ async def execute_agent_run(
 
         await update_agent_run_status(agent_run_id, final_status, error=error_message, account_id=account_id)
 
+        if final_status in {"completed", "stopped"}:
+            try:
+                from core.memory.background_jobs import schedule_memory_extraction_for_thread
+                await schedule_memory_extraction_for_thread(thread_id, account_id)
+            except Exception as e:
+                logger.warning(f"Failed to schedule memory extraction for {thread_id}: {e}")
+
         logger.info(f"✅ Agent run completed: {agent_run_id} | status={final_status}")
 
     except Exception as e:

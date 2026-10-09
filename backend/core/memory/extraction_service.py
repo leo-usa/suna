@@ -84,15 +84,21 @@ class MemoryExtractionService:
             resolved_model = self._get_resolved_model()
             logger.info(f"Using model for memory extraction: {self.model} -> {resolved_model}")
             
-            response = await self.client.acompletion(
-                model=resolved_model,
-                messages=[
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.1,
-                max_tokens=2000,
-                timeout=60, 
-            )
+            completion_kwargs = {
+                "model": resolved_model,
+                "messages": [{"role": "user", "content": prompt}],
+                "max_tokens": 2000,
+                "timeout": 60,
+            }
+            # Sonnet 5.5 / Opus 5 / Haiku 5.5 reject temperature on Bedrock.
+            lowered = resolved_model.lower()
+            if not (
+                "bedrock" in lowered
+                and ("anthropic" in lowered or "claude" in lowered)
+            ):
+                completion_kwargs["temperature"] = 0.1
+
+            response = await self.client.acompletion(**completion_kwargs)
             
             logger.debug(f"Got response from LLM")
             content = response.choices[0].message.content

@@ -1486,13 +1486,25 @@ async def get_first_user_message_content(thread_id: str) -> Optional[Dict[str, A
 
 async def get_user_memory_enabled(account_id: str) -> bool:
     sql = """
-    SELECT 
-        COALESCE((private_metadata->>'memory_enabled')::boolean, true) as memory_enabled
+    SELECT COALESCE(memory_enabled, true) as memory_enabled
     FROM basejump.accounts
     WHERE id = :account_id
     """
     result = await execute_one(sql, {"account_id": account_id})
     return result["memory_enabled"] if result else True
+
+
+async def get_recent_conversation_message_ids(thread_id: str, limit: int = 24) -> List[str]:
+    sql = """
+    SELECT message_id FROM messages
+    WHERE thread_id = :thread_id AND type IN ('user', 'assistant')
+    ORDER BY created_at DESC
+    LIMIT :limit
+    """
+    rows = await execute(sql, {"thread_id": thread_id, "limit": limit})
+    if not rows:
+        return []
+    return list(reversed([row["message_id"] for row in rows]))
 
 
 async def get_thread_memory_enabled(thread_id: str) -> bool:
