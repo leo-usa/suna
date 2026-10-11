@@ -23,7 +23,7 @@ let status = {
   previewPort: 18080,
   error: null,
 };
-let persist = { deviceToken: null, backendWsUrl: null, allowlist: [], allowAllCommands: true, allowComputerUse: false };
+let persist = { deviceToken: null, backendWsUrl: null, workspaceRoot: null, allowlist: [], allowAllCommands: true, allowComputerUse: false };
 let lastMenuTemplate = [];
 let stayAwakeId = null;
 
@@ -36,15 +36,70 @@ function persistPath() {
   return path.join(app.getPath('userData'), 'local-runner.json');
 }
 
-function claimLocalFolders() {
-  const home = os.homedir();
-  const docs = path.join(home, 'Documents', 'Dobby');
-  try {
-    fs.mkdirSync(docs, { recursive: true });
-    fs.readdirSync(docs);
-  } catch (err) {
-    console.error('[local-runner] Documents/Dobby access failed:', err && err.message);
+function defaultWorkspaceRoot() {
+  return path.join(os.homedir(), 'Documents', 'Dobby');
+}
+
+function detectExistingWorkspace() {
+  const candidates = [
+    persist.workspaceRoot,
+    defaultWorkspaceRoot(),
+    path.join(os.homedir(), 'Dobby'),
+  ].filter(Boolean);
+  for (const folder of candidates) {
+    try {
+      if (fs.existsSync(folder) && fs.statSync(folder).isDirectory()) return folder;
+    } catch (_) { /* ignore */ }
   }
+  return null;
+}
+
+function applyWorkspaceRoot(folder) {
+  const root = path.resolve(folder || defaultWorkspaceRoot());
+  persist.workspaceRoot = root;
+  process.env.DOBBY_WORKSPACE_ROOT = root;
+  savePersist();
+  try {
+    fs.mkdirSync(root, { recursive: true });
+    fs.readdirSync(root);
+  } catch (err) {
+    console.error('[local-runner] workspace access failed:', err && err.message);
+  }
+  return root;
+}
+
+function claimLocalFolders() {
+  loadPersist();
+  applyWorkspaceRoot(persist.workspaceRoot || detectExistingWorkspace() || defaultWorkspaceRoot());
+}
+
+async function chooseWorkspaceRoot({ force = false } = {}) {
+  loadPersist();
+  if (!force) {
+    if (persist.workspaceRoot) {
+      applyWorkspaceRoot(persist.workspaceRoot);
+      return persist.workspaceRoot;
+    }
+    const existing = detectExistingWorkspace();
+    if (existing) {
+      applyWorkspaceRoot(existing);
+      return existing;
+    }
+  }
+
+  const result = await dialog.showOpenDialog({
+    title: 'Choose Dobby workspace folder',
+    defaultPath: persist.workspaceRoot || detectExistingWorkspace() || defaultWorkspaceRoot(),
+    buttonLabel: 'Use this folder',
+    properties: ['openDirectory', 'createDirectory'],
+    message: 'Choose a folder for Dobby project files. You can reuse an existing Codex or Claude Code directory.',
+  });
+  const selected = !result.canceled && result.filePaths && result.filePaths[0];
+  return applyWorkspaceRoot(selected || persist.workspaceRoot || detectExistingWorkspace() || defaultWorkspaceRoot());
+}
+
+async function ensureWorkspaceReady() {
+  await chooseWorkspaceRoot({ force: false });
 }
 
 function loadPersist() {
@@ -365,6 +420,7 @@ function startRunner({ deviceToken, backendWsUrl }) {
       DOBBY_DEVICE_TOKEN: persist.deviceToken,
       DOBBY_BACKEND_WS: persist.backendWsUrl,
       DOBBY_PREVIEW_PORT: String(status.previewPort || 18080),
+      DOBBY_WORKSPACE_ROOT: persist.workspaceRoot || defaultWorkspaceRoot(),
       DOBBY_ALLOWLIST: (persist.allowlist || []).join('\n'),
       DOBBY_ALLOW_ALL: persist.allowAllCommands ? '1' : '0',
       NODE_PATH: nodePath,
@@ -433,9 +489,10 @@ function stopRunner(opts = {}) {
 
 function openWorkspace(projectId) {
   const home = os.homedir();
+  process.env.DOBBY_WORKSPACE_ROOT = persist.workspaceRoot || defaultWorkspaceRoot();
   const root = projectId
     ? ensureWorkspace(home, projectId)
-    : path.join(home, 'Documents', 'Dobby');
+    : (persist.workspaceRoot || defaultWorkspaceRoot());
   fs.mkdirSync(root, { recursive: true });
   return shell.openPath(root);
 }
@@ -471,6 +528,14 @@ function rebuildMenu(existingTemplate) {
       {
         label: 'Open workspace folder',
         click: () => openWorkspace(''),
+      },
+      {
+        label: 'Choose workspace folder…',
+        click: async () => {
+          await chooseWorkspaceRoot({ force: true });
+          if (persist.deviceToken) startRunner({});
+          rebuildMenu();
+        },
       },
       {
         label: 'Reconnect',
@@ -521,5 +586,7 @@ module.exports = {
   startRunner,
   stopRunner,
   claimLocalFolders,
+  ensureWorkspaceReady,
+  chooseWorkspaceRoot,
   restoreDobby,
 };

@@ -64,7 +64,7 @@ function requireProject(params) {
   try {
     ensureWorkspace(HOME, projectId, params.project_name);
   } catch (err) {
-    throw new Error(accessMessage(err, path.join(HOME, 'Documents', 'Dobby')));
+    throw new Error(accessMessage(err, process.env.DOBBY_WORKSPACE_ROOT || path.join(HOME, 'Documents', 'Dobby')));
   }
   return projectId;
 }

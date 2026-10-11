@@ -103,7 +103,7 @@
     },
     "localSetup": {
       "title": "Turn on local computer",
-      "intro": "Cloud mode still works as before. Local mode runs shell, files, and computer control on this Mac. Project files are saved in Documents/Dobby.",
+      "intro": "Cloud mode still works as before. Local mode runs shell, files, and computer control on this Mac. On first launch, choose the folder for project files — you can reuse a Codex or Claude Code directory.",
       "steps": {
         "1": "Sign in to the desktop app from Applications/Dobby.app.",
         "2": "On the home screen, turn on Run on this computer before the first message. You can also toggle it later in a conversation header.",
@@ -116,7 +116,7 @@
       "intro": "System Settings → Privacy & Security. Enable Dobby in each of these, then Cmd+Q and reopen. After replacing an older build, grant Documents again if macOS asks.",
       "screen": "Screen & System Audio Recording — so Dobby can see the screen.",
       "accessibility": "Accessibility — so Dobby can click and type.",
-      "files": "Files and Folders → Documents — local projects live in Documents/Dobby. Allow Desktop and Downloads if asked.",
+      "files": "Files and Folders — local projects live in the workspace folder you chose. Allow Documents, Desktop, and Downloads if asked.",
       "automation": "Automation → Dobby → System Events — allow this if macOS asks the first time you type."
     },
     "otherApps": {
@@ -125,9 +125,9 @@
     },
     "hostTools": {
       "title": "Python and other tools on this Mac",
-      "intro": "Local mode uses programs already on your computer. Files for each project are under Documents/Dobby. The cloud sandbox has its own Linux image; this Mac does not.",
+      "intro": "Local mode uses programs already on your computer. Files for each project are under the workspace folder you chose. The cloud sandbox has its own Linux image; this Mac does not.",
       "python": "Python 3.11+ — install from python.org or `brew install python`, then Cmd+Q and reopen Dobby.",
-      "packages": "Project libraries — Dobby can `pip install` into that conversation's folder under Documents/Dobby. They are not preinstalled.",
+      "packages": "Project libraries — Dobby can `pip install` into that conversation's folder under the workspace you chose. They are not preinstalled.",
       "cloud": "Need Playwright, OCR, or the full sandbox image? Turn off Run on this computer and use cloud."
     }
   },

@@ -77,6 +77,24 @@ describe('workspace path mapping', () => {
     assert.equal(rewriteWorkspaceCommand('echo /workspaces', root), 'echo /workspaces');
   });
 
+  it('uses DOBBY_WORKSPACE_ROOT as the primary project parent', () => {
+    const customHome = fs.mkdtempSync(path.join(os.tmpdir(), 'dobby-custom-home-'));
+    const customRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'dobby-custom-root-'));
+    const prev = process.env.DOBBY_WORKSPACE_ROOT;
+    process.env.DOBBY_WORKSPACE_ROOT = customRoot;
+    try {
+      const root = workspaceRoot(customHome, projectId);
+      assert.equal(root, path.resolve(path.join(customRoot, projectId)));
+      assert.equal(
+        resolveWorkspacePath(customHome, projectId, '/workspace/note.txt'),
+        path.resolve(path.join(customRoot, projectId, 'note.txt')),
+      );
+    } finally {
+      if (prev == null) delete process.env.DOBBY_WORKSPACE_ROOT;
+      else process.env.DOBBY_WORKSPACE_ROOT = prev;
+    }
+  });
+
   it('reuses a legacy ~/Dobby project folder if it already exists', () => {
     const legacyHome = path.join(os.tmpdir(), `dobby-legacy-${process.pid}`);
     const legacy = path.join(legacyHome, 'Dobby', projectId);

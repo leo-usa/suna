@@ -53,12 +53,15 @@ function isProjectFolderName(name, projectId) {
   return name.endsWith(suffix);
 }
 
-function dobbyRoots(home) {
+function dobbyRoots(home, override = process.env.DOBBY_WORKSPACE_ROOT) {
   const resolvedHome = path.resolve(home || os.homedir());
-  return [
+  const defaults = [
     path.resolve(path.join(resolvedHome, 'Documents', 'Dobby')),
     path.resolve(path.join(resolvedHome, 'Dobby')),
   ];
+  const extra = override ? path.resolve(String(override)) : '';
+  if (!extra) return defaults;
+  return [extra, ...defaults.filter((folder) => folder !== extra)];
 }
 
 function listProjectFolders(home, projectId) {
@@ -108,7 +111,8 @@ function workspaceRoot(home, projectId, projectName) {
 
 function assertAllowed(home, resolved, virtualPath) {
   const homeRoot = path.resolve(home || os.homedir());
-  if (!under(homeRoot, resolved)) {
+  const allowed = [homeRoot, ...dobbyRoots(home)];
+  if (!allowed.some((parent) => under(parent, resolved))) {
     throw new WorkspaceEscapeError(`Path is outside your home folder: ${virtualPath}`);
   }
   if (isSensitive(resolved)) {

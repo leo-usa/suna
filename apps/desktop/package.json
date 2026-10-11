@@ -47,7 +47,7 @@
       "extendInfo": {
         "NSAppleEventsUsageDescription": "Dobby uses Apple Events to type, click, and open apps on this Mac.",
         "NSScreenCaptureUsageDescription": "Dobby captures the screen so it can see what is on this computer.",
-        "NSDocumentsFolderUsageDescription": "Dobby saves this project's files in Documents/Dobby so it can list, read, and edit them on this Mac.",
+        "NSDocumentsFolderUsageDescription": "Dobby saves this project's files in the workspace folder you choose so it can list, read, and edit them on this Mac.",
         "NSDesktopFolderUsageDescription": "Dobby can use files on your Desktop when a project needs them.",
         "NSDownloadsFolderUsageDescription": "Dobby can use files in Downloads when a project needs them."
       }

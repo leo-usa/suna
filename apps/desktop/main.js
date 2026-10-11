@@ -559,10 +559,10 @@ function createWindow() {
   });
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   if (!gotSingleInstanceLock) return;
   localRunner.registerIpc();
-  localRunner.claimLocalFolders();
+  await localRunner.ensureWorkspaceReady();
 
   if (process.platform === 'darwin') {
     // Use .icns for macOS dock icon - ensures proper styling with rounded corners

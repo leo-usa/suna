@@ -75,7 +75,8 @@ function isHealthPath(urlPath) {
 
 function startPreviewServer({ port, home } = {}) {
   const roots = dobbyRoots(home || os.homedir());
-  for (const root of roots) {
+  for (const [index, root] of roots.entries()) {
+    if (index > 0 && !fs.existsSync(root)) continue;
     try {
       fs.mkdirSync(root, { recursive: true });
     } catch (_) {
