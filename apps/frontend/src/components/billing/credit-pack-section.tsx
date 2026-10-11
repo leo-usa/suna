@@ -148,72 +148,68 @@ export function CreditPackSection({
         </div>
       )}
 
-      <CreditPaymentMethodPicker
-        value={resolvedPaymentMethod}
-        onChange={setPaymentMethod}
-      />
-
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mt-4">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         {packages.map((pkg) => {
           const isSelected = selectedPackage.amount === pkg.amount;
           return (
-            <div
+            <button
               key={pkg.amount}
+              type="button"
+              onClick={() => {
+                setSelectedAmount(pkg.amount);
+                setError(null);
+              }}
               className={cn(
-                'rounded-[14px] sm:rounded-[18px] flex flex-col bg-card border border-border overflow-hidden',
+                'rounded-[14px] sm:rounded-[18px] flex flex-col items-start text-left p-4 sm:p-5 gap-2 bg-card border border-border',
                 isSelected && 'ring-2 ring-primary'
               )}
             >
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedAmount(pkg.amount);
-                  setError(null);
-                }}
-                className="flex flex-col items-start text-left p-4 sm:p-5 gap-2 flex-1"
-              >
-                <div className="flex items-center justify-between w-full gap-2 min-h-[24px]">
-                  {pkg.popular ? (
-                    <span className="text-[10px] sm:text-xs font-medium text-primary-foreground bg-primary px-2.5 py-1 rounded-full">
-                      {t('pricingUi.mostPopular')}
-                    </span>
-                  ) : (
-                    <span />
-                  )}
-                  {pkg.bonus_percent > 0 && (
-                    <span className="text-[10px] sm:text-xs font-medium text-green-600 dark:text-green-400 bg-green-500/15 border border-green-500/30 px-2.5 py-1 rounded-full">
-                      {t('creditPurchase.extraPercent', { percent: pkg.bonus_percent })}
-                    </span>
-                  )}
-                </div>
-                <div className="text-2xl sm:text-3xl font-semibold tracking-tight">
-                  {formatPrice(pkg.amount, currency)}
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  {t('creditPurchase.creditsPackLabel', {
-                    count: formatCredits(pkg.total_credits),
-                  })}
-                </div>
-              </button>
-              <div className="px-4 sm:px-5 pb-4 sm:pb-5">
-                <Button
-                  className="w-full h-10 sm:h-11 bg-primary hover:bg-primary/90 text-primary-foreground"
-                  disabled={isProcessing || (!canPurchase && !!user)}
-                  onClick={() => handlePurchase(pkg)}
-                >
-                  {isProcessing && isSelected ? (
-                    <>
-                      <DobbyLoader size="small" className="mr-2" />
-                      {t('creditPurchase.processing')}
-                    </>
-                  ) : (
-                    t('creditPurchase.buyNow')
-                  )}
-                </Button>
+              <div className="flex items-center justify-between w-full gap-2 min-h-[24px]">
+                {pkg.popular ? (
+                  <span className="text-[10px] sm:text-xs font-medium text-primary-foreground bg-primary px-2.5 py-1 rounded-full">
+                    {t('pricingUi.mostPopular')}
+                  </span>
+                ) : (
+                  <span />
+                )}
+                {pkg.bonus_percent > 0 && (
+                  <span className="text-[10px] sm:text-xs font-medium text-green-600 dark:text-green-400 bg-green-500/15 border border-green-500/30 px-2.5 py-1 rounded-full">
+                    {t('creditPurchase.extraPercent', { percent: pkg.bonus_percent })}
+                  </span>
+                )}
               </div>
-            </div>
+              <div className="text-2xl sm:text-3xl font-semibold tracking-tight">
+                {formatPrice(pkg.amount, currency)}
+              </div>
+              <div className="text-sm text-muted-foreground">
+                {t('creditPurchase.creditsPackLabel', {
+                  count: formatCredits(pkg.total_credits),
+                })}
+              </div>
+            </button>
           );
         })}
+      </div>
+
+      <div className="mt-5 sm:mt-6 space-y-4">
+        <CreditPaymentMethodPicker
+          value={resolvedPaymentMethod}
+          onChange={setPaymentMethod}
+        />
+        <Button
+          className="w-full sm:w-auto h-10 sm:h-11 bg-primary hover:bg-primary/90 text-primary-foreground"
+          disabled={isProcessing || (!canPurchase && !!user)}
+          onClick={() => handlePurchase(selectedPackage)}
+        >
+          {isProcessing ? (
+            <>
+              <DobbyLoader size="small" className="mr-2" />
+              {t('creditPurchase.processing')}
+            </>
+          ) : (
+            t('creditPurchase.buyNow')
+          )}
+        </Button>
       </div>
 
       {error && (
