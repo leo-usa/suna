@@ -294,6 +294,7 @@ export async function signUpWithPassword(prevState: any, formData: FormData) {
   const confirmPassword = normalizePassword(formData.get('confirmPassword') as string);
   const returnUrl = formData.get('returnUrl') as string | undefined;
   const origin = formData.get('origin') as string;
+  const referralCode = (formData.get('referralCode') as string | undefined)?.trim();
 
   if (!email || !email.includes('@')) {
     return { message: 'Please enter a valid email address' };
@@ -317,6 +318,9 @@ export async function signUpWithPassword(prevState: any, formData: FormData) {
     password,
     options: {
       emailRedirectTo,
+      data: referralCode
+        ? { referral_code: referralCode.toUpperCase() }
+        : undefined,
     },
   });
 

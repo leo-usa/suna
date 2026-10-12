@@ -707,7 +707,7 @@ function LoginContent() {
                 </div>
               )}
 
-              {!referralCodeParam && <input type="hidden" name="referralCode" value={referralCode} />}
+              <input type="hidden" name="referralCode" value={referralCode} />
               <div className="flex items-start gap-2">
                 <Checkbox
                   id="gdprConsent"
@@ -872,7 +872,7 @@ function LoginContent() {
                 </div>
               )}
 
-              {!referralCodeParam && <input type="hidden" name="referralCode" value={referralCode} />}
+              <input type="hidden" name="referralCode" value={referralCode} />
 
               {isSignUp && (
                 <div className="flex items-start gap-2">
