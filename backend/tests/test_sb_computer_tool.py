@@ -435,9 +435,9 @@ async def test_click_keeps_named_actions_after_screenshot_is_replaced():
     assert "target" not in computer.click.await_args.kwargs
 
 
-def test_estimate_cached_prompt_tokens_leaves_fresh_image_room():
-    from core.billing.credits.calculator import estimate_cached_prompt_tokens, cached_tokens_from_usage
+def test_cached_tokens_come_from_provider_usage():
+    from core.billing.credits.calculator import cached_tokens_from_usage
 
-    assert estimate_cached_prompt_tokens(18000, 0) == 0
-    assert estimate_cached_prompt_tokens(18300, 18000) == 16000
     assert cached_tokens_from_usage({"prompt_tokens_details": {"cached_tokens": 7903}}) == 7903
+    assert cached_tokens_from_usage({"cache_read_input_tokens": 50860}) == 50860
+    assert cached_tokens_from_usage({"prompt_tokens": 18000}) == 0

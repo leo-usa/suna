@@ -133,14 +133,3 @@ def cached_tokens_from_usage(usage) -> int:
         nested = usage.get("prompt_tokens_details") or {}
         return int(nested.get("cached_tokens") or usage.get("cache_read_input_tokens") or 0)
     return 0
-
-
-def estimate_cached_prompt_tokens(prompt_tokens: int, previous_prompt_tokens: int) -> int:
-    """When the provider omits cache stats on the stream, reuse the prior prompt prefix.
-
-    Subtract a small allowance for the new screenshot and tool result so we do not
-    treat those fresh tokens as cached.
-    """
-    if prompt_tokens <= 0 or previous_prompt_tokens <= 0:
-        return 0
-    return max(0, min(prompt_tokens, previous_prompt_tokens - 2000))

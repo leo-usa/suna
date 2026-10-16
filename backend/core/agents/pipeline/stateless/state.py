@@ -99,7 +99,6 @@ class RunState:
         self.agent_version_id: Optional[str] = None
         self.system_prompt: Optional[Dict[str, Any]] = None
         self.tool_schemas: Optional[List[Dict[str, Any]]] = None
-        self.last_prompt_tokens: int = 0
 
         self._messages: Deque[Dict[str, Any]] = deque()
         self._tool_results: OrderedDict[str, ToolResult] = OrderedDict()

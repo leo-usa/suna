@@ -378,20 +378,14 @@ class ResponseProcessor:
                     "cached_tokens": cached_tokens,
                 }
 
-            from core.billing.credits.calculator import cached_tokens_from_usage, estimate_cached_prompt_tokens
-            prompt_tokens = int(response_data["usage"].get("prompt_tokens") or 0)
+            from core.billing.credits.calculator import cached_tokens_from_usage
             cached_tokens = int((response_data["usage"].get("prompt_tokens_details") or {}).get("cached_tokens") or 0)
             if cached_tokens <= 0:
                 cached_tokens = cached_tokens_from_usage(usage)
-            if cached_tokens <= 0:
-                cached_tokens = estimate_cached_prompt_tokens(
-                    prompt_tokens, getattr(self._state, "last_prompt_tokens", 0) or 0
-                )
             if cached_tokens > 0:
                 response_data["usage"].setdefault("prompt_tokens_details", {})
                 response_data["usage"]["prompt_tokens_details"]["cached_tokens"] = cached_tokens
                 response_data["usage"]["cache_read_input_tokens"] = cached_tokens
-            self._state.last_prompt_tokens = prompt_tokens
             
             if hasattr(final_llm_response, 'model'):
                 response_data["model"] = final_llm_response.model
