@@ -281,10 +281,26 @@ def test_basic_runs_low_effort_and_power_runs_high():
     assert basic.get_litellm_params()["output_config"] == {"effort": "low"}
     assert power.get_litellm_params()["output_config"] == {"effort": "high"}
 
-    openrouter_basic = ModelFactory.create_basic_model("anthropic")
+    with patch("core.ai_models.registry._bedrock_claude_gpt_enabled", return_value=False):
+        openrouter_basic = ModelFactory.create_basic_model("anthropic")
     params = openrouter_basic.get_litellm_params()
     assert "output_config" not in params
     assert params["extra_body"]["reasoning"] == {"effort": "low"}
+
+
+def test_basic_and_power_use_bedrock_when_claude_is_available():
+    with patch("core.ai_models.registry._bedrock_claude_gpt_enabled", return_value=True):
+        basic = ModelFactory.create_basic_model("anthropic")
+        power = ModelFactory.create_power_model("anthropic")
+
+    assert basic.provider == ModelProvider.BEDROCK
+    assert basic.litellm_model_id == BedrockConfig.get_sonnet_5_5_id()
+    assert basic.fallback_litellm_model_id == "openrouter/anthropic/claude-sonnet-5.5"
+    assert power.provider == ModelProvider.BEDROCK
+    assert power.litellm_model_id == BedrockConfig.get_sonnet_5_5_id()
+    assert power.fallback_litellm_model_id == "openrouter/anthropic/claude-sonnet-5.5"
+    assert basic.get_litellm_params()["output_config"] == {"effort": "low"}
+    assert power.get_litellm_params()["output_config"] == {"effort": "high"}
 
     assert registry.format_model_info("dobby/basic")["effort"] == "low"
     assert registry.format_model_info("dobby/power")["effort"] == "high"

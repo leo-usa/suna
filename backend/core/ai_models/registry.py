@@ -411,6 +411,19 @@ def _get_main_llm() -> str:
     return getattr(config, 'MAIN_LLM', 'anthropic')
 
 
+def _mode_provider(main_llm: str, custom_model: Optional[str]) -> str:
+    """Basic and Advanced follow Bedrock when Claude is available there.
+
+    MAIN_LLM defaults to anthropic, which sends those modes straight to
+    OpenRouter. Named Claude and GPT models already use the Bedrock route.
+    """
+    if custom_model:
+        return main_llm
+    if main_llm in ("anthropic", "") and _bedrock_claude_gpt_enabled():
+        return "bedrock"
+    return main_llm
+
+
 def _get_main_llm_model() -> Optional[str]:
     return getattr(config, 'MAIN_LLM_MODEL', None)
 
@@ -512,6 +525,7 @@ class ModelFactory:
     
     @staticmethod
     def create_basic_model(main_llm: str, custom_model: Optional[str] = None) -> Model:
+        main_llm = _mode_provider(main_llm, custom_model)
         # Default models per provider
         default_models = {
             "bedrock": BedrockConfig.get_sonnet_5_5_id(),
@@ -671,6 +685,7 @@ class ModelFactory:
     
     @staticmethod
     def create_power_model(main_llm: str, custom_model: Optional[str] = None) -> Model:
+        main_llm = _mode_provider(main_llm, custom_model)
         # Default models per provider (same as basic for now)
         default_models = {
             "bedrock": BedrockConfig.get_sonnet_5_5_id(),
