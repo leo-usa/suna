@@ -15,7 +15,7 @@ DEFAULT_TOKEN_COST = Decimal('0.000002')
 
 CREDITS_PER_DOLLAR = 1000
 
-FREE_TIER_INITIAL_CREDITS = Decimal('0.00')
+FREE_TIER_INITIAL_CREDITS = Decimal('2.00')
 
 UNLIMITED_THREAD_LIMIT = 100_000
 UNLIMITED_PROJECT_LIMIT = UNLIMITED_THREAD_LIMIT * 2
@@ -94,7 +94,7 @@ TIERS: Dict[str, Tier] = {
         },
         daily_credit_config={
             'enabled': True,
-            'amount': Decimal('0.20'),  # 200 credits at CREDITS_PER_DOLLAR=1000
+            'amount': Decimal('0.50'),  # 500 credits at CREDITS_PER_DOLLAR=1000
             'refresh_interval_hours': 168
         },
         monthly_refill_enabled=False,

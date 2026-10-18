@@ -1743,7 +1743,7 @@
       "typesOverviewIntro": "积分分为两类：过期与不过期。运行任务时，扣款顺序为：先扣过期积分（每日/每周，再月度），再扣不过期积分。",
       "typeCards": {
         "dailyWeeklyTitle": "每日 / 每周",
-        "dailyWeeklyBody": "免费档：每周 200 积分。付费档：每日 200 积分。用不完不结转——到期重置。",
+        "dailyWeeklyBody": "免费档：每周 500 积分。付费档：每日 200 积分。用不完不结转——到期重置。",
         "monthlyTitle": "每月",
         "monthlyBody": "包含在订阅计划中。每个计费周期开始时刷新，不结转。",
         "extraTitle": "额外",
@@ -1751,7 +1751,7 @@
       },
       "expiringDetailsTitle": "过期积分（每日/每周 + 每月）",
       "expiringDailyWeeklyLabel": "每日/每周积分：",
-      "expiringDailyWeeklyText": "免费档每周 200 积分，付费档每日 200 积分。请在账单页面查看下次刷新时间。未用完不结转。",
+      "expiringDailyWeeklyText": "免费档每周 500 积分，付费档每日 200 积分。请在账单页面查看下次刷新时间。未用完不结转。",
       "expiringMonthlyLabel": "每月积分：",
       "expiringMonthlyText": "订阅的主要积分额度。每个计费周期开始时刷新，不累积——请在周期内使用。",
       "expiringPromotionalLabel": "促销积分：",

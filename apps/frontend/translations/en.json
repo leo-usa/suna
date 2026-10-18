@@ -2103,7 +2103,7 @@
       "typesOverviewIntro": "Credits fall into two categories: expiring and non-expiring. When you run a task, credits are deducted in this priority order: expiring credits first (daily/weekly, then monthly), followed by non-expiring credits.",
       "typeCards": {
         "dailyWeeklyTitle": "Daily / Weekly",
-        "dailyWeeklyBody": "Free tier: 200 credits weekly. Paid tiers: 200 credits daily. Use it or lose it—these credits reset and don't roll over.",
+        "dailyWeeklyBody": "Free tier: 500 credits weekly. Paid tiers: 200 credits daily. Use it or lose it—these credits reset and don't roll over.",
         "monthlyTitle": "Monthly",
         "monthlyBody": "Included with your subscription plan. Refresh at the start of each billing cycle and don't roll over.",
         "extraTitle": "Extra",
@@ -2111,7 +2111,7 @@
       },
       "expiringDetailsTitle": "Expiring credits (Daily/Weekly + Monthly)",
       "expiringDailyWeeklyLabel": "Daily/Weekly credits:",
-      "expiringDailyWeeklyText": "Free tier gets 200 credits weekly. Paid tiers get 200 credits daily. Check your billing page to see when your next refresh happens. Unused credits don't roll over.",
+      "expiringDailyWeeklyText": "Free tier gets 500 credits weekly. Paid tiers get 200 credits daily. Check your billing page to see when your next refresh happens. Unused credits don't roll over.",
       "expiringMonthlyLabel": "Monthly credits:",
       "expiringMonthlyText": "Your subscription's main credit allocation. These refresh at the start of each billing cycle and don't accumulate—use them within the month.",
       "expiringPromotionalLabel": "Promotional credits:",
