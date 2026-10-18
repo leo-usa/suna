@@ -178,6 +178,20 @@ export const TOOL_DISPLAY_NAMES: ReadonlyMap<string, string> = new Map([
   ['get_current_agent_config', 'Getting Worker Config'],
   ['create-new-agent', 'Creating New Worker'],
 
+  // Master assistant
+  ['start-conversation', 'Starting Conversation'],
+  ['send-to-conversation', 'Sending Follow-up'],
+  ['check-conversation', 'Checking Conversation'],
+  ['list-conversations', 'Listing Conversations'],
+  ['list-recent-conversations', 'Listing Conversations'],
+  ['switch-conversation', 'Switching Conversation'],
+  ['stop-conversation', 'Stopping Conversation'],
+  ['list-local-devices', 'Checking Local Computers'],
+  ['list-models', 'Checking Available Models'],
+  ['get-account-status', 'Checking Account'],
+  ['open-dobby-page', 'Preparing Link'],
+  ['share-conversation', 'Updating Sharing'],
+
   // MCP operations
   ['search-mcp-servers', 'Searching MCP Servers'],
   ['search_mcp_servers', 'Searching MCP Servers'],

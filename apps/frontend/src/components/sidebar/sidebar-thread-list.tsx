@@ -74,6 +74,8 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { RenameProjectDialog } from '@/components/sidebar/rename-project-dialog';
+import { MasterAvatarOrb } from '@/components/master-assistant/master-avatar';
+import { useMasterAssistant } from '@/hooks/master-assistant/use-master-assistant';
 
 // Date group header component - shared across tabs
 const DateGroupHeader: React.FC<{ dateGroup: string }> = ({ dateGroup }) => {
@@ -167,6 +169,22 @@ const DedicatedComputerHeader: React.FC<{
     </div>
   );
 };
+
+const MasterPinnedItem: React.FC<{ path: string; name: string; isActive: boolean; isRunning: boolean }> = ({
+  path,
+  name,
+  isActive,
+  isRunning,
+}) => (
+  <SpotlightCard className={cn('mb-1.5 transition-colors cursor-pointer', isActive ? 'bg-muted' : 'bg-transparent')}>
+    <Link href={path} prefetch className="block">
+      <div className="flex items-center gap-3 p-2.5 text-sm">
+        <MasterAvatarOrb size={40} thinking={isRunning} className="flex-shrink-0" />
+        <span className="flex-1 truncate font-medium">{name}</span>
+      </div>
+    </Link>
+  </SpotlightCard>
+);
 
 // Item card props for unified styling
 interface ThreadItemCardProps {
@@ -381,6 +399,7 @@ export interface SidebarThreadListProps {
 
 export function SidebarThreadList({ mode }: SidebarThreadListProps) {
   const t = useTranslations('sidebar');
+  const tMaster = useTranslations('masterAssistant');
   const { isMobile, state, setOpenMobile } = useSidebar();
   const [loadingThreadId, setLoadingThreadId] = useState<string | null>(null);
   const pathname = usePathname();
@@ -476,6 +495,9 @@ export function SidebarThreadList({ mode }: SidebarThreadListProps) {
   const hasDedicatedComputer =
     Boolean(threadsResponse?.dedicated_computer?.has_computer) || dedicatedProjectCount > 0;
 
+  const { data: masterAssistant } = useMasterAssistant({ enabled: mode === 'chats' });
+  const masterProjectId = masterAssistant?.project_id;
+
   const groupedByDateThenProject: GroupedByDateThenProject = useMemo(
     () => groupThreadsByDateThenProject(dedicatedFilter ? dedicatedThreads : combinedThreads),
     [dedicatedFilter, dedicatedThreads, combinedThreads],
@@ -491,15 +513,19 @@ export function SidebarThreadList({ mode }: SidebarThreadListProps) {
     for (const [dateGroup, projectsInDate] of Object.entries(
       groupedByDateThenProject,
     )) {
+      const projects = Object.values(projectsInDate)
+        .filter((p) => !(mode === 'chats' && masterProjectId && p.projectId === masterProjectId))
+        .sort(compareProjectGroups);
+      if (projects.length === 0) continue;
       sections.push({
         key: dateGroup,
         header: <DateGroupHeader dateGroup={dateGroup} />,
-        projects: Object.values(projectsInDate).sort(compareProjectGroups),
+        projects,
       });
     }
 
     return sections;
-  }, [groupedByDateThenProject]);
+  }, [groupedByDateThenProject, mode, masterProjectId]);
 
   // Initialize expanded projects
   useEffect(() => {
@@ -1027,6 +1053,14 @@ export function SidebarThreadList({ mode }: SidebarThreadListProps) {
                     onToggleFilter={() => setDedicatedFilter((prev) => !prev)}
                     onNewProject={handleCreateDedicatedProject}
                     isCreating={isCreatingChat}
+                  />
+                )}
+                {mode === 'chats' && !dedicatedFilter && masterAssistant && (
+                  <MasterPinnedItem
+                    path={masterAssistant.path}
+                    name={tMaster('name')}
+                    isActive={pathname?.includes(masterAssistant.thread_id) || false}
+                    isRunning={agentStatusMap.get(masterAssistant.thread_id) || masterAssistant.running}
                   />
                 )}
                 {chatListSections.map((section) => (

@@ -19,6 +19,7 @@ class PipelineContext:
     user_message: Optional[str] = None
     execution_target: Optional[str] = None
     local_device_id: Optional[str] = None
+    is_master: bool = False
     
     def __post_init__(self):
         if not self.stream_key:

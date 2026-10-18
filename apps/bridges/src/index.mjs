@@ -21,6 +21,7 @@ if (existsSync(bridgeEnv)) {
 const { isTelegramBridgeConfigured, runTelegramBridge } = await import("./telegram.mjs");
 const { isWechatIlinkBridgeConfigured, runWechatIlinkBridge } = await import("./wechat-ilink.mjs");
 const { isFeishuBridgeConfigured, runFeishuBridge } = await import("./feishu.mjs");
+const { isQqBridgeConfigured, runQqBridge } = await import("./qq.mjs");
 
 function waitForShutdown(signal) {
   return new Promise((resolve) => {
@@ -84,8 +85,24 @@ if (isFeishuBridgeConfigured()) {
   console.log("[i] Feishu bridge: disabled (set FEISHU_APP_ID + FEISHU_APP_SECRET + FEISHU_BRIDGE_SECRET)");
 }
 
+if (isQqBridgeConfigured()) {
+  workers.push(
+    (async () => {
+      try {
+        await runQqBridge(ac.signal);
+      } catch (e) {
+        console.error("[qq] fatal:", e.message);
+        console.error("[i] QQ stopped; other bridges keep running. Fix QQ_BOT_APP_ID / QQ_BOT_APP_SECRET in apps/bridges/.env and restart.");
+        await waitForShutdown(ac.signal);
+      }
+    })(),
+  );
+} else {
+  console.log("[i] QQ bridge: disabled (set QQ_BOT_ENABLED=true plus QQ_BOT_APP_ID, QQ_BOT_APP_SECRET and QQ_BRIDGE_SECRET)");
+}
+
 if (workers.length === 0) {
-  console.error("[✗] No bridges enabled. Set Telegram, Feishu, and/or WeChat iLink env vars (see README).");
+  console.error("[✗] No bridges enabled. Set Telegram, Feishu, WeChat iLink and/or QQ env vars (see README).");
   process.exit(1);
 }
 

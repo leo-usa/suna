@@ -21,7 +21,8 @@ class PromptManager:
                                   mcp_loader=None,
                                   disabled_tools: Optional[List[str]] = None,
                                   execution_target: Optional[str] = None,
-                                  local_device_id: Optional[str] = None) -> Tuple[dict, Optional[dict]]:
+                                  local_device_id: Optional[str] = None,
+                                  is_master: bool = False) -> Tuple[dict, Optional[dict]]:
         
         build_start = time.time()
         
@@ -71,6 +72,9 @@ class PromptManager:
         system_content = PromptManager._append_datetime_info(system_content)
         if (execution_target or "").lower() == "local":
             system_content = await PromptManager._append_local_runtime(system_content, local_device_id)
+        if is_master:
+            from core.master_assistant.prompt import MASTER_ASSISTANT_PROMPT
+            system_content += MASTER_ASSISTANT_PROMPT
         
         t5 = time.time()
         kb_data, user_context_data, memory_data, file_data = await asyncio.gather(kb_task, user_context_task, memory_task, file_task)

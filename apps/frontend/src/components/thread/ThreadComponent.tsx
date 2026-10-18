@@ -77,6 +77,7 @@ import { useClearNavigation } from '@/stores/thread-navigation-store';
 import { useModeViewerInit } from '@/hooks/threads/use-mode-viewer-init';
 import { getStreamPreconnectService } from '@/lib/streaming/stream-preconnect';
 import { useVoicePlayerStore } from '@/stores/voice-player-store';
+import { clearMasterVoicePrompt, peekMasterVoicePrompt } from '@/components/master-assistant/voice-prompt';
 
 interface ThreadComponentProps {
   projectId: string;
@@ -1541,6 +1542,21 @@ export function ThreadComponent({ projectId, threadId, compact = false, configur
       sessionStorage.removeItem('optimistic_file_previews');
     }
   }, [initialLoadCompleted]);
+
+  const masterVoiceSentRef = useRef(false);
+  useEffect(() => {
+    if (isShared || masterVoiceSentRef.current || !initialLoadCompleted) return;
+    const text = peekMasterVoicePrompt(threadId);
+    if (!text) return;
+    chatInputRef.current?.setValue(text);
+    if (agentStatus !== 'idle') return;
+    masterVoiceSentRef.current = true;
+    clearMasterVoicePrompt();
+    setTimeout(() => {
+      chatInputRef.current?.setValue(text);
+      chatInputRef.current?.submit?.();
+    }, 600);
+  }, [threadId, initialLoadCompleted, agentStatus, isShared]);
 
   // SEO title update
   useEffect(() => {

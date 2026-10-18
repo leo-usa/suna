@@ -416,6 +416,8 @@ api_router.include_router(system_status_router)
 from core.integrations.wechat_ilink import api as wechat_ilink_api
 from core.integrations.telegram_bot import api as telegram_bot_api
 from core.integrations.feishu_bot import api as feishu_bot_api
+from core.integrations.qq_bot import api as qq_bot_api
+from core.master_assistant import api as master_assistant_api
 from core.mcp_module import api as mcp_api
 from core.credentials import api as credentials_api
 from core.templates import api as template_api
@@ -424,6 +426,8 @@ from core.templates import presentations_api
 api_router.include_router(wechat_ilink_api.router, prefix="/integrations/wechat-ilink")
 api_router.include_router(telegram_bot_api.router, prefix="/integrations/telegram-bot")
 api_router.include_router(feishu_bot_api.router, prefix="/integrations/feishu-bot")
+api_router.include_router(qq_bot_api.router, prefix="/integrations/qq-bot")
+api_router.include_router(master_assistant_api.router)
 
 if config.ACTIVATE_MCPS_TRIG:
     api_router.include_router(mcp_api.router)

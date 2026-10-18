@@ -69,6 +69,20 @@ class ManagerInitializer:
         )
         tool_manager.register_core_tools()
 
+        try:
+            from core.master_assistant.service import is_master_thread
+            if await is_master_thread(ctx.thread_id):
+                from core.tools.master_assistant_tool import MasterAssistantTool
+                thread_manager.add_tool(
+                    MasterAssistantTool,
+                    thread_manager=thread_manager,
+                    thread_id=ctx.thread_id,
+                    account_id=ctx.account_id,
+                )
+                ctx.is_master = True
+        except Exception as e:
+            logger.warning(f"Could not register master assistant tools for {ctx.thread_id}: {e}")
+
         await ManagerInitializer._reload_dynamic_tools(ctx, thread_manager, jit_config)
 
         if ctx.agent_config and (
@@ -153,6 +167,7 @@ class ManagerInitializer:
             disabled_tools=[],  # Empty - blocking handled at execution time
             execution_target=getattr(ctx, 'execution_target', None),
             local_device_id=getattr(ctx, 'local_device_id', None),
+            is_master=getattr(ctx, 'is_master', False),
         )
         if prompt:
             state.system_prompt = prompt.system_prompt

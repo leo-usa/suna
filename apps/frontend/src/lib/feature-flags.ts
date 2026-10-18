@@ -17,6 +17,11 @@ export const featureFlags = {
     process.env.NEXT_PUBLIC_DISABLE_MOBILE_ADVERTISING,
     false,
   ),
+  /**
+   * QQ bot linking. Off by default: QQ only allows 4 replies per 55 minutes.
+   * Set NEXT_PUBLIC_QQ_BOT_ENABLED=true together with backend QQ_BOT_ENABLED.
+   */
+  qqBotEnabled: parseEnvBoolean(process.env.NEXT_PUBLIC_QQ_BOT_ENABLED, false),
 } as const;
 
 // Helpful during development/debugging; kept out of production logs.

@@ -36,6 +36,7 @@ import {
   Bot,
   MessageCircle,
 } from 'lucide-react';
+import { featureFlags } from '@/lib/feature-flags';
 import { useAccounts } from '@/hooks/account';
 import { useAccountState } from '@/hooks/billing';
 
@@ -449,6 +450,14 @@ export function NavUserWithTeams({
                     <span>{t('telegramBot')}</span>
                   </Link>
                 </DropdownMenuItem>
+                {featureFlags.qqBotEnabled && (
+                  <DropdownMenuItem asChild>
+                    <Link href="/dashboard/qq" className="gap-2 p-2">
+                      <MessageSquare className="h-4 w-4" />
+                      <span>{t('qqBot')}</span>
+                    </Link>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem asChild>
                   <Link href="/dashboard/wechat" className="gap-2 p-2">
                     <MessageCircle className="h-4 w-4" />

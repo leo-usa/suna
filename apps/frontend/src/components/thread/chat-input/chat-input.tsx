@@ -763,6 +763,7 @@ export interface ChatInputHandles {
   focus: () => void;
   selectRange: (start: number, end: number) => void;
   addFiles: (files: File[]) => void;
+  submit?: () => void;
 }
 
 export interface ChatInputProps {
@@ -1051,7 +1052,9 @@ export const ChatInput = memo(forwardRef<ChatInputHandles, ChatInputProps>(
         : (selectedAgent?.metadata?.is_suna_default || (!selectedAgentId && sunaAgent !== undefined) || false);
 
     const { initializeFromAgents } = useAgentSelection();
+    const submitRef = useRef<() => void>(() => {});
     useImperativeHandle(ref, () => ({
+      submit: () => submitRef.current(),
       getPendingFiles: () => pendingFiles,
       getUploadedFileIds: () => uploadedFiles
         .filter((f) => f.fileId && f.status === 'ready')
@@ -1371,6 +1374,7 @@ export const ChatInput = memo(forwardRef<ChatInputHandles, ChatInputProps>(
     const handleTextareaSubmit = useCallback(() => {
       handleSubmit({ preventDefault: () => {} } as React.FormEvent);
     }, [handleSubmit]);
+    submitRef.current = handleTextareaSubmit;
 
     // Stable callback for hasContent changes - only called when empty/non-empty state changes
     const handleHasContentChange = useCallback((newHasContent: boolean) => {

@@ -149,6 +149,7 @@ async def prep_prompt(
     disabled_tools: Optional[List[str]] = None,
     execution_target: Optional[str] = None,
     local_device_id: Optional[str] = None,
+    is_master: bool = False,
 ) -> PromptResult:
     start = time.time()
 
@@ -168,6 +169,7 @@ async def prep_prompt(
             disabled_tools=disabled_tools,
             execution_target=execution_target,
             local_device_id=local_device_id,
+            is_master=is_master,
         )
         
         elapsed_ms = (time.time() - start) * 1000

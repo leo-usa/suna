@@ -18,6 +18,16 @@ import { InlineCheckout, extractInlineCheckout } from '@/components/thread/conte
 import { UpgradeButtonCTA, extractUpgradeButton } from '@/components/thread/content/UpgradeButtonCTA';
 import { LoginHandoffActivator } from '@/components/thread/content/LoginHandoffActivator';
 import { LoginHandoffBanner } from '@/components/thread/content/LoginHandoffBanner';
+import {
+  MASTER_CARD_TOOLS,
+  MASTER_PAGE_TOOL,
+  MASTER_SHARE_TOOL,
+  MASTER_SWITCH_TOOL,
+  MasterConversationCard,
+  MasterPageButton,
+  MasterShareLink,
+  parseMasterToolOutput,
+} from '@/components/master-assistant/master-inline';
 
 export interface AssistantMessageRendererProps {
   message: UnifiedMessage;
@@ -787,6 +797,27 @@ export function renderAssistantMessage(props: AssistantMessageRendererProps): Re
           project={props.project}
         />
       );
+    } else if (
+      MASTER_CARD_TOOLS.has(toolName) ||
+      toolName === MASTER_PAGE_TOOL ||
+      toolName === MASTER_SHARE_TOOL ||
+      toolName === MASTER_SWITCH_TOOL
+    ) {
+      const toolResult = toolResults.find(tr => {
+        const trMeta = safeJsonParse<ParsedMetadata>(tr.metadata, {});
+        return trMeta.tool_call_id === toolCall.tool_call_id;
+      });
+      const resultMeta = toolResult ? safeJsonParse<ParsedMetadata>(toolResult.metadata, {}) : null;
+      const masterData = parseMasterToolOutput(resultMeta?.result);
+      if (masterData && MASTER_CARD_TOOLS.has(toolName) && masterData.thread_id) {
+        contentParts.push(<MasterConversationCard key={`master-card-${index}`} data={masterData} />);
+      } else if (masterData && (toolName === MASTER_PAGE_TOOL || (toolName === MASTER_SWITCH_TOOL && masterData.path))) {
+        contentParts.push(<MasterPageButton key={`master-page-${index}`} data={masterData} />);
+      } else if (masterData && toolName === MASTER_SHARE_TOOL) {
+        contentParts.push(<MasterShareLink key={`master-share-${index}`} data={masterData} />);
+      } else {
+        contentParts.push(renderRegularToolCall(normalizedToolCall, index, toolName, props));
+      }
     } else {
       contentParts.push(renderRegularToolCall(normalizedToolCall, index, toolName, props));
     }

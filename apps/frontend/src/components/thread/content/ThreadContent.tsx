@@ -34,6 +34,8 @@ import { ReasoningSection } from "./ReasoningSection";
 import { StreamingText } from "./StreamingText";
 import { MessageActions } from "./MessageActions";
 
+const MASTER_TASK_UPDATE_MARKER = "[Dobby 任务更新]";
+
 export function renderAttachments(
   attachments: string[],
   fileViewerHandler?: (filePath?: string, filePathList?: string[]) => void,
@@ -225,6 +227,20 @@ const UserMessageRow = memo(function UserMessageRow({
     const clean = messageContent.replace(/\[(?:Uploaded File|Attached|Image): .*?\]/g, "").trim();
     return { cleanContent: clean, attachments: attachmentsList };
   }, [messageContent]);
+
+  if (cleanContent.startsWith(MASTER_TASK_UPDATE_MARKER)) {
+    const taskLines = cleanContent
+      .split("\n")
+      .filter((line) => line.startsWith("- "))
+      .map((line) => line.slice(2).split(" | ")[0]);
+    return (
+      <div key={groupKey} className="flex justify-center">
+        <div className="max-w-[90%] rounded-full bg-muted/60 px-4 py-1.5 text-center text-xs text-muted-foreground">
+          {taskLines.length > 0 ? taskLines.join(" · ") : MASTER_TASK_UPDATE_MARKER}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div key={groupKey} className="flex justify-end">

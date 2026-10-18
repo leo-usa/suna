@@ -734,7 +734,53 @@ def tool_message_row_to_bridge_text(msg: Dict[str, Any]) -> str:
         parsed = _parse_json_if_str(s)
         if isinstance(parsed, dict):
             return _format_execute_command_for_bridge(parsed)
+    if name_l in _MASTER_TOOL_NAMES:
+        parsed = _parse_json_if_str(s)
+        if isinstance(parsed, dict):
+            return _format_master_tool_for_bridge(name_l, parsed)
     return ""
+
+
+_MASTER_TOOL_NAMES = frozenset({
+    "start_conversation",
+    "send_to_conversation",
+    "check_conversation",
+    "open_dobby_page",
+    "share_conversation",
+    "switch_conversation",
+})
+
+_MASTER_STATUS_LABELS = {
+    "running": "运行中",
+    "completed": "已完成",
+    "failed": "失败",
+    "error": "失败",
+    "stopped": "已停止",
+    "cancelled": "已停止",
+}
+
+
+def _format_master_tool_for_bridge(name_l: str, data: Dict[str, Any]) -> str:
+    if name_l == "open_dobby_page":
+        label = (data.get("label") or "").strip()
+        url = (data.get("url") or "").strip()
+        return f"{label}：{url}" if label and url else url
+    if name_l == "share_conversation":
+        url = (data.get("share_url") or "").strip()
+        return f"分享链接：{url}" if url else "已取消分享。"
+    if name_l == "switch_conversation":
+        if data.get("new"):
+            return "已切换到新对话。说「回到总助理」可以回来。" if data.get("switched") else ""
+        title = (data.get("title") or "").strip() or "对话"
+        url = (data.get("url") or "").strip()
+        head = f"已切换到「{title}」。说「回到总助理」可以回来。" if data.get("switched") else f"「{title}」"
+        return f"{head}\n{url}" if url else head
+    title = (data.get("title") or "").strip() or "对话"
+    target = {"local": "本地", "dedicated": "专属电脑"}.get(data.get("execution_target") or "", "云端")
+    status = _MASTER_STATUS_LABELS.get((data.get("status") or "").lower(), data.get("status") or "")
+    url = (data.get("url") or "").strip()
+    head = f"「{title}」（{target}）{status}".strip()
+    return f"{head}\n{url}" if url else head
 
 
 def _body_chunks_merged(

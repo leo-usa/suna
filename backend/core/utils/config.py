@@ -394,6 +394,13 @@ class Configuration:
     # Shared secret for the Telegram bridge process (server-to-server only).
     TELEGRAM_BRIDGE_SECRET: Optional[str] = None
 
+    # Shared secret for the QQ bot bridge process (server-to-server only).
+    QQ_BRIDGE_SECRET: Optional[str] = None
+
+    # QQ's passive-reply cap (4 messages / 55 min) is too low for this product.
+    # Keep the integration code; turn the interface back on with QQ_BOT_ENABLED=true.
+    QQ_BOT_ENABLED: bool = False
+
     # API Keys system configuration
     API_KEY_SECRET: Optional[str] = "default-secret-key-change-in-production"
     API_KEY_LAST_USED_THROTTLE_SECONDS: Optional[int] = 900

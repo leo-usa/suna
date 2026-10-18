@@ -66,6 +66,10 @@ const MaintenanceCountdownBanner = lazy(() =>
   import('@/components/announcements/maintenance-countdown-banner').then(mod => ({ default: mod.MaintenanceCountdownBanner }))
 );
 
+const SettingsUrlOpener = lazy(() =>
+  import('@/components/master-assistant/settings-url-opener').then(mod => ({ default: mod.SettingsUrlOpener }))
+);
+
 // Skeleton shell that renders immediately for FCP
 function DashboardSkeleton() {
   return (
@@ -256,6 +260,9 @@ export default function DashboardLayoutContent({
         </Suspense>
         <Suspense fallback={null}>
           <PresentationViewerWrapper />
+        </Suspense>
+        <Suspense fallback={null}>
+          <SettingsUrlOpener />
         </Suspense>
         {/* Dobby App announcement banners */}
         <Suspense fallback={null}>

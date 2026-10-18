@@ -19,6 +19,7 @@ import { NotificationDropdown } from '../notifications/notification-dropdown';
 import { useAgentStartInput } from '@/hooks/dashboard';
 import { ChatInput } from '@/components/thread/chat-input/chat-input';
 import { DynamicGreeting } from '@/components/ui/dynamic-greeting';
+import { MasterAvatar } from '@/components/master-assistant/master-avatar';
 import { LocalExecutionToggle } from '@/components/thread/local-execution-toggle';
 import { Menu } from 'lucide-react';
 
@@ -342,6 +343,7 @@ export function DashboardContent() {
                   - Desktop: true center with no offset */}
               <div className="absolute inset-0 flex items-center justify-center px-4 pb-28 sm:pb-0 pointer-events-none">
                 <div className="w-full max-w-3xl mx-auto flex flex-col items-center text-center pointer-events-auto">
+                  <MasterAvatar />
                   {/* Greeting */}
                   <div className="animate-in fade-in-0 slide-in-from-bottom-4 duration-500 fill-mode-both">
                     <DynamicGreeting className="text-2xl sm:text-3xl md:text-4xl font-medium text-foreground tracking-tight" />

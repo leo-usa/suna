@@ -24,7 +24,7 @@ type RecordingFormat = {
     blobType: string;
 };
 
-function getSupportedAudioRecordingFormat(): RecordingFormat {
+export function getSupportedAudioRecordingFormat(): RecordingFormat {
     if (typeof MediaRecorder === 'undefined') {
         throw new Error('MediaRecorder is not supported in this browser');
     }

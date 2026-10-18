@@ -18,6 +18,7 @@ import { trackCtaSignup } from '@/lib/analytics/gtm';
 import { useAgentStartInput } from '@/hooks/dashboard';
 import { ChatInput } from '@/components/thread/chat-input/chat-input';
 import { DynamicGreeting } from '@/components/ui/dynamic-greeting';
+import { MasterAvatar, MasterAvatarGuest } from '@/components/master-assistant/master-avatar';
 
 // Lazy load heavy components
 const SunaModesPanel = lazy(() => 
@@ -100,6 +101,18 @@ export function HeroSection() {
               - Desktop: true center with no offset */}
           <div className="absolute inset-0 flex items-center justify-center px-4 pb-28 sm:pb-0 pointer-events-none">
             <div className="w-full max-w-3xl mx-auto flex flex-col items-center text-center pointer-events-auto">
+              {!isLoading && (
+                user ? (
+                  <MasterAvatar />
+                ) : (
+                  <MasterAvatarGuest
+                    onSignIn={() => {
+                      trackCtaSignup();
+                      setAuthDialogOpen(true);
+                    }}
+                  />
+                )
+              )}
               {/* Greeting */}
               <div className="animate-in fade-in-0 slide-in-from-bottom-4 duration-500 fill-mode-both">
                 <DynamicGreeting className="text-2xl sm:text-3xl md:text-4xl font-medium text-foreground tracking-tight" />
