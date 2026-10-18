@@ -327,65 +327,85 @@ export function SidebarLeft({
         >
           {/* + button */}
           <div className="w-full flex flex-col items-center space-y-3">
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-10 w-10 p-0 shadow-none"
-              asChild
-            >
-              <Link
-                href="/dashboard"
-                onClick={() => {
-                  posthog.capture('new_task_clicked');
-                  if (isMobile) setOpenMobile(false);
-                }}
-              >
-                <Plus className="h-4 w-4" />
-              </Link>
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-10 w-10 p-0 shadow-none"
+                  asChild
+                >
+                  <Link
+                    href="/dashboard"
+                    onClick={() => {
+                      posthog.capture('new_task_clicked');
+                      if (isMobile) setOpenMobile(false);
+                    }}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Link>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right" sideOffset={8}>
+                <p>{t('newConversationTooltip')}</p>
+              </TooltipContent>
+            </Tooltip>
             
             {/* Files button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className={cn(
-                "h-10 w-10 p-0",
-                isOnLibrary && "bg-card border-[1.5px] border-border"
-              )}
-              asChild
-            >
-              <Link
-                href="/files"
-                onClick={() => {
-                  if (isMobile) setOpenMobile(false);
-                }}
-              >
-                <FolderOpen className="h-4 w-4" />
-              </Link>
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={cn(
+                    "h-10 w-10 p-0",
+                    isOnLibrary && "bg-card border-[1.5px] border-border"
+                  )}
+                  asChild
+                >
+                  <Link
+                    href="/files"
+                    onClick={() => {
+                      if (isMobile) setOpenMobile(false);
+                    }}
+                  >
+                    <FolderOpen className="h-4 w-4" />
+                  </Link>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right" sideOffset={8}>
+                <p>{t('filesTooltip')}</p>
+              </TooltipContent>
+            </Tooltip>
           </div>
           <div className="w-full flex flex-col items-center space-y-3">
             {[
-              { view: 'chats' as const, icon: MessageCircle },
+              { view: 'chats' as const, icon: MessageCircle, tooltip: t('chatsTooltip') },
               // { view: 'library' as const, icon: Library },
-              { view: 'workers' as const, icon: Users },
-              { view: 'starred' as const, icon: Zap },
-            ].map(({ view, icon: Icon }) => (
-              <Button
-                key={view}
-                variant="ghost"
-                size="icon"
-                className={cn(
-                  "h-10 w-10 p-0 cursor-pointer hover:bg-card hover:border-[1.5px] hover:border-border",
-                  activeView === view ? 'bg-card border-[1.5px] border-border' : ''
-                )}
-                onClick={() => {
-                  handleViewChange(view);
-                  setOpen(true); // Expand sidebar when clicking state button
-                }}
-              >
-                <Icon className="!h-4 !w-4" />
-              </Button>
+              { view: 'workers' as const, icon: Users, tooltip: t('workersTooltip') },
+              { view: 'starred' as const, icon: Zap, tooltip: t('triggersTooltip') },
+            ].map(({ view, icon: Icon, tooltip }) => (
+              <Tooltip key={view}>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={cn(
+                      "h-10 w-10 p-0 cursor-pointer hover:bg-card hover:border-[1.5px] hover:border-border",
+                      activeView === view ? 'bg-card border-[1.5px] border-border' : ''
+                    )}
+                    onClick={() => {
+                      handleViewChange(view);
+                      setOpen(true);
+                    }}
+                  >
+                    <Icon className="!h-4 !w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="right" sideOffset={8}>
+                  <p>{tooltip}</p>
+                </TooltipContent>
+              </Tooltip>
             ))}
           </div>
         </div>
@@ -402,83 +422,103 @@ export function SidebarLeft({
           <div className="px-6 pt-4 space-y-4">
             {/* New Chat button */}
             <div className="w-full space-y-1">
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full shadow-none justify-between h-10 px-3 group/new-chat"
-                asChild
-              >
-                <Link
-                  href="/dashboard"
-                  onClick={() => {
-                    posthog.capture('new_task_clicked');
-                    if (isMobile) setOpenMobile(false);
-                  }}
-                >
-                  <div className="flex items-center gap-2">
-                    <Plus className="h-4 w-4" />
-                    {t('newChat')}
-                  </div>
-                  <div className="flex items-center gap-1 opacity-0 group-hover/new-chat:opacity-100 transition-opacity">
-                  <KbdGroup>
-                    <Kbd>⌘</Kbd>
-                    <Kbd>J</Kbd>
-                  </KbdGroup>
-                  </div>
-                </Link>
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full shadow-none justify-between h-10 px-3 group/new-chat"
+                    asChild
+                  >
+                    <Link
+                      href="/dashboard"
+                      onClick={() => {
+                        posthog.capture('new_task_clicked');
+                        if (isMobile) setOpenMobile(false);
+                      }}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Plus className="h-4 w-4" />
+                        {t('newChat')}
+                      </div>
+                      <div className="flex items-center gap-1 opacity-0 group-hover/new-chat:opacity-100 transition-opacity">
+                      <KbdGroup>
+                        <Kbd>⌘</Kbd>
+                        <Kbd>J</Kbd>
+                      </KbdGroup>
+                      </div>
+                    </Link>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" sideOffset={6}>
+                  <p>{t('newConversationTooltip')}</p>
+                </TooltipContent>
+              </Tooltip>
               <LocalExecutionToggle className="-ml-1" />
             </div>
 
             {/* Files link */}
             <div className="w-full">
-              <Button
-                variant="ghost"
-                size="sm"
-                className={cn(
-                  "w-full shadow-none justify-start h-10 px-3 hover:text-foreground",
-                  isOnLibrary 
-                    ? "bg-card border-[1.5px] border-border text-foreground" 
-                    : "text-muted-foreground"
-                )}
-                asChild
-              >
-                <Link
-                  href="/files"
-                  onClick={() => {
-                    if (isMobile) setOpenMobile(false);
-                  }}
-                >
-                  <div className="flex items-center gap-2">
-                    <FolderOpen className="h-4 w-4" />
-                    {t('files')}
-                  </div>
-                </Link>
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={cn(
+                      "w-full shadow-none justify-start h-10 px-3 hover:text-foreground",
+                      isOnLibrary 
+                        ? "bg-card border-[1.5px] border-border text-foreground" 
+                        : "text-muted-foreground"
+                    )}
+                    asChild
+                  >
+                    <Link
+                      href="/files"
+                      onClick={() => {
+                        if (isMobile) setOpenMobile(false);
+                      }}
+                    >
+                      <div className="flex items-center gap-2">
+                        <FolderOpen className="h-4 w-4" />
+                        {t('files')}
+                      </div>
+                    </Link>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" sideOffset={6}>
+                  <p>{t('filesTooltip')}</p>
+                </TooltipContent>
+              </Tooltip>
             </div>
 
             {/* State buttons horizontally */}
             <div className="flex justify-between items-center gap-2">
               {[
-                { view: 'chats' as const, icon: MessageCircle, label: t('chats') },
+                { view: 'chats' as const, icon: MessageCircle, label: t('chats'), tooltip: t('chatsTooltip') },
                 // { view: 'library' as const, icon: Library, label: t('library') },
-                { view: 'workers' as const, icon: Users, label: t('workers') },
-                { view: 'starred' as const, icon: Zap, label: t('triggers') }
-              ].map(({ view, icon: Icon, label }) => (
-                <button
-                  key={view}
-                  className={cn(
-                    "flex flex-col items-center justify-center gap-1.5 p-1.5 rounded-2xl cursor-pointer transition-colors w-[64px] h-[64px]",
-                    "hover:bg-muted/60 hover:border-[1.5px] hover:border-border",
-                    activeView === view ? 'bg-card border-[1.5px] border-border' : 'border-[1.5px] border-transparent'
-                  )}
-                  onClick={() => handleViewChange(view)}
-                >
-                  <Icon className="!h-4 !w-4" />
-                  <span className="text-xs text-muted-foreground whitespace-nowrap">
-                    {label}
-                  </span>
-                </button>
+                { view: 'workers' as const, icon: Users, label: t('workers'), tooltip: t('workersTooltip') },
+                { view: 'starred' as const, icon: Zap, label: t('triggers'), tooltip: t('triggersTooltip') }
+              ].map(({ view, icon: Icon, label, tooltip }) => (
+                <Tooltip key={view}>
+                  <TooltipTrigger asChild>
+                    <button
+                      className={cn(
+                        "flex flex-col items-center justify-center gap-1.5 p-1.5 rounded-2xl cursor-pointer transition-colors w-[64px] h-[64px]",
+                        "hover:bg-muted/60 hover:border-[1.5px] hover:border-border",
+                        activeView === view ? 'bg-card border-[1.5px] border-border' : 'border-[1.5px] border-transparent'
+                      )}
+                      onClick={() => handleViewChange(view)}
+                    >
+                      <Icon className="!h-4 !w-4" />
+                      <span className="text-xs text-muted-foreground whitespace-nowrap">
+                        {label}
+                      </span>
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" sideOffset={6}>
+                    <p>{tooltip}</p>
+                  </TooltipContent>
+                </Tooltip>
               ))}
             </div>
           </div>

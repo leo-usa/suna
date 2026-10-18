@@ -77,6 +77,7 @@ import { UserSettingsModal } from '@/components/settings/user-settings-modal';
 import { PlanSelectionModal } from '@/components/billing/pricing';
 import { TierBadge } from '@/components/billing/tier-badge';
 import { useTranslations } from 'next-intl';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useReferralDialog } from '@/stores/referral-dialog';
 import { ReferralDialog } from '@/components/referrals/referral-dialog';
 import { Badge } from '@/components/ui/badge';
@@ -244,6 +245,8 @@ export function NavUserWithTeams({
             )}
           </div>
           <DropdownMenu>
+            <Tooltip>
+              <TooltipTrigger asChild>
             <DropdownMenuTrigger asChild>
               <SidebarMenuButton
                 size="lg"
@@ -266,6 +269,11 @@ export function NavUserWithTeams({
                 <ChevronsUpDown className="ml-auto size-4 flex-shrink-0 group-data-[collapsible=icon]:hidden" />
               </SidebarMenuButton>
             </DropdownMenuTrigger>
+              </TooltipTrigger>
+              <TooltipContent side="right" sideOffset={8}>
+                <p>{t('accountMenuTooltip')}</p>
+              </TooltipContent>
+            </Tooltip>
             <DropdownMenuContent
               className="w-(--radix-dropdown-menu-trigger-width) min-w-56 p-2"
               side={isMobile ? 'bottom' : 'top'}

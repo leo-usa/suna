@@ -113,14 +113,21 @@ export function SiteHeader({
               </Tooltip>
             ) : threadId && projectId ? (
               <SharePopover threadId={threadId} projectId={projectId}>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-9 px-2.5 cursor-pointer gap-1.5"
-                >
-                  <Upload className="h-4 w-4" />
-                  <span className="hidden sm:inline text-sm">{t('share')}</span>
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-9 px-2.5 cursor-pointer gap-1.5"
+                    >
+                      <Upload className="h-4 w-4" />
+                      <span className="hidden sm:inline text-sm">{t('share')}</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" sideOffset={4}>
+                    <p>{t('shareTooltip')}</p>
+                  </TooltipContent>
+                </Tooltip>
               </SharePopover>
             ) : null}
 

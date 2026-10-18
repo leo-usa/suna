@@ -13,6 +13,7 @@ import { usePricingModalStore } from '@/stores/pricing-modal-store';
 import { useModelPricing, type ModelPricingItem } from '@/hooks/billing/use-model-pricing';
 import { ModelProviderIcon } from '@/lib/model-provider-icons';
 import { Separator } from '@/components/ui/separator';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useTranslations } from 'next-intl';
 
 function formatLitellmModelName(litellmModelId: string): string {
@@ -259,7 +260,9 @@ export const ModeIndicator = memo(function ModeIndicator() {
 
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-      <DropdownMenuTrigger asChild>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <DropdownMenuTrigger asChild>
         <button
           className={cn(
             'flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 min-h-9 py-1 rounded-lg transition-all duration-150 cursor-pointer touch-manipulation',
@@ -289,7 +292,12 @@ export const ModeIndicator = memo(function ModeIndicator() {
             isOpen && "rotate-180"
           )} strokeWidth={2} />
         </button>
-      </DropdownMenuTrigger>
+          </DropdownMenuTrigger>
+        </TooltipTrigger>
+        <TooltipContent side="top" sideOffset={4}>
+          <p>{t('chooseModelTooltip')}</p>
+        </TooltipContent>
+      </Tooltip>
 
       <DropdownMenuContent 
         align="start" 
