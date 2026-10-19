@@ -241,6 +241,11 @@ class PricingPresets:
         cache_write_5m_cost_per_million_tokens=0.375,
     )
 
+    GEMINI_4_ARGON = ModelPricing(
+        input_cost_per_million_tokens=2.00,
+        output_cost_per_million_tokens=10.00,
+    )
+
     GEMINI_3_5_FLASH_LITE = ModelPricing(
         input_cost_per_million_tokens=0.30,
         output_cost_per_million_tokens=2.50,
@@ -1248,6 +1253,28 @@ class ModelFactory:
         )
 
     @staticmethod
+    def create_gemini_4_argon() -> Model:
+        return Model(
+            id="dobby/gemini-4-argon",
+            name="Gemini 4 Argon",
+            litellm_model_id="openrouter/google/gemini-4-argon",
+            provider=ModelProvider.OPENROUTER,
+            aliases=["gemini-4-argon", "google/gemini-4-argon", "gemini-4"],
+            context_window=1_048_576,
+            capabilities=[
+                ModelCapability.CHAT,
+                ModelCapability.FUNCTION_CALLING,
+                ModelCapability.VISION,
+                ModelCapability.THINKING,
+            ],
+            pricing=PricingPresets.GEMINI_4_ARGON,
+            tier_availability=["paid"],
+            priority=97,
+            recommended=False,
+            enabled=True,
+        )
+
+    @staticmethod
     def create_gemini_3_1_pro() -> Model:
         return Model(
             id="dobby/gemini-3.1-pro-preview",
@@ -1866,6 +1893,7 @@ class ModelRegistry:
         self.register(ModelFactory.create_claude_opus_5_5())
         self.register(ModelFactory.create_claude_fable_5())
         self.register(ModelFactory.create_gemini_2_5_pro())
+        self.register(ModelFactory.create_gemini_4_argon())
         self.register(ModelFactory.create_gemini_3_1_pro())
         self.register(ModelFactory.create_gemini_3_5_flash_lite())
         self.register(ModelFactory.create_gemini_3_8_flash())
@@ -1939,6 +1967,7 @@ class ModelRegistry:
         self._litellm_id_to_pricing[BedrockConfig.get_fable_5_id()] = PricingPresets.CLAUDE_FABLE_5
         self._litellm_id_to_pricing[BedrockConfig.get_fable_5_1_id()] = PricingPresets.CLAUDE_FABLE_5
         self._litellm_id_to_pricing["openrouter/google/gemini-2.5-pro"] = PricingPresets.GEMINI_2_5_PRO
+        self._litellm_id_to_pricing["openrouter/google/gemini-4-argon"] = PricingPresets.GEMINI_4_ARGON
         self._litellm_id_to_pricing["openrouter/google/gemini-3.1-pro-preview"] = PricingPresets.GEMINI_3_1_PRO
         self._litellm_id_to_pricing["openrouter/google/gemini-3.5-flash-lite"] = PricingPresets.GEMINI_3_5_FLASH_LITE
         self._litellm_id_to_pricing["openrouter/google/gemini-3.8-flash"] = PricingPresets.GEMINI_3_8_FLASH
