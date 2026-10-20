@@ -49,6 +49,9 @@ class ValidateReferralCodeResponse(BaseModel):
     referrer_id: Optional[str] = None
     message: Optional[str] = None
 
+class ApplyReferralRequest(BaseModel):
+    referral_code: Optional[str] = None
+
 class ReferralEmailRequest(BaseModel):
     emails: List[str]
 
@@ -191,6 +194,28 @@ async def get_user_referrals(
     except Exception as e:
         logger.error(f"Failed to get user referrals: {e}", user_id=user_id)
         raise HTTPException(status_code=500, detail="Failed to get user referrals")
+
+@router.post("/apply")
+async def apply_referral(
+    request: Optional[ApplyReferralRequest] = None,
+    user_id: str = Depends(verify_and_get_user_id_from_jwt),
+    service: ReferralService = Depends(get_referral_service)
+):
+    code = ((request.referral_code if request else None) or "").strip()
+    if not code:
+        try:
+            client = await service.db.client
+            user_response = await client.auth.admin.get_user_by_id(user_id)
+            metadata = {}
+            if user_response and getattr(user_response, "user", None):
+                metadata = user_response.user.user_metadata or {}
+            code = (metadata.get("referral_code") or "").strip()
+        except Exception as e:
+            logger.warning(f"Could not read referral code from user metadata: {e}", user_id=user_id)
+    if not code:
+        return {"success": False, "message": "No referral code"}
+    return await service.apply_referral_code(user_id, code)
+
 
 @router.post("/email", response_model=ReferralEmailResponse)
 async def send_referral_email(

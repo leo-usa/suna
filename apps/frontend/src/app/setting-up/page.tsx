@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { CheckCircle2, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/components/AuthProvider';
 import { useInitializeAccount } from '@/hooks/account';
+import { backendApi } from '@/lib/api-client';
 import { createClient } from '@/lib/supabase/client';
 import { DobbyLogo } from '@/components/sidebar/dobby-logo';
 import { Card, CardContent } from '@/components/ui/card';
@@ -21,6 +22,11 @@ export default function SettingUpPage() {
   const initializeMutation = useInitializeAccount();
   const hasAttemptedInit = useRef(false);
   const isInitializing = useRef(false);
+
+  useEffect(() => {
+    if (!user) return;
+    void backendApi.post('/referrals/apply', {}, { showErrors: false });
+  }, [user]);
 
   useEffect(() => {
     if (!user) return;

@@ -175,13 +175,35 @@ export async function GET(request: NextRequest) {
             })
             console.log('✅ Added referral code to OAuth user:', pendingReferralCode)
             shouldClearReferralCookie = true
+            const accessToken = data.session?.access_token
+            const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL
+            if (accessToken && backendUrl) {
+              try {
+                const applyResponse = await fetch(`${backendUrl}/referrals/apply`, {
+                  method: 'POST',
+                  headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({ referral_code: pendingReferralCode }),
+                })
+                if (!applyResponse.ok) {
+                  console.error('Referral apply failed:', applyResponse.status)
+                }
+              } catch (applyError) {
+                console.error('Failed to apply referral code:', applyError)
+              }
+            }
           } catch (error) {
             console.error('Failed to add referral code to OAuth user:', error)
           }
         }
 
         if (termsAccepted) {
-          const currentMetadata = data.user.user_metadata || {};
+          const currentMetadata = {
+            ...(data.user.user_metadata || {}),
+            ...(pendingReferralCode ? { referral_code: pendingReferralCode } : {}),
+          };
           if (!currentMetadata.terms_accepted_at) {
             try {
               await supabase.auth.updateUser({

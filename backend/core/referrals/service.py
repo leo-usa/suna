@@ -106,28 +106,9 @@ class ReferralService:
         
         total_earned = await self.check_total_earned_credits(referrer_id)
         
-        if total_earned >= MAX_EARNABLE_CREDITS_FROM_REFERRAL:
-            logger.warning(
-                f"Referrer has reached max earnable credits limit",
-                referrer_id=referrer_id,
-                total_earned=total_earned,
-                max_limit=MAX_EARNABLE_CREDITS_FROM_REFERRAL
-            )
-            return {
-                'success': False,
-                'message': f'Referrer has reached maximum earnable credits limit of {MAX_EARNABLE_CREDITS_FROM_REFERRAL}',
-                'credits_awarded': 0
-            }
-        
-        remaining_credits = MAX_EARNABLE_CREDITS_FROM_REFERRAL - total_earned
+        remaining_credits = max(MAX_EARNABLE_CREDITS_FROM_REFERRAL - total_earned, Decimal('0'))
         actual_credits_to_award = min(credits_amount, remaining_credits)
-        
-        if actual_credits_to_award <= 0:
-            return {
-                'success': False,
-                'message': 'No credits to award',
-                'credits_awarded': 0
-            }
+        friend_credits = REFERRAL_CREDITS
         
         try:
             client = await self._get_client()
@@ -136,13 +117,15 @@ class ReferralService:
                 'p_referrer_id': referrer_id,
                 'p_referred_account_id': referred_account_id,
                 'p_referral_code': referral_code,
-                'p_credits_amount': str(actual_credits_to_award)
+                'p_credits_amount': str(actual_credits_to_award),
+                'p_referred_credits_amount': str(friend_credits),
             }).execute()
             
             if response.data:
-                if isinstance(response.data, str):
-                    return json.loads(response.data)
-                return response.data
+                result = json.loads(response.data) if isinstance(response.data, str) else response.data
+                if result.get('success'):
+                    await self._clear_credit_cache(referrer_id, referred_account_id)
+                return result
             else:
                 raise Exception("Failed to process referral")
         except Exception as e:
@@ -152,6 +135,8 @@ class ReferralService:
                 if match:
                     try:
                         result = json.loads(match.group(0))
+                        if result.get('success'):
+                            await self._clear_credit_cache(referrer_id, referred_account_id)
                         logger.info(
                             "Referral processed successfully",
                             referrer_id=referrer_id,
@@ -170,6 +155,34 @@ class ReferralService:
                 referred_account_id=referred_account_id
             )
             raise
+
+    async def _clear_credit_cache(self, *account_ids: str) -> None:
+        try:
+            from core.utils.cache import Cache
+            for account_id in account_ids:
+                if not account_id:
+                    continue
+                await Cache.invalidate(f"credit_balance:{account_id}")
+                await Cache.invalidate(f"credit_summary:{account_id}")
+        except Exception as e:
+            logger.warning(f"Could not clear referral credit cache: {e}")
+
+    async def apply_referral_code(self, account_id: str, referral_code: Optional[str]) -> Dict:
+        code = (referral_code or "").strip()
+        if not code:
+            return {'success': False, 'message': 'No referral code'}
+        referrer_id = await self.validate_referral_code(code)
+        if not referrer_id or str(referrer_id) == str(account_id):
+            return {'success': False, 'message': 'Invalid referral code'}
+        try:
+            return await self.process_referral(
+                referrer_id=str(referrer_id),
+                referred_account_id=account_id,
+                referral_code=code,
+            )
+        except Exception as e:
+            logger.error(f"Error applying referral code: {e}", account_id=account_id)
+            return {'success': False, 'message': 'Failed to apply referral code'}
     
     async def get_referral_stats(self, user_id: str) -> Dict:
         try:
