@@ -199,6 +199,7 @@ const IsolatedTextarea = memo(forwardRef<HTMLTextAreaElement, IsolatedTextareaPr
     const textarea = internalRef.current;
     if (textarea) {
       (textarea as any).clearValue = () => setValue('');
+      (textarea as any).setValue = (text: string) => setValue(text);
       (textarea as any).appendValue = (text: string) => {
         setValue(prev => prev ? `${prev} ${text}` : text);
       };
@@ -1309,19 +1310,60 @@ export const ChatInput = memo(forwardRef<ChatInputHandles, ChatInputProps>(
       }
     }, [sandboxId, projectId, messages, queryClient]);
 
-    const handleTranscription = useCallback((transcribedText: string) => {
-      // Use the textarea's appendValue method
-      const textarea = textareaRef.current as any;
-      if (textarea?.appendValue) {
-        textarea.appendValue(transcribedText);
-      }
-      
-      // Notify parent in controlled mode
+    const voiceBaseRef = useRef<string | null>(null);
+
+    const writeComposer = useCallback((next: string) => {
+      const textarea = textareaRef.current as { setValue?: (text: string) => void } | null;
+      textarea?.setValue?.(next);
+      valueRef.current = next;
+      setHasContent(next.trim().length > 0);
       if (isControlled && controlledOnChange) {
-        const newValue = valueRef.current ? `${valueRef.current} ${transcribedText}` : transcribedText;
-        controlledOnChange(newValue);
+        controlledOnChange(next);
       }
     }, [isControlled, controlledOnChange]);
+
+    const handleVoiceStart = useCallback(() => {
+      voiceBaseRef.current = valueRef.current || '';
+    }, []);
+
+    const handleVoiceLive = useCallback((text: string) => {
+      if (voiceBaseRef.current === null) {
+        voiceBaseRef.current = valueRef.current || '';
+      }
+      const base = voiceBaseRef.current;
+      const spoken = text.trim();
+      writeComposer(spoken ? (base ? `${base} ${spoken}` : spoken) : base);
+    }, [writeComposer]);
+
+    const handleVoiceCancel = useCallback(() => {
+      const base = voiceBaseRef.current;
+      voiceBaseRef.current = null;
+      if (base !== null) writeComposer(base);
+    }, [writeComposer]);
+
+    const handleVoiceEnd = useCallback(() => {
+      voiceBaseRef.current = null;
+    }, []);
+
+    const handleTranscription = useCallback((transcribedText: string) => {
+      const spoken = transcribedText.trim();
+      if (voiceBaseRef.current !== null) {
+        const base = voiceBaseRef.current;
+        voiceBaseRef.current = null;
+        writeComposer(spoken ? (base ? `${base} ${spoken}` : spoken) : base);
+        return;
+      }
+
+      const textarea = textareaRef.current as { appendValue?: (text: string) => void } | null;
+      if (textarea?.appendValue) {
+        textarea.appendValue(spoken);
+      }
+
+      if (isControlled && controlledOnChange) {
+        const newValue = valueRef.current ? `${valueRef.current} ${spoken}` : spoken;
+        controlledOnChange(newValue);
+      }
+    }, [isControlled, controlledOnChange, writeComposer]);
 
     const removeUploadedFile = useCallback(async (index: number) => {
       const fileToRemove = uploadedFiles[index];
@@ -1498,6 +1540,10 @@ export const ChatInput = memo(forwardRef<ChatInputHandles, ChatInputProps>(
         )}
 
         {isLoggedIn && <VoiceRecorder
+          onRecordingStart={handleVoiceStart}
+          onLiveText={handleVoiceLive}
+          onRecordingCancel={handleVoiceCancel}
+          onRecordingEnd={handleVoiceEnd}
           onTranscription={handleTranscription}
           disabled={loading || (disabled && !isAgentRunning)}
         />}
@@ -1515,7 +1561,7 @@ export const ChatInput = memo(forwardRef<ChatInputHandles, ChatInputProps>(
           pendingFilesCount={pendingFilesCount}
         />
       </div>
-    ), [isLoggedIn, loading, disabled, handleTranscription, isAgentRunning, hasContent, hasFiles, isUploading, onStopAgent, handleSubmit, buttonLoaderVariant, pendingFilesCount, hideAgentSelection, selectedAgentId, onAgentSelect, threadId]);
+    ), [isLoggedIn, loading, disabled, handleVoiceStart, handleVoiceLive, handleVoiceCancel, handleVoiceEnd, handleTranscription, isAgentRunning, hasContent, hasFiles, isUploading, onStopAgent, handleSubmit, buttonLoaderVariant, pendingFilesCount, hideAgentSelection, selectedAgentId, onAgentSelect, threadId]);
 
     const renderControls = useMemo(() => (
       <div className="flex items-center justify-between mt-0 mb-1 px-1.5 sm:px-2 gap-1 sm:gap-1.5">

@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useMasterAssistant } from '@/hooks/master-assistant/use-master-assistant';
 import { useHoldToTalk } from './use-hold-to-talk';
+import { formatRecordingTime } from '@/lib/voice/live-speech';
 import { saveMasterVoicePrompt } from './voice-prompt';
 
 const DOBBY_RED = '#BA2E2E';
@@ -146,7 +147,7 @@ export function MasterAvatar() {
   const holdTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const holdingRef = React.useRef(false);
 
-  const { state: voiceState, start, stop } = useHoldToTalk((text) => {
+  const { state: voiceState, start, stop, liveText, elapsedMs } = useHoldToTalk((text) => {
     if (!data?.path) return;
     saveMasterVoicePrompt(data.thread_id, text);
     router.push(data.path);
@@ -215,12 +216,13 @@ export function MasterAvatar() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 4, scale: 0.95 }}
             transition={{ duration: 0.15 }}
-            className="pointer-events-none absolute bottom-full left-1/2 mb-1 -translate-x-1/2 whitespace-nowrap rounded-full border bg-card px-3 py-1 text-xs font-medium text-foreground shadow-sm"
+            className="pointer-events-none absolute bottom-full left-1/2 mb-1 w-max max-w-[240px] -translate-x-1/2 rounded-2xl border bg-card px-3 py-1.5 text-xs font-medium text-foreground shadow-sm"
           >
             <span className="inline-flex items-center gap-1.5">
-              {listening && <Mic className="h-3 w-3 animate-pulse text-[#BA2E2E]" />}
-              {voiceState === 'transcribing' && <Loader2 className="h-3 w-3 animate-spin" />}
-              {bubble}
+              {listening && <Mic className="h-3 w-3 shrink-0 animate-pulse text-[#BA2E2E]" />}
+              {listening && <span className="shrink-0 tabular-nums text-[#BA2E2E]">{formatRecordingTime(elapsedMs)}</span>}
+              {voiceState === 'transcribing' && <Loader2 className="h-3 w-3 shrink-0 animate-spin" />}
+              <span className="line-clamp-3 text-left">{listening && liveText ? liveText : bubble}</span>
             </span>
           </motion.div>
         )}

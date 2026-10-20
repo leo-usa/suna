@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getSupportedAudioRecordingFormat } from '@/components/thread/chat-input/voice-recorder';
 import { transcribeAudio } from '@/lib/api/transcription';
+import { startLiveSpeech } from '@/lib/voice/live-speech';
 
 export type HoldToTalkState = 'idle' | 'listening' | 'transcribing' | 'empty' | 'error';
 
@@ -13,7 +14,11 @@ const MIN_RECORDING_MS = 400;
 /** Press-and-hold voice capture: `start()` on press, `stop()` on release; resolves text via `onText`. */
 export function useHoldToTalk(onText: (text: string) => void) {
   const [state, setState] = useState<HoldToTalkState>('idle');
+  const [liveText, setLiveText] = useState('');
+  const [elapsedMs, setElapsedMs] = useState(0);
   const recorderRef = useRef<MediaRecorder | null>(null);
+  const liveSpeechRef = useRef<{ stop: () => void } | null>(null);
+  const liveTextRef = useRef('');
   const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const startedAtRef = useRef(0);
@@ -23,13 +28,19 @@ export function useHoldToTalk(onText: (text: string) => void) {
   const onTextRef = useRef(onText);
   onTextRef.current = onText;
 
+  const stopLiveSpeech = useCallback(() => {
+    liveSpeechRef.current?.stop();
+    liveSpeechRef.current = null;
+  }, []);
+
   const cleanup = useCallback(() => {
     if (maxTimerRef.current) clearTimeout(maxTimerRef.current);
     maxTimerRef.current = null;
+    stopLiveSpeech();
     streamRef.current?.getTracks().forEach((track) => track.stop());
     streamRef.current = null;
     recorderRef.current = null;
-  }, []);
+  }, [stopLiveSpeech]);
 
   const flash = useCallback((next: HoldToTalkState) => {
     setState(next);
@@ -68,8 +79,11 @@ export function useHoldToTalk(onText: (text: string) => void) {
       recorder.onstop = async () => {
         const tooShort = Date.now() - startedAtRef.current < MIN_RECORDING_MS;
         const chunks = chunksRef.current;
+        const draft = liveTextRef.current.trim();
         cleanup();
         if (tooShort || chunks.length === 0) {
+          setLiveText('');
+          liveTextRef.current = '';
           flash('empty');
           return;
         }
@@ -79,19 +93,36 @@ export function useHoldToTalk(onText: (text: string) => void) {
             type: format.blobType,
           });
           const { text } = await transcribeAudio(file);
-          if (text && text.trim()) {
+          const finalText = text?.trim() || draft;
+          setLiveText('');
+          liveTextRef.current = '';
+          if (finalText) {
             setState('idle');
-            onTextRef.current(text.trim());
+            onTextRef.current(finalText);
           } else {
             flash('empty');
           }
         } catch {
-          flash('error');
+          setLiveText('');
+          liveTextRef.current = '';
+          if (draft) {
+            setState('idle');
+            onTextRef.current(draft);
+          } else {
+            flash('error');
+          }
         }
       };
 
       startedAtRef.current = Date.now();
+      setElapsedMs(0);
+      setLiveText('');
+      liveTextRef.current = '';
       recorder.start(TIMESLICE_MS);
+      liveSpeechRef.current = startLiveSpeech((text) => {
+        liveTextRef.current = text;
+        setLiveText(text);
+      });
       setState('listening');
       maxTimerRef.current = setTimeout(stop, MAX_HOLD_MS);
     } catch {
@@ -113,5 +144,12 @@ export function useHoldToTalk(onText: (text: string) => void) {
     [cleanup],
   );
 
-  return { state, start, stop };
+  useEffect(() => {
+    if (state !== 'listening') return;
+    const started = startedAtRef.current || Date.now();
+    const tick = setInterval(() => setElapsedMs(Date.now() - started), 250);
+    return () => clearInterval(tick);
+  }, [state]);
+
+  return { state, start, stop, liveText, elapsedMs };
 }

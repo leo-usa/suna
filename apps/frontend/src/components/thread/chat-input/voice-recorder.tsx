@@ -9,9 +9,15 @@ import {
 } from '@/components/ui/tooltip';
 import { useTranscription } from '@/hooks/transcription/use-transcription';
 import { useTranslations } from 'next-intl';
+import { cn } from '@/lib/utils';
+import { formatRecordingTime, startLiveSpeech } from '@/lib/voice/live-speech';
 
 interface VoiceRecorderProps {
     onTranscription: (text: string) => void;
+    onRecordingStart?: () => void;
+    onLiveText?: (text: string) => void;
+    onRecordingCancel?: () => void;
+    onRecordingEnd?: () => void;
     disabled?: boolean;
 }
 
@@ -48,10 +54,15 @@ export function getSupportedAudioRecordingFormat(): RecordingFormat {
 
 export const VoiceRecorder: React.FC<VoiceRecorderProps> = memo(function VoiceRecorder({
     onTranscription,
+    onRecordingStart,
+    onLiveText,
+    onRecordingCancel,
+    onRecordingEnd,
     disabled = false,
 }) {
     const t = useTranslations('thread.chatInputTooltips');
     const [state, setState] = useState<'idle' | 'recording' | 'processing'>('idle');
+    const [elapsedMs, setElapsedMs] = useState(0);
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const chunksRef = useRef<Blob[]>([]);
     const streamRef = useRef<MediaStream | null>(null);
@@ -59,6 +70,20 @@ export const VoiceRecorder: React.FC<VoiceRecorderProps> = memo(function VoiceRe
     const maxTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const recordingFormatRef = useRef<RecordingFormat>({ extension: 'webm', blobType: 'audio/webm' });
     const isStartingRef = useRef(false);
+    const liveSpeechRef = useRef<{ stop: () => void } | null>(null);
+    const onLiveTextRef = useRef(onLiveText);
+    const onTranscriptionRef = useRef(onTranscription);
+    const onRecordingCancelRef = useRef(onRecordingCancel);
+    const onRecordingEndRef = useRef(onRecordingEnd);
+    onLiveTextRef.current = onLiveText;
+    onTranscriptionRef.current = onTranscription;
+    onRecordingCancelRef.current = onRecordingCancel;
+    onRecordingEndRef.current = onRecordingEnd;
+
+    const stopLiveSpeech = useCallback(() => {
+        liveSpeechRef.current?.stop();
+        liveSpeechRef.current = null;
+    }, []);
 
     const transcriptionMutation = useTranscription();
 
@@ -77,12 +102,27 @@ export const VoiceRecorder: React.FC<VoiceRecorderProps> = memo(function VoiceRe
     }, []);
 
     // Auto-stop recording after 15 minutes
+    useEffect(() => () => stopLiveSpeech(), [stopLiveSpeech]);
+
     useEffect(() => {
         if (state === 'recording') {
             recordingStartTimeRef.current = Date.now();
+            setElapsedMs(0);
+            const tick = setInterval(() => {
+                if (recordingStartTimeRef.current) {
+                    setElapsedMs(Date.now() - recordingStartTimeRef.current);
+                }
+            }, 250);
             maxTimeoutRef.current = setTimeout(() => {
                 stopRecording();
             }, MAX_RECORDING_TIME);
+            return () => {
+                clearInterval(tick);
+                if (maxTimeoutRef.current) {
+                    clearTimeout(maxTimeoutRef.current);
+                    maxTimeoutRef.current = null;
+                }
+            };
         } else {
             recordingStartTimeRef.current = null;
             if (maxTimeoutRef.current) {
@@ -129,9 +169,11 @@ export const VoiceRecorder: React.FC<VoiceRecorderProps> = memo(function VoiceRe
             };
 
             mediaRecorder.onstop = async () => {
+                stopLiveSpeech();
                 if (chunksRef.current.length === 0) {
                     cleanupStream();
                     setState('idle');
+                    onRecordingCancelRef.current?.();
                     return;
                 }
 
@@ -142,11 +184,14 @@ export const VoiceRecorder: React.FC<VoiceRecorderProps> = memo(function VoiceRe
 
                 transcriptionMutation.mutate(audioFile, {
                     onSuccess: (data) => {
-                        onTranscription(data.text);
+                        const text = data.text?.trim();
+                        if (text) onTranscriptionRef.current(text);
+                        else onRecordingEndRef.current?.();
                         setState('idle');
                     },
                     onError: (error) => {
                         console.error('Transcription failed:', error);
+                        onRecordingEndRef.current?.();
                         setState('idle');
                     },
                 });
@@ -156,6 +201,8 @@ export const VoiceRecorder: React.FC<VoiceRecorderProps> = memo(function VoiceRe
 
             // Timeslice required on iOS Safari so dataavailable events fire
             mediaRecorder.start(IOS_TIMESLICE_MS);
+            onRecordingStart?.();
+            liveSpeechRef.current = startLiveSpeech((text) => onLiveTextRef.current?.(text));
             setState('recording');
         } catch (error) {
             console.error('Error starting recording:', error);
@@ -172,8 +219,6 @@ export const VoiceRecorder: React.FC<VoiceRecorderProps> = memo(function VoiceRe
         if (recorder && recorder.state === 'recording') {
             chunksRef.current = [];
             recorder.stop();
-            cleanupStream();
-            setState('idle');
         }
     };
 
@@ -189,17 +234,6 @@ export const VoiceRecorder: React.FC<VoiceRecorderProps> = memo(function VoiceRe
         e.preventDefault();
         if (state === 'recording') {
             cancelRecording();
-        }
-    };
-
-    const getButtonClass = () => {
-        switch (state) {
-            case 'recording':
-                return '';
-            case 'processing':
-                return '';
-            default:
-                return '';
         }
     };
 
@@ -224,9 +258,20 @@ export const VoiceRecorder: React.FC<VoiceRecorderProps> = memo(function VoiceRe
                     onClick={handleClick}
                     onContextMenu={handleRightClick}
                     disabled={disabled || state === 'processing'}
-                    className={`h-10 px-2 py-2 bg-transparent border-[1.5px] border-border rounded-2xl text-muted-foreground hover:text-foreground hover:bg-accent/50 flex items-center gap-2 transition-colors ${getButtonClass()}`}
+                    className={cn(
+                        'h-10 px-2 py-2 bg-transparent border-[1.5px] rounded-2xl flex items-center gap-2 transition-colors',
+                        state === 'recording'
+                            ? 'border-[#BA2E2E] text-[#BA2E2E] hover:bg-[#BA2E2E]/10'
+                            : 'border-border text-muted-foreground hover:text-foreground hover:bg-accent/50',
+                    )}
                 >
+                    {state === 'recording' && (
+                        <span className="h-2 w-2 rounded-full bg-[#BA2E2E] animate-pulse" />
+                    )}
                     {getIcon()}
+                    {state === 'recording' && (
+                        <span className="text-xs tabular-nums">{formatRecordingTime(elapsedMs)}</span>
+                    )}
                 </Button>
             </TooltipTrigger>
             <TooltipContent side="top" className="text-xs">
