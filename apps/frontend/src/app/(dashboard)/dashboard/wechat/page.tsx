@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { Loader2, MessageCircle, RefreshCw } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import { BackgroundAALChecker } from '@/components/auth/background-aal-checker';
 import { useAccounts } from '@/hooks/account';
 import { backendApi } from '@/lib/api-client';
@@ -36,6 +37,7 @@ type ConnectStatusResponse = {
   session_id: string;
   status: string;
   connected: boolean;
+  verify_rejected?: boolean;
 };
 
 function qrImageUrl(content: string) {
@@ -49,7 +51,9 @@ export default function WeChatIlinkDashboardPage() {
   const [accountId, setAccountId] = useState<string>('');
   const [connectSession, setConnectSession] = useState<ConnectStartResponse | null>(null);
   const [connectStatus, setConnectStatus] = useState<string>('idle');
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [verifyRejected, setVerifyRejected] = useState(false);
+  const [verifyCode, setVerifyCode] = useState('');
+  const pollGenRef = useRef(0);
 
   const multipleAccounts = Boolean(accounts && accounts.length > 1);
 
@@ -62,10 +66,9 @@ export default function WeChatIlinkDashboardPage() {
   useEffect(() => {
     setConnectSession(null);
     setConnectStatus('idle');
-    if (pollRef.current) {
-      clearInterval(pollRef.current);
-      pollRef.current = null;
-    }
+    setVerifyRejected(false);
+    setVerifyCode('');
+    pollGenRef.current += 1;
   }, [accountId]);
 
   const linkQuery = useQuery({
@@ -84,29 +87,55 @@ export default function WeChatIlinkDashboardPage() {
   });
 
   const stopPolling = useCallback(() => {
-    if (pollRef.current) {
-      clearInterval(pollRef.current);
-      pollRef.current = null;
-    }
+    pollGenRef.current += 1;
   }, []);
 
   const pollConnectStatus = useCallback(
-    async (sessionId: string) => {
+    async (sessionId: string): Promise<ConnectStatusResponse | null> => {
       const res = await backendApi.get<ConnectStatusResponse>(
         `/integrations/wechat-ilink/connect/status?account_id=${encodeURIComponent(accountId)}&session_id=${encodeURIComponent(sessionId)}`,
         { showErrors: false },
       );
-      if (!res.success || !res.data) return;
+      if (!res.success || !res.data) return null;
       setConnectStatus(res.data.status);
+      setVerifyRejected(Boolean(res.data.verify_rejected));
       if (res.data.connected) {
         stopPolling();
         setConnectSession(null);
+        setVerifyCode('');
         queryClient.invalidateQueries({ queryKey: ['wechat-ilink-link-status', accountId] });
-      } else if (res.data.status === 'expired') {
-        stopPolling();
       }
+      return res.data;
     },
     [accountId, queryClient, stopPolling],
+  );
+
+  const startPolling = useCallback(
+    (sessionId: string) => {
+      const gen = ++pollGenRef.current;
+      const run = async () => {
+        while (pollGenRef.current === gen) {
+          const data = await pollConnectStatus(sessionId);
+          if (pollGenRef.current !== gen) return;
+          if (!data) {
+            await new Promise((r) => setTimeout(r, 2000));
+            continue;
+          }
+          if (
+            data.connected ||
+            data.status === 'expired' ||
+            data.status === 'verify_blocked' ||
+            data.status === 'need_verifycode' ||
+            data.status === 'already_bound'
+          ) {
+            return;
+          }
+          await new Promise((r) => setTimeout(r, 1000));
+        }
+      };
+      void run();
+    },
+    [pollConnectStatus],
   );
 
   const connectStartMutation = useMutation({
@@ -122,10 +151,10 @@ export default function WeChatIlinkDashboardPage() {
     onSuccess: (data) => {
       setConnectSession(data);
       setConnectStatus(data.status);
+      setVerifyRejected(false);
+      setVerifyCode('');
       stopPolling();
-      pollRef.current = setInterval(() => {
-        pollConnectStatus(data.session_id);
-      }, 2000);
+      startPolling(data.session_id);
     },
   });
 
@@ -141,6 +170,8 @@ export default function WeChatIlinkDashboardPage() {
     onSuccess: () => {
       setConnectSession(null);
       setConnectStatus('idle');
+      setVerifyRejected(false);
+      setVerifyCode('');
       stopPolling();
       queryClient.invalidateQueries({ queryKey: ['wechat-ilink-link-status', accountId] });
     },
@@ -157,8 +188,27 @@ export default function WeChatIlinkDashboardPage() {
     [accounts],
   );
 
+  const verifyMutation = useMutation({
+    mutationFn: async () => {
+      if (!connectSession) throw new Error('verify');
+      const res = await backendApi.post<{ ok: boolean }>('/integrations/wechat-ilink/connect/verify-code', {
+        account_id: accountId,
+        session_id: connectSession.session_id,
+        verify_code: verifyCode.trim(),
+      });
+      if (!res.success) throw new Error('verify');
+      return connectSession.session_id;
+    },
+    onSuccess: (sessionId) => {
+      setVerifyRejected(false);
+      setConnectStatus('scanned');
+      startPolling(sessionId);
+    },
+  });
+
   const isConnected = Boolean(linkQuery.data?.connected);
-  const showQr = connectSession && !isConnected && connectStatus !== 'expired';
+  const qrFinished = connectStatus === 'expired' || connectStatus === 'verify_blocked' || connectStatus === 'already_bound';
+  const showQr = connectSession && !isConnected && !qrFinished;
 
   return (
     <BackgroundAALChecker>
@@ -258,8 +308,37 @@ export default function WeChatIlinkDashboardPage() {
                   className="rounded-md bg-white p-2"
                 />
                 <p className="text-sm text-center text-muted-foreground">
-                  {connectStatus === 'scanned' ? t('qrScanned') : t('qrWaiting')}
+                  {connectStatus === 'need_verifycode'
+                    ? verifyRejected
+                      ? t('qrVerifyRejected')
+                      : t('qrNeedVerify')
+                    : connectStatus === 'scanned'
+                      ? t('qrScanned')
+                      : t('qrWaiting')}
                 </p>
+                {connectStatus === 'need_verifycode' && (
+                  <form
+                    className="flex w-full max-w-xs gap-2"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      if (verifyCode.trim()) verifyMutation.mutate();
+                    }}
+                  >
+                    <Input
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      value={verifyCode}
+                      placeholder={t('qrVerifyPlaceholder')}
+                      onChange={(e) => setVerifyCode(e.target.value)}
+                    />
+                    <Button type="submit" disabled={!verifyCode.trim() || verifyMutation.isPending}>
+                      {t('qrVerifySubmit')}
+                    </Button>
+                  </form>
+                )}
+                {verifyMutation.isError && (
+                  <p className="text-sm text-destructive">{t('qrVerifyError')}</p>
+                )}
                 <p className="text-xs text-muted-foreground">
                   {t('expiresLabel')}: {new Date(connectSession.expires_at).toLocaleString()}
                 </p>
@@ -269,13 +348,19 @@ export default function WeChatIlinkDashboardPage() {
             {connectStatus === 'expired' && !isConnected && (
               <p className="text-sm text-destructive">{t('qrExpired')}</p>
             )}
+            {connectStatus === 'verify_blocked' && !isConnected && (
+              <p className="text-sm text-destructive">{t('qrVerifyBlocked')}</p>
+            )}
+            {connectStatus === 'already_bound' && !isConnected && (
+              <p className="text-sm text-destructive">{t('qrAlreadyBound')}</p>
+            )}
 
             <div className="flex flex-wrap gap-2">
               {!isConnected && (
                 <Button
                   type="button"
                   onClick={() => connectStartMutation.mutate()}
-                  disabled={!accountId || connectStartMutation.isPending || Boolean(showQr && connectStatus !== 'expired')}
+                  disabled={!accountId || connectStartMutation.isPending || Boolean(showQr)}
                 >
                   {connectStartMutation.isPending ? (
                     <>

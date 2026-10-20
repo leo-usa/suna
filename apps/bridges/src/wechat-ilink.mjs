@@ -8,7 +8,10 @@
 import crypto from "node:crypto";
 
 const ILINK_BASE = "https://ilinkai.weixin.qq.com";
-const CHANNEL_VERSION = "1.0.2";
+const CHANNEL_VERSION = "2.4.10";
+const ILINK_APP_ID = "bot";
+const ILINK_APP_CLIENT_VERSION = (2 << 16) | (4 << 8) | 10;
+const BOT_AGENT = "Dobby/1.0";
 const POLL_TIMEOUT_MS = 40_000;
 const API_TIMEOUT_MS = 15_000;
 const SESSIONS_REFRESH_MS = 30_000;
@@ -31,7 +34,7 @@ function stripThreadBrowserFooter(text, openUrl) {
 }
 
 function baseInfo() {
-  return { channel_version: CHANNEL_VERSION };
+  return { channel_version: CHANNEL_VERSION, bot_agent: BOT_AGENT };
 }
 
 function randomUin() {
@@ -44,6 +47,8 @@ function makeHeaders(token, bodyStr) {
     "Content-Type": "application/json",
     AuthorizationType: "ilink_bot_token",
     "X-WECHAT-UIN": randomUin(),
+    "iLink-App-Id": ILINK_APP_ID,
+    "iLink-App-ClientVersion": String(ILINK_APP_CLIENT_VERSION),
   };
   if (bodyStr) {
     headers["Content-Length"] = String(Buffer.byteLength(bodyStr, "utf-8"));
@@ -137,6 +142,14 @@ async function postSessionExpired(accountId) {
   const url = `${API_BASE}/integrations/wechat-ilink/bridge/sessions/${encodeURIComponent(accountId)}/expired`;
   const res = await fetch(url, { method: "POST", headers: bridgeHeaders() });
   await readBridgeJson(res);
+}
+
+async function notifyStart(baseUrl, token) {
+  try {
+    await apiPost(baseUrl, "ilink/bot/msg/notifystart", { base_info: baseInfo() }, token);
+  } catch (err) {
+    console.log(`[wechat-ilink] notifyStart skipped: ${err.message}`);
+  }
 }
 
 async function getUpdates(baseUrl, token, cursor) {
@@ -415,6 +428,7 @@ async function pollSessionLoop(session, signal) {
   let cursor = session.get_updates_buf || "";
 
   console.log(`[wechat-ilink] [${accountId.slice(0, 8)}] poll started`);
+  await notifyStart(base, token);
 
   for (;;) {
     if (signal.aborted) {
@@ -425,11 +439,13 @@ async function pollSessionLoop(session, signal) {
     try {
       const data = await getUpdates(base, token, cursor);
 
-      if (data.ret && data.ret !== 0) {
+      const ret = Number(data.ret || 0);
+      const errcode = Number(data.errcode || 0);
+      if (ret !== 0 || errcode !== 0) {
         console.error(
-          `[wechat-ilink] [${accountId.slice(0, 8)}] getupdates ret=${data.ret} errmsg=${data.errmsg || ""}`,
+          `[wechat-ilink] [${accountId.slice(0, 8)}] getupdates ret=${data.ret} errcode=${data.errcode} errmsg=${data.errmsg || ""}`,
         );
-        if (data.errcode === -14) {
+        if (ret === -14 || errcode === -14) {
           console.error(`[wechat-ilink] [${accountId.slice(0, 8)}] session expired (errcode -14)`);
           try {
             await postSessionExpired(accountId);
@@ -495,7 +511,13 @@ async function runSessionManager(rootSignal) {
     }
 
     for (const session of sessions) {
-      if (loops.has(session.account_id)) continue;
+      const existing = loops.get(session.account_id);
+      if (existing && existing.token === session.bot_token) continue;
+      if (existing) {
+        existing.abort.abort();
+        loops.delete(session.account_id);
+        console.log(`[wechat-ilink] restarting session ${session.account_id.slice(0, 8)}`);
+      }
       const abort = new AbortController();
       const combined = mergeAbortSignals(rootSignal, abort.signal);
       const promise = pollSessionLoop(session, combined).catch((e) => {
@@ -503,7 +525,7 @@ async function runSessionManager(rootSignal) {
           console.error(`[wechat-ilink] [${session.account_id.slice(0, 8)}] loop fatal:`, e.message);
         }
       });
-      loops.set(session.account_id, { abort, promise });
+      loops.set(session.account_id, { abort, promise, token: session.bot_token });
       console.log(`[wechat-ilink] added session ${session.account_id.slice(0, 8)} (${sessions.length} active)`);
     }
   };

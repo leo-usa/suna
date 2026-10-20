@@ -30,7 +30,12 @@ from core.integrations.bridge_thread_commands import (
     parse_bridge_slash_command,
 )
 from core.agents import repo as agents_repo
-from core.integrations.wechat_ilink.ilink_client import ILINK_DEFAULT_BASE, fetch_bot_qrcode, fetch_qrcode_status
+from core.integrations.wechat_ilink.ilink_client import (
+    ILINK_DEFAULT_BASE,
+    fetch_bot_qrcode,
+    fetch_qrcode_status,
+    redirect_base_url,
+)
 from core.integrations.wechat_ilink.token_crypto import decrypt_bot_token, encrypt_bot_token
 from core.services.db import execute_one, execute_one_read, execute_read
 from core.threads import repo as threads_repo
@@ -64,6 +69,13 @@ class ConnectStatusResponse(BaseModel):
     session_id: str
     status: str
     connected: bool = False
+    verify_rejected: bool = False
+
+
+class ConnectVerifyRequest(BaseModel):
+    account_id: str = Field(..., description="Workspace (basejump account) being linked.")
+    session_id: str
+    verify_code: str = Field(..., min_length=1, max_length=16)
 
 
 class LinkStatusResponse(BaseModel):
@@ -416,7 +428,9 @@ async def _require_account_access(user_id: str, account_id: str) -> None:
 async def _get_connect_session(session_id: str, account_id: str) -> Optional[Dict[str, Any]]:
     sql = """
     SELECT session_id::text AS session_id, account_id::text AS account_id,
-           qrcode, qrcode_url, status, expires_at
+           qrcode, qrcode_url, status, expires_at,
+           COALESCE(poll_baseurl, 'https://ilinkai.weixin.qq.com') AS poll_baseurl,
+           pending_verify_code
     FROM public.wechat_ilink_connect_sessions
     WHERE session_id = CAST(:sid AS uuid) AND account_id = CAST(:aid AS uuid)
     """
@@ -430,8 +444,16 @@ async def connect_start(
 ):
     await _require_account_access(user_id, body.account_id)
 
+    local_tokens: List[str] = []
+    existing = await _get_active_session(body.account_id)
+    if existing and existing.get("encrypted_bot_token"):
+        try:
+            local_tokens = [decrypt_bot_token(existing["encrypted_bot_token"])]
+        except ValueError:
+            local_tokens = []
+
     try:
-        qr = await fetch_bot_qrcode()
+        qr = await fetch_bot_qrcode(local_tokens)
     except Exception as e:
         logger.exception("[wechat_ilink] fetch_bot_qrcode failed")
         raise HTTPException(status_code=502, detail=f"WeChat QR unavailable: {e}") from e
@@ -451,9 +473,9 @@ async def connect_start(
     await execute_one(
         """
         INSERT INTO public.wechat_ilink_connect_sessions
-            (session_id, account_id, qrcode, qrcode_url, status, expires_at)
+            (session_id, account_id, qrcode, qrcode_url, status, expires_at, poll_baseurl)
         VALUES
-            (CAST(:sid AS uuid), CAST(:aid AS uuid), :qrcode, :qrcode_url, 'pending', :expires_at)
+            (CAST(:sid AS uuid), CAST(:aid AS uuid), :qrcode, :qrcode_url, 'pending', :expires_at, :baseurl)
         RETURNING session_id
         """,
         {
@@ -462,6 +484,7 @@ async def connect_start(
             "qrcode": qr["qrcode"],
             "qrcode_url": qr["qrcode_img_content"],
             "expires_at": expires,
+            "baseurl": ILINK_DEFAULT_BASE,
         },
         commit=True,
     )
@@ -508,52 +531,133 @@ async def connect_status(
         )
         return ConnectStatusResponse(session_id=session_id, status="expired", connected=False)
 
-    try:
-        status_data = await fetch_qrcode_status(row["qrcode"])
-    except Exception as e:
-        logger.warning(f"[wechat_ilink] get_qrcode_status failed: {e}")
+    return await _advance_connect_session(account_id, session_id, row)
+
+
+async def _set_connect_progress(
+    session_id: str,
+    *,
+    status: str,
+    poll_baseurl: Optional[str] = None,
+    clear_verify_code: bool = False,
+) -> None:
+    await execute_one(
+        """
+        UPDATE public.wechat_ilink_connect_sessions
+        SET status = :st,
+            poll_baseurl = COALESCE(:baseurl, poll_baseurl),
+            pending_verify_code = CASE WHEN CAST(:clear_code AS boolean) THEN NULL ELSE pending_verify_code END
+        WHERE session_id = CAST(:sid AS uuid)
+        RETURNING 1
+        """,
+        {
+            "sid": session_id,
+            "st": status,
+            "baseurl": poll_baseurl,
+            "clear_code": clear_verify_code,
+        },
+        commit=True,
+    )
+
+
+async def _advance_connect_session(
+    account_id: str,
+    session_id: str,
+    row: Dict[str, Any],
+) -> ConnectStatusResponse:
+    pending_code = (row.get("pending_verify_code") or "").strip() or None
+    status_data = await fetch_qrcode_status(
+        row["qrcode"],
+        base_url=row.get("poll_baseurl") or ILINK_DEFAULT_BASE,
+        verify_code=pending_code,
+    )
+    remote = (status_data.get("status") or "wait").strip()
+    logger.info(f"[wechat_ilink] qr status={remote} session={session_id[:8]}")
+
+    if remote == "wait":
         return ConnectStatusResponse(session_id=session_id, status=row["status"], connected=False)
 
-    new_status = row["status"]
-    if status_data.get("status") == "scanned":
-        new_status = "scanned"
-    elif status_data.get("status") == "expired":
-        new_status = "expired"
-    elif status_data.get("status") == "confirmed" or status_data.get("bot_token"):
-        new_status = "confirmed"
+    if remote in ("scaned", "scanned"):
+        await _set_connect_progress(session_id, status="scanned", clear_verify_code=True)
+        return ConnectStatusResponse(session_id=session_id, status="scanned", connected=False)
+
+    if remote == "need_verifycode":
+        rejected = bool(pending_code)
+        await _set_connect_progress(session_id, status="need_verifycode", clear_verify_code=True)
+        return ConnectStatusResponse(
+            session_id=session_id,
+            status="need_verifycode",
+            connected=False,
+            verify_rejected=rejected,
+        )
+
+    if remote == "verify_code_blocked":
+        await _set_connect_progress(session_id, status="verify_blocked", clear_verify_code=True)
+        return ConnectStatusResponse(session_id=session_id, status="verify_blocked", connected=False)
+
+    if remote == "scaned_but_redirect":
+        new_base = redirect_base_url(str(status_data.get("redirect_host") or ""))
+        await _set_connect_progress(
+            session_id,
+            status="scanned",
+            poll_baseurl=new_base,
+            clear_verify_code=False,
+        )
+        return ConnectStatusResponse(session_id=session_id, status="scanned", connected=False)
+
+    if remote == "binded_redirect":
+        active = await _get_active_session(account_id)
+        if active:
+            await _set_connect_progress(session_id, status="confirmed", clear_verify_code=True)
+            return ConnectStatusResponse(session_id=session_id, status="confirmed", connected=True)
+        return ConnectStatusResponse(session_id=session_id, status="already_bound", connected=False)
+
+    if remote == "expired":
+        await _set_connect_progress(session_id, status="expired", clear_verify_code=True)
+        return ConnectStatusResponse(session_id=session_id, status="expired", connected=False)
+
+    if remote == "confirmed" or status_data.get("bot_token"):
         bot_token = status_data.get("bot_token") or ""
         if not bot_token:
             return ConnectStatusResponse(session_id=session_id, status="pending", connected=False)
         await _upsert_session_from_token(
             account_id,
             bot_token,
-            status_data.get("baseurl") or ILINK_DEFAULT_BASE,
-            status_data.get("bot_id") or "",
+            status_data.get("baseurl") or row.get("poll_baseurl") or ILINK_DEFAULT_BASE,
+            status_data.get("ilink_bot_id") or status_data.get("bot_id") or "",
             status_data.get("ilink_user_id") or "",
         )
-        await execute_one(
-            """
-            UPDATE public.wechat_ilink_connect_sessions SET status = 'confirmed'
-            WHERE session_id = CAST(:sid AS uuid)
-            RETURNING 1
-            """,
-            {"sid": session_id},
-            commit=True,
-        )
+        await _set_connect_progress(session_id, status="confirmed", clear_verify_code=True)
         return ConnectStatusResponse(session_id=session_id, status="confirmed", connected=True)
 
-    if new_status != row["status"]:
-        await execute_one(
-            """
-            UPDATE public.wechat_ilink_connect_sessions SET status = :st
-            WHERE session_id = CAST(:sid AS uuid)
-            RETURNING 1
-            """,
-            {"sid": session_id, "st": new_status},
-            commit=True,
-        )
+    return ConnectStatusResponse(session_id=session_id, status=row["status"], connected=False)
 
-    return ConnectStatusResponse(session_id=session_id, status=new_status, connected=False)
+
+@router.post("/connect/verify-code")
+async def connect_verify_code(
+    body: ConnectVerifyRequest,
+    user_id: str = Depends(verify_and_get_user_id_from_jwt),
+):
+    await _require_account_access(user_id, body.account_id)
+    code = body.verify_code.strip()
+    if not code.isdigit():
+        raise HTTPException(status_code=400, detail="Verification code must be digits")
+    row = await _get_connect_session(body.session_id, body.account_id)
+    if not row:
+        raise HTTPException(status_code=404, detail="Connect session not found")
+    if row["status"] not in ("need_verifycode", "scanned", "pending"):
+        raise HTTPException(status_code=409, detail="This connect session is not waiting for a code")
+    await execute_one(
+        """
+        UPDATE public.wechat_ilink_connect_sessions
+        SET pending_verify_code = :code
+        WHERE session_id = CAST(:sid AS uuid) AND account_id = CAST(:aid AS uuid)
+        RETURNING 1
+        """,
+        {"sid": body.session_id, "aid": body.account_id, "code": code},
+        commit=True,
+    )
+    return {"ok": True}
 
 
 @router.delete("/connect")
