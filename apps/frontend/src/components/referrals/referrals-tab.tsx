@@ -5,8 +5,9 @@ import { useReferralCode, useReferralStats } from '@/hooks/referrals/use-referra
 import { useTranslations } from 'next-intl';
 import { ReferralCodeSection } from './referral-code-section';
 import { ReferralStatsCards } from './referral-stats-cards';
+// Hidden until Mailtrap is configured.
+// import { ReferralEmailInvitation } from './referral-email-invitation';
 import { DobbyLogo } from '@/components/sidebar/dobby-logo';
-import { ReferralEmailInvitation } from './referral-email-invitation';
 
 interface ReferralsTabProps {
   isActive?: boolean;
@@ -57,9 +58,11 @@ export function ReferralsTab({ isActive = true }: ReferralsTabProps) {
         <ReferralCodeSection referralCode={referralCode} isLoading={codeLoading} />
       </div>
 
+      {/* Hidden until Mailtrap is configured.
       <div>
         <ReferralEmailInvitation />
       </div>
+      */}
 
       {/* Stats Section */}
       <div>

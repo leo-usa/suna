@@ -11,7 +11,8 @@ import { useTranslations } from 'next-intl';
 import { useReferralDialog } from '@/stores/referral-dialog';
 import { ReferralCodeSection } from './referral-code-section';
 import { ReferralStatsCards } from './referral-stats-cards';
-import { ReferralEmailInvitation } from './referral-email-invitation';
+// Hidden until Mailtrap is configured.
+// import { ReferralEmailInvitation } from './referral-email-invitation';
 import { DobbyLogo } from '@/components/sidebar/dobby-logo';
 import { Handshake } from 'lucide-react';
 
@@ -66,11 +67,13 @@ export function ReferralDialog({ open: controlledOpen, onOpenChange: controlledO
           <div className="mb-3 sm:mb-4">
             <ReferralCodeSection referralCode={referralCode} isLoading={codeLoading} />
           </div>
-          
+
+          {/* Hidden until Mailtrap is configured.
           <div className="mb-3 sm:mb-4">
             <ReferralEmailInvitation />
           </div>
-          
+          */}
+
           <ReferralStatsCards stats={stats} isLoading={statsLoading} compact />
         </div>
       </DialogContent>
