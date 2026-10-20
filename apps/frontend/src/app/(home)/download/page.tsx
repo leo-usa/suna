@@ -99,58 +99,6 @@ export default function DesktopDownloadPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          className="flex flex-col items-center mb-16"
-        >
-          <div className="relative bg-white dark:bg-[#2a2a2a] rounded-3xl overflow-hidden border border-border/60 dark:border-[#232324] w-full max-w-lg">
-            <div className="relative h-32 bg-muted dark:bg-[#e8e4df] flex items-center justify-center">
-              <div className="w-[200px] h-16 bg-background dark:bg-white rounded-xl p-2 flex items-center justify-center border border-border/40 dark:border-transparent shadow-sm">
-                <div className="w-10 h-10 bg-foreground dark:bg-[#1a1a1a] rounded-lg flex items-center justify-center">
-                  <DobbyLogo size={28} className="invert dark:invert-0" />
-                </div>
-              </div>
-            </div>
-
-            <div className="p-6 bg-muted/30 dark:bg-[#161618]">
-              <h2 className="text-foreground dark:text-white text-sm font-medium mb-1 text-center">
-                {t('downloadHeading')}
-              </h2>
-              <p className="text-muted-foreground dark:text-white/60 text-xs text-center mb-5">
-                {t('downloadHint')}
-              </p>
-
-              <div className="flex flex-wrap gap-3 justify-center">
-                <DownloadButton
-                  href={DESKTOP_DOWNLOAD_LINKS.macArm}
-                  sublabel={tBanners('downloadFor')}
-                  label={tBanners('platformMacM')}
-                  icon={<AppleLogo className="h-5 w-5 text-white dark:text-black" />}
-                />
-                <DownloadButton
-                  href={DESKTOP_DOWNLOAD_LINKS.windows}
-                  sublabel={tBanners('downloadFor')}
-                  label={tBanners('platformWindows')}
-                  icon={<Monitor className="h-5 w-5 text-white dark:text-black" />}
-                />
-              </div>
-
-              {DESKTOP_DOWNLOAD_LINKS.macIntel && (
-                <p className="mt-4 text-center">
-                  <a
-                    href={DESKTOP_DOWNLOAD_LINKS.macIntel}
-                    className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    {tBanners('intelMacLink')}
-                  </a>
-                </p>
-              )}
-            </div>
-          </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
           className="w-full"
         >
@@ -301,6 +249,58 @@ export default function DesktopDownloadPage() {
                 ))}
               </ul>
             </section>
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          className="flex flex-col items-center mt-20 md:mt-24"
+        >
+          <div className="relative bg-white dark:bg-[#2a2a2a] rounded-3xl overflow-hidden border border-border/60 dark:border-[#232324] w-full max-w-lg">
+            <div className="relative h-32 bg-muted dark:bg-[#e8e4df] flex items-center justify-center">
+              <div className="w-[200px] h-16 bg-background dark:bg-white rounded-xl p-2 flex items-center justify-center border border-border/40 dark:border-transparent shadow-sm">
+                <div className="w-10 h-10 bg-foreground dark:bg-[#1a1a1a] rounded-lg flex items-center justify-center">
+                  <DobbyLogo size={28} className="invert dark:invert-0" />
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 bg-muted/30 dark:bg-[#161618]">
+              <h2 className="text-foreground dark:text-white text-sm font-medium mb-1 text-center">
+                {t('downloadHeading')}
+              </h2>
+              <p className="text-muted-foreground dark:text-white/60 text-xs text-center mb-5">
+                {t('downloadHint')}
+              </p>
+
+              <div className="flex flex-wrap gap-3 justify-center">
+                <DownloadButton
+                  href={DESKTOP_DOWNLOAD_LINKS.macArm}
+                  sublabel={tBanners('downloadFor')}
+                  label={tBanners('platformMacM')}
+                  icon={<AppleLogo className="h-5 w-5 text-white dark:text-black" />}
+                />
+                <DownloadButton
+                  href={DESKTOP_DOWNLOAD_LINKS.windows}
+                  sublabel={tBanners('downloadFor')}
+                  label={tBanners('platformWindows')}
+                  icon={<Monitor className="h-5 w-5 text-white dark:text-black" />}
+                />
+              </div>
+
+              {DESKTOP_DOWNLOAD_LINKS.macIntel && (
+                <p className="mt-4 text-center">
+                  <a
+                    href={DESKTOP_DOWNLOAD_LINKS.macIntel}
+                    className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {tBanners('intelMacLink')}
+                  </a>
+                </p>
+              )}
+            </div>
           </div>
         </motion.div>
       </motion.div>
