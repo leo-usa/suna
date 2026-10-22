@@ -89,6 +89,7 @@ async def get_tier_configurations() -> Dict:
 _MODEL_PRICING_EXCLUDED_IDS = frozenset({
     'dobby/basic',
     'dobby/power',
+    'dobby/auto',
     'dobby/test',
 })
 

@@ -388,6 +388,7 @@ async def make_llm_api_call(
     extra_headers: Optional[Dict[str, str]] = None,
     stop: Optional[List[str]] = None,
     frequency_penalty: Optional[float] = 0.2,
+    output_config: Optional[Dict[str, Any]] = None,
 ) -> Union[Dict[str, Any], AsyncGenerator, ModelResponse]:
     messages = _strip_internal_properties(messages)
     
@@ -436,8 +437,16 @@ async def make_llm_api_call(
         override_params["frequency_penalty"] = frequency_penalty
     if max_tokens is not None:
         override_params["max_tokens"] = max_tokens
+    if output_config is not None:
+        override_params["output_config"] = output_config
 
     params = model_manager.get_litellm_params(resolved_model_name, **override_params)
+    if output_config is not None and str(params.get("model") or "").startswith("openrouter/"):
+        extra_body = dict(params.get("extra_body") or {})
+        if output_config.get("effort"):
+            extra_body["reasoning"] = {"effort": output_config["effort"]}
+        params["extra_body"] = extra_body
+        params.pop("output_config", None)
 
     if tools:
         params["tools"] = tools

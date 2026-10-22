@@ -497,7 +497,28 @@ class ModelFactory:
             enabled=True,
             fallback_litellm_model_id=fallback,
         )
-    
+
+    @staticmethod
+    def create_dobby_auto() -> Model:
+        return Model(
+            id="dobby/auto",
+            name="Dobby Auto",
+            litellm_model_id="dobby/auto",
+            provider=ModelProvider.ANTHROPIC,
+            aliases=["auto", "dobby-auto"],
+            context_window=1_000_000,
+            capabilities=[
+                ModelCapability.CHAT,
+                ModelCapability.FUNCTION_CALLING,
+                ModelCapability.VISION,
+            ],
+            pricing=None,
+            tier_availability=["free", "paid"],
+            priority=103,
+            recommended=False,
+            enabled=True,
+        )
+
     @staticmethod
     def create_minimax_m2(use_openrouter: bool = True) -> Model:
         if use_openrouter:
@@ -1870,6 +1891,7 @@ class ModelRegistry:
 
         self.register(ModelFactory.create_basic_model(main_llm, custom_model))
         self.register(ModelFactory.create_power_model(main_llm, custom_model))
+        self.register(ModelFactory.create_dobby_auto())
         self.register(ModelFactory.create_anthropic_haiku(use_bedrock))
         self.register(ModelFactory.create_claude_haiku_5_5())
         self.register(ModelFactory.create_grok_4_1_fast())

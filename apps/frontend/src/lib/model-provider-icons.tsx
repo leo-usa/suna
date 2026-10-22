@@ -19,7 +19,7 @@ export type ModelProvider =
  */
 export function isKortixMode(modelId: string): boolean {
   // New Dobby registry IDs
-  if (modelId === 'dobby/basic' || modelId === 'dobby/power' || modelId === 'dobby/test' ||
+  if (modelId === 'dobby/basic' || modelId === 'dobby/power' || modelId === 'dobby/auto' || modelId === 'dobby/test' ||
       modelId === 'kortix-basic' || modelId === 'kortix-power' || modelId === 'kortix-test') {
     return true;
   }

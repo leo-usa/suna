@@ -16,8 +16,15 @@ import {
 } from './errors';
 import { nonRunningAgentRuns, activeStreams, cleanupEventSource } from './streaming';
 import { Message } from './threads';
+import { useModelStore } from '@/stores/model-store';
 
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || '';
+
+function rememberRoutedModel(routed?: string | null) {
+  if (routed) {
+    useModelStore.getState().setLastAutoModelId(routed);
+  }
+}
 
 export type AgentRun = {
   id: string;
@@ -39,6 +46,7 @@ export interface UnifiedAgentStartResponse {
   agent_run_id: string;
   status: string;
   project_id?: string;
+  routed_model?: string | null;
 }
 
 export interface OptimisticAgentStartResponse {
@@ -47,6 +55,7 @@ export interface OptimisticAgentStartResponse {
   agent_run_id: string | null;  // Now synchronously created, so usually non-null
   sandbox_id?: string | null;   // Only set if has_pending_files=true was passed
   status: 'pending' | 'running';
+  routed_model?: string | null;
 }
 
 export interface AgentIconGenerationRequest {
@@ -122,7 +131,7 @@ export const unifiedAgentStart = async (options: {
       }
     }
 
-    const response = await backendApi.upload<{ thread_id: string; agent_run_id: string; project_id?: string; sandbox_id?: string; status: string }>(
+    const response = await backendApi.upload<UnifiedAgentStartResponse & { sandbox_id?: string }>(
       '/agent/start',
       formData,
       { showErrors: false, cache: 'no-store' }
@@ -209,6 +218,7 @@ export const unifiedAgentStart = async (options: {
       );
     }
 
+    rememberRoutedModel(response.data?.routed_model);
     return response.data!;
   } catch (error) {
     if (error instanceof BillingError || error instanceof AgentRunLimitError || error instanceof ProjectLimitError) {
@@ -519,6 +529,7 @@ export const optimisticAgentStart = async (options: {
       );
     }
 
+    rememberRoutedModel(response.data?.routed_model);
     return response.data!;
   } catch (error) {
     if (error instanceof BillingError || error instanceof AgentRunLimitError || error instanceof ProjectLimitError || error instanceof ThreadLimitError) {

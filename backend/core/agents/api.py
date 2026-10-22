@@ -250,13 +250,34 @@ async def _check_concurrent_runs_limit(account_id: str):
         })
 
 
-async def _get_effective_model(model_name: Optional[str], agent_config: Optional[dict], client, account_id: str) -> str:
+async def _get_effective_model(
+    model_name: Optional[str],
+    agent_config: Optional[dict],
+    client,
+    account_id: str,
+    prompt: str = "",
+    has_attachments: bool = False,
+    thread_id: Optional[str] = None,
+) -> tuple[str, Dict[str, Any]]:
+    from core.ai_models.auto_router import AUTO_MODEL_ID, route_user_message
+
     if model_name:
-        return model_name
+        chosen = model_name
     elif agent_config and agent_config.get('model'):
-        return agent_config['model']
+        chosen = agent_config['model']
     else:
-        return await model_manager.get_default_model_for_user(client, account_id)
+        chosen = await model_manager.get_default_model_for_user(client, account_id)
+
+    if chosen != AUTO_MODEL_ID:
+        return chosen, {}
+
+    routed = await route_user_message(
+        account_id,
+        prompt,
+        has_attachments=has_attachments,
+        thread_id=thread_id,
+    )
+    return routed, {"requested_model": AUTO_MODEL_ID, "routed_model": routed}
 
 
 async def _create_agent_run_record(
@@ -375,13 +396,8 @@ async def start_agent_run(
     
     agent_config = await load_agent_config_fast(agent_id, account_id, user_id=account_id)
     
-    if model_name:
-        effective_model = model_name
-    elif agent_config and agent_config.get('model'):
-        effective_model = agent_config['model']
-    else:
-        effective_model = "dobby/basic"
-    
+    client = await db.client
+
     if not is_new_thread and not project_id:
         from core.threads import repo as threads_repo
         project_id = await threads_repo.get_thread_project_id(thread_id)
@@ -421,15 +437,24 @@ async def start_agent_run(
             project_id = str(uuid.uuid4())
         if not thread_id:
             thread_id = str(uuid.uuid4())
-    
+
+    effective_model, routing_meta = await _get_effective_model(
+        model_name,
+        agent_config,
+        client,
+        account_id,
+        prompt=prompt or "",
+        has_attachments=bool(files_data),
+        thread_id=thread_id,
+    )
+    merged_metadata = {**(metadata or {}), **routing_meta, "model_name": effective_model}
+
     agent_run_id = str(uuid.uuid4())
     
     # Sandbox handling - always start sandbox creation for new threads
     sandbox_id = None
     from core.threads import repo as threads_repo
     from core.sandbox.resolver import resolve_sandbox
-    client = await db.client
-    
     has_files = files_data and len(files_data) > 0
     want_local = (execution_target or "").lower() == "local"
     want_dedicated = (execution_target or "").lower() == "dedicated"
@@ -562,7 +587,7 @@ async def start_agent_run(
                 thread_id=thread_id,
                 account_id=account_id,
                 status="running",
-                metadata=metadata
+                metadata=merged_metadata
             )
         else:
             from core.cache.runtime_cache import set_agent_run_stream_data
@@ -571,7 +596,7 @@ async def start_agent_run(
                 thread_id=thread_id,
                 account_id=account_id,
                 status="running",
-                metadata=metadata
+                metadata=merged_metadata
             )
     except Exception:
         # Clean up cancellation event if setup between event creation
@@ -591,7 +616,7 @@ async def start_agent_run(
         agent_run_id=agent_run_id,
         agent_config=agent_config,
         effective_model=effective_model,
-        metadata=metadata,
+        metadata=merged_metadata,
         memory_enabled=memory_enabled,
         is_new_thread=is_new_thread,
         mode=mode,
@@ -605,6 +630,7 @@ async def start_agent_run(
         "project_id": project_id,
         "sandbox_id": sandbox_id,  # NEW
         "status": "running",
+        "routed_model": routing_meta.get("routed_model"),
         "timing_breakdown": {"setup_ms": setup_time_ms} if emit_timing else None,
     }
 
@@ -893,7 +919,8 @@ async def unified_agent_start(
             "agent_run_id": result["agent_run_id"],
             "project_id": result.get("project_id"),
             "sandbox_id": result.get("sandbox_id"),
-            "status": result.get("status", "running")
+            "status": result.get("status", "running"),
+            "routed_model": result.get("routed_model"),
         }
         if emit_timing and result.get("timing_breakdown"):
             response["timing_breakdown"] = result["timing_breakdown"]

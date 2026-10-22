@@ -9,6 +9,7 @@ import {
 import { Check, Lock, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useModelSelection, type ModelOption } from '@/hooks/agents';
+import { useModelStore } from '@/stores/model-store';
 import { usePricingModalStore } from '@/stores/pricing-modal-store';
 import { useModelPricing, type ModelPricingItem } from '@/hooks/billing/use-model-pricing';
 import { ModelProviderIcon } from '@/lib/model-provider-icons';
@@ -152,11 +153,28 @@ export const ModeIndicator = memo(function ModeIndicator() {
     [modelOptions]
   );
 
-  // Get other models (not basic or power); accessible first, then by priority
+  const autoModel = useMemo(
+    () => modelOptions.find((m) => m.id === 'dobby/auto'),
+    [modelOptions]
+  );
+  const lastAutoModelId = useModelStore((s) => s.lastAutoModelId);
+  const lastAutoLabel = useMemo(() => {
+    if (!lastAutoModelId) return null;
+    const shortNames: Record<string, string> = {
+      'dobby/claude-haiku-5.5': 'Haiku 5.5',
+      'dobby/claude-sonnet-5.5': 'Sonnet 5.5',
+      'dobby/claude-opus-5.5': 'Opus 5.5',
+    };
+    return shortNames[lastAutoModelId]
+      || modelOptions.find((m) => m.id === lastAutoModelId)?.label
+      || lastAutoModelId;
+  }, [lastAutoModelId, modelOptions]);
+
+  // Get other models (not basic, auto, or power); accessible first, then by priority
   const otherModels = useMemo(() => {
     return modelOptions.filter(
-      (m) => m.id !== 'dobby/basic' && m.id !== 'dobby/power' && 
-             m.label !== 'Dobby Basic' && m.label !== 'Dobby Advanced Mode'
+      (m) => m.id !== 'dobby/basic' && m.id !== 'dobby/power' && m.id !== 'dobby/auto' &&
+             m.label !== 'Dobby Basic' && m.label !== 'Dobby Advanced Mode' && m.label !== 'Dobby Auto'
     ).sort((a, b) => {
       if (a.requiresSubscription !== b.requiresSubscription) {
         return a.requiresSubscription ? 1 : -1;
@@ -166,11 +184,13 @@ export const ModeIndicator = memo(function ModeIndicator() {
   }, [modelOptions]);
 
   // Check if a non-standard model is selected
+  const isAutoSelected = Boolean(autoModel && selectedModel === autoModel.id);
   const isOtherModelSelected = useMemo(() => {
     return selectedModel && 
            selectedModel !== basicModel?.id && 
-           selectedModel !== powerModel?.id;
-  }, [selectedModel, basicModel?.id, powerModel?.id]);
+           selectedModel !== powerModel?.id &&
+           selectedModel !== autoModel?.id;
+  }, [selectedModel, basicModel?.id, powerModel?.id, autoModel?.id]);
 
   const selectedOtherModel = useMemo(() => {
     if (!isOtherModelSelected) return null;
@@ -223,6 +243,13 @@ export const ModeIndicator = memo(function ModeIndicator() {
     [powerModel, pricingById, pricingData?.models, modelOptions],
   );
 
+  const handleAutoClick = useCallback(() => {
+    if (autoModel) {
+      handleModelChange(autoModel.id);
+      setIsOpen(false);
+    }
+  }, [autoModel, handleModelChange]);
+
   const handleBasicClick = useCallback(() => {
     if (basicModel) {
       handleModelChange(basicModel.id);
@@ -270,7 +297,18 @@ export const ModeIndicator = memo(function ModeIndicator() {
           )}
           aria-label={t('selectModel')}
         >
-          {isOtherModelSelected && selectedOtherModel ? (
+          {isAutoSelected ? (
+            <span className="flex flex-col items-start min-w-0 leading-none">
+              <span className="text-sm font-medium truncate max-w-[140px] sm:max-w-[180px]">
+                {lastAutoLabel ? t('autoChosen', { model: lastAutoLabel }) : t('autoLabel')}
+              </span>
+              {!lastAutoLabel && (
+                <span className="text-[10px] sm:text-[11px] text-muted-foreground truncate max-w-[140px] sm:max-w-[180px] mt-0.5">
+                  {t('autoDescription')}
+                </span>
+              )}
+            </span>
+          ) : isOtherModelSelected && selectedOtherModel ? (
             <>
               <ModelProviderIcon modelId={selectedOtherModel.id} size={18} />
               <span className="text-sm font-medium truncate max-w-[140px] sm:max-w-[180px]">
@@ -304,6 +342,29 @@ export const ModeIndicator = memo(function ModeIndicator() {
         className="w-[300px] sm:w-[360px] p-1.5 sm:p-2 rounded-xl border border-border/50 shadow-lg"
         sideOffset={6}
       >
+        {autoModel && (
+          <div
+            className={cn(
+              'flex items-start gap-3 px-3 py-3 cursor-pointer rounded-lg transition-all duration-150 mb-1.5',
+              isAutoSelected ? 'bg-accent' : 'hover:bg-accent/50 active:bg-accent/70'
+            )}
+            onClick={handleAutoClick}
+          >
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-medium mb-1">{t('autoLabel')}</div>
+              <div className="text-xs text-muted-foreground leading-relaxed">{t('autoDescription')}</div>
+              {lastAutoLabel && (
+                <div className="text-[11px] text-muted-foreground/80 mt-1 truncate">
+                  {t('autoChosen', { model: lastAutoLabel })}
+                </div>
+              )}
+            </div>
+            {isAutoSelected && (
+              <Check className="h-4 w-4 text-foreground flex-shrink-0 mt-0.5" strokeWidth={2} />
+            )}
+          </div>
+        )}
+
         {/* Basic Mode */}
         <div
           className={cn(
