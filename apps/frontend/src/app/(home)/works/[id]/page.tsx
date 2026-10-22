@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
@@ -34,6 +34,15 @@ const TYPE_KEYS = {
 function typeLabel(t: ReturnType<typeof useTranslations>, artifactType: string) {
   const key = TYPE_KEYS[artifactType as keyof typeof TYPE_KEYS] ?? 'typeMixed';
   return t(key);
+}
+
+function usesHtmlFrame(post: WorkPost) {
+  const files = post.files || [];
+  const kind = post.artifact_type || 'site';
+  if (kind === 'images' && filesOfType(files, IMAGE_EXTS).length > 0) return false;
+  if (kind === 'video' && filesOfType(files, VIDEO_EXTS).length > 0) return false;
+  if ((kind === 'sheet' || kind === 'docs') && files.length > 0) return false;
+  return true;
 }
 
 function WorkActions({
@@ -78,6 +87,35 @@ function WorkActions({
         {copied ? t('linkCopied') : t('share')}
       </button>
     </div>
+  );
+}
+
+function HtmlWorkFrame({ src, title }: { src: string; title: string }) {
+  const frameRef = useRef<HTMLIFrameElement>(null);
+  const [height, setHeight] = useState<number | null>(null);
+
+  useEffect(() => {
+    const fit = () => {
+      const frame = frameRef.current;
+      if (!frame) return;
+      const top = frame.getBoundingClientRect().top;
+      setHeight(Math.max(320, Math.round(window.innerHeight - top - 12)));
+    };
+    fit();
+    window.addEventListener('resize', fit);
+    return () => window.removeEventListener('resize', fit);
+  }, []);
+
+  return (
+    <iframe
+      ref={frameRef}
+      src={src}
+      title={title}
+      style={{ height: height ?? 'calc(100vh - 8.5rem)' }}
+      className="block w-full rounded-xl border border-border bg-background"
+      sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+      referrerPolicy="no-referrer"
+    />
   );
 }
 
@@ -139,15 +177,7 @@ function WorkViewer({ post }: { post: WorkPost }) {
     );
   }
 
-  return (
-    <iframe
-      src={iframeSrc}
-      title={post.title}
-      className="w-full min-h-[70vh] rounded-xl border border-border bg-background"
-      sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
-      referrerPolicy="no-referrer"
-    />
-  );
+  return <HtmlWorkFrame src={iframeSrc} title={post.title} />;
 }
 
 export default function WorkDetailPage() {
@@ -239,6 +269,32 @@ export default function WorkDetailPage() {
       t={t}
     />
   ) : null;
+
+  if (post && usesHtmlFrame(post)) {
+    return (
+      <main className="bg-background">
+        <div className="flex flex-col px-2 pb-3 sm:px-3">
+          <div className="flex shrink-0 items-center gap-3 px-1 py-2">
+            <Link
+              href="/works"
+              className="inline-flex shrink-0 items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <span className="hidden sm:inline">{t('backToWorks')}</span>
+            </Link>
+            <div className="min-w-0 flex-1">
+              <h1 className="truncate text-base font-semibold leading-tight sm:text-lg">{post.title}</h1>
+              <p className="truncate text-xs text-muted-foreground">
+                {t('publishedBy', { name: post.user_name || '—' })}
+              </p>
+            </div>
+            {actions}
+          </div>
+          <WorkViewer post={post} />
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-background">
