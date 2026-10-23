@@ -13,6 +13,7 @@ import {
 import { useState, useContext } from "react"
 import { useIsMobile } from "@/hooks/utils"
 import { SharePopover } from "@/components/sidebar/share-modal"
+import { PopoverTrigger } from "@/components/ui/popover"
 import { ModeIndicator } from "@/components/thread/mode-indicator"
 import { LocalExecutionToggle } from "@/components/thread/local-execution-toggle"
 import { SidebarContext } from "@/components/ui/sidebar"
@@ -115,14 +116,16 @@ export function SiteHeader({
               <SharePopover threadId={threadId} projectId={projectId}>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-9 px-2.5 cursor-pointer gap-1.5"
-                    >
-                      <Upload className="h-4 w-4" />
-                      <span className="hidden sm:inline text-sm">{t('share')}</span>
-                    </Button>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-9 px-2.5 cursor-pointer gap-1.5"
+                      >
+                        <Upload className="h-4 w-4" />
+                        <span className="hidden sm:inline text-sm">{t('share')}</span>
+                      </Button>
+                    </PopoverTrigger>
                   </TooltipTrigger>
                   <TooltipContent side="bottom" sideOffset={4}>
                     <p>{t('shareTooltip')}</p>

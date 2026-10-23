@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Popover, PopoverContent, PopoverTrigger, PopoverAnchor } from "@/components/ui/popover"
+import { Popover, PopoverContent, PopoverAnchor } from "@/components/ui/popover"
 import { Switch } from "@/components/ui/switch"
 import { Copy, Check, Globe, ExternalLink, Lock, Upload } from "lucide-react"
 import { toast } from "@/lib/toast"
@@ -277,11 +277,7 @@ export function SharePopover({
 
   return (
     <Popover open={isOpen} onOpenChange={setOpen}>
-      {children ? (
-        <PopoverTrigger asChild>
-          {children}
-        </PopoverTrigger>
-      ) : (
+      {children ?? (
         <PopoverAnchor className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
       )}
       <PopoverContent 
