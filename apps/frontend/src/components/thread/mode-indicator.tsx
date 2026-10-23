@@ -114,7 +114,7 @@ const ModeLogo = memo(function ModeLogo({
   );
 });
 
-export const ModeIndicator = memo(function ModeIndicator() {
+export const ModeIndicator = memo(function ModeIndicator({ compact = false }: { compact?: boolean }) {
   const t = useTranslations('thread.modeIndicator');
   const [isOpen, setIsOpen] = useState(false);
   const {
@@ -292,12 +292,29 @@ export const ModeIndicator = memo(function ModeIndicator() {
           <DropdownMenuTrigger asChild>
         <button
           className={cn(
-            'flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 min-h-9 py-1 rounded-lg transition-all duration-150 cursor-pointer touch-manipulation',
-            'hover:bg-accent/50 active:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+            compact
+              ? 'h-10 max-w-[46vw] sm:max-w-[200px] px-2 bg-transparent border-[1.5px] border-border rounded-2xl text-muted-foreground hover:text-foreground hover:bg-accent/50 flex items-center gap-1.5 cursor-pointer'
+              : 'flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 min-h-9 py-1 rounded-lg transition-all duration-150 cursor-pointer touch-manipulation hover:bg-accent/50 active:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
           )}
           aria-label={t('selectModel')}
         >
-          {isAutoSelected ? (
+          {compact ? (
+            <>
+              {isAutoSelected ? (
+                <span className="truncate text-sm font-medium text-foreground">
+                  {lastAutoLabel ? t('autoChosen', { model: lastAutoLabel }) : t('autoLabel')}
+                </span>
+              ) : isOtherModelSelected && selectedOtherModel ? (
+                <>
+                  <ModelProviderIcon modelId={selectedOtherModel.id} size={16} />
+                  <span className="truncate text-sm font-medium text-foreground">{selectedOtherModel.label}</span>
+                </>
+              ) : (
+                <ModeLogo mode={isPowerSelected ? 'advanced' : 'basic'} height={12} />
+              )}
+              <ChevronDown className={cn("h-3 w-3 opacity-60 flex-shrink-0 transition-transform", isOpen && "rotate-180")} />
+            </>
+          ) : isAutoSelected ? (
             <span className="flex flex-col items-start min-w-0 leading-none">
               <span className="text-sm font-medium truncate max-w-[140px] sm:max-w-[180px]">
                 {lastAutoLabel ? t('autoChosen', { model: lastAutoLabel }) : t('autoLabel')}
@@ -325,10 +342,12 @@ export const ModeIndicator = memo(function ModeIndicator() {
               )}
             </span>
           )}
-          <ChevronDown className={cn(
-            "h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground transition-transform duration-200 flex-shrink-0",
-            isOpen && "rotate-180"
-          )} strokeWidth={2} />
+          {!compact && (
+            <ChevronDown className={cn(
+              "h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground transition-transform duration-200 flex-shrink-0",
+              isOpen && "rotate-180"
+            )} strokeWidth={2} />
+          )}
         </button>
           </DropdownMenuTrigger>
         </TooltipTrigger>
@@ -338,7 +357,8 @@ export const ModeIndicator = memo(function ModeIndicator() {
       </Tooltip>
 
       <DropdownMenuContent 
-        align="start" 
+        align={compact ? 'end' : 'start'}
+        side={compact ? 'top' : 'bottom'}
         className="w-[300px] sm:w-[360px] p-1.5 sm:p-2 rounded-xl border border-border/50 shadow-lg"
         sideOffset={6}
       >

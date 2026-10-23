@@ -46,6 +46,7 @@ import { PlanSelectionModal } from '@/components/billing/pricing';
 import { AgentConfigurationDialog } from '@/components/agents/agent-configuration-dialog';
 import { SpotlightCard } from '@/components/ui/spotlight-card';
 import { UnifiedConfigMenu } from './unified-config-menu';
+import { ModeIndicator } from '@/components/thread/mode-indicator';
 import { useVoicePlayerStore } from '@/stores/voice-player-store';
 
 import posthog from 'posthog-js';
@@ -1530,6 +1531,8 @@ export const ChatInput = memo(forwardRef<ChatInputHandles, ChatInputProps>(
             />
           )}
         </div>
+
+        <ModeIndicator compact />
 
         {!hideAgentSelection && (
           <UnifiedConfigMenu
