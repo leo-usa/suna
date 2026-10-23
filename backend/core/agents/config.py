@@ -7,7 +7,8 @@ from core.utils.logger import logger
 async def load_agent_config_fast(
     agent_id: Optional[str], 
     account_id: Optional[str], 
-    user_id: Optional[str] = None
+    user_id: Optional[str] = None,
+    is_new_thread: bool = False,
 ) -> Optional[Dict[str, Any]]:
     from core.cache.runtime_cache import (
         get_static_suna_config, 
@@ -26,7 +27,7 @@ async def load_agent_config_fast(
             agent_id = await agents_repo.get_default_agent_id(account_id)
             if not agent_id:
                 logger.warning(f"[AGENT CONFIG FAST] No default agent for {account_id}")
-                return await load_agent_config(None, account_id, user_id)
+                return await load_agent_config(None, account_id, user_id, is_new_thread=is_new_thread)
         
         agent_type = await get_cached_agent_type(agent_id)
         
@@ -98,7 +99,11 @@ async def load_agent_config(
                 return agent_data.to_dict()
             else:
                 logger.warning(f"[AGENT LOAD] No default agent found for account {account_id}, searching for shared Suna")
-                agent_data = await _find_shared_suna_agent()
+                try:
+                    agent_data = await _find_shared_suna_agent()
+                except Exception as shared_error:
+                    logger.warning(f"[AGENT LOAD] Shared Suna unavailable for {account_id}: {shared_error}")
+                    agent_data = None
                 
                 if not agent_data:
                     any_agent_id = await agents_repo.get_any_agent_id(account_id)

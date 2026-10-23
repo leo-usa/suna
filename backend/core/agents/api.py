@@ -394,7 +394,9 @@ async def start_agent_run(
     
     logger.info(f"🚀 start_agent_run: is_optimistic={is_optimistic}, is_new_thread={is_new_thread}")
     
-    agent_config = await load_agent_config_fast(agent_id, account_id, user_id=account_id)
+    agent_config = await load_agent_config_fast(
+        agent_id, account_id, user_id=account_id, is_new_thread=is_new_thread
+    )
     
     client = await db.client
 

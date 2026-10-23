@@ -208,7 +208,8 @@ async def create_new_thread_records(
     from core.utils.thread_name_generator import generate_and_update_thread_name
     
     placeholder_name = f"{prompt[:30]}..." if len(prompt) > 30 else prompt
-    
+    config = agent_config or {}
+
     await threads_repo.create_thread_with_message_and_run(
         project_id=project_id,
         thread_id=thread_id,
@@ -217,8 +218,8 @@ async def create_new_thread_records(
         thread_name="New Chat",
         agent_run_id=agent_run_id,
         message_content=message_content,
-        agent_id=agent_config.get("agent_id"),
-        agent_version_id=agent_config.get("agent_version_id"),
+        agent_id=config.get("agent_id"),
+        agent_version_id=config.get("agent_version_id") or config.get("current_version_id"),
         run_metadata=metadata,
         memory_enabled=memory_enabled
     )
