@@ -375,6 +375,10 @@ async def _bridge_start_agent_for_chat(account_id: str, peer: str, raw: str) -> 
     thread_id = session.get("thread_id")
     if thread_id is not None:
         thread_id = str(thread_id)
+    else:
+        from core.master_assistant.service import master_thread_for_new_channel
+
+        thread_id = await master_thread_for_new_channel(account_id)
 
     from core.agents.api import start_agent_run
 

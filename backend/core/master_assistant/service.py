@@ -87,6 +87,15 @@ async def is_master_thread(thread_id: str) -> bool:
     return (await get_master_by_thread(thread_id)) is not None
 
 
+async def master_thread_for_new_channel(account_id: str) -> str:
+    """First WeChat or Telegram chat lands in the master assistant, not a new project."""
+    from core.utils.ensure_suna import ensure_suna_installed
+
+    await ensure_suna_installed(account_id)
+    master = await get_or_create_master(account_id)
+    return master["thread_id"]
+
+
 async def get_or_create_master(account_id: str) -> Dict[str, Any]:
     existing = await get_master(account_id)
     if existing:
