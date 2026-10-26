@@ -60,15 +60,6 @@ class ManagerInitializer:
         except Exception as e:
             logger.debug(f"Could not load execution_target for {ctx.project_id}: {e}")
 
-        tool_manager = ToolManager(
-            thread_manager,
-            ctx.project_id,
-            ctx.thread_id,
-            ctx.agent_config,
-            execution_target=execution_target,
-        )
-        tool_manager.register_core_tools()
-
         try:
             from core.master_assistant.service import is_master_thread
             if await is_master_thread(ctx.thread_id):
@@ -80,8 +71,19 @@ class ManagerInitializer:
                     account_id=ctx.account_id,
                 )
                 ctx.is_master = True
+                logger.info("Master assistant: slim prompt and tool set")
+                return thread_manager, tool_registry, trace
         except Exception as e:
             logger.warning(f"Could not register master assistant tools for {ctx.thread_id}: {e}")
+
+        tool_manager = ToolManager(
+            thread_manager,
+            ctx.project_id,
+            ctx.thread_id,
+            ctx.agent_config,
+            execution_target=execution_target,
+        )
+        tool_manager.register_core_tools()
 
         await ManagerInitializer._reload_dynamic_tools(ctx, thread_manager, jit_config)
 

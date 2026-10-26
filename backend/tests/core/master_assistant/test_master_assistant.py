@@ -6,6 +6,26 @@ import pytest
 from core.master_assistant import service
 
 
+async def test_master_prompt_skips_the_worker_tool_catalog():
+    from core.agents.runner.prompt_manager import PromptManager
+
+    system, extra = await PromptManager.build_system_prompt(
+        model_name="dobby/basic",
+        agent_config={"system_prompt": "WORKER PROMPT SHOULD NOT APPEAR"},
+        thread_id="t1",
+        mcp_wrapper_instance=None,
+        is_master=True,
+    )
+    text = system["content"]
+    assert "<master_assistant>" in text
+    assert "史丹福机器人庞博士" in text
+    assert "零基础精通ChatGPT" in text
+    assert "WORKER PROMPT SHOULD NOT APPEAR" not in text
+    assert "PRELOADED TOOL" not in text
+    assert "Task Management" not in text
+    assert extra is None
+
+
 def test_thread_path_with_and_without_project():
     assert service.thread_path("p1", "t1") == "/projects/p1/thread/t1"
     assert service.thread_path(None, "t1") == "/thread/t1"

@@ -25,6 +25,14 @@ class PromptManager:
                                   is_master: bool = False) -> Tuple[dict, Optional[dict]]:
         
         build_start = time.time()
+
+        if is_master:
+            from core.master_assistant.prompt import MASTER_ASSISTANT_PROMPT
+            from core.prompts.dr_pang_courses_prompt import DR_PANG_COURSES_PROMPT
+            system_content = MASTER_ASSISTANT_PROMPT.strip() + "\n" + DR_PANG_COURSES_PROMPT.strip()
+            system_content = PromptManager._append_datetime_info(system_content)
+            logger.info(f"⏱️ [PROMPT TIMING] Master assistant prompt: {(time.time() - build_start) * 1000:.1f}ms, {len(system_content):,} chars")
+            return {"role": "system", "content": system_content}, None
         
         if agent_config and agent_config.get('system_prompt'):
             system_content = agent_config['system_prompt'].strip()
