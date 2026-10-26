@@ -41,6 +41,7 @@ async def test_deliver_child_files_uses_the_latest_conversation():
     assert result["thread_id"] == "t1"
     assert result["files"] == ["hello_world.docx"]
     assert result["sent_to_chat"] is True
+    assert "send any short message" in result["user_notice"]
 
 
 async def test_deliver_child_files_when_none_started():

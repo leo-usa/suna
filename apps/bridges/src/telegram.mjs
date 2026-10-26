@@ -251,11 +251,19 @@ async function sendTelegramOfficeFiles(chatId, telegramUserId, threadId, files) 
   for (const file of files) {
     const name = file.name || String(file.path).split("/").pop() || "file";
     try {
-      const buffer = await downloadTelegramOfficeFile(telegramUserId, threadId, file.path);
+      const buffer = await downloadTelegramOfficeFile(telegramUserId, file.thread_id || threadId, file.path);
       await tgSendDocument(chatId, buffer, name);
+      if (file.id) await markTelegramOutboxSent([file.id]);
       sent += 1;
       console.log(`[telegram] [→ file] ${chatId}: ${name} (${buffer.length} bytes)`);
     } catch (err) {
+      if (file.id) {
+        try {
+          await markTelegramOutboxRetry(file.id, err.message);
+        } catch (markErr) {
+          console.error(`[telegram] outbox retry: ${markErr.message}`);
+        }
+      }
       console.error(`[telegram] [→ file] ${name} failed: ${err.message}`);
     }
   }
@@ -280,10 +288,12 @@ async function markTelegramOutboxRetry(id, error) {
   await readBridgeJson(res);
 }
 
-async function drainTelegramOutbox() {
+async function drainTelegramOutbox(includeFresh = false) {
   let data;
   try {
-    const res = await fetch(`${API_BASE}/integrations/telegram-bot/bridge/outbox`, {
+    const url = new URL(`${API_BASE}/integrations/telegram-bot/bridge/outbox`);
+    if (includeFresh) url.searchParams.set("include_fresh", "true");
+    const res = await fetch(url, {
       headers: { "X-Telegram-Bridge-Secret": TELEGRAM_BRIDGE_SECRET },
     });
     data = await readBridgeJson(res);
@@ -497,6 +507,7 @@ async function handleTelegramChatTurn(chatId, uid, text) {
 
   const fin = await postBridgeFinalize(uid, rid, tid, userMsg);
   await applyFinalReply(chatId, previewId, fin, uid);
+  await drainTelegramOutbox(true);
 }
 
 /**

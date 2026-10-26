@@ -19,6 +19,7 @@ from pydantic import BaseModel, Field
 
 from core.integrations.bridge_billing import out_of_credits_reply
 from core.integrations.im_file_outbox import (
+    append_outbox_files,
     claim_wechat,
     clear_wechat_reply_context,
     mark_sent,
@@ -399,6 +400,7 @@ async def _bridge_build_success_reply(
         office_files = await list_turn_office_files(account_id, str(tid), str(agent_run_id), raw)
     except Exception:
         logger.exception("[wechat_ilink] office file list failed")
+    office_files = await append_outbox_files(office_files, "wechat_ilink", account_id, str(tid))
     return BridgeChatResponse(
         ok=True,
         reply=reply_text,
@@ -843,10 +845,11 @@ async def bridge_save_reply_context(
 @router.get("/bridge/outbox", response_model=WechatOutboxResponse)
 async def bridge_claim_outbox(
     account_id: str = Query(..., min_length=1, max_length=80),
+    include_fresh: bool = Query(False),
     x_wechat_ilink_bridge_secret: Optional[str] = Header(None, alias="X-Wechat-Ilink-Bridge-Secret"),
 ):
     _require_bridge_secret(x_wechat_ilink_bridge_secret)
-    claimed = await claim_wechat(account_id.strip())
+    claimed = await claim_wechat(account_id.strip(), mature_only=not include_fresh)
     return WechatOutboxResponse(
         files=[OutboxFileRow(**item) for item in claimed["files"]],
         peer_id=claimed["peer_id"],

@@ -334,11 +334,19 @@ async function sendOfficeFiles(base, token, to, contextToken, accountId, threadI
   for (const file of files) {
     const name = file.name || String(file.path).split("/").pop() || "file";
     try {
-      const buffer = await downloadWechatOfficeFile(accountId, threadId, file.path);
+      const buffer = await downloadWechatOfficeFile(accountId, file.thread_id || threadId, file.path);
       await sendWechatOfficeFile(base, token, to, contextToken, buffer, name);
+      if (file.id) await markWechatOutboxSent([file.id]);
       sent += 1;
       console.log(`[wechat-ilink] [→ file] ${to}: ${name} (${buffer.length} bytes)`);
     } catch (err) {
+      if (file.id) {
+        try {
+          await markWechatOutboxRetry(accountId, file.id, err.message, isWechatContextError(err.message));
+        } catch (markErr) {
+          console.error(`[wechat-ilink] outbox retry: ${markErr.message}`);
+        }
+      }
       console.error(`[wechat-ilink] [→ file] ${name} failed: ${err.message}`);
     }
   }
@@ -380,7 +388,7 @@ async function markWechatOutboxRetry(accountId, id, error, contextExpired) {
   await readBridgeJson(res);
 }
 
-async function drainWechatOutbox(session) {
+async function drainWechatOutbox(session, includeFresh = false) {
   const accountId = session.account_id;
   const base = session.baseurl || ILINK_BASE;
   const token = session.bot_token;
@@ -388,6 +396,7 @@ async function drainWechatOutbox(session) {
   try {
     const url = new URL(`${API_BASE}/integrations/wechat-ilink/bridge/outbox`);
     url.searchParams.set("account_id", accountId);
+    if (includeFresh) url.searchParams.set("include_fresh", "true");
     const res = await fetch(url, { headers: bridgeHeaders() });
     data = await readBridgeJson(res);
   } catch (err) {
@@ -628,7 +637,7 @@ async function handleMessage(msg, session, signal) {
   } catch (err) {
     console.error(`[wechat-ilink] [${accountId.slice(0, 8)}] save reply context: ${err.message}`);
   }
-  await drainWechatOutbox(session);
+  await drainWechatOutbox(session, true);
 
   if (!text) {
     await sendText(base, token, from, contextToken, `收到你的非文本消息（${types}），请发文字继续对话。`);
@@ -644,6 +653,7 @@ async function handleMessage(msg, session, signal) {
   } finally {
     await stopTyping(base, token, from);
   }
+  await drainWechatOutbox(session, true);
 }
 
 async function pollSessionLoop(session, signal) {

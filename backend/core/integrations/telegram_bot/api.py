@@ -22,7 +22,7 @@ from pydantic import BaseModel, Field
 from core.services.transcription import transcribe_audio_bytes
 
 from core.integrations.bridge_billing import out_of_credits_reply
-from core.integrations.im_file_outbox import claim_telegram, mark_sent, release_file
+from core.integrations.im_file_outbox import append_outbox_files, claim_telegram, mark_sent, release_file
 from core.integrations.bridge_office_files import (
     BridgeOfficeFile,
     list_turn_office_files,
@@ -349,6 +349,7 @@ async def _bridge_build_success_reply(
             office_files = await list_turn_office_files(account_id, str(tid), str(agent_run_id), raw)
         except Exception:
             logger.exception("[telegram_bot] office file list failed")
+    office_files = await append_outbox_files(office_files, "telegram", peer, str(tid))
     return BridgeChatResponse(
         ok=True,
         reply=reply_text,
@@ -656,10 +657,11 @@ async def bridge_file_content(
 
 @router.get("/bridge/outbox", response_model=TelegramOutboxResponse)
 async def bridge_claim_outbox(
+    include_fresh: bool = Query(False),
     x_telegram_bridge_secret: Optional[str] = Header(None, alias="X-Telegram-Bridge-Secret"),
 ):
     _require_bridge_secret(x_telegram_bridge_secret)
-    files = await claim_telegram()
+    files = await claim_telegram(mature_only=not include_fresh)
     return TelegramOutboxResponse(files=[OutboxFileRow(**item) for item in files])
 
 

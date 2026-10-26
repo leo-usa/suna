@@ -230,8 +230,17 @@ def _file_row(row: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-async def claim_pending(channel: str, recipient: Optional[str] = None, limit: int = 3) -> List[Dict[str, Any]]:
+async def claim_pending(
+    channel: str,
+    recipient: Optional[str] = None,
+    limit: int = 3,
+    *,
+    mature_only: bool = True,
+) -> List[Dict[str, Any]]:
     recipient_clause = "AND recipient = :recipient" if recipient else ""
+    # A reply that is still being written should claim its own fresh rows.
+    # The idle poll waits, so it does not grab them first and then sit on them.
+    age_clause = "AND created_at < timezone('utc', now()) - interval '30 seconds'" if mature_only else ""
     params: Dict[str, Any] = {
         "channel": channel,
         "lim": max(1, min(int(limit or 3), 10)),
@@ -248,6 +257,7 @@ async def claim_pending(channel: str, recipient: Optional[str] = None, limit: in
             WHERE sent_at IS NULL AND attempts < :max_attempts
               AND channel = :channel
               {recipient_clause}
+              {age_clause}
               AND (claimed_at IS NULL OR claimed_at < timezone('utc', now()) - interval '2 minutes')
             ORDER BY created_at
             LIMIT :lim
@@ -261,7 +271,41 @@ async def claim_pending(channel: str, recipient: Optional[str] = None, limit: in
     return [_file_row(row) for row in rows or [] if row.get("id")]
 
 
-async def claim_wechat(account_id: str) -> Dict[str, Any]:
+async def claim_for_reply(channel: str, recipient: str) -> List[Dict[str, Any]]:
+    """Files queued during this chat turn, including ones just requested."""
+    try:
+        return await claim_pending(channel, recipient, mature_only=False)
+    except Exception as exc:
+        if _missing_table(exc):
+            return []
+        raise
+
+
+async def append_outbox_files(office_files: List[Any], channel: str, recipient: str, fallback_thread_id: str) -> List[Any]:
+    """Attach files the user just asked to resend onto this reply."""
+    from core.integrations.bridge_office_files import BridgeOfficeFile
+
+    queued = await claim_for_reply(channel, recipient)
+    merged = list(office_files or [])
+    seen = {
+        ((getattr(item, "thread_id", None) or fallback_thread_id), item.path)
+        for item in merged
+    }
+    for row in queued:
+        key = (row["thread_id"], row["path"])
+        if key in seen:
+            continue
+        seen.add(key)
+        merged.append(BridgeOfficeFile(
+            name=row["name"],
+            path=row["path"],
+            thread_id=row["thread_id"],
+            id=row["id"],
+        ))
+    return merged
+
+
+async def claim_wechat(account_id: str, mature_only: bool = True) -> Dict[str, Any]:
     empty = {"files": [], "peer_id": "", "context_token": ""}
     try:
         ctx = await execute_one(
@@ -280,13 +324,13 @@ async def claim_wechat(account_id: str) -> Dict[str, Any]:
     token = str((ctx or {}).get("reply_context_token") or "")
     if not peer or not token:
         return empty
-    files = await claim_pending("wechat_ilink", account_id)
+    files = await claim_pending("wechat_ilink", account_id, mature_only=mature_only)
     return {"files": files, "peer_id": peer, "context_token": token}
 
 
-async def claim_telegram() -> List[Dict[str, Any]]:
+async def claim_telegram(mature_only: bool = True) -> List[Dict[str, Any]]:
     try:
-        return await claim_pending("telegram", None)
+        return await claim_pending("telegram", None, mature_only=mature_only)
     except Exception as exc:
         if _missing_table(exc):
             return []

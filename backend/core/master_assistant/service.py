@@ -378,14 +378,22 @@ async def deliver_child_files(account_id: str, thread_id: Optional[str] = None) 
     names = delivery.get("names") or []
     queued = int(delivery.get("queued") or 0)
     pending = int(delivery.get("already_pending") or 0)
+    sent = queued > 0 or pending > 0
     return {
         "found": True,
         "thread_id": target,
         "title": child.get("title"),
         "status": status,
         "files": names,
-        "sent_to_chat": queued > 0 or pending > 0,
+        "sent_to_chat": sent,
         "already_on_the_way": queued == 0 and pending > 0,
+        "user_notice": (
+            "Tell the user the file follows this message. Also tell them, in their language: "
+            "if it does not show up within a few seconds, send any short message and the file will come through. "
+            "Do not say the file has already arrived."
+            if sent
+            else ""
+        ),
     }
 
 

@@ -47,6 +47,8 @@ class BridgeOfficeFile(BaseModel):
     name: str
     path: str
     size: int = 0
+    thread_id: Optional[str] = None
+    id: Optional[str] = None
 
 
 def workspace_office_path(raw: str) -> Optional[str]:
