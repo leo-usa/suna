@@ -212,6 +212,139 @@ async function sendTextChunked(baseUrl, token, to, contextToken, text, openUrl) 
   }
 }
 
+const CDN_BASE = "https://novac2c.cdn.weixin.qq.com/c2c";
+const FILE_MEDIA_TYPE = 3;
+
+function aesEcbPaddedSize(plaintextSize) {
+  return Math.ceil((plaintextSize + 1) / 16) * 16;
+}
+
+function encryptAesEcb(plaintext, key) {
+  const cipher = crypto.createCipheriv("aes-128-ecb", key, null);
+  return Buffer.concat([cipher.update(plaintext), cipher.final()]);
+}
+
+async function downloadWechatOfficeFile(accountId, threadId, filePath) {
+  const url = new URL(`${API_BASE}/integrations/wechat-ilink/bridge/files/content`);
+  url.searchParams.set("account_id", accountId);
+  url.searchParams.set("thread_id", threadId);
+  url.searchParams.set("path", filePath);
+  const res = await fetch(url, {
+    headers: { "X-Wechat-Ilink-Bridge-Secret": WECHAT_ILINK_BRIDGE_SECRET },
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`office file HTTP ${res.status}: ${text.slice(0, 200)}`);
+  }
+  return Buffer.from(await res.arrayBuffer());
+}
+
+async function sendWechatOfficeFile(baseUrl, token, to, contextToken, buffer, filename) {
+  const rawsize = buffer.length;
+  const rawfilemd5 = crypto.createHash("md5").update(buffer).digest("hex");
+  const filekey = crypto.randomBytes(16).toString("hex");
+  const aeskey = crypto.randomBytes(16);
+  const aesKeyHex = aeskey.toString("hex");
+  const upload = await apiPost(
+    baseUrl,
+    "ilink/bot/getuploadurl",
+    {
+      filekey,
+      media_type: FILE_MEDIA_TYPE,
+      to_user_id: to,
+      rawsize,
+      rawfilemd5,
+      filesize: aesEcbPaddedSize(rawsize),
+      no_need_thumb: true,
+      aeskey: aesKeyHex,
+      base_info: baseInfo(),
+    },
+    token,
+    120_000,
+  );
+  if (upload.ret != null && Number(upload.ret) !== 0) {
+    throw new Error(`getuploadurl ret=${upload.ret} ${upload.errmsg || ""}`);
+  }
+  const uploadFullUrl = typeof upload.upload_full_url === "string" ? upload.upload_full_url.trim() : "";
+  let cdnUrl = uploadFullUrl;
+  if (!cdnUrl) {
+    if (!upload.upload_param) throw new Error("getuploadurl returned no upload URL");
+    cdnUrl = `${CDN_BASE}/upload?encrypted_query_param=${encodeURIComponent(upload.upload_param)}&filekey=${encodeURIComponent(filekey)}`;
+  }
+  const ciphertext = encryptAesEcb(buffer, aeskey);
+  let downloadParam = "";
+  let lastError = null;
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    try {
+      const res = await fetch(cdnUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/octet-stream" },
+        body: ciphertext,
+      });
+      if (res.status >= 400 && res.status < 500) {
+        const errMsg = res.headers.get("x-error-message") || (await res.text());
+        throw new Error(`CDN upload client error ${res.status}: ${String(errMsg).slice(0, 200)}`);
+      }
+      if (res.status !== 200) {
+        const errMsg = res.headers.get("x-error-message") || `status ${res.status}`;
+        throw new Error(`CDN upload server error: ${errMsg}`);
+      }
+      downloadParam = res.headers.get("x-encrypted-param") || "";
+      if (!downloadParam) throw new Error("CDN upload response missing x-encrypted-param");
+      lastError = null;
+      break;
+    } catch (err) {
+      lastError = err;
+      if (String(err.message || err).includes("client error")) throw err;
+    }
+  }
+  if (!downloadParam) throw lastError || new Error("CDN upload failed");
+
+  // WeChat file messages expect base64 of the hex key string.
+  const aesKeyForMessage = Buffer.from(aesKeyHex, "utf8").toString("base64");
+  await sendMessageApi(baseUrl, token, {
+    msg: {
+      from_user_id: "",
+      to_user_id: to,
+      client_id: `bridge-${crypto.randomUUID()}`,
+      message_type: 2,
+      message_state: 2,
+      context_token: contextToken,
+      item_list: [
+        {
+          type: 4,
+          file_item: {
+            media: {
+              encrypt_query_param: downloadParam,
+              aes_key: aesKeyForMessage,
+              encrypt_type: 1,
+            },
+            file_name: filename,
+            md5: rawfilemd5,
+            len: String(rawsize),
+          },
+        },
+      ],
+    },
+  });
+}
+
+async function sendOfficeFiles(base, token, to, contextToken, accountId, threadId, files) {
+  let sent = 0;
+  for (const file of files) {
+    const name = file.name || String(file.path).split("/").pop() || "file";
+    try {
+      const buffer = await downloadWechatOfficeFile(accountId, threadId, file.path);
+      await sendWechatOfficeFile(base, token, to, contextToken, buffer, name);
+      sent += 1;
+      console.log(`[wechat-ilink] [→ file] ${to}: ${name} (${buffer.length} bytes)`);
+    } catch (err) {
+      console.error(`[wechat-ilink] [→ file] ${name} failed: ${err.message}`);
+    }
+  }
+  return sent > 0 && sent === files.length;
+}
+
 async function getConfig(baseUrl, token, ilinkUserId, contextToken) {
   return apiPost(
     baseUrl,
@@ -372,6 +505,19 @@ async function handleWechatChatTurn(accountId, ilinkPeerId, text, tokenData) {
 
   const openUrl = typeof fin.thread_browser_url === "string" ? fin.thread_browser_url.trim() : "";
   const finalReply = typeof fin.reply === "string" ? fin.reply : JSON.stringify(fin);
+  const files = Array.isArray(fin.files) ? fin.files.filter((file) => file && file.path) : [];
+  if (files.length && tid) {
+    const comparable = openUrl ? stripThreadBrowserFooter(finalReply, openUrl) : finalReply;
+    const alreadyShown = sawTerminal && (finalReply === lastShown || comparable === lastShown);
+    if (!alreadyShown) {
+      await sendTextChunked(base, token, to, contextToken, comparable || "（无回复）", "");
+    }
+    const allSent = await sendOfficeFiles(base, token, to, contextToken, accountId, tid, files);
+    if (!allSent && openUrl) {
+      await sendText(base, token, to, contextToken, `${THREAD_BROWSER_FOOTER}${openUrl}`);
+    }
+    return;
+  }
   if (sawTerminal && finalReply === lastShown) {
     if (openUrl) {
       await sendText(base, token, to, contextToken, `${THREAD_BROWSER_FOOTER}${openUrl}`);

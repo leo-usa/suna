@@ -220,14 +220,67 @@ async function sendReply(chatId, text, options = {}) {
   }
 }
 
+async function downloadTelegramOfficeFile(telegramUserId, threadId, filePath) {
+  const url = new URL(`${API_BASE}/integrations/telegram-bot/bridge/files/content`);
+  url.searchParams.set("telegram_user_id", telegramUserId);
+  url.searchParams.set("thread_id", threadId);
+  url.searchParams.set("path", filePath);
+  const res = await fetch(url, {
+    headers: { "X-Telegram-Bridge-Secret": TELEGRAM_BRIDGE_SECRET },
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`office file HTTP ${res.status}: ${text.slice(0, 200)}`);
+  }
+  return Buffer.from(await res.arrayBuffer());
+}
+
+async function tgSendDocument(chatId, buffer, filename) {
+  const form = new FormData();
+  form.append("chat_id", String(chatId));
+  form.append("document", new Blob([buffer]), filename);
+  const res = await fetch(`${TG}/sendDocument`, { method: "POST", body: form });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || !data.ok) {
+    throw new Error(`sendDocument: ${JSON.stringify(data).slice(0, 400)}`);
+  }
+}
+
+async function sendTelegramOfficeFiles(chatId, telegramUserId, threadId, files) {
+  let sent = 0;
+  for (const file of files) {
+    const name = file.name || String(file.path).split("/").pop() || "file";
+    try {
+      const buffer = await downloadTelegramOfficeFile(telegramUserId, threadId, file.path);
+      await tgSendDocument(chatId, buffer, name);
+      sent += 1;
+      console.log(`[telegram] [→ file] ${chatId}: ${name} (${buffer.length} bytes)`);
+    } catch (err) {
+      console.error(`[telegram] [→ file] ${name} failed: ${err.message}`);
+    }
+  }
+  return sent > 0 && sent === files.length;
+}
+
 /** Apply final reply without deleting the live preview (avoids empty gap while finalize runs). */
-async function applyFinalReply(chatId, previewMessageId, fin) {
+async function applyFinalReply(chatId, previewMessageId, fin, telegramUserId) {
   const openUrl = typeof fin.thread_browser_url === "string" ? fin.thread_browser_url.trim() : "";
   const reply = typeof fin.reply === "string" ? fin.reply : JSON.stringify(fin);
+  const files = Array.isArray(fin.files) ? fin.files.filter((file) => file && file.path) : [];
+  const deliverFiles = Boolean(fin.ok && files.length && fin.thread_id && telegramUserId);
   const chunkSize = 4096;
-  const browserKb = openUrl
-    ? { inline_keyboard: [[{ text: "Open in browser", url: openUrl }]] }
-    : undefined;
+  const browserKb =
+    openUrl && !deliverFiles
+      ? { inline_keyboard: [[{ text: "Open in browser", url: openUrl }]] }
+      : undefined;
+
+  async function deliverFilesAfterText() {
+    if (!deliverFiles) return;
+    const allSent = await sendTelegramOfficeFiles(chatId, telegramUserId, fin.thread_id, files);
+    if (!allSent && openUrl) {
+      await sendReply(chatId, `Open in browser (files & full reply):\n${openUrl}`, { openUrl });
+    }
+  }
 
   if (!fin.ok) {
     const errText = (reply || "（失败）").slice(0, chunkSize);
@@ -267,8 +320,9 @@ async function applyFinalReply(chatId, previewMessageId, fin) {
     } catch (e) {
       console.error("[telegram] applyFinalReply edit:", e.message);
       await sendReply(chatId, (openUrl ? stripThreadBrowserFooter(fin.reply, openUrl) : fin.reply) || "（无回复）", {
-        openUrl,
+        openUrl: deliverFiles ? "" : openUrl,
       });
+      await deliverFilesAfterText();
       return;
     }
   } else {
@@ -282,9 +336,10 @@ async function applyFinalReply(chatId, previewMessageId, fin) {
     const part = remaining.slice(0, chunkSize);
     remaining = remaining.slice(chunkSize);
     const payload = { chat_id: chatId, text: part };
-    if (openUrl && remaining.length === 0) payload.reply_markup = browserKb;
+    if (browserKb && remaining.length === 0) payload.reply_markup = browserKb;
     await tgPost("sendMessage", payload);
   }
+  await deliverFilesAfterText();
 }
 
 export function isTelegramBridgeConfigured() {
@@ -389,7 +444,7 @@ async function handleTelegramChatTurn(chatId, uid, text) {
   if (!sawTerminal) return;
 
   const fin = await postBridgeFinalize(uid, rid, tid, userMsg);
-  await applyFinalReply(chatId, previewId, fin);
+  await applyFinalReply(chatId, previewId, fin, uid);
 }
 
 /**

@@ -14,9 +14,15 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, Depends, Header, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from pydantic import BaseModel, Field
 
+from core.integrations.bridge_office_files import (
+    BridgeOfficeFile,
+    list_turn_office_files,
+    office_file_response,
+    read_thread_office_file,
+)
 from core.integrations.bridge_reply_format import (
     BRIDGE_POST_RUN_SETTLE_SEC,
     append_thread_workspace_link,
@@ -113,6 +119,7 @@ class BridgeChatResponse(BaseModel):
     thread_id: Optional[str] = None
     agent_run_id: Optional[str] = None
     thread_browser_url: Optional[str] = None
+    files: List[BridgeOfficeFile] = Field(default_factory=list)
 
 
 class BridgeChatStartResponse(BaseModel):
@@ -340,12 +347,18 @@ async def _bridge_build_success_reply(
         reply_text = reply_text[: _max - 1] + "…"
 
     await _update_session_thread_resilient(account_id, str(tid))
+    office_files: List[BridgeOfficeFile] = []
+    try:
+        office_files = await list_turn_office_files(account_id, str(tid), str(agent_run_id), raw)
+    except Exception:
+        logger.exception("[wechat_ilink] office file list failed")
     return BridgeChatResponse(
         ok=True,
         reply=reply_text,
         thread_id=str(tid),
         agent_run_id=str(agent_run_id),
         thread_browser_url=thread_browser_url,
+        files=office_files,
     )
 
 
@@ -817,6 +830,18 @@ async def bridge_chat_snapshot(
     except Exception:
         logger.exception("[wechat_ilink] bridge_chat_snapshot failed")
         return BridgeChatSnapshotResponse(ok=False, run_status="error", reply=MSG_RUN_FAILED, terminal=True)
+
+
+@router.get("/bridge/files/content")
+async def bridge_file_content(
+    thread_id: str = Query(..., min_length=1, max_length=80),
+    path: str = Query(..., min_length=1, max_length=500),
+    account_id: str = Query(..., min_length=1, max_length=80),
+    x_wechat_ilink_bridge_secret: Optional[str] = Header(None, alias="X-Wechat-Ilink-Bridge-Secret"),
+):
+    _require_bridge_secret(x_wechat_ilink_bridge_secret)
+    data, name = await read_thread_office_file(account_id.strip(), thread_id.strip(), path)
+    return office_file_response(data, name)
 
 
 @router.post("/bridge/chat/finalize", response_model=BridgeChatResponse)

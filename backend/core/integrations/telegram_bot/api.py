@@ -16,11 +16,17 @@ import time
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, Query, UploadFile
 from pydantic import BaseModel, Field
 
 from core.services.transcription import transcribe_audio_bytes
 
+from core.integrations.bridge_office_files import (
+    BridgeOfficeFile,
+    list_turn_office_files,
+    office_file_response,
+    read_thread_office_file,
+)
 from core.integrations.bridge_reply_format import (
     BRIDGE_POST_RUN_SETTLE_SEC,
     append_thread_workspace_link,
@@ -90,6 +96,7 @@ class BridgeChatResponse(BaseModel):
     agent_run_id: Optional[str] = None
     paired: bool = False
     thread_browser_url: Optional[str] = None
+    files: List[BridgeOfficeFile] = Field(default_factory=list)
 
 
 class BridgeChatStartResponse(BaseModel):
@@ -301,12 +308,21 @@ async def _bridge_build_success_reply(
         reply_text = reply_text[: _max - 1] + "…"
 
     await _update_link_thread_resilient(peer, str(tid))
+    office_files: List[BridgeOfficeFile] = []
+    link = await _get_link(peer)
+    account_id = str((link or {}).get("account_id") or "")
+    if account_id:
+        try:
+            office_files = await list_turn_office_files(account_id, str(tid), str(agent_run_id), raw)
+        except Exception:
+            logger.exception("[telegram_bot] office file list failed")
     return BridgeChatResponse(
         ok=True,
         reply=reply_text,
         thread_id=str(tid),
         agent_run_id=str(agent_run_id),
         thread_browser_url=thread_browser_url,
+        files=office_files,
     )
 
 
@@ -576,6 +592,21 @@ async def bridge_chat_snapshot(
     except Exception:
         logger.exception("[telegram_bot] bridge_chat_snapshot failed")
         return BridgeChatSnapshotResponse(ok=False, run_status="error", reply=MSG_RUN_FAILED, terminal=True)
+
+
+@router.get("/bridge/files/content")
+async def bridge_file_content(
+    thread_id: str = Query(..., min_length=1, max_length=80),
+    path: str = Query(..., min_length=1, max_length=500),
+    telegram_user_id: str = Query(..., min_length=1, max_length=64),
+    x_telegram_bridge_secret: Optional[str] = Header(None, alias="X-Telegram-Bridge-Secret"),
+):
+    _require_bridge_secret(x_telegram_bridge_secret)
+    link = await _get_link(telegram_user_id.strip())
+    if not link:
+        raise HTTPException(status_code=403, detail="Telegram user is not linked")
+    data, name = await read_thread_office_file(str(link["account_id"]), thread_id.strip(), path)
+    return office_file_response(data, name)
 
 
 @router.post("/bridge/chat/finalize", response_model=BridgeChatResponse)

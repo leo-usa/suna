@@ -45,13 +45,14 @@ class SandboxResolver:
         project_id: str,
         account_id: str,
         db_client=None,
-        require_started: bool = True
+        require_started: bool = True,
+        create: bool = True,
     ) -> Optional[SandboxInfo]:
         lock = await self._get_project_lock(project_id)
         
         async with lock:
             return await self._resolve_internal(
-                project_id, account_id, db_client, require_started
+                project_id, account_id, db_client, require_started, create
             )
     
     async def _resolve_internal(
@@ -59,7 +60,8 @@ class SandboxResolver:
         project_id: str,
         account_id: str,
         db_client,
-        require_started: bool
+        require_started: bool,
+        create: bool = True,
     ) -> Optional[SandboxInfo]:
         start_time = time.time()
 
@@ -98,6 +100,10 @@ class SandboxResolver:
                 elapsed = (time.time() - start_time) * 1000
                 logger.debug(f"[RESOLVER] DB hit for {project_id}: {sandbox_info.sandbox_id} in {elapsed:.0f}ms")
                 return sandbox_info
+
+        if not create:
+            logger.debug(f"[RESOLVER] No existing sandbox for {project_id}; not creating one")
+            return None
         
         sandbox_info = await self._claim_or_create(project_id, account_id, db_client)
         if sandbox_info:
@@ -324,7 +330,8 @@ async def resolve_sandbox(
     project_id: str,
     account_id: str,
     db_client=None,
-    require_started: bool = True
+    require_started: bool = True,
+    create: bool = True,
 ) -> Optional[SandboxInfo]:
     resolver = get_resolver()
-    return await resolver.resolve(project_id, account_id, db_client, require_started)
+    return await resolver.resolve(project_id, account_id, db_client, require_started, create)
