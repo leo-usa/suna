@@ -262,6 +262,58 @@ async function sendTelegramOfficeFiles(chatId, telegramUserId, threadId, files) 
   return sent > 0 && sent === files.length;
 }
 
+async function markTelegramOutboxSent(ids) {
+  const res = await fetch(`${API_BASE}/integrations/telegram-bot/bridge/outbox/sent`, {
+    method: "POST",
+    headers: bridgeHeaders(),
+    body: JSON.stringify({ ids }),
+  });
+  await readBridgeJson(res);
+}
+
+async function markTelegramOutboxRetry(id, error) {
+  const res = await fetch(`${API_BASE}/integrations/telegram-bot/bridge/outbox/retry`, {
+    method: "POST",
+    headers: bridgeHeaders(),
+    body: JSON.stringify({ id, error: String(error || "").slice(0, 500) }),
+  });
+  await readBridgeJson(res);
+}
+
+async function drainTelegramOutbox() {
+  let data;
+  try {
+    const res = await fetch(`${API_BASE}/integrations/telegram-bot/bridge/outbox`, {
+      headers: { "X-Telegram-Bridge-Secret": TELEGRAM_BRIDGE_SECRET },
+    });
+    data = await readBridgeJson(res);
+  } catch (err) {
+    console.error(`[telegram] outbox: ${err.message}`);
+    return;
+  }
+  const files = Array.isArray(data.files) ? data.files : [];
+  for (const file of files) {
+    const chatId = file.recipient;
+    if (!chatId) continue;
+    try {
+      if (file.caption) {
+        await sendReply(chatId, file.caption, {});
+      }
+      const buffer = await downloadTelegramOfficeFile(chatId, file.thread_id, file.path);
+      await tgSendDocument(chatId, buffer, file.name || "file");
+      await markTelegramOutboxSent([file.id]);
+      console.log(`[telegram] [→ file] child ${file.name}`);
+    } catch (err) {
+      try {
+        await markTelegramOutboxRetry(file.id, err.message);
+      } catch (markErr) {
+        console.error(`[telegram] outbox retry: ${markErr.message}`);
+      }
+      console.error(`[telegram] [→ file] child ${file.name} failed: ${err.message}`);
+    }
+  }
+}
+
 /** Apply final reply without deleting the live preview (avoids empty gap while finalize runs). */
 async function applyFinalReply(chatId, previewMessageId, fin, telegramUserId) {
   const openUrl = typeof fin.thread_browser_url === "string" ? fin.thread_browser_url.trim() : "";
@@ -466,6 +518,7 @@ export async function runTelegramBridge(signal) {
       console.log("[telegram] stopped (signal)");
       return;
     }
+    await drainTelegramOutbox();
     try {
       const url = new URL(`${TG}/getUpdates`);
       url.searchParams.set("timeout", "50");

@@ -22,6 +22,7 @@ from pydantic import BaseModel, Field
 from core.services.transcription import transcribe_audio_bytes
 
 from core.integrations.bridge_billing import out_of_credits_reply
+from core.integrations.im_file_outbox import claim_telegram, mark_sent, release_file
 from core.integrations.bridge_office_files import (
     BridgeOfficeFile,
     list_turn_office_files,
@@ -110,6 +111,28 @@ class BridgeChatStartResponse(BaseModel):
     message: str = ""
     paired: bool = False
     reply_markup: Optional[Dict[str, Any]] = None
+
+
+class OutboxFileRow(BaseModel):
+    id: str
+    thread_id: str
+    path: str
+    name: str
+    caption: str = ""
+    recipient: str = ""
+
+
+class TelegramOutboxResponse(BaseModel):
+    files: List[OutboxFileRow] = Field(default_factory=list)
+
+
+class OutboxSentRequest(BaseModel):
+    ids: List[str] = Field(default_factory=list)
+
+
+class OutboxRetryRequest(BaseModel):
+    id: str = Field(..., min_length=1, max_length=80)
+    error: str = ""
 
 
 class BridgeChatSessionRequest(BaseModel):
@@ -629,6 +652,35 @@ async def bridge_file_content(
         raise HTTPException(status_code=403, detail="Telegram user is not linked")
     data, name = await read_thread_office_file(str(link["account_id"]), thread_id.strip(), path)
     return office_file_response(data, name)
+
+
+@router.get("/bridge/outbox", response_model=TelegramOutboxResponse)
+async def bridge_claim_outbox(
+    x_telegram_bridge_secret: Optional[str] = Header(None, alias="X-Telegram-Bridge-Secret"),
+):
+    _require_bridge_secret(x_telegram_bridge_secret)
+    files = await claim_telegram()
+    return TelegramOutboxResponse(files=[OutboxFileRow(**item) for item in files])
+
+
+@router.post("/bridge/outbox/sent")
+async def bridge_outbox_sent(
+    body: OutboxSentRequest,
+    x_telegram_bridge_secret: Optional[str] = Header(None, alias="X-Telegram-Bridge-Secret"),
+):
+    _require_bridge_secret(x_telegram_bridge_secret)
+    await mark_sent(body.ids)
+    return {"ok": True}
+
+
+@router.post("/bridge/outbox/retry")
+async def bridge_outbox_retry(
+    body: OutboxRetryRequest,
+    x_telegram_bridge_secret: Optional[str] = Header(None, alias="X-Telegram-Bridge-Secret"),
+):
+    _require_bridge_secret(x_telegram_bridge_secret)
+    await release_file(body.id, body.error)
+    return {"ok": True}
 
 
 @router.post("/bridge/chat/finalize", response_model=BridgeChatResponse)

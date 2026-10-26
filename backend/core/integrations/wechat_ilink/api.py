@@ -18,6 +18,13 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from core.integrations.bridge_billing import out_of_credits_reply
+from core.integrations.im_file_outbox import (
+    claim_wechat,
+    clear_wechat_reply_context,
+    mark_sent,
+    release_file,
+    save_wechat_reply_context,
+)
 from core.integrations.bridge_office_files import (
     BridgeOfficeFile,
     list_turn_office_files,
@@ -106,6 +113,36 @@ class BridgeSessionsResponse(BaseModel):
 
 class BridgeCursorRequest(BaseModel):
     get_updates_buf: str = ""
+
+
+class BridgeReplyContextRequest(BaseModel):
+    peer_id: str = Field(..., min_length=1, max_length=256)
+    context_token: str = Field(..., min_length=1, max_length=4000)
+
+
+class OutboxFileRow(BaseModel):
+    id: str
+    thread_id: str
+    path: str
+    name: str
+    caption: str = ""
+    recipient: str = ""
+
+
+class WechatOutboxResponse(BaseModel):
+    files: List[OutboxFileRow] = Field(default_factory=list)
+    peer_id: str = ""
+    context_token: str = ""
+
+
+class OutboxSentRequest(BaseModel):
+    ids: List[str] = Field(default_factory=list)
+
+
+class OutboxRetryRequest(BaseModel):
+    id: str = Field(..., min_length=1, max_length=80)
+    error: str = ""
+    context_expired: bool = False
 
 
 class BridgeChatRequest(BaseModel):
@@ -789,6 +826,54 @@ async def bridge_update_cursor(
         {"aid": account_id, "buf": body.get_updates_buf or ""},
         commit=True,
     )
+    return {"ok": True}
+
+
+@router.post("/bridge/sessions/{account_id}/reply-context")
+async def bridge_save_reply_context(
+    account_id: str,
+    body: BridgeReplyContextRequest,
+    x_wechat_ilink_bridge_secret: Optional[str] = Header(None, alias="X-Wechat-Ilink-Bridge-Secret"),
+):
+    _require_bridge_secret(x_wechat_ilink_bridge_secret)
+    await save_wechat_reply_context(account_id.strip(), body.peer_id, body.context_token)
+    return {"ok": True}
+
+
+@router.get("/bridge/outbox", response_model=WechatOutboxResponse)
+async def bridge_claim_outbox(
+    account_id: str = Query(..., min_length=1, max_length=80),
+    x_wechat_ilink_bridge_secret: Optional[str] = Header(None, alias="X-Wechat-Ilink-Bridge-Secret"),
+):
+    _require_bridge_secret(x_wechat_ilink_bridge_secret)
+    claimed = await claim_wechat(account_id.strip())
+    return WechatOutboxResponse(
+        files=[OutboxFileRow(**item) for item in claimed["files"]],
+        peer_id=claimed["peer_id"],
+        context_token=claimed["context_token"],
+    )
+
+
+@router.post("/bridge/outbox/sent")
+async def bridge_outbox_sent(
+    body: OutboxSentRequest,
+    x_wechat_ilink_bridge_secret: Optional[str] = Header(None, alias="X-Wechat-Ilink-Bridge-Secret"),
+):
+    _require_bridge_secret(x_wechat_ilink_bridge_secret)
+    await mark_sent(body.ids)
+    return {"ok": True}
+
+
+@router.post("/bridge/outbox/retry")
+async def bridge_outbox_retry(
+    body: OutboxRetryRequest,
+    account_id: str = Query("", max_length=80),
+    x_wechat_ilink_bridge_secret: Optional[str] = Header(None, alias="X-Wechat-Ilink-Bridge-Secret"),
+):
+    _require_bridge_secret(x_wechat_ilink_bridge_secret)
+    if body.context_expired and account_id.strip():
+        await clear_wechat_reply_context(account_id.strip())
+    await release_file(body.id, body.error, context_expired=body.context_expired)
     return {"ok": True}
 
 

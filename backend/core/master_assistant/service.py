@@ -578,7 +578,7 @@ async def on_agent_run_terminal(agent_run_id: str, status: str) -> None:
             SET status = :status, finished_at = timezone('utc', now()), updated_at = timezone('utc', now())
             WHERE child_agent_run_id = CAST(:rid AS uuid) AND finished_at IS NULL
             RETURNING account_id::text AS account_id, master_thread_id::text AS master_thread_id,
-                      child_thread_id::text AS thread_id
+                      child_thread_id::text AS thread_id, title
             """,
             {"rid": agent_run_id, "status": status},
             commit=True,
@@ -594,6 +594,17 @@ async def on_agent_run_terminal(agent_run_id: str, status: str) -> None:
                 {"summary": summary[:4000] if summary else None, "tid": child["thread_id"]},
                 commit=True,
             )
+            try:
+                from core.integrations.im_file_outbox import enqueue_child_office_files
+
+                await enqueue_child_office_files(
+                    child["account_id"],
+                    child["thread_id"],
+                    agent_run_id,
+                    child.get("title"),
+                )
+            except Exception:
+                logger.warning("[master] child file enqueue failed", exc_info=True)
             await maybe_report_to_master(child["account_id"], child["master_thread_id"])
             return
 

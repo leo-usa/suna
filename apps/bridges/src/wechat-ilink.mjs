@@ -345,6 +345,79 @@ async function sendOfficeFiles(base, token, to, contextToken, accountId, threadI
   return sent > 0 && sent === files.length;
 }
 
+function isWechatContextError(message) {
+  const text = String(message || "").toLowerCase();
+  return text.includes("context") || text.includes("token") || text.includes("-14");
+}
+
+async function saveWechatReplyContext(accountId, peerId, contextToken) {
+  const url = `${API_BASE}/integrations/wechat-ilink/bridge/sessions/${encodeURIComponent(accountId)}/reply-context`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: bridgeHeaders(),
+    body: JSON.stringify({ peer_id: peerId, context_token: contextToken }),
+  });
+  await readBridgeJson(res);
+}
+
+async function markWechatOutboxSent(ids) {
+  const res = await fetch(`${API_BASE}/integrations/wechat-ilink/bridge/outbox/sent`, {
+    method: "POST",
+    headers: bridgeHeaders(),
+    body: JSON.stringify({ ids }),
+  });
+  await readBridgeJson(res);
+}
+
+async function markWechatOutboxRetry(accountId, id, error, contextExpired) {
+  const url = new URL(`${API_BASE}/integrations/wechat-ilink/bridge/outbox/retry`);
+  if (accountId) url.searchParams.set("account_id", accountId);
+  const res = await fetch(url, {
+    method: "POST",
+    headers: bridgeHeaders(),
+    body: JSON.stringify({ id, error: String(error || "").slice(0, 500), context_expired: Boolean(contextExpired) }),
+  });
+  await readBridgeJson(res);
+}
+
+async function drainWechatOutbox(session) {
+  const accountId = session.account_id;
+  const base = session.baseurl || ILINK_BASE;
+  const token = session.bot_token;
+  let data;
+  try {
+    const url = new URL(`${API_BASE}/integrations/wechat-ilink/bridge/outbox`);
+    url.searchParams.set("account_id", accountId);
+    const res = await fetch(url, { headers: bridgeHeaders() });
+    data = await readBridgeJson(res);
+  } catch (err) {
+    console.error(`[wechat-ilink] [${accountId.slice(0, 8)}] outbox: ${err.message}`);
+    return;
+  }
+  const files = Array.isArray(data.files) ? data.files : [];
+  if (!files.length || !data.context_token || !data.peer_id) return;
+  for (const file of files) {
+    try {
+      if (file.caption) {
+        await sendText(base, token, data.peer_id, data.context_token, file.caption);
+      }
+      const buffer = await downloadWechatOfficeFile(accountId, file.thread_id, file.path);
+      await sendWechatOfficeFile(base, token, data.peer_id, data.context_token, buffer, file.name || "file");
+      await markWechatOutboxSent([file.id]);
+      console.log(`[wechat-ilink] [${accountId.slice(0, 8)}] [→ file] child ${file.name}`);
+    } catch (err) {
+      const contextExpired = isWechatContextError(err.message);
+      try {
+        await markWechatOutboxRetry(accountId, file.id, err.message, contextExpired);
+      } catch (markErr) {
+        console.error(`[wechat-ilink] outbox retry: ${markErr.message}`);
+      }
+      console.error(`[wechat-ilink] [${accountId.slice(0, 8)}] [→ file] child ${file.name} failed: ${err.message}`);
+      if (contextExpired) break;
+    }
+  }
+}
+
 async function getConfig(baseUrl, token, ilinkUserId, contextToken) {
   return apiPost(
     baseUrl,
@@ -550,6 +623,12 @@ async function handleMessage(msg, session, signal) {
   }
 
   tokenData._contextToken = contextToken;
+  try {
+    await saveWechatReplyContext(accountId, from, contextToken);
+  } catch (err) {
+    console.error(`[wechat-ilink] [${accountId.slice(0, 8)}] save reply context: ${err.message}`);
+  }
+  await drainWechatOutbox(session);
 
   if (!text) {
     await sendText(base, token, from, contextToken, `收到你的非文本消息（${types}），请发文字继续对话。`);
@@ -581,6 +660,7 @@ async function pollSessionLoop(session, signal) {
       console.log(`[wechat-ilink] [${accountId.slice(0, 8)}] poll stopped`);
       return;
     }
+    await drainWechatOutbox(session);
 
     try {
       const data = await getUpdates(base, token, cursor);
