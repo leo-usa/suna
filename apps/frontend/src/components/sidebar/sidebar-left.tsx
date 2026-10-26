@@ -256,7 +256,7 @@ export function SidebarLeft({
             "left-6"
           )}>
 
-            <Link href="/dashboard" onClick={() => isMobile && setOpenMobile(false)} className="flex items-center justify-center">
+            <Link href="/" onClick={() => isMobile && setOpenMobile(false)} className="flex items-center justify-center">
               <DobbyLogo 
                 size={20} 
                 className={cn(
