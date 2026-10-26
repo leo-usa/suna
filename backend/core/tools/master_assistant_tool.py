@@ -138,6 +138,30 @@ class MasterAssistantTool(Tool):
     @openapi_schema({
         "type": "function",
         "function": {
+            "name": "send_files",
+            "description": "Look up PowerPoint, Word, Excel, and PDF files from a conversation you started and send them again to the user's WeChat or Telegram. Use when they ask if a file is ready, ask you to send it, or ask you to send it again. Omit thread_id to use the latest conversation.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "thread_id": {"type": "string", "description": "Conversation id from list_conversations. Omit for the latest one."},
+                },
+            },
+        },
+    })
+    async def send_files(self, thread_id: Optional[str] = None) -> ToolResult:
+        try:
+            result = await service.deliver_child_files(self.account_id, thread_id)
+            if not result.get("found"):
+                if result.get("reason") == "no_conversation":
+                    return self.fail_response("No conversation has been started yet.")
+                return self.fail_response("Conversation not found among those started by the master assistant.")
+            return self.success_response(result)
+        except Exception as e:
+            return self.fail_response(f"Could not send the files: {e}")
+
+    @openapi_schema({
+        "type": "function",
+        "function": {
             "name": "check_conversation",
             "description": "Get the status and latest reply of a conversation started by the master assistant. Also shows the user a card with an Open button.",
             "parameters": {

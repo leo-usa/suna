@@ -2,8 +2,11 @@ from core.integrations.im_file_outbox import channel_should_receive_child_file, 
 
 
 def test_caption_names_the_child_conversation():
+    from core.integrations.im_file_outbox import resend_file_caption
+
     assert child_file_caption("Hello World Word 文件") == "「Hello World Word 文件」已完成，文件在下面。"
     assert "任务" in child_file_caption("  ")
+    assert resend_file_caption("Hello World Word 文件") == "「Hello World Word 文件」的文件在下面。"
 
 
 def test_skip_file_push_when_the_chat_is_already_that_conversation():

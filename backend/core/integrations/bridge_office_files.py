@@ -171,6 +171,28 @@ async def list_turn_office_files(
         allowed_types=["user", "tool", "assistant"],
     )
     paths = office_paths_from_turn(rows, started, user_prompt)
+    return await _existing_office_files(account_id, thread_id, paths)
+
+
+async def list_thread_office_files(account_id: str, thread_id: str) -> List[BridgeOfficeFile]:
+    """Office files mentioned anywhere in the conversation that still exist."""
+    from core.threads import repo as threads_repo
+
+    rows = await threads_repo.get_thread_messages(
+        thread_id,
+        order="asc",
+        optimized=True,
+        allowed_types=["user", "tool", "assistant"],
+    )
+    paths = office_paths_from_turn(rows, None, "")
+    return await _existing_office_files(account_id, thread_id, paths)
+
+
+async def _existing_office_files(
+    account_id: str,
+    thread_id: str,
+    paths: List[str],
+) -> List[BridgeOfficeFile]:
     if not paths:
         return []
     try:

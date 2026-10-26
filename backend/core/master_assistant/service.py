@@ -360,6 +360,35 @@ async def _live_status(child: Dict[str, Any]) -> str:
     return ((row or {}).get("status") or child.get("status") or "unknown").lower()
 
 
+async def deliver_child_files(account_id: str, thread_id: Optional[str] = None) -> Dict[str, Any]:
+    """Send an existing conversation's office files back to WeChat and Telegram."""
+    from core.integrations.im_file_outbox import enqueue_existing_office_files
+
+    target = (thread_id or "").strip()
+    if not target:
+        children = await list_children(account_id, 1)
+        if not children:
+            return {"found": False, "reason": "no_conversation"}
+        target = children[0]["thread_id"]
+    child = await get_child(account_id, target)
+    if not child:
+        return {"found": False, "reason": "not_found"}
+    status = await _live_status(child)
+    delivery = await enqueue_existing_office_files(account_id, target, child.get("title"))
+    names = delivery.get("names") or []
+    queued = int(delivery.get("queued") or 0)
+    pending = int(delivery.get("already_pending") or 0)
+    return {
+        "found": True,
+        "thread_id": target,
+        "title": child.get("title"),
+        "status": status,
+        "files": names,
+        "sent_to_chat": queued > 0 or pending > 0,
+        "already_on_the_way": queued == 0 and pending > 0,
+    }
+
+
 async def check_child(account_id: str, child_thread_id: str) -> Optional[Dict[str, Any]]:
     child = await get_child(account_id, child_thread_id)
     if not child:

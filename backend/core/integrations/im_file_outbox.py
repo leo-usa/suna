@@ -15,6 +15,11 @@ def child_file_caption(title: Optional[str]) -> str:
     return f"「{name}」已完成，文件在下面。"
 
 
+def resend_file_caption(title: Optional[str]) -> str:
+    name = (title or "").strip() or "任务"
+    return f"「{name}」的文件在下面。"
+
+
 def channel_should_receive_child_file(current_thread_id: Optional[str], child_thread_id: str) -> bool:
     """The live chat already sends files when the user is inside that same conversation."""
     return bool(child_thread_id) and str(current_thread_id or "") != str(child_thread_id)
@@ -119,7 +124,36 @@ async def enqueue_child_office_files(
         return 0
     if not files:
         return 0
+    queued, _pending = await _queue_office_files(account_id, child_thread_id, files, child_file_caption(title))
+    return queued
 
+
+async def enqueue_existing_office_files(
+    account_id: str,
+    thread_id: str,
+    title: Optional[str],
+) -> Dict[str, Any]:
+    """Queue office files that already exist, including ones sent before."""
+    from core.integrations.bridge_office_files import list_thread_office_files
+
+    try:
+        files = await list_thread_office_files(account_id, thread_id)
+    except Exception:
+        logger.warning("[im_file_outbox] could not list conversation files", exc_info=True)
+        files = []
+    names = [office_file.name for office_file in files]
+    if not files:
+        return {"queued": 0, "already_pending": 0, "names": []}
+    queued, pending = await _queue_office_files(account_id, thread_id, files, resend_file_caption(title))
+    return {"queued": queued, "already_pending": pending, "names": names}
+
+
+async def _queue_office_files(
+    account_id: str,
+    thread_id: str,
+    files: List[Any],
+    caption: str,
+) -> tuple:
     try:
         wechat = await execute_one(
             """
@@ -140,25 +174,28 @@ async def enqueue_child_office_files(
     except Exception as exc:
         if _missing_table(exc):
             logger.warning("[im_file_outbox] enqueue skipped; apply migration 20261026020000_im_file_outbox.sql")
-            return 0
+            return 0, 0
         raise
 
     inserted = 0
-    if wechat and channel_should_receive_child_file(wechat.get("thread_id"), child_thread_id):
+    already_pending = 0
+    if wechat and channel_should_receive_child_file(wechat.get("thread_id"), thread_id):
         for index, office_file in enumerate(files):
             if await _insert_file(
                 account_id,
                 "wechat_ilink",
                 account_id,
-                child_thread_id,
+                thread_id,
                 office_file.path,
                 office_file.name,
                 office_file.size,
-                child_file_caption(title) if index == 0 else None,
+                caption if index == 0 else None,
             ):
                 inserted += 1
+            else:
+                already_pending += 1
     for link in telegram_links or []:
-        if not channel_should_receive_child_file(link.get("thread_id"), child_thread_id):
+        if not channel_should_receive_child_file(link.get("thread_id"), thread_id):
             continue
         recipient = str(link.get("telegram_user_id") or "")
         if not recipient:
@@ -168,16 +205,18 @@ async def enqueue_child_office_files(
                 account_id,
                 "telegram",
                 recipient,
-                child_thread_id,
+                thread_id,
                 office_file.path,
                 office_file.name,
                 office_file.size,
-                child_file_caption(title) if index == 0 else None,
+                caption if index == 0 else None,
             ):
                 inserted += 1
+            else:
+                already_pending += 1
     if inserted:
-        logger.info("[im_file_outbox] queued %s file row(s) for child %s", inserted, child_thread_id)
-    return inserted
+        logger.info("[im_file_outbox] queued %s file row(s) for %s", inserted, thread_id)
+    return inserted, already_pending
 
 
 def _file_row(row: Dict[str, Any]) -> Dict[str, Any]:

@@ -28,6 +28,27 @@ def test_build_task_update_prompt_lists_each_task():
     assert "check_conversation" in lines[-1]
 
 
+async def test_deliver_child_files_uses_the_latest_conversation():
+    child = {"thread_id": "t1", "title": "Hello World", "agent_run_id": "r1", "status": "completed"}
+    with patch.object(service, "list_children", AsyncMock(return_value=[child])), \
+         patch.object(service, "get_child", AsyncMock(return_value=child)), \
+         patch.object(service, "_live_status", AsyncMock(return_value="completed")), \
+         patch("core.integrations.im_file_outbox.enqueue_existing_office_files", AsyncMock(return_value={
+             "queued": 1, "already_pending": 0, "names": ["hello_world.docx"],
+         })):
+        result = await service.deliver_child_files("a1")
+    assert result["found"] is True
+    assert result["thread_id"] == "t1"
+    assert result["files"] == ["hello_world.docx"]
+    assert result["sent_to_chat"] is True
+
+
+async def test_deliver_child_files_when_none_started():
+    with patch.object(service, "list_children", AsyncMock(return_value=[])):
+        result = await service.deliver_child_files("a1")
+    assert result == {"found": False, "reason": "no_conversation"}
+
+
 async def test_child_finish_saves_summary_and_reports():
     child = {"account_id": "a1", "master_thread_id": "m1", "thread_id": "t1"}
     with patch.object(service, "execute_one", AsyncMock(side_effect=[child, {"?column?": 1}])) as ex_one, \
