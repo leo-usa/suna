@@ -17,6 +17,7 @@ from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from pydantic import BaseModel, Field
 
+from core.integrations.bridge_billing import out_of_credits_reply
 from core.integrations.bridge_office_files import (
     BridgeOfficeFile,
     list_turn_office_files,
@@ -347,6 +348,15 @@ async def _bridge_build_success_reply(
         reply_text = reply_text[: _max - 1] + "…"
 
     await _update_session_thread_resilient(account_id, str(tid))
+    run_row = await agents_repo.get_agent_run_status(str(agent_run_id))
+    pay = out_of_credits_reply((run_row or {}).get("error"), config.FRONTEND_URL)
+    if pay:
+        return BridgeChatResponse(
+            ok=False,
+            reply=pay,
+            thread_id=str(tid),
+            agent_run_id=str(agent_run_id),
+        )
     office_files: List[BridgeOfficeFile] = []
     try:
         office_files = await list_turn_office_files(account_id, str(tid), str(agent_run_id), raw)
@@ -413,6 +423,10 @@ async def _bridge_start_agent_for_chat(account_id: str, peer: str, raw: str) -> 
         )
     except HTTPException as e:
         detail = e.detail
+        pay = out_of_credits_reply(detail, config.FRONTEND_URL)
+        if pay:
+            logger.warning("[wechat_ilink] start blocked: out of credits")
+            return BridgeChatStartResponse(ok=False, reply=pay)
         if isinstance(detail, dict):
             msg = detail.get("message") or str(detail)
         else:
@@ -867,6 +881,9 @@ async def bridge_chat_finalize(
                 agent_run_id=rid,
             )
         st = (row.get("status") or "").lower()
+        pay = out_of_credits_reply(row.get("error"), config.FRONTEND_URL)
+        if pay:
+            return BridgeChatResponse(ok=False, reply=pay, thread_id=tid, agent_run_id=rid)
         if st in ("failed", "error"):
             err = row.get("error") or "failed"
             return BridgeChatResponse(ok=False, reply=f"{MSG_RUN_FAILED} ({err})")

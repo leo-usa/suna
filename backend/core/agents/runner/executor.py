@@ -167,9 +167,12 @@ async def execute_agent_run(
                 status = response.get('status')
                 if status in ['completed', 'failed', 'stopped', 'error']:
                     final_status = status if status != 'error' else 'failed'
+                    message = response.get('message') or response.get('error')
                     if status in ['failed', 'error']:
-                        error_message = response.get('message') or response.get('error')
+                        error_message = message
                         logger.error(f"Agent run error: {error_message}")
+                    elif message == 'insufficient_credits' or response.get('error_code') == 'INSUFFICIENT_CREDITS':
+                        error_message = 'insufficient_credits'
                     break
 
             if response.get('type') == 'error':

@@ -21,6 +21,7 @@ from pydantic import BaseModel, Field
 
 from core.services.transcription import transcribe_audio_bytes
 
+from core.integrations.bridge_billing import out_of_credits_reply
 from core.integrations.bridge_office_files import (
     BridgeOfficeFile,
     list_turn_office_files,
@@ -308,6 +309,15 @@ async def _bridge_build_success_reply(
         reply_text = reply_text[: _max - 1] + "…"
 
     await _update_link_thread_resilient(peer, str(tid))
+    run_row = await agents_repo.get_agent_run_status(str(agent_run_id))
+    pay = out_of_credits_reply((run_row or {}).get("error"), config.FRONTEND_URL)
+    if pay:
+        return BridgeChatResponse(
+            ok=False,
+            reply=pay,
+            thread_id=str(tid),
+            agent_run_id=str(agent_run_id),
+        )
     office_files: List[BridgeOfficeFile] = []
     link = await _get_link(peer)
     account_id = str((link or {}).get("account_id") or "")
@@ -390,6 +400,10 @@ async def _bridge_start_agent_for_chat(peer: str, raw: str) -> BridgeChatStartRe
         )
     except HTTPException as e:
         detail = e.detail
+        pay = out_of_credits_reply(detail, config.FRONTEND_URL)
+        if pay:
+            logger.warning("[telegram_bot] start blocked: out of credits")
+            return BridgeChatStartResponse(ok=False, reply=pay)
         if isinstance(detail, dict):
             msg = detail.get("message") or str(detail)
         else:
@@ -534,6 +548,14 @@ async def bridge_chat(
     try:
         terminal = await _poll_run_for_terminal(str(start.agent_run_id))
         status = terminal.get("status")
+        pay = out_of_credits_reply(terminal.get("error"), config.FRONTEND_URL)
+        if pay:
+            return BridgeChatResponse(
+                ok=False,
+                reply=pay,
+                thread_id=str(start.thread_id) if start.thread_id else None,
+                agent_run_id=str(start.agent_run_id),
+            )
         if status == "failed":
             err = terminal.get("error") or "failed"
             return BridgeChatResponse(ok=False, reply=f"{MSG_RUN_FAILED} ({err})")
@@ -632,6 +654,9 @@ async def bridge_chat_finalize(
                 agent_run_id=rid,
             )
         st = (row.get("status") or "").lower()
+        pay = out_of_credits_reply(row.get("error"), config.FRONTEND_URL)
+        if pay:
+            return BridgeChatResponse(ok=False, reply=pay, thread_id=tid, agent_run_id=rid)
         if st in ("failed", "error"):
             err = row.get("error") or "failed"
             return BridgeChatResponse(ok=False, reply=f"{MSG_RUN_FAILED} ({err})")
