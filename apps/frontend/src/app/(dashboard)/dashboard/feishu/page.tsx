@@ -108,6 +108,14 @@ export default function FeishuBotDashboardPage() {
               alt={t('qrAlt')}
               className="h-48 w-48 rounded-md border border-border bg-white p-2"
             />
+            <a
+              href="https://applink.feishu.cn/T9aUxe7XWZEo"
+              target="_blank"
+              rel="noreferrer"
+              className="block break-all text-foreground underline underline-offset-2"
+            >
+              https://applink.feishu.cn/T9aUxe7XWZEo
+            </a>
             <p>{t('step1')}</p>
             <p>{t('step2')}</p>
             <p>{t('step3')}</p>

@@ -3316,7 +3316,7 @@
     "expiresLabel": "Expires",
     "instructionsTitle": "How to connect",
     "qrAlt": "Feishu Dobby bot QR code",
-    "step1": "Scan the QR code above with Feishu to add the Dobby bot and open a private chat. If Feishu asks for approval, wait until it is accepted. You can also search for Dobby in Feishu.",
+    "step1": "On a phone, scan the QR code with Feishu. On a computer, click the link above and allow the browser to open Feishu. The desktop app opens the Dobby bot; start a private chat there. If the browser does not open Feishu, paste the link into Feishu’s top search box. If Feishu asks for approval, wait until it is accepted.",
     "step2": "Tap Generate verification code below. You will get a 6-character code, valid for about 15 minutes.",
     "step3": "In the bot DM, send only that code as a single message. The bot will confirm when linking succeeds.",
     "step4": "After linking, message the bot as usual. Send /help for commands, /list to see chats, /use <number> to switch, or /new for a new thread.",
