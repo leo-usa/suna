@@ -102,7 +102,12 @@ export default function FeishuBotDashboardPage() {
           <CardHeader>
             <CardTitle>{t('instructionsTitle')}</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2 text-sm text-muted-foreground leading-relaxed">
+          <CardContent className="space-y-3 text-sm text-muted-foreground leading-relaxed">
+            <img
+              src="/feishu-dobby-bot-qr.png"
+              alt={t('qrAlt')}
+              className="h-48 w-48 rounded-md border border-border bg-white p-2"
+            />
             <p>{t('step1')}</p>
             <p>{t('step2')}</p>
             <p>{t('step3')}</p>
