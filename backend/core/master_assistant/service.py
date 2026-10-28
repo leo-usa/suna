@@ -699,8 +699,15 @@ async def current_run_channel(master_thread_id: str) -> Dict[str, Any]:
             meta = json.loads(meta)
         except ValueError:
             meta = {}
-    if meta.get("source") == "qq_bot" and meta.get("qq_user_openid"):
+    source = meta.get("source")
+    if source == "qq_bot" and meta.get("qq_user_openid"):
         return {"channel": "qq", "qq_user_openid": str(meta["qq_user_openid"])}
+    if source == "wechat_ilink" and meta.get("account_id"):
+        return {"channel": "wechat", "account_id": str(meta["account_id"])}
+    if source == "telegram_bot" and meta.get("telegram_user_id"):
+        return {"channel": "telegram", "telegram_user_id": str(meta["telegram_user_id"])}
+    if source == "feishu_bot" and meta.get("feishu_open_id"):
+        return {"channel": "feishu", "feishu_open_id": str(meta["feishu_open_id"])}
     return {"channel": "web"}
 
 
@@ -760,7 +767,19 @@ async def switch_channel_conversation(
         if not thread:
             raise ValueError("Conversation not found in this account")
 
-    result: Dict[str, Any] = {"channel": channel["channel"], "new": thread is None}
+    opened_new = thread is None
+    im_channel = channel["channel"] in ("wechat", "telegram", "feishu")
+    if im_channel and opened_new:
+        from core.integrations.bridge_thread_commands import create_blank_thread
+
+        created = await create_blank_thread(account_id)
+        thread = {
+            "thread_id": created["thread_id"],
+            "project_id": created["project_id"],
+            "title": created["title"],
+        }
+
+    result: Dict[str, Any] = {"channel": channel["channel"], "new": opened_new}
     if thread:
         path = thread_path(thread.get("project_id"), thread["thread_id"])
         result.update({
@@ -783,11 +802,46 @@ async def switch_channel_conversation(
             commit=True,
         )
         result["switched"] = True
-        result["note"] = (
-            "From the user's next QQ message on, they talk to "
-            + ("a brand-new conversation" if not thread else f"「{thread['title']}」")
-            + " instead of you. They can say 回到总助理 or send /master to come back."
+        result["note"] = _im_switch_note(thread)
+    elif channel["channel"] == "wechat" and channel.get("account_id") and thread:
+        await execute_one(
+            """
+            UPDATE public.wechat_ilink_sessions
+            SET thread_id = CAST(:tid AS uuid), updated_at = timezone('utc', now())
+            WHERE account_id = CAST(:aid AS uuid)
+            RETURNING 1
+            """,
+            {"tid": thread["thread_id"], "aid": channel["account_id"]},
+            commit=True,
         )
+        result["switched"] = True
+        result["note"] = _im_switch_note(thread)
+    elif channel["channel"] == "telegram" and channel.get("telegram_user_id") and thread:
+        await execute_one(
+            """
+            UPDATE public.telegram_bot_links
+            SET thread_id = CAST(:tid AS uuid), updated_at = timezone('utc', now())
+            WHERE telegram_user_id = :uid
+            RETURNING 1
+            """,
+            {"tid": thread["thread_id"], "uid": channel["telegram_user_id"]},
+            commit=True,
+        )
+        result["switched"] = True
+        result["note"] = _im_switch_note(thread)
+    elif channel["channel"] == "feishu" and channel.get("feishu_open_id") and thread:
+        await execute_one(
+            """
+            UPDATE public.feishu_bot_links
+            SET thread_id = CAST(:tid AS uuid), updated_at = timezone('utc', now())
+            WHERE feishu_open_id = :oid
+            RETURNING 1
+            """,
+            {"tid": thread["thread_id"], "oid": channel["feishu_open_id"]},
+            commit=True,
+        )
+        result["switched"] = True
+        result["note"] = _im_switch_note(thread)
     else:
         result["switched"] = False
         result["note"] = (
@@ -796,3 +850,13 @@ async def switch_channel_conversation(
             else "The user is on the web; for a new task use start_conversation instead."
         )
     return result
+
+
+def _im_switch_note(thread: Optional[Dict[str, Any]]) -> str:
+    where = "a brand-new conversation" if not thread else f"「{thread['title']}」"
+    return (
+        "From the user's next message in this chat, they talk to "
+        + where
+        + " instead of you. They can say 回到总助理 or send /master to come back. "
+        + "start_conversation does not switch them; they stay with you until they say 切进去 or you call this tool."
+    )

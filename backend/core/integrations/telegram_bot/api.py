@@ -37,10 +37,14 @@ from core.integrations.bridge_reply_format import (
 )
 from core.integrations.bridge_thread_commands import (
     BRIDGE_MSG_NEW_THREAD,
+    ENTER_REPLY_MARKUP,
+    append_where,
     build_help_reply,
+    child_started_during_run,
     handle_thread_slash_command,
     is_help_command,
     parse_bridge_slash_command,
+    rewrite_navigation,
 )
 from core.agents import repo as agents_repo
 from core.services.db import execute_one, execute_one_read
@@ -99,6 +103,7 @@ class BridgeChatResponse(BaseModel):
     paired: bool = False
     thread_browser_url: Optional[str] = None
     files: List[BridgeOfficeFile] = Field(default_factory=list)
+    reply_markup: Optional[Dict[str, Any]] = None
 
 
 class BridgeChatStartResponse(BaseModel):
@@ -321,20 +326,26 @@ async def _bridge_build_success_reply(
     reply_text = await _latest_assistant_reply(str(tid), str(agent_run_id), raw)
     if not reply_text:
         reply_text = "（暂无文本回复，请在网页端查看详情。）"
+    link = await _get_link(peer)
+    account_id = str((link or {}).get("account_id") or "")
+    _max = 180_000
+    if len(reply_text) > _max:
+        reply_text = reply_text[: _max - 1] + "…"
+    if account_id:
+        reply_text = await append_where(reply_text, account_id, str(tid))
     reply_text, thread_browser_url = await append_thread_workspace_link(
         reply_text,
         str(tid),
         threads_repo=threads_repo,
         frontend_url=config.FRONTEND_URL,
     )
-    _max = 180_000
-    if len(reply_text) > _max:
-        reply_text = reply_text[: _max - 1] + "…"
 
     await _update_link_thread_resilient(peer, str(tid))
     run_row = await agents_repo.get_agent_run_status(str(agent_run_id))
     pay = out_of_credits_reply((run_row or {}).get("error"), config.FRONTEND_URL)
     if pay:
+        if account_id:
+            pay = await append_where(pay, account_id, str(tid))
         return BridgeChatResponse(
             ok=False,
             reply=pay,
@@ -342,14 +353,15 @@ async def _bridge_build_success_reply(
             agent_run_id=str(agent_run_id),
         )
     office_files: List[BridgeOfficeFile] = []
-    link = await _get_link(peer)
-    account_id = str((link or {}).get("account_id") or "")
     if account_id:
         try:
             office_files = await list_turn_office_files(account_id, str(tid), str(agent_run_id), raw)
         except Exception:
             logger.exception("[telegram_bot] office file list failed")
     office_files = await append_outbox_files(office_files, "telegram", peer, str(tid))
+    enter_markup = None
+    if account_id and await child_started_during_run(account_id, str(tid), str(agent_run_id)):
+        enter_markup = ENTER_REPLY_MARKUP
     return BridgeChatResponse(
         ok=True,
         reply=reply_text,
@@ -357,6 +369,7 @@ async def _bridge_build_success_reply(
         agent_run_id=str(agent_run_id),
         thread_browser_url=thread_browser_url,
         files=office_files,
+        reply_markup=enter_markup,
     )
 
 
@@ -378,18 +391,28 @@ async def _bridge_start_agent_for_chat(peer: str, raw: str) -> BridgeChatStartRe
             return BridgeChatStartResponse(ok=True, reply=build_help_reply(linked=False))
         return BridgeChatStartResponse(ok=False, reply=MSG_BIND_NEEDED)
 
+    raw, direct = await rewrite_navigation(link["account_id"], raw)
+    active_thread_id = link.get("thread_id")
+    if direct:
+        return BridgeChatStartResponse(
+            ok=True,
+            reply=await append_where(direct, link["account_id"], str(active_thread_id) if active_thread_id else None),
+            thread_id=str(active_thread_id) if active_thread_id else None,
+        )
+
     handled = await handle_thread_slash_command(
         raw,
         account_id=link["account_id"],
-        active_thread_id=link.get("thread_id"),
+        active_thread_id=active_thread_id,
         frontend_url=config.FRONTEND_URL,
         set_active_thread=lambda tid: _update_link_thread(peer, tid),
         clear_active_thread=lambda: _clear_link_thread(peer),
     )
     if handled is not None:
+        located_thread = handled.thread_id or (str(active_thread_id) if active_thread_id else None)
         return BridgeChatStartResponse(
             ok=True,
-            reply=handled.reply,
+            reply=await append_where(handled.reply, link["account_id"], located_thread),
             paired=False,
             thread_id=handled.thread_id,
             reply_markup=handled.reply_markup,

@@ -190,6 +190,20 @@ function sleep(ms) {
 
 const THREAD_BROWSER_FOOTER = "\n\n────────\nOpen in browser (files & full reply):\n";
 
+function callbackCommand(data) {
+  if (data === "master") return "/master";
+  if (data === "enter") return "/enter";
+  const match = /^use:(\d{1,2})$/.exec(String(data || ""));
+  return match ? `/use ${match[1]}` : "";
+}
+
+function mergeKeyboards(primary, extra) {
+  const rows = [];
+  if (primary?.inline_keyboard) rows.push(...primary.inline_keyboard);
+  if (extra?.inline_keyboard) rows.push(...extra.inline_keyboard);
+  return rows.length ? { inline_keyboard: rows } : undefined;
+}
+
 function stripThreadBrowserFooter(text, openUrl) {
   if (!openUrl || typeof text !== "string") return text;
   const suffix = `${THREAD_BROWSER_FOOTER}${openUrl}`;
@@ -335,6 +349,7 @@ async function applyFinalReply(chatId, previewMessageId, fin, telegramUserId) {
     openUrl && !deliverFiles
       ? { inline_keyboard: [[{ text: "Open in browser", url: openUrl }]] }
       : undefined;
+  const replyMarkup = mergeKeyboards(fin.reply_markup, browserKb);
 
   async function deliverFilesAfterText() {
     if (!deliverFiles) return;
@@ -368,14 +383,14 @@ async function applyFinalReply(chatId, previewMessageId, fin, telegramUserId) {
   if (previewMessageId != null) {
     try {
       await tgEditMessageText(chatId, previewMessageId, first, {
-        reply_markup: rest.length === 0 ? browserKb : undefined,
+        reply_markup: rest.length === 0 ? replyMarkup : undefined,
       });
-      if (rest.length === 0 && browserKb) {
+      if (rest.length === 0 && replyMarkup) {
         try {
           await tgPost("editMessageReplyMarkup", {
             chat_id: chatId,
             message_id: previewMessageId,
-            reply_markup: browserKb,
+            reply_markup: replyMarkup,
           });
         } catch (_) {}
       }
@@ -389,7 +404,7 @@ async function applyFinalReply(chatId, previewMessageId, fin, telegramUserId) {
     }
   } else {
     const payload = { chat_id: chatId, text: first };
-    if (rest.length === 0 && browserKb) payload.reply_markup = browserKb;
+    if (rest.length === 0 && replyMarkup) payload.reply_markup = replyMarkup;
     await tgPost("sendMessage", payload);
   }
 
@@ -398,7 +413,7 @@ async function applyFinalReply(chatId, previewMessageId, fin, telegramUserId) {
     const part = remaining.slice(0, chunkSize);
     remaining = remaining.slice(chunkSize);
     const payload = { chat_id: chatId, text: part };
-    if (browserKb && remaining.length === 0) payload.reply_markup = browserKb;
+    if (replyMarkup && remaining.length === 0) payload.reply_markup = replyMarkup;
     await tgPost("sendMessage", payload);
   }
   await deliverFilesAfterText();
@@ -548,6 +563,25 @@ export async function runTelegramBridge(signal) {
 
       for (const u of data.result || []) {
         offset = u.update_id + 1;
+        const callback = u.callback_query;
+        if (callback?.id) {
+          const command = callbackCommand(callback.data);
+          const chat = callback.message?.chat;
+          try {
+            await tgPost("answerCallbackQuery", { callback_query_id: callback.id });
+          } catch (err) {
+            console.error("[telegram] answerCallbackQuery:", err.message);
+          }
+          if (command && chat?.type === "private" && callback.from?.id) {
+            try {
+              await handleTelegramChatTurn(chat.id, String(callback.from.id), command);
+            } catch (err) {
+              console.error("[telegram] callback:", err.message);
+              await sendReply(chat.id, `服务暂时不可用：${String(err.message || err).slice(0, 500)}`);
+            }
+          }
+          continue;
+        }
         const msg = u.message || u.edited_message;
         if (!msg || msg.chat?.type !== "private") continue;
 

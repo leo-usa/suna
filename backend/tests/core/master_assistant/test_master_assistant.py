@@ -20,6 +20,7 @@ async def test_master_prompt_skips_the_worker_tool_catalog():
     assert "<master_assistant>" in text
     assert "史丹福机器人庞博士" in text
     assert "零基础精通ChatGPT" in text
+    assert "切进去" in text
     assert "WORKER PROMPT SHOULD NOT APPEAR" not in text
     assert "PRELOADED TOOL" not in text
     assert "Task Management" not in text
@@ -170,6 +171,25 @@ async def test_switch_new_from_qq_clears_link():
     assert ex.await_args.args[1]["tid"] is None
 
 
+async def test_switch_from_telegram_updates_link():
+    tid = "11111111-1111-1111-1111-111111111111"
+    thread = {"thread_id": tid, "project_id": "p1", "title": "旅行计划"}
+    with patch.object(service, "current_run_channel", AsyncMock(return_value={"channel": "telegram", "telegram_user_id": "tg1"})), \
+         patch.object(service, "_thread_for_account", AsyncMock(return_value=thread)), \
+         patch.object(service, "execute_one", AsyncMock(return_value={"?column?": 1})) as ex:
+        result = await service.switch_channel_conversation("a1", "m1", tid)
+    assert result["switched"] is True and result["title"] == "旅行计划"
+    sql, params = ex.await_args.args
+    assert "telegram_bot_links" in sql
+    assert params == {"tid": tid, "uid": "tg1"}
+
+
+async def test_current_run_channel_detects_feishu():
+    row = {"metadata": {"source": "feishu_bot", "feishu_open_id": "ou_1"}}
+    with patch.object(service, "execute_one", AsyncMock(return_value=row)):
+        assert await service.current_run_channel("m1") == {"channel": "feishu", "feishu_open_id": "ou_1"}
+
+
 async def test_switch_on_web_only_returns_button():
     tid = "11111111-1111-1111-1111-111111111111"
     thread = {"thread_id": tid, "project_id": "p1", "title": "旅行计划"}
@@ -203,6 +223,7 @@ def test_bridge_text_for_master_tools():
     card = tool_message_row_to_bridge_text(row("start_conversation", {
         "title": "调研", "execution_target": "cloud", "status": "running", "url": "https://dobby.now/thread/t1"}))
     assert "调研" in card and "https://dobby.now/thread/t1" in card
+    assert "切进去" in card and "总助理" in card
 
     page = tool_message_row_to_bridge_text(row("open_dobby_page", {
         "label": "充值", "url": "https://dobby.now/dashboard?settings=billing"}))

@@ -780,7 +780,12 @@ def _format_master_tool_for_bridge(name_l: str, data: Dict[str, Any]) -> str:
     status = _MASTER_STATUS_LABELS.get((data.get("status") or "").lower(), data.get("status") or "")
     url = (data.get("url") or "").strip()
     head = f"「{title}」（{target}）{status}".strip()
-    return f"{head}\n{url}" if url else head
+    lines = [head]
+    if url:
+        lines.append(url)
+    if name_l == "start_conversation":
+        lines.append("你还在总助理。要进入这个项目，回复「切进去」。")
+    return "\n".join(lines)
 
 
 def _body_chunks_merged(

@@ -34,7 +34,7 @@ class MasterAssistantTool(Tool):
         "type": "function",
         "function": {
             "name": "start_conversation",
-            "description": "Start a new Dobby conversation that works on a task in the background. The user gets a card with an Open button, and you will be notified automatically when it finishes. Use for any substantial task (research, coding, documents, files, browsing).",
+            "description": "Start a new Dobby conversation that works on a task in the background. The user stays in this master chat on WeChat, Feishu, and Telegram until they say 切进去. You will be notified automatically when it finishes. Use for any substantial task (research, coding, documents, files, browsing).",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -112,7 +112,7 @@ class MasterAssistantTool(Tool):
         "type": "function",
         "function": {
             "name": "switch_conversation",
-            "description": "Switch the user to another conversation (same as /use) or to a fresh new one (same as /new). In QQ, the user's following messages go to that conversation instead of you; on the web, the user gets a button to open it. Resolve names/numbers with list_recent_conversations first.",
+            "description": "Switch the user to another conversation (same as /use) or to a fresh new one (same as /new). On QQ, WeChat, Feishu, and Telegram their following messages go there; on the web they get a button. Do not call this just because you started a task. Resolve names/numbers with list_recent_conversations first. Use the latest started conversation when they say 切进去.",
             "parameters": {
                 "type": "object",
                 "properties": {

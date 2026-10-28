@@ -95,6 +95,50 @@ function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
+function callbackCommand(data) {
+  if (data === "master") return "/master";
+  if (data === "enter") return "/enter";
+  const match = /^use:(\d{1,2})$/.exec(String(data || ""));
+  return match ? `/use ${match[1]}` : "";
+}
+
+function feishuCard(text, replyMarkup, openUrl = "") {
+  const actions = [];
+  for (const row of replyMarkup?.inline_keyboard || []) {
+    for (const btn of row) {
+      const cmd = btn.callback_data ? callbackCommand(btn.callback_data) : "";
+      if (cmd) {
+        actions.push({
+          tag: "button",
+          text: { tag: "plain_text", content: String(btn.text || cmd).slice(0, 30) },
+          type: "default",
+          value: { cmd },
+        });
+      } else if (btn.url) {
+        actions.push({
+          tag: "button",
+          text: { tag: "plain_text", content: String(btn.text || "Open").slice(0, 30) },
+          type: "default",
+          url: btn.url,
+        });
+      }
+    }
+  }
+  if (openUrl) {
+    actions.push({
+      tag: "button",
+      text: { tag: "plain_text", content: "在浏览器打开" },
+      type: "default",
+      url: openUrl,
+    });
+  }
+  const elements = [{ tag: "markdown", content: String(text || " ").slice(0, 4000) }];
+  for (let i = 0; i < actions.length; i += 3) {
+    elements.push({ tag: "action", actions: actions.slice(i, i + 3) });
+  }
+  return { config: { wide_screen_mode: true }, elements };
+}
+
 function stripThreadBrowserFooter(text, openUrl) {
   if (!openUrl || typeof text !== "string") return text;
   const suffix = `${THREAD_BROWSER_FOOTER}${openUrl}`;
@@ -115,25 +159,50 @@ function parseTextContent(content) {
 async function sendText(chatId, text, options = {}) {
   if (!client) throw new Error("Feishu client not initialized");
   const openUrl = options.openUrl && String(options.openUrl).trim() ? String(options.openUrl).trim() : "";
+  const replyMarkup = options.replyMarkup && typeof options.replyMarkup === "object" ? options.replyMarkup : null;
   let body = typeof text === "string" ? text : JSON.stringify(text);
   if (openUrl) body = stripThreadBrowserFooter(body, openUrl);
   if (!body.trim() && openUrl) {
     body = `${THREAD_BROWSER_FOOTER}${openUrl}`;
   }
 
-  let rest = body;
-  while (rest.length > 0) {
-    const part = rest.slice(0, OUTBOUND_TEXT_CHUNK);
-    rest = rest.slice(OUTBOUND_TEXT_CHUNK);
-    const segment = rest.length === 0 && openUrl ? `${part}${THREAD_BROWSER_FOOTER}${openUrl}` : part;
+  if (replyMarkup && body.length <= OUTBOUND_TEXT_CHUNK) {
     await client.im.message.create({
       params: { receive_id_type: "chat_id" },
       data: {
         receive_id: chatId,
-        msg_type: "text",
-        content: JSON.stringify({ text: segment || " " }),
+        msg_type: "interactive",
+        content: JSON.stringify(feishuCard(body, replyMarkup, openUrl)),
       },
     });
+    return;
+  }
+
+  let rest = body;
+  while (rest.length > 0) {
+    const part = rest.slice(0, OUTBOUND_TEXT_CHUNK);
+    rest = rest.slice(OUTBOUND_TEXT_CHUNK);
+    const last = rest.length === 0;
+    const segment = last && openUrl && !replyMarkup ? `${part}${THREAD_BROWSER_FOOTER}${openUrl}` : part;
+    if (last && replyMarkup) {
+      await client.im.message.create({
+        params: { receive_id_type: "chat_id" },
+        data: {
+          receive_id: chatId,
+          msg_type: "interactive",
+          content: JSON.stringify(feishuCard(segment, replyMarkup, openUrl)),
+        },
+      });
+    } else {
+      await client.im.message.create({
+        params: { receive_id_type: "chat_id" },
+        data: {
+          receive_id: chatId,
+          msg_type: "text",
+          content: JSON.stringify({ text: segment || " " }),
+        },
+      });
+    }
     if (rest.length > 0) await sleep(300);
   }
 }
@@ -158,6 +227,7 @@ async function updateText(chatId, messageId, text) {
 
 async function applyFinalReply(chatId, previewMessageId, fin) {
   const openUrl = typeof fin.thread_browser_url === "string" ? fin.thread_browser_url.trim() : "";
+  const replyMarkup = fin.reply_markup && typeof fin.reply_markup === "object" ? fin.reply_markup : null;
   const reply = typeof fin.reply === "string" ? fin.reply : JSON.stringify(fin);
 
   if (!fin.ok) {
@@ -179,7 +249,7 @@ async function applyFinalReply(chatId, previewMessageId, fin) {
     const first = body.slice(0, OUTBOUND_TEXT_CHUNK);
     const updated = await updateText(chatId, previewMessageId, first);
     if (!updated) {
-      await sendText(chatId, body, { openUrl });
+      await sendText(chatId, body, { openUrl, replyMarkup });
       return;
     }
     const rest = body.slice(OUTBOUND_TEXT_CHUNK);
@@ -188,17 +258,21 @@ async function applyFinalReply(chatId, previewMessageId, fin) {
     } else if (openUrl) {
       await sendText(chatId, `${THREAD_BROWSER_FOOTER}${openUrl}`);
     }
+    if (replyMarkup) {
+      await sendText(chatId, "要进入刚才那个项目，点下面的按钮，或回复「切进去」。", { replyMarkup });
+    }
     return;
   }
 
-  await sendText(chatId, body, { openUrl });
+  await sendText(chatId, body, { openUrl, replyMarkup });
 }
 
 async function handleFeishuChatTurn(chatId, openId, text) {
   const started = await postBridgeChatStart(openId, text);
   if (!started.agent_run_id) {
     const reply = typeof started.reply === "string" ? started.reply : JSON.stringify(started);
-    await sendText(chatId, reply || "（无回复）");
+    const replyMarkup = started.reply_markup && typeof started.reply_markup === "object" ? started.reply_markup : null;
+    await sendText(chatId, reply || "（无回复）", { replyMarkup });
     return;
   }
 
@@ -324,6 +398,21 @@ export async function runFeishuBridge(signal) {
   });
 
   const eventDispatcher = new lark.EventDispatcher({}).register({
+    "card.action.trigger": async (data) => {
+      const openId = data?.operator?.open_id || data?.operator?.operator_id?.open_id;
+      const chatId = data?.context?.open_chat_id;
+      const cmd = typeof data?.action?.value?.cmd === "string" ? data.action.value.cmd.trim() : "";
+      if (openId && chatId && cmd) {
+        void enqueueUserTurn(openId, async () => {
+          try {
+            await handleFeishuChatTurn(chatId, openId, cmd);
+          } catch (err) {
+            console.error("[feishu] card:", err.message);
+          }
+        });
+      }
+      return { toast: { type: "info", content: "已收到" } };
+    },
     "im.message.receive_v1": async (data) => {
       const incoming = extractIncomingText(data);
       if (!incoming) return;

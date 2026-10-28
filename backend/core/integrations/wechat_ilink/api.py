@@ -39,10 +39,12 @@ from core.integrations.bridge_reply_format import (
     latest_bridge_reply_plain_text_via_poll,
 )
 from core.integrations.bridge_thread_commands import (
+    append_where,
     build_help_reply,
     handle_thread_slash_command,
     is_help_command,
     parse_bridge_slash_command,
+    rewrite_navigation,
 )
 from core.agents import repo as agents_repo
 from core.integrations.wechat_ilink.ilink_client import (
@@ -375,15 +377,16 @@ async def _bridge_build_success_reply(
     reply_text = await _latest_assistant_reply(str(tid), str(agent_run_id), raw)
     if not reply_text:
         reply_text = "（暂无文本回复，请在网页端查看详情。）"
+    _max = 180_000
+    if len(reply_text) > _max:
+        reply_text = reply_text[: _max - 1] + "…"
+    reply_text = await append_where(reply_text, account_id, str(tid))
     reply_text, thread_browser_url = await append_thread_workspace_link(
         reply_text,
         str(tid),
         threads_repo=threads_repo,
         frontend_url=config.FRONTEND_URL,
     )
-    _max = 180_000
-    if len(reply_text) > _max:
-        reply_text = reply_text[: _max - 1] + "…"
 
     await _update_session_thread_resilient(account_id, str(tid))
     run_row = await agents_repo.get_agent_run_status(str(agent_run_id))
@@ -391,7 +394,7 @@ async def _bridge_build_success_reply(
     if pay:
         return BridgeChatResponse(
             ok=False,
-            reply=pay,
+            reply=await append_where(pay, account_id, str(tid)),
             thread_id=str(tid),
             agent_run_id=str(agent_run_id),
         )
@@ -419,18 +422,28 @@ async def _bridge_start_agent_for_chat(account_id: str, peer: str, raw: str) -> 
             return BridgeChatStartResponse(ok=True, reply=build_help_reply(linked=False))
         return BridgeChatStartResponse(ok=False, reply=MSG_NOT_CONNECTED)
 
+    raw, direct = await rewrite_navigation(account_id, raw)
+    active_thread_id = session.get("thread_id")
+    if direct:
+        return BridgeChatStartResponse(
+            ok=True,
+            reply=await append_where(direct, account_id, str(active_thread_id) if active_thread_id else None),
+            thread_id=str(active_thread_id) if active_thread_id else None,
+        )
+
     handled = await handle_thread_slash_command(
         raw,
         account_id=account_id,
-        active_thread_id=session.get("thread_id"),
+        active_thread_id=active_thread_id,
         frontend_url=config.FRONTEND_URL,
         set_active_thread=lambda tid: _update_session_thread(account_id, tid),
         clear_active_thread=lambda: _clear_session_thread(account_id),
     )
     if handled is not None:
+        located_thread = handled.thread_id or (str(active_thread_id) if active_thread_id else None)
         return BridgeChatStartResponse(
             ok=True,
-            reply=handled.reply,
+            reply=await append_where(handled.reply, account_id, located_thread),
             thread_id=handled.thread_id,
         )
 
