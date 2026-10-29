@@ -81,20 +81,108 @@ def classify_rel_paths(rel_paths: Iterable[str]) -> str:
     return "mixed"
 
 
-def pick_entry_html(rel_paths: list[str]) -> str | None:
+def _mtime_sort_key(value: str | None) -> float:
+    """Best-effort parse of sandbox mod_time strings; unknown sorts as oldest."""
+    if not value:
+        return 0.0
+    text = str(value).strip()
+    if not text:
+        return 0.0
+    try:
+        return float(text)
+    except ValueError:
+        pass
+    from datetime import datetime
+
+    cleaned = text.replace("Z", "+00:00")
+    for candidate in (cleaned, text[:19]):
+        try:
+            return datetime.fromisoformat(candidate).timestamp()
+        except ValueError:
+            continue
+    return 0.0
+
+
+def pick_entry_html(
+    rel_paths: list[str],
+    mtimes: dict[str, str] | None = None,
+) -> str | None:
+    """Pick the HTML entry for a published site.
+
+    Prefers the newest index.html/htm at any depth (dedicated computers often keep
+    each project in a subdirectory), then presentation slides, then other HTML.
+    """
     normalized = [p.replace("\\", "/").lstrip("/") for p in rel_paths]
     html_files = [p for p in normalized if os.path.splitext(p.lower())[1] in HTML_EXTS]
     if not html_files:
         return None
-    for candidate in ("index.html", "index.htm"):
-        if candidate in html_files:
-            return candidate
-    presentations = [p for p in html_files if "presentations/" in p.lower()]
+
+    mtimes = mtimes or {}
+
+    def rank(path: str) -> tuple:
+        name = os.path.basename(path).lower()
+        is_index = name in ("index.html", "index.htm")
+        is_presentation = "presentations/" in path.lower() or "/slide_" in path.lower() or name.startswith("slide_")
+        # Lower tuple wins: indexes first, then newest, then shallower, then name.
+        return (
+            0 if is_index else (1 if is_presentation else 2),
+            -_mtime_sort_key(mtimes.get(path)),
+            path.count("/"),
+            path.lower(),
+        )
+
+    indexes = [p for p in html_files if os.path.basename(p).lower() in ("index.html", "index.htm")]
+    if indexes:
+        indexes.sort(key=rank)
+        return indexes[0]
+
+    presentations = [p for p in html_files if "presentations/" in p.lower() or "/slide_" in p.lower() or os.path.basename(p).lower().startswith("slide_")]
     if presentations:
-        presentations.sort()
+        presentations.sort(key=rank)
         return presentations[0]
-    html_files.sort()
+
+    html_files.sort(key=rank)
     return html_files[0]
+
+
+def site_root_for_entry(entry_html: str | None) -> str:
+    if not entry_html:
+        return ""
+    return os.path.dirname(entry_html.replace("\\", "/").lstrip("/")).strip("/")
+
+
+def filter_files_for_entry(
+    rel_paths: list[str],
+    entry_html: str | None,
+) -> list[str]:
+    """Keep only files belonging to the chosen site.
+
+    Nested entry `report/index.html` → only `report/**`.
+    Root entry → keep root files and folders that are not themselves other sites
+    (directories that contain their own index.html).
+    """
+    normalized = [p.replace("\\", "/").lstrip("/") for p in rel_paths]
+    if not entry_html:
+        return normalized
+    entry = entry_html.replace("\\", "/").lstrip("/")
+    folder = site_root_for_entry(entry)
+    if folder:
+        prefix = folder + "/"
+        return [p for p in normalized if p == entry or p == folder or p.startswith(prefix)]
+
+    other_site_roots: set[str] = set()
+    for path in normalized:
+        base = os.path.basename(path).lower()
+        if base in ("index.html", "index.htm") and "/" in path:
+            other_site_roots.add(path.split("/", 1)[0])
+
+    kept: list[str] = []
+    for path in normalized:
+        top = path.split("/", 1)[0]
+        if "/" in path and top in other_site_roots:
+            continue
+        kept.append(path)
+    return kept
 
 
 def public_storage_url(supabase_url: str, bucket: str, path: str) -> str:

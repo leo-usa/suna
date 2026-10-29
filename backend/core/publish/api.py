@@ -17,9 +17,11 @@ from core.publish.artifacts import (
     IMAGE_EXTS,
     VIDEO_EXTS,
     classify_rel_paths,
+    filter_files_for_entry,
     pick_entry_html,
     public_storage_url,
     should_skip_rel_path,
+    site_root_for_entry,
 )
 from core.publish.language import detect_language_from_fields
 from core.publish.slug import slugify_title
@@ -127,9 +129,16 @@ def _extract_text(content: Any) -> str:
     return str(content)
 
 
-async def _list_workspace_files(sandbox) -> list[tuple[str, str]]:
-    files: list[tuple[str, str]] = []
-    stack = ["/workspace"]
+async def _walk_workspace(
+    sandbox,
+    root: str = "/workspace",
+    *,
+    html_only: bool = False,
+    max_files: int | None = None,
+) -> list[tuple[str, str, str]]:
+    """Walk sandbox files under root. Returns (full_path, rel_path, mod_time)."""
+    files: list[tuple[str, str, str]] = []
+    stack = [root]
     while stack:
         current = stack.pop()
         try:
@@ -143,15 +152,52 @@ async def _list_workspace_files(sandbox) -> list[tuple[str, str]]:
                 continue
             full_path = f"{current.rstrip('/')}/{name}"
             rel_path = full_path[len("/workspace/"):] if full_path.startswith("/workspace/") else full_path
+            rel_path = rel_path.replace("\\", "/")
             if should_skip_rel_path(rel_path):
                 continue
             if getattr(entry, "is_dir", False):
                 stack.append(full_path)
-            else:
-                files.append((full_path, rel_path.replace("\\", "/")))
-            if len(files) >= MAX_FILES:
+                continue
+            ext = os.path.splitext(rel_path.lower())[1]
+            if html_only and ext not in {".html", ".htm"}:
+                continue
+            mod_time = str(getattr(entry, "mod_time", "") or "")
+            files.append((full_path, rel_path, mod_time))
+            if max_files is not None and len(files) >= max_files:
                 return files
     return files
+
+
+async def _list_workspace_files(sandbox) -> list[tuple[str, str]]:
+    """Discover the active site on a (possibly shared dedicated) workspace.
+
+    Dedicated computers keep many projects under /workspace. A naive walk hits
+    MAX_FILES on old folders (e.g. video/) and never reaches the new index.html.
+    We first find HTML entries, pick the best one, then upload only that site.
+    """
+    html_files = await _walk_workspace(sandbox, html_only=True, max_files=500)
+    if not html_files:
+        # No HTML — fall back to a bounded full walk for image/doc publishes.
+        return [(full, rel) for full, rel, _ in await _walk_workspace(sandbox, max_files=MAX_FILES)]
+
+    mtimes = {rel: mod for _, rel, mod in html_files}
+    entry = pick_entry_html([rel for _, rel, _ in html_files], mtimes=mtimes)
+    if not entry:
+        return [(full, rel) for full, rel, _ in await _walk_workspace(sandbox, max_files=MAX_FILES)]
+
+    site_root = site_root_for_entry(entry)
+    collect_root = f"/workspace/{site_root}" if site_root else "/workspace"
+    site_files = await _walk_workspace(sandbox, collect_root, max_files=MAX_FILES)
+
+    if site_root:
+        logger.info(f"[PUBLISH] Scoped to site '{site_root}/' entry={entry} files={len(site_files)}")
+        return [(full, rel) for full, rel, _ in site_files]
+
+    # Root-level entry: drop sibling project folders that have their own index.html.
+    allowed = set(filter_files_for_entry([rel for _, rel, _ in site_files], entry))
+    filtered = [(full, rel) for full, rel, _ in site_files if rel in allowed]
+    logger.info(f"[PUBLISH] Root entry={entry} files={len(filtered)} (filtered from {len(site_files)})")
+    return filtered
 
 
 def _inject_base_href(html_content: str, base_href: str) -> str:
