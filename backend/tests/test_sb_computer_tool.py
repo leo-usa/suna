@@ -383,7 +383,7 @@ def test_format_action_log_names_clicked_targets():
         ["Focus search box"],
     )
     assert observation.startswith("Actions so far")
-    assert "Current Mac screen" in observation
+    assert "Current screen" in observation
     assert screen_observation_text() == SCREEN_OBSERVATION_TEXT
 
 

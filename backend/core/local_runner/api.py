@@ -167,6 +167,7 @@ async def local_runner_ws(websocket: WebSocket):
         device_id = found.data["device_id"]
         preview_port = int(found.data.get("preview_port") or proto.DEFAULT_PREVIEW_PORT)
         host_tools: dict = {}
+        platform = None
 
         hello = await websocket.receive_json()
         if isinstance(hello, dict) and hello.get("type") == proto.HELLO_TYPE:
@@ -185,7 +186,9 @@ async def local_runner_ws(websocket: WebSocket):
         async def send(message: dict):
             await websocket.send_json(message)
 
-        conn = await register_connection(device_id, send, preview_port, host_tools=host_tools)
+        conn = await register_connection(
+            device_id, send, preview_port, host_tools=host_tools, platform=platform if isinstance(platform, str) else None
+        )
         await websocket.send_json({"type": proto.READY_TYPE, "device_id": device_id})
         logger.info(f"[LOCAL_RUNNER] Device {device_id} connected")
 
@@ -196,7 +199,12 @@ async def local_runner_ws(websocket: WebSocket):
             msg_type = message.get("type")
             if msg_type == proto.PING_TYPE:
                 live = get_connection(device_id)
-                await mark_online(device_id, preview_port, host_tools=(live.host_tools if live else host_tools))
+                await mark_online(
+                    device_id,
+                    preview_port,
+                    host_tools=(live.host_tools if live else host_tools),
+                    platform=platform if isinstance(platform, str) else None,
+                )
                 await websocket.send_json({"type": proto.PONG_TYPE})
                 continue
             if msg_type == proto.EVENT_TYPE:

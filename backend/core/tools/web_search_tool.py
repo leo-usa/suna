@@ -323,8 +323,20 @@ IMPORTANT: For batch searches, pass query as a native array of strings, NOT as a
             answer = search_response.get('answer', '')
             raw_images = search_response.get('images', [])
             
-            # Enrich images with OCR and dimensions
-            enriched_images = await self._enrich_images_with_metadata(raw_images)
+            # Image OCR can hang on Replicate or slow hosts; never block the search forever.
+            try:
+                enriched_images = await asyncio.wait_for(
+                    self._enrich_images_with_metadata(raw_images),
+                    timeout=self.IMAGE_ENRICH_BUDGET_SEC,
+                )
+            except asyncio.TimeoutError:
+                logging.warning(
+                    f"[WebSearch] Image enrichment timed out after {self.IMAGE_ENRICH_BUDGET_SEC}s for '{query}'; returning URLs only"
+                )
+                enriched_images = self._plain_image_urls(raw_images)
+            except Exception as enrich_err:
+                logging.warning(f"[WebSearch] Image enrichment failed for '{query}': {enrich_err}")
+                enriched_images = self._plain_image_urls(raw_images)
             
             # Consider search successful if we have either results OR an answer
             success = len(results) > 0 or (answer and answer.strip())
@@ -355,21 +367,34 @@ IMPORTANT: For batch searches, pass query as a native array of strings, NOT as a
                 "error": error_message
             }
 
+    MAX_IMAGES_TO_ENRICH = 3
+    IMAGE_DOWNLOAD_TIMEOUT_SEC = 8.0
+    IMAGE_DESCRIBE_TIMEOUT_SEC = 8.0
+    IMAGE_ENRICH_BUDGET_SEC = 20.0
+
+    @staticmethod
+    def _plain_image_urls(images: list) -> list:
+        plain = []
+        for img in images or []:
+            if isinstance(img, str) and img:
+                plain.append({"url": img, "width": 0, "height": 0, "description": ""})
+            elif isinstance(img, dict) and img.get("url"):
+                plain.append({
+                    "url": img["url"],
+                    "width": int(img.get("width") or 0),
+                    "height": int(img.get("height") or 0),
+                    "description": str(img.get("description") or ""),
+                })
+        return plain
+
     async def _enrich_images_with_metadata(self, images: list) -> list:
         """
-        Enrich image URLs with OCR text and dimensions.
-        Downloads all images and runs OCR IN PARALLEL for speed.
-        
-        Args:
-            images: List of image URLs (strings) or image objects from Tavily
-            
-        Returns:
-            List of enriched image objects with url, width, height, and description
+        Enrich a few image URLs with dimensions and a short description.
+        Caps concurrency and times out so a hung Replicate or host cannot stall search.
         """
         if not images:
             return []
         
-        # Collect valid image URLs
         valid_images = []
         for img in images:
             if isinstance(img, str):
@@ -384,15 +409,16 @@ IMPORTANT: For batch searches, pass query as a native array of strings, NOT as a
         
         if not valid_images:
             return []
+
+        skipped = valid_images[self.MAX_IMAGES_TO_ENRICH:]
+        valid_images = valid_images[: self.MAX_IMAGES_TO_ENRICH]
         
         logging.info(f"[WebSearch] Starting parallel image enrichment for {len(valid_images)} images")
         
-        # Process all images in parallel
         async with get_http_client() as client:
             tasks = [self._enrich_single_image(img_url, client) for img_url in valid_images]
             results = await asyncio.gather(*tasks, return_exceptions=True)
         
-        # Collect results, handling any exceptions
         enriched = []
         for i, result in enumerate(results):
             if isinstance(result, Exception):
@@ -405,6 +431,9 @@ IMPORTANT: For batch searches, pass query as a native array of strings, NOT as a
                 })
             else:
                 enriched.append(result)
+
+        for url in skipped:
+            enriched.append({"url": url, "width": 0, "height": 0, "description": ""})
         
         logging.info(f"[WebSearch] Completed parallel enrichment for {len(enriched)} images")
         return enriched
@@ -413,13 +442,6 @@ IMPORTANT: For batch searches, pass query as a native array of strings, NOT as a
         """
         Download and enrich a single image with dimensions and description.
         Uses Moondream2 vision model for image understanding.
-        
-        Args:
-            img_url: URL of the image
-            client: HTTP client for downloading
-            
-        Returns:
-            Enriched image data dict
         """
         image_data = {
             "url": img_url,
@@ -433,14 +455,18 @@ IMPORTANT: For batch searches, pass query as a native array of strings, NOT as a
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
             }
             
-            response = await client.get(img_url, headers=headers, timeout=15.0, follow_redirects=True)
+            response = await client.get(
+                img_url,
+                headers=headers,
+                timeout=self.IMAGE_DOWNLOAD_TIMEOUT_SEC,
+                follow_redirects=True,
+            )
             
             if response.status_code == 200:
                 image_bytes = response.content
                 content_type = response.headers.get("content-type", "")
                 
                 if content_type.startswith("image/"):
-                    # Get dimensions using PIL
                     try:
                         from PIL import Image
                         from io import BytesIO
@@ -451,9 +477,14 @@ IMPORTANT: For batch searches, pass query as a native array of strings, NOT as a
                     except Exception as dim_err:
                         logging.debug(f"[WebSearch] Could not get dimensions: {dim_err}")
                     
-                    # Get image description using Moondream2
-                    description = await self._describe_image(image_bytes, content_type)
-                    image_data["description"] = description
+                    try:
+                        description = await asyncio.wait_for(
+                            self._describe_image(image_bytes, content_type),
+                            timeout=self.IMAGE_DESCRIBE_TIMEOUT_SEC,
+                        )
+                        image_data["description"] = description
+                    except asyncio.TimeoutError:
+                        logging.warning(f"[WebSearch] Moondream2 timed out for {img_url[:80]}")
         
         except Exception as e:
             logging.debug(f"[WebSearch] Error enriching image {img_url[:50]}...: {str(e)[:100]}")
@@ -463,18 +494,9 @@ IMPORTANT: For batch searches, pass query as a native array of strings, NOT as a
     async def _describe_image(self, image_bytes: bytes, content_type: str) -> str:
         """
         Get image description using Moondream2 vision model.
-        Runs in ~2 seconds on Replicate GPU, includes text extraction.
         Skipped if REPLICATE_API_TOKEN is not configured.
-        
-        Args:
-            image_bytes: Raw image bytes
-            content_type: MIME type of the image
-            
-        Returns:
-            Image description, or empty string if processing fails or token not configured
         """
         try:
-            # Skip if Replicate token not configured
             from core.utils.config import get_config
             replicate_token = get_config().REPLICATE_API_TOKEN
             if not replicate_token:
@@ -486,11 +508,9 @@ IMPORTANT: For batch searches, pass query as a native array of strings, NOT as a
             
             logging.debug(f"[WebSearch] Running Moondream2 on image ({len(image_bytes)} bytes)")
             
-            # Convert to base64 data URL
             image_b64 = base64.b64encode(image_bytes).decode("utf-8")
             data_url = f"data:{content_type};base64,{image_b64}"
             
-            # Call Moondream2 vision model
             def run_moondream(data_url: str) -> str:
                 output = replicate.run(
                     "lucataco/moondream2:72ccb656353c348c1385df54b237eeb7bfa874bf11486cf0b9473e691b662d31",
@@ -499,7 +519,6 @@ IMPORTANT: For batch searches, pass query as a native array of strings, NOT as a
                         "prompt": "Describe this image in detail. Include any text visible in the image."
                     }
                 )
-                # Output is a generator, consume it to get the full text
                 if hasattr(output, '__iter__') and not isinstance(output, (str, bytes)):
                     return "".join(str(chunk) for chunk in output)
                 return str(output) if output else ""

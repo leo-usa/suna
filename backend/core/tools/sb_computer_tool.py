@@ -16,7 +16,7 @@ from core.utils.s3_upload_utils import upload_base64_image
 # Staging/prod may not have browser-screenshots. `share` exists and is public.
 SCREENSHOT_BUCKETS = ("browser-screenshots", "share")
 SCREEN_OBSERVATION_TEXT = (
-    "Current Mac screen after the last action (observation only, not a new user request). "
+    "Current screen after the last action (observation only, not a new user request). "
     "The image is only for choosing the next unused control and its coordinates. "
     "If a computer action failed, do not retry that same action. "
     "Ignore the Dobby window if it appears."
@@ -177,7 +177,7 @@ async def screenshot_url_for_ui(b64: str) -> Optional[str]:
 
 @tool_metadata(
     display_name="This computer",
-    description="See the screen and control the mouse and keyboard on this Mac",
+    description="See the screen and control the mouse and keyboard on this computer",
     icon="Monitor",
     color="bg-zinc-100 dark:bg-zinc-800/50",
     weight=55,
@@ -185,12 +185,12 @@ async def screenshot_url_for_ui(b64: str) -> Optional[str]:
     usage_guide="""
 ## This computer — local screen, mouse, and keyboard
 
-These tools control the real Mac desktop. They are already loaded. Do not call initialize_tools.
+These tools control the real desktop on this computer. They are already loaded. Do not call initialize_tools.
 
 - computer_screenshot: first look only, when you have no screenshot yet
 - computer_click: click screenshot-pixel coordinates. Requires intent.
 - computer_type: type into the focused field. Requires intent. replace overwrites a field; submit types and presses return
-- computer_key: press keys such as tab, escape, cmd+c
+- computer_key: press keys such as tab, escape, cmd+c on Mac, ctrl+c on Windows
 - computer_scroll: scroll at a point on the list you want to move. Omit dy. One call already scrolls one page (last visible item to the top).
 - computer_open: open an app or URL, then screenshot
 
@@ -210,7 +210,7 @@ Rules:
 """,
 )
 class SandboxComputerTool(SandboxToolsBase):
-    """Control the user's Mac when the project is running locally."""
+    """Control the user's computer when the project is running locally."""
 
     def __init__(self, project_id: str, thread_manager: ThreadManager, thread_id: Optional[str] = None):
         super().__init__(project_id, thread_manager)
@@ -355,7 +355,7 @@ class SandboxComputerTool(SandboxToolsBase):
         "type": "function",
         "function": {
             "name": "computer_screenshot",
-            "description": "Capture the Mac screen only when you do not already have one. Click, type, key, scroll, and open already return a screenshot — use that instead of calling this. If the user only asked for a screenshot, take exactly one and stop.",
+            "description": "Capture this computer's screen only when you do not already have one. Click, type, key, scroll, and open already return a screenshot — use that instead of calling this. If the user only asked for a screenshot, take exactly one and stop.",
             "parameters": {
                 "type": "object",
                 "properties": {},
@@ -393,7 +393,7 @@ class SandboxComputerTool(SandboxToolsBase):
         "type": "function",
         "function": {
             "name": "computer_click",
-            "description": "Click the Mac screen at screenshot-pixel coordinates from the last computer_* screenshot. Do not call computer_screenshot first. Set intent to what you are about to do and which visible control you will click. That sentence is kept after the screenshot is discarded.",
+            "description": "Click this computer's screen at screenshot-pixel coordinates from the last computer_* screenshot. Do not call computer_screenshot first. Set intent to what you are about to do and which visible control you will click. That sentence is kept after the screenshot is discarded.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -439,7 +439,7 @@ class SandboxComputerTool(SandboxToolsBase):
         "type": "function",
         "function": {
             "name": "computer_type",
-            "description": "Type text into the focused field on this Mac. Always click that field first. Set intent to the field and why you are typing. Set replace true to overwrite existing text. Set submit true to type and press return in one step. Do not follow this with computer_key return.",
+            "description": "Type text into the focused field on this computer. Always click that field first. Set intent to the field and why you are typing. Set replace true to overwrite existing text. Set submit true to type and press return in one step. Do not follow this with computer_key return.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -490,11 +490,11 @@ class SandboxComputerTool(SandboxToolsBase):
         "type": "function",
         "function": {
             "name": "computer_key",
-            "description": "Press a key or key combo on this Mac. Examples: tab, escape, space, cmd+c, cmd+v, cmd+space, cmd+tab. To type text and press return, use computer_type with submit true — do not type and then call this with return. To replace field text, prefer computer_type with replace true instead of cmd+a plus a second type.",
+            "description": "Press a key or key combo on this computer. On Mac use cmd (cmd+c, cmd+v, cmd+space). On Windows use ctrl (ctrl+c, ctrl+v, ctrl+a), not cmd. To type text and press return, use computer_type with submit true — do not type and then call this with return. To replace field text, prefer computer_type with replace true instead of select-all plus a second type.",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "key": {"type": "string", "description": "Key name or combo such as return, tab, escape, cmd+c"},
+                    "key": {"type": "string", "description": "Key name or combo such as return, tab, escape, cmd+c on Mac, ctrl+c on Windows"},
                 },
                 "required": ["key"],
                 "additionalProperties": False,
@@ -570,7 +570,7 @@ class SandboxComputerTool(SandboxToolsBase):
         "type": "function",
         "function": {
             "name": "computer_open",
-            "description": "Open or activate a URL or macOS app on this computer, then return a screenshot. Examples: WeChat, 微信, Safari, Google Chrome, https://example.com. Call this by itself before clicking or typing.",
+            "description": "Open or activate a URL or an app on this computer, then return a screenshot. Examples: WeChat, 微信, Safari, Notepad, Google Chrome, https://example.com. Call this by itself before clicking or typing.",
             "parameters": {
                 "type": "object",
                 "properties": {

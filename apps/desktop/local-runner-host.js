@@ -120,8 +120,21 @@ function runnerScript() {
 }
 
 function runnerPids() {
-  if (process.platform === 'win32') return [];
   const script = runnerScript();
+  if (process.platform === 'win32') {
+    try {
+      const needle = script.replace(/'/g, "''");
+      const command = `Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -and $_.CommandLine.Contains('${needle}') } | ForEach-Object { $_.ProcessId }`;
+      const out = execFileSync(
+        'powershell.exe',
+        ['-NoProfile', '-NonInteractive', '-Command', command],
+        { encoding: 'utf8', windowsHide: true },
+      );
+      return String(out || '').split(/\s+/).map((part) => parseInt(part, 10)).filter((pid) => pid > 0 && pid !== process.pid);
+    } catch (_) {
+      return [];
+    }
+  }
   try {
     const out = execFileSync('/bin/ps', ['-axo', 'pid=,command='], { encoding: 'utf8' });
     const pids = [];
@@ -187,8 +200,6 @@ const SCREEN_CAPTURE_HELP = process.platform === 'win32'
   ? 'Screen capture is not available. Allow Dobby to capture the screen if Windows asks, then quit and reopen the app.'
   : 'Screen capture is not available. In System Settings → Privacy & Security → Screen & System Audio Recording, enable Dobby, then fully quit (Cmd+Q) and reopen the app.';
 const ACCESSIBILITY_HELP = 'macOS Accessibility permission is required. Enable Dobby in System Settings → Privacy & Security → Accessibility, then fully quit (Cmd+Q) and reopen the app.';
-const WINDOWS_COMPUTER_HELP = 'Click, type, and open apps on this computer are only available on macOS right now. File and command tools still work here.';
-
 function encodeScreenshot(image, screenWidth, screenHeight, scale) {
   const size = image && image.getSize ? image.getSize() : { width: 0, height: 0 };
   if (!size.width || !size.height || size.width < 32 || size.height < 32) {
@@ -354,9 +365,6 @@ function ensureAccessibility() {
 async function handleComputerRequest(kind, payload) {
   console.log('[computer]', kind, 'start');
   try {
-    if (process.platform === 'win32' && kind !== 'screenshot') {
-      throw new Error(WINDOWS_COMPUTER_HELP);
-    }
     if (kind === 'open') {
       const result = await withTimeout(runComputerAction('open', payload), 8000, 'open');
       console.log('[computer]', kind, 'done');

@@ -99,6 +99,7 @@ async def register_connection(
     send: Callable[[dict], Any],
     preview_port: int,
     host_tools: Optional[dict] = None,
+    platform: Optional[str] = None,
 ) -> RunnerConnection:
     async with _connections_lock:
         existing = _connections.get(device_id)
@@ -106,7 +107,7 @@ async def register_connection(
             await existing.stop()
         conn = RunnerConnection(device_id, send, preview_port, host_tools=host_tools)
         _connections[device_id] = conn
-    await mark_online(device_id, preview_port, host_tools)
+    await mark_online(device_id, preview_port, host_tools, platform=platform)
     await conn.start_inbox()
     return conn
 
@@ -128,10 +129,17 @@ def get_connection(device_id: str) -> Optional[RunnerConnection]:
     return _connections.get(device_id)
 
 
-async def mark_online(device_id: str, preview_port: int, host_tools: Optional[dict] = None) -> None:
+async def mark_online(
+    device_id: str,
+    preview_port: int,
+    host_tools: Optional[dict] = None,
+    platform: Optional[str] = None,
+) -> None:
     payload: dict[str, Any] = {"preview_port": preview_port}
     if host_tools:
         payload["host_tools"] = host_tools
+    if platform:
+        payload["platform"] = platform
     await redis.set(ONLINE_KEY.format(device_id=device_id), json.dumps(payload), ex=ONLINE_TTL_SECONDS)
 
 

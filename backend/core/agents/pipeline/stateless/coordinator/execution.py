@@ -5,7 +5,11 @@ from core.utils.config import config
 from core.utils.logger import logger
 from core.agentpress.processor_config import ProcessorConfig
 from core.agentpress.thread_manager.services.execution.llm_executor import LLMExecutor
-from core.agentpress.prompt_caching import add_cache_control
+from core.agentpress.prompt_caching import (
+    add_cache_control,
+    mark_stable_conversation_prefix,
+    supports_prompt_caching,
+)
 from core.agents.pipeline.ux_streaming import stream_context_usage, stream_summarizing
 from core.agents.pipeline.stateless.context.manager import ContextManager
 from core.agents.pipeline.stateless.context.archiver import ContextArchiver, format_archive_summary
@@ -21,6 +25,11 @@ class ExecutionEngine:
     def __init__(self, state, response_processor):
         self._state = state
         self._response_processor = response_processor
+
+    def _with_conversation_cache(self, messages: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        if not supports_prompt_caching(self._state.model_name):
+            return messages
+        return mark_stable_conversation_prefix(messages)
 
     @staticmethod
     async def fast_token_count(
@@ -531,6 +540,7 @@ class ExecutionEngine:
         prepared_retry = [cached_system] + retry_messages
 
         prepared_retry = self._repair_tool_message_structure(prepared_retry, log_prefix="Retry path")
+        prepared_retry = self._with_conversation_cache(prepared_retry)
 
         retry_messages = prepared_retry[1:]
         retry_tokens = await self.fast_token_count(
@@ -656,6 +666,7 @@ class ExecutionEngine:
             return
         
         prepared = self._repair_tool_message_structure(prepared, log_prefix="Main path")
+        prepared = self._with_conversation_cache(prepared)
         
         if did_compress:
             await stream_context_usage(

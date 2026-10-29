@@ -392,8 +392,12 @@ async function openTarget(target) {
 
 async function runComputerAction(kind, payload) {
   payload = payload || {};
+  if (process.platform === 'win32') {
+    const win = require('./computer-win');
+    return win.runWindowsComputerAction(kind, payload, { mapToScreen, scrollTicks });
+  }
   if (process.platform !== 'darwin') {
-    throw new Error('Computer control (click, type, and open apps) is only available on macOS right now. Use the cloud sandbox, or file and command tools on this computer.');
+    throw new Error('Computer control (click, type, and open apps) is only available on macOS and Windows right now. Use the cloud sandbox, or file and command tools on this computer.');
   }
   if (kind !== 'open') await ensureLastAppFront();
   switch (kind) {

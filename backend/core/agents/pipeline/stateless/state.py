@@ -28,7 +28,8 @@ def _is_computer_screen_observation(msg: Dict[str, Any]) -> bool:
         if part.get("type") == "text":
             text = str(part.get("text") or "")
             if (
-                text.startswith("Current Mac screen")
+                text.startswith("Current screen")
+                or text.startswith("Current Mac screen")
                 or text.startswith("Actions so far")
                 or text.strip() == "[Screenshot of this computer]"
             ):

@@ -566,16 +566,18 @@ Multiple parallel tool calls:
     @staticmethod
     async def _append_local_runtime(system_content: str, local_device_id: Optional[str]) -> str:
         host_tools = None
+        platform = None
         if local_device_id:
             try:
                 from core.local_runner.registry import get_online_info
                 info = await get_online_info(local_device_id)
                 if info:
                     host_tools = info.get("host_tools")
+                    platform = info.get("platform")
             except Exception as e:
                 logger.debug(f"Could not load host tools for {local_device_id}: {e}")
         from core.local_runner.runtime_prompt import local_runtime_prompt
-        return system_content + local_runtime_prompt(host_tools)
+        return system_content + local_runtime_prompt(host_tools, platform)
     
     @staticmethod
     async def _fetch_user_context_data(user_id: Optional[str], client) -> Optional[str]:

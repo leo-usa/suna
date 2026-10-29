@@ -524,7 +524,7 @@ function connect() {
         'process',
         'pty',
         'preview',
-        ...(process.platform === 'darwin' ? ['computer_use'] : []),
+        ...(process.platform === 'darwin' || process.platform === 'win32' ? ['computer_use'] : []),
       ],
       preview_port: PREVIEW_PORT,
       platform: process.platform,

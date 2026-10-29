@@ -164,6 +164,38 @@ def calculate_optimal_cache_threshold(
     return final_threshold
 
 
+def _is_tool_result_message(message: Dict[str, Any]) -> bool:
+    return message.get("role") == "tool" or "tool_call_id" in message
+
+
+def mark_stable_conversation_prefix(messages: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Second cache breakpoint, on the last message before the new tail.
+
+    messages[0] is the system prompt and already has the first breakpoint.
+    A new user message, or a trailing run of tool results, stays after this
+    marker so the prefix matches the previous request.
+    """
+    if len(messages) < 3:
+        return messages
+
+    marker_at = len(messages) - 1
+    if _is_tool_result_message(messages[marker_at]):
+        while marker_at > 0 and _is_tool_result_message(messages[marker_at]):
+            marker_at -= 1
+    else:
+        marker_at -= 1
+
+    while marker_at > 0 and _is_tool_result_message(messages[marker_at]):
+        marker_at -= 1
+
+    if marker_at <= 0:
+        return messages
+
+    updated = list(messages)
+    updated[marker_at] = add_cache_control(updated[marker_at])
+    return updated
+
+
 def add_cache_control(message: Dict[str, Any]) -> Dict[str, Any]:
     from copy import deepcopy
     cached_msg = deepcopy(message)
