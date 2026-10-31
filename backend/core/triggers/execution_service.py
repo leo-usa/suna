@@ -75,21 +75,58 @@ class ExecutionService:
             )
             
             from core.agents.api import start_agent_run
+            from .trigger_service import get_trigger_service
             
             model_name = trigger_result.model if hasattr(trigger_result, 'model') and trigger_result.model else "dobby/basic"
+
+            master_thread_id = None
+            trigger_name = None
+            try:
+                trigger = await get_trigger_service(self._db).get_trigger(trigger_event.trigger_id)
+                if trigger:
+                    trigger_name = trigger.name
+                    cfg = trigger.config or {}
+                    master_thread_id = cfg.get("master_thread_id") or None
+                    if not model_name or model_name == "dobby/basic":
+                        model_name = cfg.get("model") or model_name
+            except Exception as e:
+                logger.debug(f"Could not load trigger {trigger_event.trigger_id} for master link: {e}")
+
+            metadata = {
+                "trigger_execution": True,
+                "trigger_id": trigger_event.trigger_id,
+                "trigger_variables": trigger_result.execution_variables,
+            }
+            if master_thread_id:
+                metadata["source"] = "master_assistant"
+                metadata["master_thread_id"] = str(master_thread_id)
             
             result = await start_agent_run(
                 account_id=account_id,
                 prompt=rendered_prompt,
                 agent_id=agent_id,
                 model_name=model_name,
-                metadata={
-                    "trigger_execution": True,
-                    "trigger_id": trigger_event.trigger_id,
-                    "trigger_variables": trigger_result.execution_variables
-                },
+                metadata=metadata,
                 skip_limits_check=True
             )
+
+            if master_thread_id and result.get("thread_id") and result.get("agent_run_id"):
+                try:
+                    from core.master_assistant.service import register_trigger_child_run
+
+                    await register_trigger_child_run(
+                        account_id=account_id,
+                        master_thread_id=str(master_thread_id),
+                        child_thread_id=str(result["thread_id"]),
+                        child_project_id=str(result.get("project_id") or "") or None,
+                        agent_run_id=str(result["agent_run_id"]),
+                        title=trigger_name or "Scheduled task",
+                    )
+                except Exception as e:
+                    logger.warning(
+                        f"Failed to register trigger run with master assistant: {e}",
+                        exc_info=True,
+                    )
             
             return {
                 "success": True,

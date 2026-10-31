@@ -163,7 +163,7 @@ class MasterAssistantTool(Tool):
         "type": "function",
         "function": {
             "name": "check_conversation",
-            "description": "Get the status and latest reply of a conversation started by the master assistant. Also shows the user a card with an Open button.",
+            "description": "Get the status and latest reply of a conversation started by the master assistant. Also shows the user a card with an Open button. Prefer inspect_conversation for any of the user's older projects from list_recent_conversations.",
             "parameters": {
                 "type": "object",
                 "properties": {"thread_id": {"type": "string"}},
@@ -179,6 +179,114 @@ class MasterAssistantTool(Tool):
             return self.success_response(result)
         except Exception as e:
             return self.fail_response(f"Could not check the conversation: {e}")
+
+    @openapi_schema({
+        "type": "function",
+        "function": {
+            "name": "inspect_conversation",
+            "description": "Look inside any of the user's conversations/projects (from list_recent_conversations): status, latest reply summary, and office file names. Does not switch them into that chat — use switch_conversation when they say 切进去 or ask to open it.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "thread_id": {"type": "string", "description": "Conversation id from list_recent_conversations."},
+                },
+                "required": ["thread_id"],
+            },
+        },
+    })
+    async def inspect_conversation(self, thread_id: str) -> ToolResult:
+        try:
+            return self.success_response(await service.inspect_thread(self.account_id, thread_id))
+        except ValueError as e:
+            return self.fail_response(str(e))
+        except Exception as e:
+            return self.fail_response(f"Could not inspect the conversation: {e}")
+
+    @openapi_schema({
+        "type": "function",
+        "function": {
+            "name": "create_schedule",
+            "description": "Create a recurring scheduled task. Each run starts a new conversation and you are notified with [Dobby 任务更新] when it finishes. Pass a standard 5-field cron_expression (minute hour day month weekday). Examples: daily 9am '0 9 * * *'; every 6 hours '0 */6 * * *'; weekdays 9am '0 9 * * 1-5'. Minimum interval is usually 1 hour.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string", "description": "Short schedule title in the user's language."},
+                    "prompt": {"type": "string", "description": "Full instructions for each run (self-contained)."},
+                    "cron_expression": {"type": "string", "description": "5-field cron, e.g. '0 9 * * *'."},
+                    "timezone": {"type": "string", "description": "IANA timezone for the cron, e.g. 'Asia/Shanghai' or 'America/Los_Angeles'. Default UTC."},
+                    "description": {"type": "string", "description": "Optional longer description."},
+                },
+                "required": ["name", "prompt", "cron_expression"],
+            },
+        },
+    })
+    async def create_schedule(
+        self,
+        name: str,
+        prompt: str,
+        cron_expression: str,
+        timezone: str = "UTC",
+        description: Optional[str] = None,
+    ) -> ToolResult:
+        try:
+            result = await service.create_schedule(
+                self.account_id,
+                self.thread_id,
+                name,
+                prompt,
+                cron_expression,
+                timezone_name=timezone or "UTC",
+                description=description,
+            )
+            return self.success_response(result)
+        except ValueError as e:
+            return self.fail_response(str(e))
+        except Exception as e:
+            return self.fail_response(f"Could not create the schedule: {_http_error_message(e)}")
+
+    @openapi_schema({
+        "type": "function",
+        "function": {
+            "name": "list_schedules",
+            "description": "List the user's scheduled (cron) triggers, including whether each one reports back to you when it finishes.",
+            "parameters": {
+                "type": "object",
+                "properties": {"limit": {"type": "integer", "description": "Max items (default 20)."}},
+            },
+        },
+    })
+    async def list_schedules(self, limit: int = 20) -> ToolResult:
+        try:
+            return self.success_response({"schedules": await service.list_schedules(self.account_id, limit)})
+        except Exception as e:
+            return self.fail_response(f"Could not list schedules: {e}")
+
+    @openapi_schema({
+        "type": "function",
+        "function": {
+            "name": "set_schedule_active",
+            "description": "Pause or resume a scheduled trigger from list_schedules.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "trigger_id": {"type": "string"},
+                    "is_active": {"type": "boolean", "description": "true to resume, false to pause."},
+                },
+                "required": ["trigger_id", "is_active"],
+            },
+        },
+    })
+    async def set_schedule_active(self, trigger_id: str, is_active: bool = True) -> ToolResult:
+        if isinstance(is_active, str):
+            is_active = is_active.strip().lower() in ("true", "1", "yes")
+        try:
+            return self.success_response(
+                await service.set_schedule_active(self.account_id, trigger_id, bool(is_active))
+            )
+        except ValueError as e:
+            return self.fail_response(str(e))
+        except Exception as e:
+            return self.fail_response(f"Could not update the schedule: {_http_error_message(e)}")
 
     @openapi_schema({
         "type": "function",

@@ -860,3 +860,245 @@ def _im_switch_note(thread: Optional[Dict[str, Any]]) -> str:
         + " instead of you. They can say 回到总助理 or send /master to come back. "
         + "start_conversation does not switch them; they stay with you until they say 切进去 or you call this tool."
     )
+
+
+async def inspect_thread(account_id: str, thread_id: str) -> Dict[str, Any]:
+    """Status, latest reply, and files for any conversation in this account."""
+    thread = await _thread_for_account(account_id, thread_id)
+    if not thread:
+        raise ValueError("Conversation not found in this account")
+
+    master = await get_master(account_id)
+    master_tid = master["thread_id"] if master else None
+    child = await get_child(account_id, thread_id)
+
+    run = await execute_one(
+        """
+        SELECT id::text AS agent_run_id, status, started_at, completed_at, error
+        FROM public.agent_runs
+        WHERE thread_id = CAST(:tid AS uuid)
+        ORDER BY started_at DESC NULLS LAST
+        LIMIT 1
+        """,
+        {"tid": thread_id},
+    )
+    status = ((run or {}).get("status") or "idle").lower()
+    summary = await latest_reply_text(thread_id, None)
+
+    files: List[str] = []
+    try:
+        from core.integrations.bridge_office_files import list_thread_office_files
+
+        office = await list_thread_office_files(account_id, thread_id)
+        files = [f.name for f in office or [] if getattr(f, "name", None)]
+    except Exception as e:
+        logger.debug(f"[master] inspect file list failed for {thread_id}: {e}")
+
+    path = thread_path(thread.get("project_id"), thread_id)
+    return {
+        "thread_id": thread_id,
+        "project_id": thread.get("project_id"),
+        "title": thread.get("title"),
+        "status": status,
+        "is_master": thread_id == master_tid,
+        "started_by_master": bool(child),
+        "latest_reply": (summary or "")[:SUMMARY_MAX_CHARS],
+        "files": files[:20],
+        "agent_run_id": (run or {}).get("agent_run_id"),
+        "path": path,
+        "url": absolute_url(path),
+    }
+
+
+async def _default_agent_id_for_account(account_id: str) -> str:
+    from core.agents import repo as agents_repo
+    from core.utils.ensure_suna import ensure_suna_installed
+
+    await ensure_suna_installed(account_id)
+    agent_id = await agents_repo.get_default_agent_id(account_id)
+    if not agent_id:
+        agent_id = await agents_repo.get_any_agent_id(account_id)
+    if not agent_id:
+        raise ValueError("No Dobby worker found for this account")
+    return str(agent_id)
+
+
+async def create_schedule(
+    account_id: str,
+    master_thread_id: str,
+    name: str,
+    prompt: str,
+    cron_expression: str,
+    timezone_name: str = "UTC",
+    description: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Create a schedule trigger that reports back to the master when it finishes."""
+    from core.services.supabase import DBConnection
+    from core.triggers import get_trigger_service
+    from core.triggers.api import sync_triggers_to_version_config
+    from core.triggers.utils import get_human_readable_schedule, get_next_run_time
+
+    label = (name or "").strip()[:80] or "Scheduled task"
+    agent_prompt = (prompt or "").strip()
+    cron = (cron_expression or "").strip()
+    tz = (timezone_name or "UTC").strip() or "UTC"
+    if not agent_prompt:
+        raise ValueError("prompt is required")
+    if not cron:
+        raise ValueError("cron_expression is required")
+
+    agent_id = await _default_agent_id_for_account(account_id)
+    db = DBConnection()
+    trigger_svc = get_trigger_service(db)
+    config = {
+        "cron_expression": cron,
+        "provider_id": "schedule",
+        "agent_prompt": agent_prompt,
+        "model": "dobby/basic",
+        "timezone": tz,
+        "master_thread_id": master_thread_id,
+        "master_account_id": account_id,
+    }
+    trigger = await trigger_svc.create_trigger(
+        agent_id=agent_id,
+        provider_id="schedule",
+        name=label,
+        config=config,
+        description=(description or "").strip() or None,
+    )
+    try:
+        await sync_triggers_to_version_config(agent_id)
+    except Exception as e:
+        logger.warning(f"[master] sync triggers after create failed: {e}")
+
+    next_run = get_next_run_time(cron, tz)
+    return {
+        "trigger_id": trigger.trigger_id,
+        "name": trigger.name,
+        "cron_expression": cron,
+        "timezone": tz,
+        "is_active": trigger.is_active,
+        "human_readable": get_human_readable_schedule(cron, tz),
+        "next_run_time": next_run.isoformat() if next_run else None,
+        "agent_prompt": agent_prompt,
+        "master_thread_id": master_thread_id,
+        "triggers_page": absolute_url(PAGE_PATHS["triggers"]),
+    }
+
+
+async def list_schedules(account_id: str, limit: int = 20) -> List[Dict[str, Any]]:
+    from core.triggers.repo import get_all_user_triggers
+    from core.triggers.utils import get_human_readable_schedule, get_next_run_time
+
+    rows = await get_all_user_triggers(account_id)
+    out: List[Dict[str, Any]] = []
+    for row in rows or []:
+        cfg = row.get("config") or {}
+        if isinstance(cfg, str):
+            import json
+            try:
+                cfg = json.loads(cfg)
+            except Exception:
+                cfg = {}
+        if not isinstance(cfg, dict):
+            cfg = {}
+        cron = cfg.get("cron_expression") or ""
+        ttype = str(row.get("trigger_type") or "").lower()
+        is_schedule = ttype in ("schedule", "scheduled") or bool(cron) or cfg.get("provider_id") == "schedule"
+        if not is_schedule or not cron:
+            continue
+        tz = cfg.get("timezone") or "UTC"
+        next_run = get_next_run_time(cron, tz)
+        out.append({
+            "trigger_id": str(row.get("trigger_id")),
+            "name": row.get("name"),
+            "is_active": bool(row.get("is_active")),
+            "cron_expression": cron,
+            "timezone": tz,
+            "human_readable": get_human_readable_schedule(cron, tz),
+            "next_run_time": next_run.isoformat() if next_run else None,
+            "agent_prompt": (cfg.get("agent_prompt") or "")[:500],
+            "reports_to_master": bool(cfg.get("master_thread_id")),
+            "created_at": row.get("created_at"),
+        })
+        if len(out) >= max(1, min(int(limit or 20), 50)):
+            break
+    return out
+
+
+async def set_schedule_active(
+    account_id: str,
+    trigger_id: str,
+    is_active: bool,
+) -> Dict[str, Any]:
+    from core.services.supabase import DBConnection
+    from core.triggers import get_trigger_service
+    from core.triggers.api import sync_triggers_to_version_config
+
+    db = DBConnection()
+    trigger_svc = get_trigger_service(db)
+    trigger = await trigger_svc.get_trigger(trigger_id)
+    if not trigger:
+        raise ValueError("Schedule not found")
+
+    client = await db.client
+    owned = (
+        await client.table("agents")
+        .select("agent_id")
+        .eq("agent_id", trigger.agent_id)
+        .eq("account_id", account_id)
+        .limit(1)
+        .execute()
+    )
+    if not owned.data:
+        raise ValueError("Schedule not found in this account")
+
+    updated = await trigger_svc.update_trigger(trigger_id, is_active=bool(is_active))
+    try:
+        await sync_triggers_to_version_config(updated.agent_id)
+    except Exception as e:
+        logger.warning(f"[master] sync triggers after toggle failed: {e}")
+    return {
+        "trigger_id": updated.trigger_id,
+        "name": updated.name,
+        "is_active": updated.is_active,
+    }
+
+
+async def register_trigger_child_run(
+    account_id: str,
+    master_thread_id: str,
+    child_thread_id: str,
+    child_project_id: Optional[str],
+    agent_run_id: str,
+    title: str,
+) -> None:
+    """Link a trigger-started run to the master so terminal hooks report back."""
+    label = (title or "Scheduled task").strip()[:80] or "Scheduled task"
+    await execute_one(
+        """
+        INSERT INTO public.master_child_runs
+            (account_id, master_thread_id, child_thread_id, child_project_id, child_agent_run_id,
+             title, execution_target, model_name, status)
+        VALUES (CAST(:aid AS uuid), CAST(:mtid AS uuid), CAST(:ctid AS uuid),
+                CAST(NULLIF(:cpid, '') AS uuid), CAST(:rid AS uuid),
+                :title, 'cloud', 'dobby/basic', 'running')
+        ON CONFLICT (child_thread_id) DO UPDATE SET
+            child_agent_run_id = EXCLUDED.child_agent_run_id,
+            status = 'running',
+            finished_at = NULL,
+            reported_at = NULL,
+            summary = NULL,
+            updated_at = timezone('utc', now())
+        RETURNING 1
+        """,
+        {
+            "aid": account_id,
+            "mtid": master_thread_id,
+            "ctid": child_thread_id,
+            "cpid": child_project_id or "",
+            "rid": agent_run_id,
+            "title": label,
+        },
+        commit=True,
+    )

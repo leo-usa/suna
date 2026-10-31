@@ -745,6 +745,10 @@ _MASTER_TOOL_NAMES = frozenset({
     "start_conversation",
     "send_to_conversation",
     "check_conversation",
+    "inspect_conversation",
+    "create_schedule",
+    "list_schedules",
+    "set_schedule_active",
     "open_dobby_page",
     "share_conversation",
     "switch_conversation",
@@ -775,6 +779,39 @@ def _format_master_tool_for_bridge(name_l: str, data: Dict[str, Any]) -> str:
         url = (data.get("url") or "").strip()
         head = f"已切换到「{title}」。说「回到总助理」可以回来。" if data.get("switched") else f"「{title}」"
         return f"{head}\n{url}" if url else head
+    if name_l == "create_schedule":
+        name = (data.get("name") or "").strip() or "定时任务"
+        human = (data.get("human_readable") or data.get("cron_expression") or "").strip()
+        return f"已创建定时「{name}」：{human}。每次跑完会通知总助理。"
+    if name_l == "set_schedule_active":
+        name = (data.get("name") or "").strip() or "定时任务"
+        return f"已{'恢复' if data.get('is_active') else '暂停'}定时「{name}」。"
+    if name_l == "list_schedules":
+        schedules = data.get("schedules") or []
+        if not schedules:
+            return "当前没有定时任务。"
+        lines = []
+        for item in schedules[:10]:
+            label = (item.get("name") or "定时").strip()
+            human = (item.get("human_readable") or item.get("cron_expression") or "").strip()
+            active = "开" if item.get("is_active") else "停"
+            lines.append(f"「{label}」{human}（{active}）")
+        return "\n".join(lines)
+    if name_l == "inspect_conversation":
+        title = (data.get("title") or "").strip() or "对话"
+        status = _MASTER_STATUS_LABELS.get((data.get("status") or "").lower(), data.get("status") or "")
+        url = (data.get("url") or "").strip()
+        reply = (data.get("latest_reply") or "").strip()
+        files = data.get("files") or []
+        lines = [f"「{title}」{status}".strip()]
+        if reply:
+            lines.append(reply[:400])
+        if files:
+            lines.append("文件：" + "、".join(str(f) for f in files[:5]))
+        if url:
+            lines.append(url)
+        lines.append("仍在总助理。要进入这个项目，回复「切进去」。")
+        return "\n".join(lines)
     title = (data.get("title") or "").strip() or "对话"
     target = {"local": "本地", "dedicated": "专属电脑"}.get(data.get("execution_target") or "", "云端")
     status = _MASTER_STATUS_LABELS.get((data.get("status") or "").lower(), data.get("status") or "")

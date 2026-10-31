@@ -50,6 +50,10 @@ export function useThreadData(
   const foundRunningAgentRef = useRef(false);
   const hasInitiallyScrolled = useRef<boolean>(false);
   const lastDetectedRunIdRef = useRef<string | null>(null);
+  // Tracks the newest run we've already accounted for so background
+  // completions (e.g. master_callback) can refresh messages even if we
+  // missed the live stream window.
+  const lastKnownLatestRunIdRef = useRef<string | null>(null);
   
   const retryCountRef = useRef(0);
 
@@ -68,11 +72,13 @@ export function useThreadData(
     staleTime: 10000,
   });
   
-  const shouldPollAgentRuns = waitingForAgent && !foundRunningAgentRef.current && !agentRunId;
+  // Keep polling while idle so externally started runs on this thread
+  // (master task callbacks, schedules, etc.) show up without a page refresh.
+  const shouldPollAgentRuns = !isShared && !agentRunId;
   
   const agentRunsQuery = useAgentRunsQuery(threadId, { 
     enabled: !isShared,
-    refetchInterval: shouldPollAgentRuns ? 2000 : false,
+    refetchInterval: shouldPollAgentRuns ? (waitingForAgent ? 2000 : 4000) : false,
     staleTime: 1000,
   });
 
@@ -84,6 +90,7 @@ export function useThreadData(
     messagesLoadedRef.current = false;
     foundRunningAgentRef.current = false;
     lastDetectedRunIdRef.current = null;
+    lastKnownLatestRunIdRef.current = null;
     initialLoadCompleted.current = false;
     hasInitiallyScrolled.current = false;
     retryCountRef.current = 0;
@@ -206,9 +213,11 @@ export function useThreadData(
     }
     
     const runningRuns = agentRunsQuery.data.filter(r => r.status === 'running');
+    const latestRun = agentRunsQuery.data[0];
     
     if (runningRuns.length > 0) {
       const latestRunning = runningRuns[0];
+      lastKnownLatestRunIdRef.current = latestRunning.id;
       
       if (lastDetectedRunIdRef.current !== latestRunning.id) {
         console.log('[useThreadData] Detected running agent:', latestRunning.id);
@@ -218,12 +227,31 @@ export function useThreadData(
         setAgentRunId(latestRunning.id);
         setAgentStatus('running');
       }
-    } else if (foundRunningAgentRef.current && !waitingForAgent) {
-      setAgentStatus('idle');
-      setAgentRunId(null);
-      lastDetectedRunIdRef.current = null;
+    } else {
+      // A new completed run appeared while we were idle — we likely missed
+      // the live stream (e.g. master_callback finished between polls).
+      if (
+        latestRun &&
+        latestRun.status !== 'running' &&
+        lastKnownLatestRunIdRef.current !== null &&
+        lastKnownLatestRunIdRef.current !== latestRun.id &&
+        !agentRunId
+      ) {
+        console.log('[useThreadData] Detected completed background run, refreshing messages:', latestRun.id);
+        messagesQuery.refetch();
+      }
+      if (latestRun) {
+        lastKnownLatestRunIdRef.current = latestRun.id;
+      }
+
+      // Only reset detection refs when already idle. Never clear agentRunId
+      // here — an in-flight stream owns that lifecycle.
+      if (foundRunningAgentRef.current && !waitingForAgent && !agentRunId) {
+        lastDetectedRunIdRef.current = null;
+        foundRunningAgentRef.current = false;
+      }
     }
-  }, [agentRunsQuery.data, isShared, waitingForAgent]);
+  }, [agentRunsQuery.data, isShared, waitingForAgent, agentRunId, messagesQuery.refetch]);
 
   useEffect(() => {
     let isMounted = true;

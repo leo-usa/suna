@@ -126,8 +126,131 @@ def test_tool_exposes_expected_functions():
     names = set(MasterAssistantTool.__dict__)
     for fn in ("start_conversation", "list_conversations", "check_conversation", "send_to_conversation",
                "stop_conversation", "list_local_devices", "list_models", "get_account_status",
-               "open_dobby_page", "share_conversation", "list_recent_conversations", "switch_conversation"):
+               "open_dobby_page", "share_conversation", "list_recent_conversations", "switch_conversation",
+               "inspect_conversation", "create_schedule", "list_schedules", "set_schedule_active"):
         assert fn in names
+
+
+async def test_inspect_thread_returns_status_and_files():
+    thread = {"thread_id": "t1", "project_id": "p1", "title": "Anthropic S1"}
+    run = {"agent_run_id": "r1", "status": "completed", "started_at": None, "completed_at": None, "error": None}
+    with patch.object(service, "_thread_for_account", AsyncMock(return_value=thread)), \
+         patch.object(service, "get_master", AsyncMock(return_value={"thread_id": "m1"})), \
+         patch.object(service, "get_child", AsyncMock(return_value=None)), \
+         patch.object(service, "execute_one", AsyncMock(return_value=run)), \
+         patch.object(service, "latest_reply_text", AsyncMock(return_value="报告已写好")), \
+         patch("core.integrations.bridge_office_files.list_thread_office_files", AsyncMock(return_value=[
+             type("F", (), {"name": "report.docx"})(),
+         ])):
+        result = await service.inspect_thread("a1", "t1")
+    assert result["title"] == "Anthropic S1"
+    assert result["status"] == "completed"
+    assert result["latest_reply"] == "报告已写好"
+    assert result["files"] == ["report.docx"]
+    assert result["started_by_master"] is False
+    assert result["path"] == "/projects/p1/thread/t1"
+
+
+async def test_inspect_thread_rejects_foreign_thread():
+    with patch.object(service, "_thread_for_account", AsyncMock(return_value=None)):
+        with pytest.raises(ValueError, match="not found"):
+            await service.inspect_thread("a1", "t-missing")
+
+
+async def test_create_schedule_stores_master_thread_id():
+    fake_trigger = type("T", (), {
+        "trigger_id": "trg1",
+        "name": "每日简报",
+        "is_active": True,
+    })()
+    create = AsyncMock(return_value=fake_trigger)
+    with patch.object(service, "_default_agent_id_for_account", AsyncMock(return_value="agent1")), \
+         patch("core.services.supabase.DBConnection"), \
+         patch("core.triggers.get_trigger_service", return_value=type("S", (), {"create_trigger": create})()), \
+         patch("core.triggers.api.sync_triggers_to_version_config", AsyncMock()), \
+         patch("core.triggers.utils.get_next_run_time", return_value=None), \
+         patch("core.triggers.utils.get_human_readable_schedule", return_value="Daily at 9:00 AM"):
+        result = await service.create_schedule(
+            "a1", "m1", "每日简报", "汇总昨日新闻", "0 9 * * *", timezone_name="Asia/Shanghai"
+        )
+    assert result["trigger_id"] == "trg1"
+    assert result["master_thread_id"] == "m1"
+    kwargs = create.await_args.kwargs
+    assert kwargs["agent_id"] == "agent1"
+    assert kwargs["provider_id"] == "schedule"
+    assert kwargs["config"]["master_thread_id"] == "m1"
+    assert kwargs["config"]["agent_prompt"] == "汇总昨日新闻"
+    assert kwargs["config"]["cron_expression"] == "0 9 * * *"
+    assert result["human_readable"] == "Daily at 9:00 AM"
+
+
+async def test_register_trigger_child_run_inserts_row():
+    with patch.object(service, "execute_one", AsyncMock(return_value={"?column?": 1})) as ex:
+        await service.register_trigger_child_run(
+            "a1", "m1", "t1", "p1", "r1", "每日简报"
+        )
+    sql, params = ex.await_args.args
+    assert "master_child_runs" in sql
+    assert params["mtid"] == "m1"
+    assert params["ctid"] == "t1"
+    assert params["rid"] == "r1"
+    assert params["title"] == "每日简报"
+
+
+async def test_execution_service_registers_master_child_when_configured():
+    from core.triggers.execution_service import ExecutionService
+    from core.triggers.trigger_service import TriggerEvent, TriggerResult, TriggerType
+    from core.utils.config import EnvMode
+
+    from unittest.mock import MagicMock
+
+    agent_client = MagicMock()
+    agent_client.table.return_value.select.return_value.eq.return_value.single.return_value.execute = AsyncMock(
+        return_value=type("R", (), {"data": {"account_id": "a1"}})()
+    )
+
+    class _ClientProxy:
+        def __await__(self):
+            async def _():
+                return agent_client
+            return _().__await__()
+
+    class FakeDB:
+        client = _ClientProxy()
+
+    trigger = type("T", (), {
+        "trigger_id": "trg1",
+        "name": "每日简报",
+        "config": {"master_thread_id": "m1", "agent_prompt": "go", "model": "dobby/basic"},
+    })()
+    event = TriggerEvent(
+        trigger_id="trg1",
+        agent_id="agent1",
+        trigger_type=TriggerType.SCHEDULE,
+        raw_data={},
+    )
+    result = TriggerResult(success=True, should_execute_agent=True, agent_prompt="go")
+    svc = ExecutionService(FakeDB())
+
+    with patch("core.triggers.execution_service.config") as cfg, \
+         patch("core.triggers.trigger_service.get_trigger_service", return_value=type("S", (), {
+             "get_trigger": AsyncMock(return_value=trigger),
+         })()), \
+         patch("core.agents.api.start_agent_run", AsyncMock(return_value={
+             "thread_id": "t1", "agent_run_id": "r1", "project_id": "p1",
+         })) as start, \
+         patch("core.master_assistant.service.register_trigger_child_run", AsyncMock()) as reg:
+        cfg.ACTIVATE_MCPS_TRIG = True
+        cfg.ENV_MODE = EnvMode.LOCAL
+        out = await svc.execute_trigger_result("agent1", result, event)
+
+    assert out["success"] is True
+    meta = start.await_args.kwargs["metadata"]
+    assert meta["source"] == "master_assistant"
+    assert meta["master_thread_id"] == "m1"
+    reg.assert_awaited_once()
+    assert reg.await_args.kwargs["master_thread_id"] == "m1"
+    assert reg.await_args.kwargs["child_thread_id"] == "t1"
 
 
 @pytest.mark.parametrize("text,expected", [
@@ -228,3 +351,12 @@ def test_bridge_text_for_master_tools():
     page = tool_message_row_to_bridge_text(row("open_dobby_page", {
         "label": "充值", "url": "https://dobby.now/dashboard?settings=billing"}))
     assert "充值" in page and "settings=billing" in page
+
+    inspect = tool_message_row_to_bridge_text(row("inspect_conversation", {
+        "title": "报告", "status": "completed", "latest_reply": "写完了",
+        "files": ["a.docx"], "url": "https://dobby.now/thread/t2"}))
+    assert "报告" in inspect and "写完了" in inspect and "切进去" in inspect
+
+    sched = tool_message_row_to_bridge_text(row("create_schedule", {
+        "name": "每日简报", "human_readable": "Daily at 9:00 AM"}))
+    assert "每日简报" in sched and "9:00" in sched
