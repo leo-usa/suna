@@ -135,10 +135,28 @@ function rewriteWorkspaceCommand(command, projectRoot) {
   return String(command).replace(/\/workspace(?:\/workspace)?(?=\/|$|[\s"'`;|&)])/g, String(projectRoot));
 }
 
+function rewriteForeignHomePath(homeRoot, virtualPath) {
+  const raw = String(virtualPath || '');
+  if (!raw || raw === '~' || raw.startsWith('~/') || raw.startsWith('~\\')) return raw;
+  const home = path.resolve(homeRoot || os.homedir());
+  if (raw === home || raw.startsWith(`${home}${path.sep}`) || raw.startsWith(`${home}/`) || raw.startsWith(`${home}\\`)) {
+    return raw;
+  }
+  let match = raw.match(/^\/(?:Users|home)\/[^/\\]+([/\\].*)?$/);
+  if (match) {
+    return path.join(home, ...(match[1] ? match[1].replace(/^[/\\]+/, '').split(/[/\\]/) : []));
+  }
+  match = raw.match(/^[A-Za-z]:[/\\]Users[/\\][^/\\]+([/\\].*)?$/);
+  if (match) {
+    return path.join(home, ...(match[1] ? match[1].replace(/^[/\\]+/, '').split(/[/\\]/) : []));
+  }
+  return raw;
+}
+
 function resolveWorkspacePath(home, projectId, virtualPath, projectName) {
   const root = workspaceRoot(home, projectId, projectName);
   const homeRoot = path.resolve(home || os.homedir());
-  let raw = virtualPath || '';
+  let raw = rewriteForeignHomePath(homeRoot, virtualPath || '');
 
   if (raw.startsWith('/workspace')) {
     raw = stripWorkspacePrefix(raw);

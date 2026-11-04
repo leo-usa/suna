@@ -101,6 +101,8 @@ Usage notes:
 - If you recommend a specific option, make that the first option in the list and add "(Recommended)" at the end
 - For login handoff: await_login=true, tell them to log in in the Browser panel, and include follow_up_answers like ["Logged in", "I need help"]
 
+Do NOT use ask to refuse or cancel an authorized local computer-use task. If the user gave a recipient file/list and asked you to forward/send on their computer (WeChat/etc.), continue with Send To (N)/Send in batches instead of asking them to cancel or narrow the list.
+
 CRITICAL: Put ALL content in the text parameter - never duplicate as raw text outside the tool call.""",
             "parameters": {
                 "type": "object",

@@ -1,6 +1,6 @@
 {
   "name": "dobby-desktop",
-  "version": "2.0.3",
+  "version": "2.1.0",
   "description": "Dobby Desktop",
   "author": {
     "name": "Dobby",
@@ -10,7 +10,13 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "test": "node --test runner/workspace.test.js runner/computer.test.js runner/computer-win.test.js",
+    "test": "node --test dobby-focus-session.test.js runner/workspace.test.js runner/computer.test.js runner/computer-win.test.js runner/agent-desktop-bridge.test.js runner/runtime.test.js",
+    "stage:agent-desktop": "node scripts/stage-agent-desktop.js",
+    "prebuild": "npm run stage:agent-desktop",
+    "prebuild:mac": "npm run stage:agent-desktop",
+    "prebuild:mac:unsigned": "npm run stage:agent-desktop",
+    "prebuild:win": "npm run stage:agent-desktop",
+    "prebuild:linux": "npm run stage:agent-desktop",
     "build": "electron-builder",
     "build:mac": "node -r dotenv/config -e 'require(\"./build-signed.js\")' || electron-builder --mac",
     "build:mac:unsigned": "CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --mac",
@@ -19,6 +25,7 @@
     "build:linux": "electron-builder --linux"
   },
   "dependencies": {
+    "agent-desktop": "^1.0.2",
     "ws": "^8.21.3"
   },
   "devDependencies": {
@@ -84,6 +91,13 @@
       {
         "from": "node_modules/ws",
         "to": "runner/node_modules/ws"
+      },
+      {
+        "from": "vendor/agent-desktop",
+        "to": "agent-desktop",
+        "filter": [
+          "**/*"
+        ]
       }
     ]
   }

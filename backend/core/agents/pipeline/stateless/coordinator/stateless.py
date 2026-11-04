@@ -190,7 +190,37 @@ class StatelessCoordinator(BaseCoordinator):
         from core.ai_models import model_manager
         from core.ai_models.registry import IMAGE_MODEL_ID
         from core.agentpress.thread_manager.services.state.thread_state import ThreadState
-        
+        from core.tools.computer_cost_controls import (
+            maybe_computer_model,
+            should_route_computer_to_cheap_model,
+            thread_has_computer_tools,
+        )
+
+        # Computer-use loops on premium models are extremely expensive (long
+        # AX/screenshot context). Route to a cheap vision model once computer
+        # tools have been used on this thread/run.
+        try:
+            has_computer_history = await thread_has_computer_tools(ctx.thread_id)
+        except Exception as e:
+            logger.warning(f"[Coordinator] computer history check failed: {e}")
+            has_computer_history = False
+
+        if should_route_computer_to_cheap_model(
+            self._state.model_name,
+            tool_registry=self._tool_registry,
+            state=self._state,
+            thread_has_computer=has_computer_history,
+        ):
+            cheap = maybe_computer_model(self._state.model_name)
+            if cheap:
+                new_model = model_manager.resolve_model_id(cheap) or cheap
+                logger.info(
+                    f"💻 Computer-use on expensive model — switching from "
+                    f"{self._state.model_name} to {new_model}"
+                )
+                self._state.model_name = new_model
+                return
+
         if model_manager.supports_vision(self._state.model_name):
             logger.debug(f"Model {self._state.model_name} supports vision, no switch needed")
             return

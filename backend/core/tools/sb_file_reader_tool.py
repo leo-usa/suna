@@ -54,7 +54,9 @@ Reads files from the workspace. You can access any file directly by using this t
 - When searching for specific terms or concepts
 
 ### Usage Notes
-- The file_path parameter should be relative to /workspace
+- On cloud: file_path is relative to /workspace
+- On "run on this computer": /workspace works, and if the user names a home path
+  (~/Documents/..., /Users/..., ~/.agents/...), use that path as-is — do not rewrite it into /workspace
 - Can read multiple files in parallel within a single response
 - Use this tool when provided screenshot paths - it works with temporary file paths
 - Returns system warning for empty files that exist
@@ -148,10 +150,11 @@ class SandboxFileReaderTool(SandboxToolsBase):
 
     async def _read_single_file(self, file_path: str) -> dict:
         try:
-            cleaned_path = self.clean_path(file_path)
-            full_path = f"{self.workspace_path}/{cleaned_path}"
+            full_path = self.resolve_fs_path(file_path)
+            # Keep historical variable name used throughout this method's returns.
+            cleaned_path = file_path.strip() if (file_path or "").strip() else full_path
 
-            if self._is_image_file(cleaned_path):
+            if self._is_image_file(cleaned_path) or self._is_image_file(full_path):
                 return {
                     "file_path": cleaned_path,
                     "success": False,
@@ -166,11 +169,11 @@ class SandboxFileReaderTool(SandboxToolsBase):
                         "success": False,
                         "error": f"Path '{cleaned_path}' is a directory, not a file."
                     }
-            except Exception:
+            except Exception as e:
                 return {
                     "file_path": cleaned_path,
                     "success": False,
-                    "error": f"File not found: '{cleaned_path}'"
+                    "error": f"File not found: '{cleaned_path}' (resolved: '{full_path}'): {e}"
                 }
 
 
@@ -327,18 +330,26 @@ class SandboxFileReaderTool(SandboxToolsBase):
                 content = result.result
 
             else:
-                result = await self.sandbox.process.exec(
-                    f'cat {escaped_path}',
-                    timeout=60
-                )
-                if result.exit_code != 0:
-                    return {
-                        "file_path": cleaned_path,
-                        "success": False,
-                        "error": f"Failed to read file"
-                    }
-                content = result.result
-                extraction_method = "cat"
+                # Prefer fs.download_file so ~/home paths work even when shell
+                # quoting would prevent tilde expansion in `cat '~/...'`.
+                try:
+                    raw_bytes = await self.sandbox.fs.download_file(full_path)
+                    content = raw_bytes.decode("utf-8", errors="replace")
+                    extraction_method = "download"
+                except Exception:
+                    result = await self.sandbox.process.exec(
+                        f'cat {escaped_path}',
+                        timeout=60
+                    )
+                    if result.exit_code != 0:
+                        detail = (getattr(result, "stderr", None) or result.result or "").strip()
+                        return {
+                            "file_path": cleaned_path,
+                            "success": False,
+                            "error": f"Failed to read file '{cleaned_path}' (resolved: '{full_path}'){': ' + detail if detail else ''}"
+                        }
+                    content = result.result
+                    extraction_method = "cat"
 
             truncated = False
             if len(content) > MAX_OUTPUT_CHARS:
@@ -374,7 +385,7 @@ class SandboxFileReaderTool(SandboxToolsBase):
             "description": """Reads a file from the workspace. You can access any file directly by using this tool.
 
 Usage:
-- The file_path parameter should be a path relative to /workspace (e.g., 'src/main.py')
+- Prefer paths relative to /workspace (e.g., 'src/main.py'). On this computer, home paths the user names (~/Documents/..., /Users/...) are also allowed.
 - By default, it reads up to 2000 lines starting from the beginning of the file
 - You can optionally specify a line offset and limit for long files
 - Any lines longer than 2000 characters will be truncated
@@ -511,9 +522,9 @@ Examples:
             
             paths = []
             if file_paths:
-                paths = [f"{self.workspace_path}/{self.clean_path(p)}" for p in file_paths]
+                paths = [self.resolve_fs_path(p) for p in file_paths]
             elif file_path:
-                paths = [f"{self.workspace_path}/{self.clean_path(file_path)}"]
+                paths = [self.resolve_fs_path(file_path)]
             else:
                 # Check default paths: uploads, KB directory, and workspace root
                 default_paths = [

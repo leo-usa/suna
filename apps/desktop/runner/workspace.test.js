@@ -55,6 +55,14 @@ describe('workspace path mapping', () => {
     assert.equal(resolveWorkspacePath(home, projectId, notes), path.resolve(notes));
   });
 
+  it('remaps a wrong /Users/<name> prefix onto the real home', () => {
+    const notes = path.join(home, 'Documents', 'notes.txt');
+    assert.equal(
+      resolveWorkspacePath(home, projectId, '/Users/huang.wendy/Documents/notes.txt'),
+      path.resolve(notes),
+    );
+  });
+
   it('rejects sensitive paths, escapes, and bad project ids', () => {
     assert.throws(() => resolveWorkspacePath(home, projectId, path.join(home, '.ssh', 'id_rsa')), WorkspaceEscapeError);
     assert.throws(() => resolveWorkspacePath(home, projectId, '/etc/passwd'), WorkspaceEscapeError);

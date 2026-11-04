@@ -13,6 +13,31 @@ function runnerDir() {
   return path.join(__dirname, 'runner');
 }
 
+function ensureAgentDesktopEnv() {
+  if (!app.isPackaged) return;
+  process.env.DOBBY_RESOURCES_PATH = process.resourcesPath;
+  const axDir = path.join(process.resourcesPath, 'agent-desktop');
+  const axName =
+    process.platform === 'win32'
+      ? (process.arch === 'arm64' ? 'agent-desktop-win32-arm64.exe' : 'agent-desktop-win32-x64.exe')
+      : process.platform === 'darwin'
+        ? (process.arch === 'arm64' ? 'agent-desktop-darwin-arm64' : 'agent-desktop-darwin-x64')
+        : null;
+  if (axName) {
+    const axBin = path.join(axDir, axName);
+    if (fs.existsSync(axBin)) process.env.DOBBY_AGENT_DESKTOP_BIN = axBin;
+  }
+  if (process.platform === 'darwin') {
+    const helper = path.join(
+      axDir,
+      process.arch === 'arm64'
+        ? 'agent-desktop-macos-helper-darwin-arm64'
+        : 'agent-desktop-macos-helper-darwin-x64',
+    );
+    if (fs.existsSync(helper)) process.env.AGENT_DESKTOP_MACOS_HELPER_PATH = helper;
+  }
+}
+
 const { ensureWorkspace } = require(path.join(runnerDir(), 'workspace.js'));
 const { runComputerAction } = require(path.join(runnerDir(), 'computer.js'));
 
@@ -174,6 +199,7 @@ function setStatus(partial) {
 
 async function promptComputerUse(detail) {
   if (persist.allowComputerUse) return true;
+  restoreDobby({ focus: true });
   const result = await dialog.showMessageBox({
     type: 'warning',
     title: process.platform === 'win32' ? 'Dobby wants to control this computer' : 'Dobby wants to control this Mac',
@@ -239,60 +265,60 @@ function withTimeout(promise, ms, label) {
   ]).finally(() => clearTimeout(timer));
 }
 
-// Dobby steps aside for the whole computer-use session instead of once per action,
-// so the app being driven keeps the foreground and keyboard focus between steps.
-const DOBBY_RESTORE_IDLE_MS = 5000;
-let hiddenDobbyWindows = null;
-let dobbyRestoreTimer = null;
+// Dobby steps aside for the whole computer-use stretch (not once per action),
+// so WeChat/etc. keep the foreground between LLM thinking gaps.
+const { createDobbyFocusSession } = require('./dobby-focus-session');
 
-function cancelDobbyRestore() {
-  if (dobbyRestoreTimer) {
-    clearTimeout(dobbyRestoreTimer);
-    dobbyRestoreTimer = null;
-  }
-}
-
-function hideDobby() {
-  if (hiddenDobbyWindows) return false;
-  const windows = BrowserWindow.getAllWindows().filter((win) => !win.isDestroyed() && win.isVisible());
-  if (!windows.length) return false;
-  hiddenDobbyWindows = windows;
-  // Hide windows only. app.hide() naps Electron, so "open done" never gets
-  // back to the agent and the chat stays on Opening until the 120s timeout.
-  for (const win of windows) {
-    try { win.hide(); } catch (_) { /* ignore */ }
-  }
-  return true;
-}
-
-function restoreDobby({ focus = false } = {}) {
-  cancelDobbyRestore();
-  const tracked = hiddenDobbyWindows;
-  hiddenDobbyWindows = null;
-  const windows = BrowserWindow.getAllWindows().filter((win) => !win.isDestroyed());
-  for (const win of windows) {
-    const shouldShow = !win.isVisible() || (tracked && tracked.includes(win));
-    if (!shouldShow) continue;
-    try {
-      if (win.isMinimized()) win.restore();
-      if (focus) {
-        win.show();
-        win.focus();
-      } else {
-        win.showInactive();
-      }
-    } catch (_) {
-      try { win.show(); } catch (__) { /* ignore */ }
+const dobbyFocus = createDobbyFocusSession({
+  listVisibleWindows: () => BrowserWindow.getAllWindows().filter((win) => !win.isDestroyed() && win.isVisible()),
+  listAllWindows: () => BrowserWindow.getAllWindows().filter((win) => !win.isDestroyed()),
+  isAnyWindowHidden: () => BrowserWindow.getAllWindows().some((win) => !win.isDestroyed() && !win.isVisible()),
+  hideWindows: (windows) => {
+    // Hide windows only. app.hide() naps Electron, so "open done" never gets
+    // back to the agent and the chat stays on Opening until the 120s timeout.
+    for (const win of windows) {
+      try { win.hide(); } catch (_) { /* ignore */ }
     }
-  }
+  },
+  showWindows: (windows, { focus, tracked }) => {
+    for (const win of windows) {
+      if (win.isDestroyed && win.isDestroyed()) continue;
+      // When focusing after computer-use / agent stop, force every window back.
+      // Otherwise only revive the ones we hid (or that are currently invisible).
+      const shouldShow = Boolean(focus)
+        || !win.isVisible()
+        || (tracked && tracked.includes(win));
+      if (!shouldShow) continue;
+      try {
+        if (win.isMinimized()) win.restore();
+        win.show();
+        if (typeof win.moveTop === 'function') win.moveTop();
+        if (focus) win.focus();
+      } catch (_) {
+        try { win.show(); } catch (__) { /* ignore */ }
+      }
+    }
+    if (focus) {
+      try {
+        if (process.platform === 'darwin' && typeof app.show === 'function') app.show();
+      } catch (_) { /* ignore */ }
+      try {
+        // Required on macOS or show()+focus alone leaves WeChat frontmost.
+        if (typeof app.focus === 'function') app.focus({ steal: true });
+      } catch (_) {
+        try { app.focus(); } catch (__) { /* ignore */ }
+      }
+    }
+  },
+  delay,
+});
+
+function restoreDobby(opts = { focus: true }) {
+  dobbyFocus.restore({ focus: true, ...opts });
 }
 
-function scheduleDobbyRestore() {
-  const hidden = hiddenDobbyWindows
-    || BrowserWindow.getAllWindows().some((win) => !win.isDestroyed() && !win.isVisible());
-  if (!hidden) return;
-  cancelDobbyRestore();
-  dobbyRestoreTimer = setTimeout(() => restoreDobby({ focus: true }), DOBBY_RESTORE_IDLE_MS);
+function withDobbyHidden(fn) {
+  return dobbyFocus.withHidden(fn);
 }
 
 // Dock / Cmd-Tab must actually show the hidden windows. Forgetting the list
@@ -300,15 +326,6 @@ function scheduleDobbyRestore() {
 app.on('activate', () => {
   restoreDobby({ focus: true });
 });
-
-async function withDobbyHidden(fn) {
-  if (hideDobby()) await delay(200);
-  try {
-    return await fn();
-  } finally {
-    scheduleDobbyRestore();
-  }
-}
 
 function screenshotFromPngB64(result) {
   const img = nativeImage.createFromBuffer(Buffer.from(result.png_b64 || '', 'base64'));
@@ -364,13 +381,18 @@ function ensureAccessibility() {
 
 async function handleComputerRequest(kind, payload) {
   console.log('[computer]', kind, 'start');
+  ensureAgentDesktopEnv();
   try {
-    if (kind === 'open') {
-      const result = await withTimeout(runComputerAction('open', payload), 8000, 'open');
-      console.log('[computer]', kind, 'done');
-      return result;
-    }
+    // Hide for open + AX + screenshot/click alike so multi-step runs stay on the target app.
     const result = await withDobbyHidden(async () => {
+      if (kind === 'open') {
+        return withTimeout(runComputerAction('open', payload), 8000, 'open');
+      }
+      if (String(kind || '').startsWith('ax_')) {
+        // Accessibility snapshots can be slower than a screenshot on dense apps.
+        ensureAccessibility();
+        return withTimeout(runComputerAction(kind, payload), 25000, kind);
+      }
       if (kind === 'screenshot') {
         return withTimeout(captureScreen(), 8000, 'screenshot');
       }
@@ -386,6 +408,7 @@ async function handleComputerRequest(kind, payload) {
 }
 
 async function promptApproval(command) {
+  restoreDobby({ focus: true });
   const result = await dialog.showMessageBox({
     type: 'warning',
     title: 'Dobby wants to run a command',
@@ -416,6 +439,8 @@ function startRunner({ deviceToken, backendWsUrl }) {
     path.join(__dirname, 'node_modules'),
     process.env.NODE_PATH,
   ].filter(Boolean).join(path.delimiter);
+
+  ensureAgentDesktopEnv();
 
   child = fork(runnerScript(), [], {
     cwd: runnerDir,
@@ -578,6 +603,10 @@ function registerIpc() {
   }));
   ipcMain.handle('dobby-local-stop', async () => stopRunner());
   ipcMain.handle('dobby-local-open-workspace', async (_event, projectId) => openWorkspace(projectId));
+  ipcMain.handle('dobby-local-restore-ui', async () => {
+    restoreDobby({ focus: true });
+    return { ok: true };
+  });
 }
 
 function autoStartIfPaired() {

@@ -105,12 +105,33 @@ def _assert_allowed(home: Path, resolved: Path, virtual_path: str) -> None:
         raise WorkspaceEscapeError(f"Refuses a sensitive path: {virtual_path}")
 
 
+def _rewrite_foreign_home(home_path: Path, raw: str) -> str:
+    """Agents often expand ~ to the wrong /Users/<name>; remap onto real home."""
+    import re
+
+    text = raw or ""
+    if not text or text == "~" or text.startswith("~/") or text.startswith("~\\"):
+        return text
+    home_str = str(home_path)
+    if text == home_str or text.startswith(home_str + "/") or text.startswith(home_str + "\\"):
+        return text
+    unix = re.match(r"^/(?:Users|home)/[^/\\]+(?P<rest>[/\\].*)?$", text)
+    if unix:
+        rest = (unix.group("rest") or "").lstrip("/").lstrip("\\")
+        return str(home_path / rest) if rest else home_str
+    win = re.match(r"^[A-Za-z]:[/\\]Users[/\\][^/\\]+(?P<rest>[/\\].*)?$", text)
+    if win:
+        rest = (win.group("rest") or "").lstrip("/").lstrip("\\")
+        return str(home_path / rest) if rest else home_str
+    return text
+
+
 def resolve_workspace_path(
     home: str | Path, project_id: str, virtual_path: str, project_name: str | None = None
 ) -> Path:
     home_path = Path(home).expanduser().resolve()
     root = workspace_root(home, project_id, project_name)
-    raw = virtual_path or ""
+    raw = _rewrite_foreign_home(home_path, virtual_path or "")
     if raw.startswith("/workspace"):
         remainder = raw[len("/workspace") :].lstrip("/").lstrip("\\")
         if remainder == "workspace" or remainder.startswith("workspace/") or remainder.startswith("workspace\\"):

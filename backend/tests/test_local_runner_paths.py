@@ -70,6 +70,16 @@ def test_home_files_are_allowed(tmp_path: Path):
     assert resolve_workspace_path(tmp_path, "proj_abc", str(notes)) == notes.resolve()
 
 
+def test_foreign_username_home_is_remapped(tmp_path: Path):
+    notes = tmp_path / "Documents" / "notes.txt"
+    notes.parent.mkdir(parents=True)
+    notes.write_text("hi")
+    assert (
+        resolve_workspace_path(tmp_path, "proj_abc", "/Users/huang.wendy/Documents/notes.txt")
+        == notes.resolve()
+    )
+
+
 def test_sensitive_and_outside_home_are_rejected(tmp_path: Path):
     with pytest.raises(WorkspaceEscapeError):
         resolve_workspace_path(tmp_path, "proj_abc", str(tmp_path / ".ssh" / "id_rsa"))

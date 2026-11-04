@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Optional, TYPE_CHECKING
 
 from core.agentpress.tool import Tool
@@ -7,7 +8,7 @@ if TYPE_CHECKING:
 from daytona_sdk import AsyncSandbox
 from core.sandbox.resolver import resolve_sandbox, SandboxInfo
 from core.utils.logger import logger
-from core.utils.files_utils import clean_path
+from core.utils.files_utils import clean_path, is_host_home_path, rewrite_foreign_home_path
 
 
 class SandboxToolsBase(Tool):
@@ -19,6 +20,32 @@ class SandboxToolsBase(Tool):
         self.thread_manager = thread_manager
         self.workspace_path = "/workspace"
         self._sandbox_info: Optional[SandboxInfo] = None
+
+    def _is_local_sandbox(self) -> bool:
+        try:
+            return str(self.sandbox_id or "").startswith("local:")
+        except RuntimeError:
+            return False
+
+    def resolve_fs_path(self, path: str) -> str:
+        """Path to pass to sandbox.fs / local runner.
+
+        Cloud: always /workspace/<relative>.
+        Local: keep home paths, remap wrong /Users/<name>/..., and expand ~/
+        to an absolute path. Quoted shell commands (cat '~/x') do not expand tilde.
+        """
+        raw = (path or "").strip()
+        if self._is_local_sandbox() and is_host_home_path(raw):
+            rewritten = rewrite_foreign_home_path(raw)
+            if rewritten.startswith("~"):
+                rewritten = str(Path(rewritten).expanduser())
+            if rewritten != raw:
+                logger.info(f"Resolved host home path on local runtime: {raw} -> {rewritten}")
+            else:
+                logger.debug(f"Preserving host home path on local runtime: {raw}")
+            return rewritten
+        cleaned = self.clean_path(raw)
+        return f"{self.workspace_path}/{cleaned}" if cleaned else self.workspace_path
 
     async def _ensure_sandbox(self) -> AsyncSandbox:
         if self._sandbox_info is None:

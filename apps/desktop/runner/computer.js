@@ -390,8 +390,80 @@ async function openTarget(target) {
   throw lastError || new Error(`Could not open ${value}`);
 }
 
+async function nativePressReturn() {
+  if (process.platform === 'darwin') {
+    await runOsascript(keyScript('return'));
+    return { ok: true, mode: 'native_key', key: 'return' };
+  }
+  if (process.platform === 'win32') {
+    const win = require('./computer-win');
+    return win.runWindowsComputerAction('key', { key: 'return' }, { mapToScreen, scrollTicks });
+  }
+  throw new Error('Return key fallback is only available on macOS and Windows');
+}
+
+async function runAxAction(kind, payload) {
+  const ax = require('./agent-desktop-bridge');
+  switch (kind) {
+    case 'ax_status':
+      return ax.axStatus();
+    case 'ax_snapshot': {
+      const app = payload.app || lastActivatedApp || undefined;
+      return ax.axSnapshot({ ...payload, app: payload.app || app });
+    }
+    case 'ax_click':
+      try {
+        return await ax.axClick({
+          ...payload,
+          app: payload.app || lastActivatedApp || undefined,
+        });
+      } catch (err) {
+        // Chat Send buttons often cannot be AX-clicked; Return usually submits.
+        const message = String(err && err.message || '');
+        const allowReturn =
+          payload.submit_fallback === true ||
+          (payload.submit_fallback !== false &&
+            (ax.isSendLikeIntent(payload.intent) ||
+              /owning window|multiple application instances|not actionable|physical fallback/i.test(message)));
+        if (!allowReturn) throw err;
+        console.warn('[computer] ax_click failed; native Return fallback:', message);
+        if (lastActivatedApp) {
+          try { await activateApp(lastActivatedApp); } catch (_) { /* ignore */ }
+        }
+        const pressed = await nativePressReturn();
+        return { ...pressed, submit_fallback: 'return', click_error: message };
+      }
+    case 'ax_set_value':
+      return ax.axSetValue(payload);
+    case 'ax_type':
+      return ax.axType(payload);
+    case 'ax_press':
+      try {
+        return await ax.axPress({
+          ...payload,
+          app: payload.app || lastActivatedApp || undefined,
+        });
+      } catch (err) {
+        const key = String(payload.key || payload.combo || 'return').toLowerCase();
+        if (key !== 'return' && key !== 'enter') throw err;
+        console.warn('[computer] ax_press failed; native Return fallback:', err.message || err);
+        if (lastActivatedApp) {
+          try { await activateApp(lastActivatedApp); } catch (_) { /* ignore */ }
+        }
+        const pressed = await nativePressReturn();
+        return { ...pressed, press_fallback: 'native', ax_error: String(err.message || err) };
+      }
+    default:
+      throw new Error(`Unknown computer action: ${kind}`);
+  }
+}
+
 async function runComputerAction(kind, payload) {
   payload = payload || {};
+  if (String(kind || '').startsWith('ax_')) {
+    // Accessibility actions work on macOS and Windows (and Linux when installed).
+    return runAxAction(kind, payload);
+  }
   if (process.platform === 'win32') {
     const win = require('./computer-win');
     return win.runWindowsComputerAction(kind, payload, { mapToScreen, scrollTicks });

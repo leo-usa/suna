@@ -431,6 +431,24 @@ async function handleRpc(method, params) {
     case 'computer.open':
       logAudit({ method, project_id: params.project_id, target: params.target });
       return askHost('open', params);
+    case 'computer.ax_status':
+      logAudit({ method, project_id: params.project_id });
+      return askHost('ax_status', params);
+    case 'computer.ax_snapshot':
+      logAudit({ method, project_id: params.project_id, app: params.app });
+      return askHost('ax_snapshot', params);
+    case 'computer.ax_click':
+      logAudit({ method, project_id: params.project_id, ref: params.ref });
+      return askHost('ax_click', params);
+    case 'computer.ax_set_value':
+      logAudit({ method, project_id: params.project_id, ref: params.ref });
+      return askHost('ax_set_value', params);
+    case 'computer.ax_type':
+      logAudit({ method, project_id: params.project_id, ref: params.ref });
+      return askHost('ax_type', params);
+    case 'computer.ax_press':
+      logAudit({ method, project_id: params.project_id, key: params.key || params.combo });
+      return askHost('ax_press', params);
     case 'workspace.delete': {
       const projectId = params.project_id;
       if (!projectId) throw new Error('Missing project_id');

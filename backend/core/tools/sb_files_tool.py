@@ -88,9 +88,8 @@ class SandboxFilesTool(SandboxToolsBase):
         return clean_path(path, self.workspace_path)
     
     def _get_full_path(self, path: str) -> str:
-        """Get full absolute path relative to /workspace"""
-        cleaned = self.clean_path(path)
-        return f"{self.workspace_path}/{cleaned}"
+        """Get sandbox/local FS path. Preserves ~/home paths on local runtime."""
+        return self.resolve_fs_path(path)
 
     def _should_exclude_file(self, rel_path: str) -> bool:
         """Check if a file should be excluded based on path, name, or extension"""
@@ -500,9 +499,10 @@ Usage:
     async def edit_file(self, target_file: str, instructions: str, code_edit: str) -> ToolResult:
         try:
             await self._ensure_sandbox()
-            
-            target_file = self.clean_path(target_file)
+
+            display_path = (target_file or "").strip() or target_file
             full_path = self._get_full_path(target_file)
+            target_file = display_path
             if not await self._file_exists(full_path):
                 return self.fail_response(f"File '{target_file}' does not exist")
             
@@ -592,7 +592,7 @@ Usage:
             # Try to get original_content if possible
             original_content_on_error = None
             try:
-                full_path_on_error = f"{self.workspace_path}/{self.clean_path(target_file)}"
+                full_path_on_error = self._get_full_path(target_file)
                 if await self._file_exists(full_path_on_error):
                     original_content_on_error = (await self.sandbox.fs.download_file(full_path_on_error)).decode()
             except:

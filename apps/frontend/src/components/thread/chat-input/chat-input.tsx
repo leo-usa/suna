@@ -1524,10 +1524,10 @@ export const ChatInput = memo(forwardRef<ChatInputHandles, ChatInputProps>(
         
         {/* Hide context indicator on mobile - not critical */}
         <div className="hidden sm:block">
-          {threadId && selectedAgentId && (
+          {threadId && (
             <ContextUsageIndicator 
               threadId={threadId}
-              modelName={selectedAgentId}
+              modelName={selectedModel ? getActualModelId(selectedModel) : selectedModel}
             />
           )}
         </div>
@@ -1564,7 +1564,7 @@ export const ChatInput = memo(forwardRef<ChatInputHandles, ChatInputProps>(
           pendingFilesCount={pendingFilesCount}
         />
       </div>
-    ), [isLoggedIn, loading, disabled, handleVoiceStart, handleVoiceLive, handleVoiceCancel, handleVoiceEnd, handleTranscription, isAgentRunning, hasContent, hasFiles, isUploading, onStopAgent, handleSubmit, buttonLoaderVariant, pendingFilesCount, hideAgentSelection, selectedAgentId, onAgentSelect, threadId]);
+    ), [isLoggedIn, loading, disabled, handleVoiceStart, handleVoiceLive, handleVoiceCancel, handleVoiceEnd, handleTranscription, isAgentRunning, hasContent, hasFiles, isUploading, onStopAgent, handleSubmit, buttonLoaderVariant, pendingFilesCount, hideAgentSelection, selectedAgentId, onAgentSelect, threadId, selectedModel, getActualModelId]);
 
     const renderControls = useMemo(() => (
       <div className="flex items-center justify-between mt-0 mb-1 px-1.5 sm:px-2 gap-1 sm:gap-1.5">

@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { ArrowLeft, Check, Download, Heart, Loader2, Share2 } from 'lucide-react';
 import { SimpleFooter } from '@/components/home/simple-footer';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { getWork, likeWork, publicHtmlUrl, workPath, type WorkFile, type WorkPost } from '@/lib/api/works';
 import { cn } from '@/lib/utils';
 
@@ -62,6 +63,8 @@ function WorkActions({
   onShare: () => void;
   t: ReturnType<typeof useTranslations>;
 }) {
+  const [shareUrl, setShareUrl] = useState('');
+
   return (
     <div className="flex items-center gap-2 shrink-0">
       <button
@@ -76,16 +79,39 @@ function WorkActions({
         {liked ? t('liked') : t('like')}
         <span className="text-muted-foreground">{likeCount || 0}</span>
       </button>
-      <button
-        onClick={onShare}
-        className={cn(
-          'inline-flex items-center gap-2 h-9 px-3 rounded-lg border border-border text-sm hover:bg-muted',
-          copied && 'bg-muted',
-        )}
-      >
-        {copied ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
-        {copied ? t('linkCopied') : t('share')}
-      </button>
+        <Popover onOpenChange={(open) => {
+          if (!open) return;
+          const url = window.location.href;
+          try {
+            setShareUrl(decodeURI(url));
+          } catch {
+            setShareUrl(url);
+          }
+        }}>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            className={cn(
+              'inline-flex items-center gap-2 h-9 px-3 rounded-lg border border-border text-sm hover:bg-muted',
+              copied && 'bg-muted',
+            )}
+          >
+            {copied ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
+            {copied ? t('linkCopied') : t('share')}
+          </button>
+        </PopoverTrigger>
+        <PopoverContent align="end" side="bottom" sideOffset={8} className="z-[80] w-80 p-3 space-y-2">
+          <p className="text-sm font-medium">{t('share')}</p>
+          <p className="text-xs text-muted-foreground break-all">{shareUrl}</p>
+          <button
+            type="button"
+            onClick={onShare}
+            className="w-full h-8 rounded-lg bg-foreground text-background text-sm font-medium hover:bg-foreground/90"
+          >
+            {copied ? t('linkCopied') : t('copyLink')}
+          </button>
+        </PopoverContent>
+      </Popover>
     </div>
   );
 }
@@ -113,7 +139,8 @@ function HtmlWorkFrame({ src, title }: { src: string; title: string }) {
       title={title}
       style={{ height: height ?? 'calc(100vh - 8.5rem)' }}
       className="block w-full rounded-xl border border-border bg-background"
-      sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+      allow="web-share"
+      sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-forms"
       referrerPolicy="no-referrer"
     />
   );
@@ -240,17 +267,8 @@ export default function WorkDetailPage() {
 
   const handleShare = async () => {
     if (!post) return;
-    const url = window.location.href;
     try {
-      if (typeof navigator !== 'undefined' && navigator.share) {
-        await navigator.share({ title: post.title, url });
-        return;
-      }
-    } catch (error) {
-      if (error instanceof DOMException && error.name === 'AbortError') return;
-    }
-    try {
-      await navigator.clipboard.writeText(url);
+      await navigator.clipboard.writeText(window.location.href);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {

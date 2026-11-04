@@ -25,6 +25,11 @@ def test_rpc_methods_include_daytona_surface():
     assert COMPUTER_CLICK in RPC_METHODS
     assert "computer.type" in RPC_METHODS
     assert "computer.open" in RPC_METHODS
+    assert "computer.ax_snapshot" in RPC_METHODS
+    assert "computer.ax_click" in RPC_METHODS
+    assert "computer.ax_set_value" in RPC_METHODS
+    assert "computer.ax_type" in RPC_METHODS
+    assert "computer.ax_press" in RPC_METHODS
 
 
 def test_local_file_info_matches_tool_access():

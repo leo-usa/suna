@@ -1,5 +1,6 @@
 node_modules/
 dist/
+vendor/agent-desktop/
 *.log
 .DS_Store
 .env

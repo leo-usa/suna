@@ -4,6 +4,27 @@ import { useContextUsageStore } from "@/stores/context-usage-store"
 import { useModelSelection } from "@/hooks/agents"
 import { cn } from "@/lib/utils"
 
+/** Soft-warn when a premium model is carrying a large thread context. */
+const PREMIUM_CONTEXT_WARN_TOKENS = 100_000
+
+function isPremiumCostModel(modelId?: string, label?: string): boolean {
+  const haystack = `${modelId || ""} ${label || ""}`.toLowerCase()
+  if (!haystack.trim()) return false
+  if (haystack.includes("luna") || haystack.includes("haiku") || haystack.includes("basic")) {
+    return false
+  }
+  return (
+    haystack.includes("sol") ||
+    haystack.includes("astra") ||
+    haystack.includes("opus") ||
+    haystack.includes("power") ||
+    haystack.includes("terra") ||
+    haystack.includes("sonnet") ||
+    haystack.includes("gpt-6.1") ||
+    haystack.includes("gpt-5.4")
+  )
+}
+
 interface ContextUsageIndicatorProps {
   threadId: string
   modelName?: string
@@ -26,11 +47,16 @@ export const ContextUsageIndicator = ({
   const modelData = modelName ? allModels.find((m) => m.id === modelName) : null
   const context_window = modelData?.contextWindow || 200000
   const displayModelName = modelData?.label || ""
+  const premiumWarn =
+    !summarizing &&
+    current_tokens >= PREMIUM_CONTEXT_WARN_TOKENS &&
+    isPremiumCostModel(modelName, displayModelName)
 
   const rawPct = (current_tokens / context_window) * 100
   const percentage = Math.max(0, Math.min(100, rawPct))
 
   const getColor = (pct: number) => {
+    if (premiumWarn) return "text-amber-600 dark:text-amber-400"
     if (pct < 60) return "text-muted-foreground"
     if (pct < 75) return "text-muted-foreground"
     if (pct < 90) return "text-amber-500/80 dark:text-amber-400/80"
@@ -38,6 +64,7 @@ export const ContextUsageIndicator = ({
   }
 
   const getStrokeClass = (pct: number) => {
+    if (premiumWarn) return "stroke-amber-500 dark:stroke-amber-400"
     if (pct < 75) return "stroke-muted-foreground/60"
     if (pct < 90) return "stroke-amber-500/70 dark:stroke-amber-400/70"
     return "stroke-red-400/80 dark:stroke-red-400/70"
@@ -60,7 +87,7 @@ export const ContextUsageIndicator = ({
         <TooltipTrigger asChild>
           <div className={cn(
             "flex items-center gap-1.5 cursor-help transition-opacity duration-300 hover:opacity-100",
-            summarizing ? "opacity-90" : percentage < 75 ? "opacity-50 hover:opacity-80" : "opacity-100",
+            summarizing ? "opacity-90" : premiumWarn ? "opacity-100" : percentage < 75 ? "opacity-50 hover:opacity-80" : "opacity-100",
             className
           )}>
             <div className="relative">
@@ -68,7 +95,13 @@ export const ContextUsageIndicator = ({
                 className={cn("w-5 h-5 -rotate-90")}
                 viewBox={`0 0 ${size} ${size}`}
                 role="img"
-                aria-label={summarizing ? "Summarizing context window" : `Context usage ${percentage.toFixed(1)} percent`}
+                aria-label={
+                  summarizing
+                    ? "Summarizing context window"
+                    : premiumWarn
+                      ? `Large thread on a premium model: ${(current_tokens / 1000).toFixed(0)}k tokens`
+                      : `Context usage ${percentage.toFixed(1)} percent`
+                }
               >
                 {/* Background track */}
                 <circle
@@ -117,12 +150,17 @@ export const ContextUsageIndicator = ({
                 Summarizing...
               </span>
             )}
+            {premiumWarn && (
+              <span className="hidden md:inline text-[11px] text-amber-600 dark:text-amber-400 font-medium max-w-[11rem] truncate">
+                Large thread — use Luna or a new chat
+              </span>
+            )}
           </div>
         </TooltipTrigger>
         <TooltipContent
           side="top"
           align="center"
-          className="px-3 py-2 text-xs"
+          className="px-3 py-2 text-xs max-w-xs"
         >
           <div className="flex flex-col gap-1">
             {summarizing ? (
@@ -140,6 +178,11 @@ export const ContextUsageIndicator = ({
                 <div className="text-muted-foreground font-mono text-[10px] tabular-nums">
                   {(current_tokens / 1000).toFixed(0)}k / {(context_window / 1000).toFixed(0)}k tokens
                 </div>
+                {premiumWarn && (
+                  <div className="text-amber-600 dark:text-amber-400 text-[10px] mt-0.5 border-t border-border pt-1">
+                    This thread is large on a premium model. Switch to Luna for computer-use, or start a new chat to cut cost.
+                  </div>
+                )}
               </>
             )}
             {displayModelName && (

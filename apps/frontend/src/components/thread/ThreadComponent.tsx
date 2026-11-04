@@ -14,7 +14,7 @@ import {
   BillingError 
 } from '@/lib/api/errors';
 import { optimisticAgentStart } from '@/lib/api/agents';
-import { ensureLocalRunnerReady, isLocalRunnerAvailable, setProjectExecutionTarget } from '@/lib/api/local-runner';
+import { ensureLocalRunnerReady, isLocalRunnerAvailable, restoreDobbyDesktopUi, setProjectExecutionTarget } from '@/lib/api/local-runner';
 import { toast } from '@/lib/toast';
 import { ChatInput, ChatInputHandles } from '@/components/thread/chat-input/chat-input';
 import { SidebarContext } from '@/components/ui/sidebar';
@@ -1027,6 +1027,8 @@ export function ThreadComponent({ projectId, threadId, compact = false, configur
           setAgentStatus('idle');
           setAgentRunId(null);
           setAutoOpenedPanel(false);
+          // Computer-use hides the Electron window; bring it back when the run ends.
+          restoreDobbyDesktopUi();
 
           const ENABLE_MESSAGE_QUEUE = false;
           if (ENABLE_MESSAGE_QUEUE && queuedMessages.length > 0) {
@@ -1351,6 +1353,7 @@ export function ThreadComponent({ projectId, threadId, compact = false, configur
     if (isShared) return;
 
     setAgentStatus('idle');
+    restoreDobbyDesktopUi();
 
     await stopStreaming();
 
@@ -1522,6 +1525,7 @@ export function ThreadComponent({ projectId, threadId, compact = false, configur
       setAgentStatus('idle');
       setAgentRunId(null);
       lastStreamStartedRef.current = null;
+      restoreDobbyDesktopUi();
     }
   }, [streamHookStatus, agentStatus, setAgentStatus, setAgentRunId]);
 

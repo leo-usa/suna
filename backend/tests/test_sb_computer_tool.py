@@ -441,3 +441,176 @@ def test_cached_tokens_come_from_provider_usage():
     assert cached_tokens_from_usage({"prompt_tokens_details": {"cached_tokens": 7903}}) == 7903
     assert cached_tokens_from_usage({"cache_read_input_tokens": 50860}) == 50860
     assert cached_tokens_from_usage({"prompt_tokens": 18000}) == 0
+
+
+@pytest.mark.asyncio
+async def test_open_returns_ui_tree_when_agent_desktop_available():
+    computer = MagicMock()
+    computer.open = AsyncMock(return_value={"ok": True})
+    computer.ax_status = AsyncMock(return_value={"available": True})
+    computer.ax_snapshot = AsyncMock(return_value={
+        "ok": True,
+        "mode": "ax",
+        "app": "WeChat",
+        "snapshot_id": "ss1",
+        "complete": True,
+        "ref_count": 3,
+        "elements": [
+            {"ref": "@ss1:e1", "role": "button", "name": "Chats"},
+            {"ref": "@ss1:e2", "role": "statictext", "name": "File Transfer"},
+            {"ref": "@ss1:e3", "role": "button", "name": "Send"},
+        ],
+        "text": '1. @ss1:e1 button name="Chats"\n2. @ss1:e2 statictext name="File Transfer"',
+    })
+    computer.screenshot = AsyncMock()
+    tool = SandboxComputerTool("proj", MagicMock(), "thread")
+    tool._require_local_computer = AsyncMock(return_value=(computer, None))
+    with patch("core.tools.sb_computer_tool.asyncio.sleep", new_callable=AsyncMock):
+        result = await tool.computer_open("WeChat")
+    assert result.success is True
+    payload = json.loads(result.output)
+    assert payload["mode"] == "ax"
+    assert "File Transfer" in payload["tree"]
+    computer.screenshot.assert_not_awaited()
+    assert tool._last_app == "WeChat"
+
+
+@pytest.mark.asyncio
+async def test_screenshot_captures_pixels_even_when_ax_available():
+    computer = MagicMock()
+    computer.ax_status = AsyncMock(return_value={"available": True})
+    computer.ax_snapshot = AsyncMock()
+    # Minimal valid 1x1 PNG
+    png = (
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+    )
+    computer.screenshot = AsyncMock(return_value={
+        "png_b64": png,
+        "width": 1,
+        "height": 1,
+        "screen_width": 1,
+        "screen_height": 1,
+        "scale": 1,
+    })
+    tool = SandboxComputerTool("proj", MagicMock(), "thread")
+    tool._require_local_computer = AsyncMock(return_value=(computer, None))
+    with patch("core.local_runner.screenshots.save_computer_screenshots_enabled", new_callable=AsyncMock, return_value=False):
+        result = await tool.computer_screenshot()
+    assert result.success is True
+    payload = json.loads(result.output)
+    assert payload.get("mode") != "ax"
+    assert "_image_context_data" in payload or payload.get("width") == 1
+    computer.screenshot.assert_awaited()
+    computer.ax_snapshot.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_wechat_ui_snapshot_hints_screenshot_when_cards_missing():
+    computer = MagicMock()
+    computer.ax_snapshot = AsyncMock(return_value={
+        "ok": True,
+        "mode": "ax",
+        "app": "WeChat",
+        "snapshot_id": "ss1",
+        "complete": True,
+        "ref_count": 2,
+        "elements": [
+            {"ref": "@ss1:e1", "role": "AXButton", "name": "Chats"},
+            {"ref": "@ss1:e2", "role": "AXButton", "name": "Contacts"},
+        ],
+        "text": '1. @ss1:e1 button name="Chats"',
+    })
+    tool = SandboxComputerTool("proj", MagicMock(), "thread")
+    tool._require_local_computer = AsyncMock(return_value=(computer, None))
+    result = await tool.computer_ui_snapshot(app="WeChat")
+    assert result.success is True
+    payload = json.loads(result.output)
+    assert "computer_screenshot" in payload["message"]
+    assert "right" in payload["message"]
+
+
+@pytest.mark.asyncio
+async def test_ui_snapshot_returns_text_tree_without_screenshot():
+    computer = MagicMock()
+    computer.ax_snapshot = AsyncMock(return_value={
+        "ok": True,
+        "mode": "ax",
+        "app": "Finder",
+        "snapshot_id": "ss1",
+        "complete": True,
+        "ref_count": 1,
+        "elements": [{"ref": "@ss1:e1", "role": "button", "name": "Recents"}],
+        "text": '1. @ss1:e1 button name="Recents"',
+    })
+    tool = SandboxComputerTool("proj", MagicMock(), "thread")
+    tool._require_local_computer = AsyncMock(return_value=(computer, None))
+    result = await tool.computer_ui_snapshot(app="Finder")
+    assert result.success is True
+    payload = json.loads(result.output)
+    assert payload["mode"] == "ax"
+    assert payload["tree"].startswith("1. @ss1:e1")
+    assert "_image_context_data" not in payload
+    computer.ax_snapshot.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_ui_click_refreshes_tree_after_action():
+    computer = MagicMock()
+    computer.ax_click = AsyncMock(return_value={"ok": True})
+    computer.ax_snapshot = AsyncMock(return_value={
+        "ok": True,
+        "mode": "ax",
+        "app": "Finder",
+        "snapshot_id": "ss2",
+        "complete": True,
+        "ref_count": 1,
+        "elements": [{"ref": "@ss2:e1", "role": "button", "name": "Documents"}],
+        "text": '1. @ss2:e1 button name="Documents"',
+    })
+    tool = SandboxComputerTool("proj", MagicMock(), "thread")
+    tool._require_local_computer = AsyncMock(return_value=(computer, None))
+    with patch("core.tools.sb_computer_tool.asyncio.sleep", new_callable=AsyncMock):
+        result = await tool.computer_ui_click(ref="@ss1:e1", intent="Open Recents", app="Finder")
+    assert result.success is True
+    payload = json.loads(result.output)
+    assert "UI-clicked @ss1:e1" in payload["message"]
+    assert payload["targets"] == ["Open Recents"]
+    computer.ax_click.assert_awaited_once()
+    assert computer.ax_click.await_args.kwargs["intent"] == "Open Recents"
+    computer.ax_snapshot.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_ui_set_value_submit_presses_return():
+    computer = MagicMock()
+    computer.ax_set_value = AsyncMock(return_value={"ok": True})
+    computer.ax_press = AsyncMock(return_value={"ok": True})
+    computer.ax_snapshot = AsyncMock(return_value={
+        "ok": True,
+        "mode": "ax",
+        "app": "WeChat",
+        "snapshot_id": "ss3",
+        "complete": True,
+        "ref_count": 2,
+        "elements": [
+            {"ref": "@ss3:e1", "role": "textfield", "name": "File Transfer"},
+            {"ref": "@ss3:e2", "role": "button", "name": "Send"},
+        ],
+        "text": '1. @ss3:e1 textfield name="File Transfer"',
+    })
+    tool = SandboxComputerTool("proj", MagicMock(), "thread")
+    tool._require_local_computer = AsyncMock(return_value=(computer, None))
+    tool._last_app = "WeChat"
+    with patch("core.tools.sb_computer_tool.asyncio.sleep", new_callable=AsyncMock):
+        result = await tool.computer_ui_set_value(
+            ref="@ss3:e1",
+            value="hi",
+            intent="Type hi in File Transfer",
+            submit=True,
+            app="WeChat",
+        )
+    assert result.success is True
+    payload = json.loads(result.output)
+    assert "submitted" in payload["message"]
+    computer.ax_press.assert_awaited_once()
+    assert computer.ax_press.await_args.kwargs["key"] == "return"

@@ -77,6 +77,12 @@ COMPUTER_TYPE = "computer.type"
 COMPUTER_KEY = "computer.key"
 COMPUTER_SCROLL = "computer.scroll"
 COMPUTER_OPEN = "computer.open"
+COMPUTER_AX_STATUS = "computer.ax_status"
+COMPUTER_AX_SNAPSHOT = "computer.ax_snapshot"
+COMPUTER_AX_CLICK = "computer.ax_click"
+COMPUTER_AX_SET_VALUE = "computer.ax_set_value"
+COMPUTER_AX_TYPE = "computer.ax_type"
+COMPUTER_AX_PRESS = "computer.ax_press"
 
 WORKSPACE_DELETE = "workspace.delete"
 
@@ -106,6 +112,12 @@ RPC_METHODS: FrozenSet[str] = frozenset(
         COMPUTER_KEY,
         COMPUTER_SCROLL,
         COMPUTER_OPEN,
+        COMPUTER_AX_STATUS,
+        COMPUTER_AX_SNAPSHOT,
+        COMPUTER_AX_CLICK,
+        COMPUTER_AX_SET_VALUE,
+        COMPUTER_AX_TYPE,
+        COMPUTER_AX_PRESS,
         WORKSPACE_DELETE,
     }
 )

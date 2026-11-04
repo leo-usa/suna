@@ -62,10 +62,19 @@ function probeHostTools() {
   const python = resolveBin('python3') || resolveBin('python');
   const node = resolveBin('node');
   const git = resolveBin('git');
+  let agentDesktop = null;
+  try {
+    const { probeAgentDesktopHostTool } = require('./agent-desktop-bridge');
+    agentDesktop = probeAgentDesktopHostTool();
+  } catch (_) {
+    agentDesktop = null;
+  }
   return {
+    home: process.env.DOBBY_HOME || require('os').homedir(),
     python: python ? { path: python, version: versionOf(python) } : null,
     node: node ? { path: node, version: versionOf(node) } : null,
     git: git ? { path: git, version: versionOf(git) } : null,
+    agent_desktop: agentDesktop,
   };
 }
 

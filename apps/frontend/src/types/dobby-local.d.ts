@@ -11,6 +11,8 @@ export type DobbyLocalAPI = {
   status: () => Promise<DobbyLocalStatus>;
   stop: () => Promise<{ ok: boolean }>;
   openWorkspace: (projectId?: string) => Promise<string>;
+  /** Bring the desktop window back after computer-use hid it. */
+  restoreUi?: () => Promise<{ ok: boolean }>;
 };
 
 declare global {

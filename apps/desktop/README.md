@@ -16,6 +16,20 @@ npm install
 npm start
 ```
 
+## Accessibility computer use (agent-desktop)
+
+Faster computer-use path: reads the OS accessibility tree instead of screenshots.
+
+**End users do not need npm.** The Mac/Windows installer already embeds the `agent-desktop` native binary. `npm install` is only for developers building the app.
+
+```bash
+npm install                 # developers: downloads agent-desktop for this machine
+npm run stage:agent-desktop # copies the platform binary into vendor/ (also runs before build)
+npm run build:mac:unsigned  # ships vendor/agent-desktop inside the .app / .dmg
+```
+
+Grant **Accessibility** to Dobby, then fully quit and reopen. The agent prefers `computer_ui_*` tools and falls back to screenshots if the tree is empty.
+
 ## App icon (macOS / Windows / Linux)
 
 Icons under `assets/` are generated from the Dobby brand SVG in the web app. To refresh after changing the logo:

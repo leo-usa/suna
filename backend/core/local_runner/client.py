@@ -301,6 +301,80 @@ class LocalComputer:
     async def open(self, target: str) -> dict:
         return await rpc(self._device_id, proto.COMPUTER_OPEN, self._params({"target": target})) or {}
 
+    async def ax_status(self) -> dict:
+        return await rpc(self._device_id, proto.COMPUTER_AX_STATUS, self._params({})) or {}
+
+    async def ax_snapshot(
+        self,
+        app: Optional[str] = None,
+        root: Optional[str] = None,
+        skeleton: bool = True,
+        interactive: bool = True,
+        compact: bool = True,
+        max_depth: Optional[int] = None,
+    ) -> dict:
+        payload: dict = {
+            "skeleton": skeleton,
+            "interactive": interactive,
+            "compact": compact,
+        }
+        if app:
+            payload["app"] = app
+        if root:
+            payload["root"] = root
+        if max_depth is not None:
+            payload["max_depth"] = max_depth
+        return await rpc(self._device_id, proto.COMPUTER_AX_SNAPSHOT, self._params(payload), timeout=30) or {}
+
+    async def ax_click(
+        self,
+        ref: str,
+        headed: bool = False,
+        intent: Optional[str] = None,
+        app: Optional[str] = None,
+        submit_fallback: Optional[bool] = None,
+    ) -> dict:
+        payload: dict = {"ref": ref, "headed": headed}
+        if intent:
+            payload["intent"] = intent
+        if app:
+            payload["app"] = app
+        if submit_fallback is not None:
+            payload["submit_fallback"] = submit_fallback
+        return await rpc(
+            self._device_id,
+            proto.COMPUTER_AX_CLICK,
+            self._params(payload),
+            timeout=20,
+        ) or {}
+
+    async def ax_set_value(self, ref: str, value: str, headed: bool = False) -> dict:
+        return await rpc(
+            self._device_id,
+            proto.COMPUTER_AX_SET_VALUE,
+            self._params({"ref": ref, "value": value, "headed": headed}),
+            timeout=20,
+        ) or {}
+
+    async def ax_type(self, ref: str, text: str, headed: bool = False) -> dict:
+        return await rpc(
+            self._device_id,
+            proto.COMPUTER_AX_TYPE,
+            self._params({"ref": ref, "text": text, "headed": headed}),
+            timeout=20,
+        ) or {}
+
+    async def ax_press(self, key: str = "return", app: Optional[str] = None, headed: bool = False) -> dict:
+        payload: dict = {"key": key, "headed": headed}
+        if app:
+            payload["app"] = app
+        return await rpc(
+            self._device_id,
+            proto.COMPUTER_AX_PRESS,
+            self._params(payload),
+            timeout=20,
+        ) or {}
+
 
 class LocalSandbox:
     def __init__(self, device_id: str, project_id: str, preview_port: Optional[int] = None, project_name: Optional[str] = None):

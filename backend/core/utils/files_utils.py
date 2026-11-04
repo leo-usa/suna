@@ -222,6 +222,63 @@ def normalize_path(path: str) -> str:
         return path
 
 
+def is_host_home_path(path: str) -> bool:
+    """True for paths that should stay host-absolute on the local runner.
+
+    The cloud sandbox only mounts /workspace. On "run on this computer", the
+    local runner already allows reading under the user's home folder when given
+    ~/... or an absolute home path — but only if tools do not rewrite them into
+    /workspace first.
+    """
+    raw = (path or "").strip()
+    if not raw:
+        return False
+    if raw == "~" or raw.startswith("~/") or raw.startswith("~\\"):
+        return True
+    if raw.startswith("/Users/") or raw.startswith("/home/"):
+        return True
+    # Windows drive paths, e.g. C:\Users\... or C:/Users/...
+    if len(raw) >= 3 and raw[1] == ":" and raw[2] in ("/", "\\"):
+        return True
+    return False
+
+
+def rewrite_foreign_home_path(path: str, home: str | None = None) -> str:
+    """Map /Users/<other>/... (or /home/<other>, C:\\Users\\<other>) onto this host's home.
+
+    Agents often expand ~ themselves and invent the wrong username. Keep ~/ as-is;
+    only rewrite absolute foreign-home prefixes so local reads hit the real user.
+    """
+    import re
+    from pathlib import Path
+
+    raw = (path or "").strip()
+    if not raw or raw == "~" or raw.startswith("~/") or raw.startswith("~\\"):
+        return raw
+
+    home_path = Path(home or Path.home()).expanduser().resolve()
+    home_str = str(home_path)
+
+    # Already under the real home — leave alone (normalize separators later via resolve).
+    if raw == home_str or raw.startswith(home_str + "/") or raw.startswith(home_str + "\\"):
+        return raw
+
+    unix = re.match(r"^/(?:Users|home)/[^/\\]+(?P<rest>[/\\].*)?$", raw)
+    if unix:
+        rest = unix.group("rest") or ""
+        return home_str + rest.replace("\\", "/")
+
+    win = re.match(r"^[A-Za-z]:[/\\]Users[/\\][^/\\]+(?P<rest>[/\\].*)?$", raw)
+    if win:
+        rest = win.group("rest") or ""
+        # Preserve the host home's separator style.
+        if "\\" in home_str and "/" not in home_str.replace(":", ""):
+            return home_str + rest.replace("/", "\\")
+        return home_str + rest.replace("\\", "/")
+
+    return raw
+
+
 def clean_path(path: str, workspace_path: str = "/workspace") -> str:
     """Clean and normalize a path to be relative to the workspace.
 

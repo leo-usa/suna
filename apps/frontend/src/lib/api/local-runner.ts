@@ -15,6 +15,14 @@ export function isLocalRunnerAvailable(): boolean {
   return typeof window !== 'undefined' && Boolean(window.dobbyLocal);
 }
 
+/** After local computer-use, Electron may have hidden Dobby — bring it back. */
+export function restoreDobbyDesktopUi(): void {
+  if (typeof window === 'undefined' || !window.dobbyLocal?.restoreUi) return;
+  void window.dobbyLocal.restoreUi().catch(() => {
+    /* ignore — older desktop builds lack the IPC */
+  });
+}
+
 export function getPreferredExecutionTarget(): ExecutionTarget {
   if (typeof window === 'undefined') return 'cloud';
   const stored = window.localStorage.getItem(PREFERRED_TARGET_KEY);
