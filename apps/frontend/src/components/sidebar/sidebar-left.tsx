@@ -419,7 +419,7 @@ export function SidebarLeft({
               : "opacity-100 pointer-events-auto delay-100"
           )}
         >
-          <div className="px-6 pt-4 space-y-4">
+          <div className="density-sidebar-controls px-6 pt-4 space-y-4">
             {/* New Chat button */}
             <div className="w-full space-y-1">
               <Tooltip>
@@ -427,7 +427,7 @@ export function SidebarLeft({
                   <Button
                     variant="outline"
                     size="sm"
-                    className="w-full shadow-none justify-between h-10 px-3 group/new-chat"
+                    className="density-nav-action w-full shadow-none justify-between h-10 px-3 group/new-chat"
                     asChild
                   >
                     <Link
@@ -465,7 +465,7 @@ export function SidebarLeft({
                     variant="ghost"
                     size="sm"
                     className={cn(
-                      "w-full shadow-none justify-start h-10 px-3 hover:text-foreground",
+                      "density-nav-action w-full shadow-none justify-start h-10 px-3 hover:text-foreground",
                       isOnLibrary 
                         ? "bg-card border-[1.5px] border-border text-foreground" 
                         : "text-muted-foreground"
@@ -503,7 +503,7 @@ export function SidebarLeft({
                   <TooltipTrigger asChild>
                     <button
                       className={cn(
-                        "flex flex-col items-center justify-center gap-1.5 p-1.5 rounded-2xl cursor-pointer transition-colors w-[64px] h-[64px]",
+                        "density-nav-tile flex flex-col items-center justify-center gap-1.5 p-1.5 rounded-2xl cursor-pointer transition-colors w-[64px] h-[64px]",
                         "hover:bg-muted/60 hover:border-[1.5px] hover:border-border",
                         activeView === view ? 'bg-card border-[1.5px] border-border' : 'border-[1.5px] border-transparent'
                       )}
@@ -524,7 +524,7 @@ export function SidebarLeft({
           </div>
 
           {/* Content area */}
-          <div className="px-6 flex-1 overflow-hidden">
+          <div className="density-sidebar-list px-6 flex-1 overflow-hidden">
             {activeView === 'chats' && <NavAgents />}
             {activeView === 'workers' && <NavWorkers />}
             {activeView === 'starred' && (

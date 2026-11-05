@@ -139,6 +139,22 @@
         "cancelDeletionTitle": "アカウント削除をキャンセル",
         "cancelDeletionDescription": "アカウントの削除をキャンセルしますか？アカウントとすべてのデータが保持されます。",
         "cancelDeletion": "削除をキャンセル"
+      },
+      "density": {
+        "description": "ナビの余白とUI文字サイズを調整します。メッセージ本文は読みやすさを保ちます。",
+        "savedAutomatically": "このブラウザまたはデスクトップアプリに自動保存されます。モバイルの余白と文字は変わりません。",
+        "default": {
+          "label": "デフォルト",
+          "description": "元の余白と文字サイズ。"
+        },
+        "dense": {
+          "label": "密",
+          "description": "やや詰めた余白と小さめのUI文字。"
+        },
+        "compact": {
+          "label": "コンパクト",
+          "description": "最も詰めた余白と最小のUI文字。"
+        }
       }
     },
     "referrals": {

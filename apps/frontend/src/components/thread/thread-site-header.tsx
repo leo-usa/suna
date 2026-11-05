@@ -65,7 +65,7 @@ export function SiteHeader({
   };
 
   return (
-    <header className="bg-background sticky top-0 z-20 w-full h-12 sm:h-14 flex-shrink-0">
+    <header className="density-panel-header bg-background sticky top-0 z-20 w-full h-12 sm:h-14 flex-shrink-0">
       <div className="h-full flex items-center justify-between px-3 sm:px-4">
         {/* Left side - Menu (mobile) + Mode indicator or project name */}
         <div className="flex items-center gap-1 min-w-0 flex-1">

@@ -99,7 +99,7 @@ export function NavWorkers() {
             {sunaAgent && !searchQuery && (
               <div
                 className={cn(
-                  "flex items-center gap-3 p-2.5 rounded-xl cursor-pointer transition-colors",
+                  "density-list-row flex items-center gap-3 p-2.5 rounded-xl cursor-pointer transition-colors",
                   "hover:bg-muted/50"
                 )}
                 onClick={() => handleAgentClick(sunaAgent.agent_id)}
@@ -129,7 +129,7 @@ export function NavWorkers() {
                   <div
                     key={agent.agent_id}
                     className={cn(
-                      "flex items-center gap-3 p-2.5 rounded-xl cursor-pointer transition-colors mb-1",
+                      "density-list-row flex items-center gap-3 p-2.5 rounded-xl cursor-pointer transition-colors mb-1",
                       "hover:bg-muted/50"
                     )}
                     onClick={() => handleAgentClick(agent.agent_id)}

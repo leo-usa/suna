@@ -48,20 +48,20 @@ export function DobbyComputerHeader({
   actions,
 }: DobbyComputerHeaderProps) {
   return (
-    <div className="h-12 sm:h-14 bg-zinc-50/80 dark:bg-zinc-900/80 backdrop-blur-sm border-b p-1.5 sm:p-2 px-3 sm:px-4 flex items-center justify-between flex-shrink-0 max-w-full min-w-0">
+    <div className="density-panel-header h-12 sm:h-14 bg-zinc-50/80 dark:bg-zinc-900/80 backdrop-blur-sm border-b p-1.5 sm:p-2 px-3 sm:px-4 flex items-center justify-between flex-shrink-0 max-w-full min-w-0">
       {/* Left section: Icon + Title/Breadcrumbs/FileName */}
       <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto min-w-0 scrollbar-hide max-w-full">
         {/* Icon Button - compact on mobile */}
         {onIconClick ? (
           <button
             onClick={onIconClick}
-            className="relative p-1.5 sm:p-2 rounded-lg border flex-shrink-0 bg-zinc-200/60 dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700 hover:bg-zinc-300/60 dark:hover:bg-zinc-800 active:bg-zinc-300 transition-colors touch-manipulation"
+            className="density-panel-icon relative p-1.5 sm:p-2 rounded-lg border flex-shrink-0 bg-zinc-200/60 dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700 hover:bg-zinc-300/60 dark:hover:bg-zinc-800 active:bg-zinc-300 transition-colors touch-manipulation"
             title={iconTitle}
           >
             <Icon className="h-4 w-4 sm:h-5 sm:w-5 text-zinc-600 dark:text-zinc-400" />
           </button>
         ) : (
-          <div className="relative p-1.5 sm:p-2 rounded-lg border flex-shrink-0 bg-zinc-200/60 dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700">
+          <div className="density-panel-icon relative p-1.5 sm:p-2 rounded-lg border flex-shrink-0 bg-zinc-200/60 dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700">
             <Icon className="h-4 w-4 sm:h-5 sm:w-5 text-zinc-600 dark:text-zinc-400" />
           </div>
         )}

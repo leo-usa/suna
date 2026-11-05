@@ -139,6 +139,22 @@
         "cancelDeletionTitle": "Cancelar Exclusão de Conta",
         "cancelDeletionDescription": "Tens certeza que queres cancelar a exclusão da tua conta? Tua conta e todos os dados serão preservados.",
         "cancelDeletion": "Cancelar Exclusão"
+      },
+      "density": {
+        "description": "Ajuste o espaçamento da navegação e o tamanho do texto da UI. O conteúdo das mensagens permanece legível.",
+        "savedAutomatically": "Salvo automaticamente neste navegador ou app desktop. Espaçamento e texto mobile não mudam.",
+        "default": {
+          "label": "Padrão",
+          "description": "Espaçamento e tamanho de texto originais."
+        },
+        "dense": {
+          "label": "Denso",
+          "description": "Espaçamento um pouco mais fechado e texto de UI menor."
+        },
+        "compact": {
+          "label": "Compacto",
+          "description": "Espaçamento mais fechado e texto de UI menor."
+        }
       }
     },
     "referrals": {

@@ -139,6 +139,22 @@
         "cancelDeletionTitle": "Kontolöschung stornieren",
         "cancelDeletionDescription": "Möchtest du die Löschung deines Kontos stornieren? Dein Konto und alle Daten bleiben erhalten.",
         "cancelDeletion": "Löschung stornieren"
+      },
+      "density": {
+        "description": "Navigation, Abstände und UI-Textgröße anpassen. Nachrichten bleiben gut lesbar.",
+        "savedAutomatically": "Wird automatisch in diesem Browser oder der Desktop-App gespeichert. Mobile Abstände und Schrift bleiben unverändert.",
+        "default": {
+          "label": "Standard",
+          "description": "Originaler Abstand und Schriftgröße."
+        },
+        "dense": {
+          "label": "Dicht",
+          "description": "Etwas engerer Abstand und kleinere UI-Schrift."
+        },
+        "compact": {
+          "label": "Kompakt",
+          "description": "Engster Abstand und kleinste UI-Schrift."
+        }
       }
     },
     "referrals": {

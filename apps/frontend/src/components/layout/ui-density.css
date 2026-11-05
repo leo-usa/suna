@@ -1,0 +1,135 @@
+/*
+ * Density spacing + type scale.
+ * Desktop / fine-pointer only. Mobile and touch keep Default geometry and 105% root type.
+ * Font scale is on <html> so rem-based Tailwind utilities shrink with Dense/Compact.
+ */
+@media (min-width: 768px) and (pointer: fine) {
+  html[data-ui-density='dense'] {
+    font-size: 100%; /* Default app root is 105% */
+    --density-sidebar-inset: 16px;
+    --density-section-gap: 12px;
+    --density-tile-size: 52px;
+    --density-row-height: 44px;
+    --density-row-padding: 8px;
+    --density-row-icon: 28px;
+    --density-control-height: 36px;
+    --density-panel-height: 48px;
+    --density-message-gap: 18px;
+    --density-file-gap: 10px;
+    --density-chrome-font: 0.96;
+  }
+
+  html[data-ui-density='compact'] {
+    font-size: 93%;
+    --density-sidebar-inset: 12px;
+    --density-section-gap: 8px;
+    --density-tile-size: 44px;
+    --density-row-height: 36px;
+    --density-row-padding: 6px;
+    --density-row-icon: 24px;
+    --density-control-height: 32px;
+    --density-panel-height: 44px;
+    --density-message-gap: 12px;
+    --density-file-gap: 8px;
+    --density-chrome-font: 0.94;
+  }
+
+  html[data-ui-density] .density-sidebar-controls {
+    padding-inline: var(--density-sidebar-inset) !important;
+    padding-top: var(--density-section-gap) !important;
+    display: flex;
+    flex-direction: column;
+    gap: var(--density-section-gap) !important;
+    font-size: calc(1rem * var(--density-chrome-font)) !important;
+  }
+
+  html[data-ui-density] .density-sidebar-controls > * {
+    margin-block: 0 !important;
+  }
+
+  html[data-ui-density] .density-sidebar-list {
+    padding-inline: var(--density-sidebar-inset) !important;
+    font-size: calc(1rem * var(--density-chrome-font)) !important;
+  }
+
+  html[data-ui-density] .density-nav-action {
+    height: var(--density-control-height) !important;
+    min-height: var(--density-control-height) !important;
+    font-size: calc(1rem * var(--density-chrome-font)) !important;
+  }
+
+  html[data-ui-density] .density-nav-tile {
+    height: var(--density-tile-size) !important;
+    width: var(--density-tile-size) !important;
+    gap: 2px !important;
+    padding-block: 2px !important;
+    font-size: calc(0.75rem * var(--density-chrome-font)) !important;
+  }
+
+  html[data-ui-density] .density-list-row {
+    min-height: var(--density-row-height) !important;
+    padding: var(--density-row-padding) !important;
+    gap: 8px !important;
+    font-size: calc(0.875rem * var(--density-chrome-font)) !important;
+  }
+
+  html[data-ui-density] .density-row-icon {
+    width: var(--density-row-icon) !important;
+    height: var(--density-row-icon) !important;
+    min-width: var(--density-row-icon) !important;
+    min-height: var(--density-row-icon) !important;
+  }
+
+  html[data-ui-density] .density-avatar {
+    width: var(--density-row-icon) !important;
+    height: var(--density-row-icon) !important;
+    min-width: var(--density-row-icon) !important;
+    min-height: var(--density-row-icon) !important;
+  }
+
+  html[data-ui-density] .density-avatar > svg,
+  html[data-ui-density] .density-avatar canvas,
+  html[data-ui-density] .density-avatar img {
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  html[data-ui-density] .density-section-heading {
+    margin-top: var(--density-section-gap) !important;
+    padding-block: 4px !important;
+    font-size: calc(0.75rem * var(--density-chrome-font)) !important;
+  }
+
+  html[data-ui-density] .density-panel-header {
+    height: var(--density-panel-height) !important;
+    min-height: var(--density-panel-height) !important;
+    padding-block: 2px !important;
+    font-size: calc(0.875rem * var(--density-chrome-font)) !important;
+  }
+
+  html[data-ui-density] .density-panel-icon {
+    padding: 6px !important;
+  }
+
+  html[data-ui-density] .density-message-list {
+    gap: 0 !important;
+  }
+
+  html[data-ui-density] .density-message-list > * {
+    margin-block: 0 !important;
+  }
+
+  html[data-ui-density] .density-message-list > * + * {
+    margin-top: var(--density-message-gap) !important;
+  }
+
+  html[data-ui-density] .density-message-tail {
+    margin-top: var(--density-message-gap) !important;
+  }
+
+  html[data-ui-density] .density-file-grid {
+    gap: var(--density-file-gap) !important;
+    padding: var(--density-sidebar-inset) !important;
+    font-size: calc(0.75rem * var(--density-chrome-font)) !important;
+  }
+}

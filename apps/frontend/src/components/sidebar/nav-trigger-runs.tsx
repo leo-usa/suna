@@ -17,7 +17,7 @@ import { useTranslations } from 'next-intl';
 const DateGroupHeader: React.FC<{ dateGroup: string }> = ({ dateGroup }) => {
     const t = useTranslations('sidebar');
     return (
-        <div className="py-2 mt-4 first:mt-2">
+        <div className="density-section-heading py-2 mt-4 first:mt-2">
             <div className="text-xs font-medium text-muted-foreground pl-2.5">
                 {t(`dateGroups.${dateGroup}` as any)}
             </div>
@@ -46,8 +46,8 @@ const TriggerRunItem: React.FC<{
                 onClick={(e) => handleThreadClick(e, thread.threadId, thread.url)}
                 className="block"
             >
-                <div className="flex items-center gap-3 p-2.5 text-sm">
-                    <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-card border-[1.5px] border-border flex-shrink-0">
+                <div className="density-list-row flex items-center gap-3 p-2.5 text-sm">
+                    <div className="density-row-icon flex items-center justify-center w-10 h-10 rounded-2xl bg-card border-[1.5px] border-border flex-shrink-0">
                         {isThreadLoading ? (
                             <DobbyLoader size="small" />
                         ) : (
@@ -149,7 +149,7 @@ export function NavTriggerRuns() {
     return (
         <div>
             {/* Section Header */}
-            <div className="py-2 mt-4 first:mt-2">
+            <div className="density-section-heading py-2 mt-4 first:mt-2">
                 <div className="text-xs font-medium text-muted-foreground pl-2.5">
                     Trigger Runs
                 </div>

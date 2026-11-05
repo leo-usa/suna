@@ -1805,14 +1805,14 @@ export const ThreadContent: React.FC<ThreadContentProps> = memo(
           ref={contentRef}
           className="mx-auto max-w-3xl min-w-0 w-full px-3 sm:px-6"
         >
-          <div className="space-y-6 min-w-0">
+          <div className="density-message-list space-y-6 min-w-0">
             {groupedMessages.map((group, index) =>
               renderMessageGroup(group, index),
             )}
           </div>
 
           {showNewGroupLoader && (
-            <div ref={latestMessageRef} className="w-full rounded mt-6">
+            <div ref={latestMessageRef} className="density-message-tail w-full rounded mt-6">
               <div className="flex flex-col gap-2">
                 {/* Smooth transition between loader and reasoning section */}
                 <AnimatePresence mode="wait" initial={false}>
@@ -1856,7 +1856,7 @@ export const ThreadContent: React.FC<ThreadContentProps> = memo(
           )}
 
           {readOnly && currentToolCall && (
-            <div ref={latestMessageRef} className="mt-6">
+            <div ref={latestMessageRef} className="density-message-tail mt-6">
               <div className="flex flex-col gap-2">
                 <div className="flex items-center">
                   <AgentHeader agentInfo={agentInfo} />
@@ -1882,7 +1882,7 @@ export const ThreadContent: React.FC<ThreadContentProps> = memo(
             visibleMessages &&
             visibleMessages.length === 0 &&
             isStreamingText && (
-              <div ref={latestMessageRef} className="mt-6">
+              <div ref={latestMessageRef} className="density-message-tail mt-6">
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center">
                     <AgentHeader agentInfo={agentInfo} />

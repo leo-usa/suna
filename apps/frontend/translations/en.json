@@ -173,6 +173,23 @@
     "general": {
       "title": "General settings",
       "description": "Manage your account information",
+      "density": {
+        "title": "Display density",
+        "description": "Adjust navigation spacing and text size for panels and lists. Message content stays readable.",
+        "savedAutomatically": "Saved automatically on this browser or desktop app. Mobile spacing and text stay unchanged.",
+        "default": {
+          "label": "Default",
+          "description": "Original spacing and type size."
+        },
+        "dense": {
+          "label": "Dense",
+          "description": "Slightly tighter spacing and smaller UI text."
+        },
+        "compact": {
+          "label": "Compact",
+          "description": "Tightest spacing and smallest UI text."
+        }
+      },
       "profilePicture": {
         "title": "Profile Picture",
         "upload": "Upload avatar",

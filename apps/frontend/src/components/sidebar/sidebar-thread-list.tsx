@@ -81,7 +81,7 @@ import { useMasterAssistant } from '@/hooks/master-assistant/use-master-assistan
 const DateGroupHeader: React.FC<{ dateGroup: string }> = ({ dateGroup }) => {
   const t = useTranslations('sidebar');
   return (
-    <div className="py-2 mt-4 first:mt-2">
+    <div className="density-section-heading py-2 mt-4 first:mt-2">
       <div className="text-xs font-medium text-muted-foreground px-2.5">
         {t(`dateGroups.${dateGroup}` as any)}
       </div>
@@ -178,8 +178,8 @@ const MasterPinnedItem: React.FC<{ path: string; name: string; isActive: boolean
 }) => (
   <SpotlightCard className={cn('mb-1.5 transition-colors cursor-pointer', isActive ? 'bg-muted' : 'bg-transparent')}>
     <Link href={path} prefetch className="block">
-      <div className="flex items-center gap-3 p-2.5 text-sm">
-        <MasterAvatarOrb size={40} thinking={isRunning} className="flex-shrink-0" />
+      <div className="density-list-row flex items-center gap-3 p-2.5 text-sm">
+        <MasterAvatarOrb size={40} thinking={isRunning} className="density-avatar flex-shrink-0" />
         <span className="flex-1 truncate font-medium">{name}</span>
       </div>
     </Link>
@@ -247,12 +247,12 @@ const ThreadItemCard: React.FC<ThreadItemCardProps> = ({
         className="block"
       >
         <div
-          className="flex items-center gap-3 p-2.5 text-sm"
+          className="density-list-row flex items-center gap-3 p-2.5 text-sm"
           onMouseEnter={() => setIsHoveringCard(true)}
           onMouseLeave={() => setIsHoveringCard(false)}
         >
           {/* Icon */}
-          <div className="relative flex items-center justify-center w-10 h-10 rounded-2xl bg-card border-[1.5px] border-border flex-shrink-0">
+          <div className="relative density-row-icon flex items-center justify-center w-10 h-10 rounded-2xl bg-card border-[1.5px] border-border flex-shrink-0">
             {isThreadLoading ? (
               <DobbyLoader size="small" />
             ) : (
@@ -1123,14 +1123,14 @@ export function SidebarThreadList({ mode }: SidebarThreadListProps) {
                                 <CollapsibleTrigger asChild>
                                   <div
                                     className={cn(
-                                      'flex items-center gap-2.5 px-2.5 py-2.5 cursor-pointer group/project rounded-xl transition-colors',
+                                      'density-list-row flex items-center gap-2.5 px-2.5 py-2.5 cursor-pointer group/project rounded-xl transition-colors',
                                       hasActiveThread
                                         ? 'bg-muted'
                                         : 'hover:bg-muted/30'
                                     )}
                                   >
                                     {/* Project Icon */}
-                                    <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-card border-[1.5px] border-border flex-shrink-0">
+                                    <div className="density-row-icon flex items-center justify-center w-10 h-10 rounded-2xl bg-card border-[1.5px] border-border flex-shrink-0">
                                       <ThreadIcon
                                         iconName={projectGroup.iconName}
                                         className="text-muted-foreground"

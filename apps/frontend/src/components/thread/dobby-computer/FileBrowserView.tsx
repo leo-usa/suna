@@ -2197,7 +2197,7 @@ export function FileBrowserView({
         ) : (
           /* Default: Simple icon grid */
           <ScrollArea className="h-full w-full max-w-full p-2 min-w-0">
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 p-4 max-w-full min-w-0">
+            <div className="density-file-grid grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 p-4 max-w-full min-w-0">
               {mainPanelFiles.map((file) => (
                 <button
                   key={file.path}

@@ -139,6 +139,22 @@
         "cancelDeletionTitle": "Cancelar Eliminación de Cuenta",
         "cancelDeletionDescription": "¿Estás seguro de que quieres cancelar la eliminación de tu cuenta? Tu cuenta y todos los datos serán preservados.",
         "cancelDeletion": "Cancelar Eliminación"
+      },
+      "density": {
+        "description": "Ajusta el espaciado de navegación y el tamaño del texto de la UI. El contenido del mensaje sigue siendo legible.",
+        "savedAutomatically": "Se guarda automáticamente en este navegador o app de escritorio. El espaciado y texto móvil no cambian.",
+        "default": {
+          "label": "Predeterminado",
+          "description": "Espaciado y tamaño de texto originales."
+        },
+        "dense": {
+          "label": "Denso",
+          "description": "Espaciado un poco más cerrado y texto de UI más pequeño."
+        },
+        "compact": {
+          "label": "Compacto",
+          "description": "Espaciado más cerrado y texto de UI más pequeño."
+        }
       }
     },
     "referrals": {

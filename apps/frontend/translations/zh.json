@@ -173,6 +173,23 @@
     "general": {
       "title": "个人资料设置",
       "description": "管理你的账户信息",
+      "density": {
+        "title": "显示密度",
+        "description": "调整导航间距和界面文字大小。正文仍保持可读。",
+        "savedAutomatically": "会自动保存在当前浏览器或桌面应用。手机端间距和文字保持不变。",
+        "default": {
+          "label": "默认",
+          "description": "原来的间距和字号。"
+        },
+        "dense": {
+          "label": "密集",
+          "description": "略紧的间距，界面文字稍小。"
+        },
+        "compact": {
+          "label": "紧凑",
+          "description": "最紧的间距，界面文字最小。"
+        }
+      },
       "profilePicture": {
         "title": "头像",
         "upload": "上传头像",

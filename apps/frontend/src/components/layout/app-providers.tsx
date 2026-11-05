@@ -1,13 +1,15 @@
 'use client';
 
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useEffect } from 'react';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { useDeleteOperationEffects } from '@/stores/delete-operation-store';
 import { SubscriptionStoreSync } from '@/stores/subscription-store';
+import { useUiDensityStore } from '@/stores/ui-density-store';
+import './ui-density.css';
 
 // Lazy load the heavy sidebar component
-const SidebarLeft = lazy(() => 
-  import('@/components/sidebar/sidebar-left').then(mod => ({ default: mod.SidebarLeft }))
+const SidebarLeft = lazy(() =>
+  import('@/components/sidebar/sidebar-left').then((mod) => ({ default: mod.SidebarLeft })),
 );
 
 // Sidebar skeleton for immediate render
@@ -49,17 +51,34 @@ interface AppProvidersProps {
  * - SubscriptionStoreSync
  * - SidebarProvider + SidebarLeft + SidebarInset (if showSidebar is true)
  */
-export function AppProviders({ 
-  children, 
+export function AppProviders({
+  children,
   showSidebar = true,
   sidebarContent,
-  sidebarSiblings
+  sidebarSiblings,
 }: AppProvidersProps) {
+  const density = useUiDensityStore((state) => state.density);
+
+  useEffect(() => {
+    void useUiDensityStore.persist.rehydrate();
+  }, []);
+
+  // Sync to <html> so rem-based Tailwind type scales with Dense/Compact.
+  useEffect(() => {
+    const root = document.documentElement;
+    if (density === 'default') {
+      delete root.dataset.uiDensity;
+    } else {
+      root.dataset.uiDensity = density;
+    }
+    return () => {
+      delete root.dataset.uiDensity;
+    };
+  }, [density]);
+
   const content = (
     <DeleteOperationEffectsWrapper>
-      <SubscriptionStoreSync>
-        {children}
-      </SubscriptionStoreSync>
+      <SubscriptionStoreSync>{children}</SubscriptionStoreSync>
     </DeleteOperationEffectsWrapper>
   );
 
@@ -74,11 +93,8 @@ export function AppProviders({
           <SidebarLeft />
         </Suspense>
       )}
-      <SidebarInset>
-        {content}
-      </SidebarInset>
+      <SidebarInset>{content}</SidebarInset>
       {sidebarSiblings}
     </SidebarProvider>
   );
 }
-

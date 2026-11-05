@@ -139,6 +139,22 @@
         "cancelDeletionTitle": "Annulla Eliminazione Account",
         "cancelDeletionDescription": "Vuoi annullare l'eliminazione del tuo account? Il tuo account e tutti i dati saranno preservati.",
         "cancelDeletion": "Annulla Eliminazione"
+      },
+      "density": {
+        "description": "Regola spaziatura di navigazione e dimensione del testo UI. Il contenuto dei messaggi resta leggibile.",
+        "savedAutomatically": "Salvato automaticamente su questo browser o app desktop. Spaziatura e testo mobile non cambiano.",
+        "default": {
+          "label": "Predefinito",
+          "description": "Spaziatura e dimensione testo originali."
+        },
+        "dense": {
+          "label": "Denso",
+          "description": "Spaziatura un po’ più stretta e testo UI più piccolo."
+        },
+        "compact": {
+          "label": "Compatto",
+          "description": "Spaziatura più stretta e testo UI più piccolo."
+        }
       }
     },
     "referrals": {

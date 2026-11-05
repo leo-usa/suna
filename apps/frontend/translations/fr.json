@@ -139,6 +139,22 @@
         "cancelDeletionTitle": "Annuler la Suppression de Compte",
         "cancelDeletionDescription": "Veux-tu vraiment annuler la suppression de ton compte ? Ton compte et toutes les données seront préservés.",
         "cancelDeletion": "Annuler la Suppression"
+      },
+      "density": {
+        "description": "Ajustez l’espacement de navigation et la taille du texte d’interface. Le contenu des messages reste lisible.",
+        "savedAutomatically": "Enregistré automatiquement sur ce navigateur ou l’app bureau. L’espacement et le texte mobile ne changent pas.",
+        "default": {
+          "label": "Par défaut",
+          "description": "Espacement et taille de texte d’origine."
+        },
+        "dense": {
+          "label": "Dense",
+          "description": "Espacement un peu plus serré et texte d’UI plus petit."
+        },
+        "compact": {
+          "label": "Compact",
+          "description": "Espacement le plus serré et plus petit texte d’UI."
+        }
       }
     },
     "referrals": {

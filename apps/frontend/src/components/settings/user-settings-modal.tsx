@@ -97,6 +97,7 @@ import ThreadUsage from '@/components/billing/thread-usage';
 import { UsageLimitsCard } from '@/components/billing/usage-limits-card';
 import { formatCredits } from '@agentpress/shared';
 import { LanguageSwitcher } from './language-switcher';
+import { DensitySelector } from './density-selector';
 import { useLocale, useTranslations } from 'next-intl';
 import { ReferralsTab } from '@/components/referrals/referrals-tab';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -592,6 +593,8 @@ function GeneralTab({ onClose }: { onClose: () => void }) {
                 <div className="space-y-2">
                     <LanguageSwitcher />
                 </div>
+
+                <DensitySelector />
             </div>
 
             <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end pt-4">
