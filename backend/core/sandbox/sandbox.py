@@ -70,6 +70,43 @@ def _start_lock_for(sandbox_id: str) -> asyncio.Lock:
     return lock
 
 
+def is_daytona_throttle_error(error: BaseException) -> bool:
+    """Daytona API rate limit / throttler responses."""
+    text = str(error).lower()
+    return (
+        "throttlerexception" in text
+        or "too many requests" in text
+        or "429" in text
+        or "rate limit" in text
+    )
+
+
+async def _retry_on_daytona_throttle(
+    operation_name: str,
+    operation,
+    *,
+    max_attempts: int = 5,
+    base_delay: float = 0.75,
+):
+    """Retry Daytona calls that fail with ThrottlerException / 429."""
+    last_error: BaseException | None = None
+    for attempt in range(1, max_attempts + 1):
+        try:
+            return await operation()
+        except Exception as e:
+            last_error = e
+            if not is_daytona_throttle_error(e) or attempt >= max_attempts:
+                raise
+            delay = base_delay * (2 ** (attempt - 1))
+            logger.warning(
+                f"[DAYTONA THROTTLE] {operation_name} attempt {attempt}/{max_attempts} "
+                f"rate-limited; retrying in {delay:.1f}s: {e}"
+            )
+            await asyncio.sleep(delay)
+    assert last_error is not None
+    raise last_error
+
+
 async def _run_scheduled_sandbox_start(sandbox_id: str, force: bool = False) -> None:
     try:
         await get_or_start_sandbox(sandbox_id, force=force)
@@ -373,6 +410,14 @@ async def _evict_oldest_deletable_sandboxes_if_over_limit() -> None:
 
 async def get_or_start_sandbox(sandbox_id: str, force: bool = False) -> AsyncSandbox:
     """Retrieve a sandbox by ID, check its state, and start it if needed."""
+    return await _retry_on_daytona_throttle(
+        f"get_or_start_sandbox({sandbox_id})",
+        lambda: _get_or_start_sandbox_once(sandbox_id, force=force),
+    )
+
+
+async def _get_or_start_sandbox_once(sandbox_id: str, force: bool = False) -> AsyncSandbox:
+    """Single attempt to retrieve/start a sandbox (no throttle retry)."""
     
     logger.info(f"Getting or starting sandbox with ID: {sandbox_id} force={force}")
 

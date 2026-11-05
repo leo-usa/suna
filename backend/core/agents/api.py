@@ -495,7 +495,14 @@ async def start_agent_run(
                 logger.debug(f"Project check/creation skipped: {e}")
         
         # Resolve sandbox (creates if needed, starts it) - BLOCKING
-        sandbox_info = await resolve_sandbox(project_id, account_id, client, require_started=True)
+        try:
+            sandbox_info = await resolve_sandbox(project_id, account_id, client, require_started=True)
+        except Exception as e:
+            logger.error(f"[AGENT_START] Sandbox resolve failed for file uploads (project {project_id}): {e}")
+            raise HTTPException(
+                status_code=503,
+                detail="Sandbox is temporarily unavailable (rate limited). Please retry in a few seconds.",
+            )
         sandbox_id = sandbox_info.sandbox_id if sandbox_info else None
         
         if sandbox_id:
@@ -507,7 +514,11 @@ async def start_agent_run(
             if want_dedicated:
                 await _sync_dedicated_sandbox_after_resolve(project_id, account_id)
         else:
-            logger.warning(f"⚠️ [AGENT_START] Failed to resolve sandbox for file uploads (project {project_id})")
+            logger.error(f"[AGENT_START] Failed to resolve sandbox for file uploads (project {project_id})")
+            raise HTTPException(
+                status_code=503,
+                detail="Could not prepare sandbox for file upload. Please retry.",
+            )
     
     elif is_new_thread:
         # NO FILES but NEW THREAD: Start sandbox creation in background (non-blocking)

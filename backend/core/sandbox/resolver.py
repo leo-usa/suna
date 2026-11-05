@@ -6,7 +6,7 @@ import time
 from daytona_sdk import AsyncSandbox
 
 from core.utils.logger import logger
-from core.sandbox.sandbox import get_or_start_sandbox, create_sandbox
+from core.sandbox.sandbox import get_or_start_sandbox, create_sandbox, is_daytona_throttle_error
 from core.cache.runtime_cache import get_cached_project_metadata, set_cached_project_metadata
 
 
@@ -92,10 +92,23 @@ class SandboxResolver:
                     token=sandbox_data.get('token')
                 )
             except Exception as e:
+                # Rate limits are transient — do not fall through to create a second sandbox.
+                if is_daytona_throttle_error(e):
+                    logger.error(
+                        f"[RESOLVER] Cached sandbox {sandbox_id} throttled for {project_id}; not creating another"
+                    )
+                    raise
                 logger.warning(f"[RESOLVER] Cached sandbox {sandbox_id} failed: {e}")
         
         if db_client:
-            sandbox_info = await self._resolve_from_db(project_id, account_id, db_client)
+            try:
+                sandbox_info = await self._resolve_from_db(project_id, account_id, db_client)
+            except Exception as e:
+                if is_daytona_throttle_error(e):
+                    logger.error(
+                        f"[RESOLVER] DB sandbox resolve throttled for {project_id}; not creating another"
+                    )
+                raise
             if sandbox_info:
                 elapsed = (time.time() - start_time) * 1000
                 logger.debug(f"[RESOLVER] DB hit for {project_id}: {sandbox_info.sandbox_id} in {elapsed:.0f}ms")
@@ -206,6 +219,9 @@ class SandboxResolver:
             )
         except Exception as e:
             logger.error(f"[RESOLVER] DB resolution failed for {project_id}: {e}")
+            # Propagate throttles so callers retry / surface errors instead of creating duplicates
+            if is_daytona_throttle_error(e):
+                raise
             return None
     
     async def _claim_or_create(
