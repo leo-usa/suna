@@ -117,6 +117,19 @@ export default async function RootLayout({
         {/* DNS prefetch for analytics (loaded later but resolve DNS early) */}
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
         <link rel="dns-prefetch" href="https://eu.i.posthog.com" />
+
+        {/* Google Ads tag (AW-1036055403) */}
+        <script async src="https://www.googletagmanager.com/gtag/js?id=AW-1036055403" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'AW-1036055403');
+            `,
+          }}
+        />
         
         {/* Container Load - Initialize dataLayer with page context BEFORE GTM loads */}
         <script
