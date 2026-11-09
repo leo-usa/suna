@@ -255,6 +255,28 @@ export function FileViewerView({
   const fileType = getEditableFileType(fileName);
   const canEdit = isEditableFileType(fileType);
 
+  const folderBreadcrumbs = useMemo(() => {
+    const normalized = normalizeWorkspacePath(filePath);
+    const dir = normalized.includes('/')
+      ? normalized.slice(0, normalized.lastIndexOf('/')) || '/workspace'
+      : '/workspace';
+    const clean = dir.replace(/^\/workspace\/?/, '');
+    if (!clean) return [] as { name: string; path: string; isLast: boolean }[];
+    const parts = clean.split('/').filter(Boolean);
+    let acc = '/workspace';
+    return parts.map((part, index) => {
+      acc = `${acc}/${part}`;
+      return { name: part, path: acc, isLast: index === parts.length - 1 };
+    });
+  }, [filePath]);
+
+  const parentFolderPath = useMemo(() => {
+    if (folderBreadcrumbs.length > 0) {
+      return folderBreadcrumbs[folderBreadcrumbs.length - 1].path;
+    }
+    return '/workspace';
+  }, [folderBreadcrumbs]);
+
   // File type checks
   const isMarkdownFile = fileExtension === 'md' || fileExtension === 'markdown';
   const isHtmlFile = fileExtension === 'html' || fileExtension === 'htm';
@@ -887,8 +909,15 @@ export function FileViewerView({
         {/* Header */}
         <DobbyComputerHeader
           icon={Home}
-          onIconClick={goBackToBrowser}
+          onIconClick={() => navigateToPath('/workspace')}
           iconTitle={t('fileViewer.backToFiles')}
+          onNavigateUp={() => navigateToPath(parentFolderPath)}
+          canNavigateUp
+          navigateUpTitle={t('fileBrowser.navigateUp')}
+          rootLabel={t('fileBrowser.filesTitle')}
+          rootPath="/workspace"
+          breadcrumbs={folderBreadcrumbs}
+          onBreadcrumbClick={navigateToPath}
           fileName={presentationName}
           actions={
             <>
@@ -985,8 +1014,15 @@ export function FileViewerView({
       {/* Header */}
       <DobbyComputerHeader
         icon={Home}
-        onIconClick={goBackToBrowser}
+        onIconClick={() => navigateToPath('/workspace')}
         iconTitle={t('fileViewer.backToFiles')}
+        onNavigateUp={() => navigateToPath(parentFolderPath)}
+        canNavigateUp
+        navigateUpTitle={t('fileBrowser.navigateUp')}
+        rootLabel={t('fileBrowser.filesTitle')}
+        rootPath="/workspace"
+        breadcrumbs={folderBreadcrumbs}
+        onBreadcrumbClick={navigateToPath}
         fileName={fileName}
         actions={
           <>

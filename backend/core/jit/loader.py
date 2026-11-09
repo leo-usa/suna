@@ -36,6 +36,7 @@ class JITLoader:
             'sb_git_sync',
             'sb_upload_file_tool',
             'sb_expose_tool',
+            'sb_publish_tool',
             'sb_kb_tool',  # Knowledge base operations
         ]
     

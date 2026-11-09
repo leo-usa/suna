@@ -54,6 +54,35 @@ def parse_image_paths(image_path: Optional[str | list[str]]) -> list[str]:
     # Single path
     return [trimmed] if trimmed else []
 
+
+def normalize_image_output(
+    output_format: Optional[str],
+    frame_count: Optional[int],
+    frame_duration_ms: Optional[int],
+) -> tuple[str, Optional[int], Optional[int]]:
+    """Return (format, frame_count, frame_duration_ms). GIF params are clamped to Replicate limits."""
+    fmt = (output_format or "png").lower().strip()
+    if fmt not in ("png", "gif"):
+        fmt = "png"
+    if fmt != "gif":
+        return "png", None, None
+
+    try:
+        frames = int(frame_count if frame_count is not None else 9)
+    except (TypeError, ValueError):
+        frames = 9
+    frames = max(2, min(16, frames))
+
+    try:
+        duration = int(frame_duration_ms if frame_duration_ms is not None else 200)
+    except (TypeError, ValueError):
+        duration = 200
+    duration = max(20, min(2000, duration))
+    duration = int(round(duration / 10.0) * 10)
+    if duration < 20:
+        duration = 20
+    return "gif", frames, duration
+
 @tool_metadata(
     display_name="Generate Media",
     description="Generate, edit, upscale, or remove background from images. Also generates videos.",
@@ -95,8 +124,17 @@ image_edit_or_generate(
     prompt="An astronaut floating in space",
     video_options={"duration": 5, "generate_audio": True}
 )
+
+# Animated GIF (2-16 frames). Describe the motion and that it loops back to the start.
+image_edit_or_generate(
+    prompt="A paper lantern sways, then returns to its starting position. Smooth loop.",
+    output_format="gif",
+    frame_count=9,
+    frame_duration_ms=200
+)
 ```
 
+**output_format:** "png" (default) or "gif". GIFs use frame_count (2-16, default 9) and frame_duration_ms (20-2000, default 200).
 **video_options:** duration (2-15s, or -1 for auto length), resolution ("480p"|"720p"|"1080p"), aspect_ratio (e.g. "16:9"), generate_audio (bool), last_frame_image (path; requires start image)
 **canvas_path:** Optionally add result to a canvas (e.g., "canvases/my-design.kanvax")
 """
@@ -183,6 +221,19 @@ Generate, edit, upscale, or remove background from images. Video generation supp
                             "enum": ["1:1", "3:2", "2:3", "4:3", "3:4", "16:9", "9:16"],
                             "description": "**MANDATORY when using frame_id!** Match frame orientation: stories 9:16, YouTube 16:9, portrait 2:3/3:4, landscape 3:2/4:3, square 1:1. Default: '1:1'."
                         },
+                        "output_format": {
+                            "type": "string",
+                            "enum": ["png", "gif"],
+                            "description": "**OPTIONAL** - 'png' (default) or 'gif' for an animated loop. For GIFs, describe the motion and that it returns to the starting pose. To animate an existing image, use action='edit' with image_path."
+                        },
+                        "frame_count": {
+                            "type": "integer",
+                            "description": "**OPTIONAL, GIF only** - Number of frames, 2-16. Default 9."
+                        },
+                        "frame_duration_ms": {
+                            "type": "integer",
+                            "description": "**OPTIONAL, GIF only** - Milliseconds each frame is shown, 20-2000, rounded to 10ms. Default 200."
+                        },
                         "video_options": {
                             "type": "object",
                             "description": "**OPTIONAL** - Include this to generate VIDEO instead of image. Optional: duration (2-15 seconds, or -1 for model-chosen length), resolution (\"480p\"|\"720p\"|\"1080p\"), aspect_ratio (e.g. \"16:9\"), generate_audio (boolean), seed (integer), last_frame_image (string path; requires image_path)."
@@ -204,6 +255,9 @@ Generate, edit, upscale, or remove background from images. Video generation supp
         action: Optional[str] = None,
         image_path: Optional[str | list[str]] = None,
         aspect_ratio: Optional[str] = None,
+        output_format: Optional[str] = None,
+        frame_count: Optional[int] = None,
+        frame_duration_ms: Optional[int] = None,
         video_options: Optional[dict] = None,
         canvas_path: Optional[str] = None,
         canvas_x: Optional[float] = None,
@@ -307,13 +361,22 @@ Generate, edit, upscale, or remove background from images. Video generation supp
                 start_time = time.time()
                 tasks = []
                 img_aspect_ratio = aspect_ratio or "1:1"
+                out_fmt, gif_frames, gif_duration = normalize_image_output(
+                    output_format, frame_count, frame_duration_ms
+                )
                 for i, p in enumerate(prompts):
                     if mode == "edit":
                         # Use corresponding image or fall back to first one
                         img_path = image_paths[i] if i < len(image_paths) else image_paths[0]
-                        tasks.append(self._execute_single_image_operation(mode, p, img_path, use_mock, quality_variant, img_aspect_ratio))
+                        tasks.append(self._execute_single_image_operation(
+                            mode, p, img_path, use_mock, quality_variant, img_aspect_ratio,
+                            out_fmt, gif_frames, gif_duration,
+                        ))
                     else:
-                        tasks.append(self._execute_single_image_operation(mode, p, None, use_mock, quality_variant, img_aspect_ratio))
+                        tasks.append(self._execute_single_image_operation(
+                            mode, p, None, use_mock, quality_variant, img_aspect_ratio,
+                            out_fmt, gif_frames, gif_duration,
+                        ))
                 results = await asyncio.gather(*tasks, return_exceptions=True)
                 elapsed_time = time.time() - start_time
                 logger.info(f"Batch image operation completed in {elapsed_time:.2f}s (concurrent execution)")
@@ -342,9 +405,14 @@ Generate, edit, upscale, or remove background from images. Video generation supp
                         account_id=account_id,
                         model=GPT_IMAGE_FLARE,
                         count=len(image_files),
-                        description=f"Batch image {mode} ({len(image_files)} images, quality={quality_variant})",
+                        description=(
+                            f"Batch GIF {mode} ({len(image_files)} files, {gif_frames} frames, quality={quality_variant})"
+                            if out_fmt == "gif"
+                            else f"Batch image {mode} ({len(image_files)} images, quality={quality_variant})"
+                        ),
                         thread_id=thread_id,
                         variant=quality_variant,
+                        gif_frames=gif_frames if out_fmt == "gif" else None,
                     )
                 
                 # If canvas_path provided, add all successful images to canvas
@@ -476,9 +544,18 @@ Generate, edit, upscale, or remove background from images. Video generation supp
                 
                 # Image mode (generate/edit)
                 img_aspect_ratio = aspect_ratio or "1:1"
-                logger.info(f"Executing single image operation with mode '{mode}' for prompt: '{prompt[:50]}...' (quality={quality_variant}, aspect_ratio={img_aspect_ratio})")
+                out_fmt, gif_frames, gif_duration = normalize_image_output(
+                    output_format, frame_count, frame_duration_ms
+                )
+                logger.info(
+                    f"Executing single image operation with mode '{mode}' for prompt: '{prompt[:50]}...' "
+                    f"(quality={quality_variant}, aspect_ratio={img_aspect_ratio}, format={out_fmt})"
+                )
                 
-                result = await self._execute_single_image_operation(mode, prompt, image_path, use_mock, quality_variant, img_aspect_ratio)
+                result = await self._execute_single_image_operation(
+                    mode, prompt, image_path, use_mock, quality_variant, img_aspect_ratio,
+                    out_fmt, gif_frames, gif_duration,
+                )
                 
                 if isinstance(result, ToolResult):
                     # Error - return gracefully with friendly message
@@ -490,9 +567,14 @@ Generate, edit, upscale, or remove background from images. Video generation supp
                         account_id=account_id,
                         model=GPT_IMAGE_FLARE,
                         count=1,
-                        description=f"Image {mode} (quality={quality_variant})",
+                        description=(
+                            f"GIF {mode} ({gif_frames} frames, quality={quality_variant})"
+                            if out_fmt == "gif"
+                            else f"Image {mode} (quality={quality_variant})"
+                        ),
                         thread_id=thread_id,
                         variant=quality_variant,
+                        gif_frames=gif_frames if out_fmt == "gif" else None,
                     )
                 
                 # Success - result is filename (include full path so AI knows exact location)
@@ -529,11 +611,14 @@ Generate, edit, upscale, or remove background from images. Video generation supp
         image_path: Optional[str],
         use_mock: bool,
         quality: str = "medium",
-        aspect_ratio: str = "1:1"
+        aspect_ratio: str = "1:1",
+        output_format: str = "png",
+        frame_count: Optional[int] = None,
+        frame_duration_ms: Optional[int] = None,
     ) -> str | ToolResult:
         """
         Helper function to execute a single image generation or edit operation.
-        Uses Replicate GPT Image 2.5 Flare for both generation and editing.
+        Uses Replicate GPT Image 2.6 Flare for both generation and editing.
         
         Parameters:
         - mode: 'generate' or 'edit'
@@ -562,18 +647,24 @@ Generate, edit, upscale, or remove background from images. Video generation supp
             # Ensure Replicate token is set
             self._get_replicate_token()
 
+            replicate_input = {
+                "prompt": prompt,
+                "aspect_ratio": aspect_ratio,
+                "number_of_images": 1,
+                "quality": quality,
+                "output_format": output_format,
+            }
+            if output_format == "gif" and frame_count and frame_duration_ms:
+                replicate_input["frame_count"] = frame_count
+                replicate_input["frame_duration_ms"] = frame_duration_ms
+
             if mode == "generate":
-                logger.info(f"Calling Replicate {GPT_IMAGE_FLARE} for generation (quality={quality}, aspect_ratio={aspect_ratio})")
+                logger.info(f"Calling Replicate {GPT_IMAGE_FLARE} for generation (quality={quality}, aspect_ratio={aspect_ratio}, format={output_format})")
                 # Wrap replicate.run() in thread pool to avoid blocking event loop
                 output = await asyncio.to_thread(
                     replicate.run,
                     GPT_IMAGE_FLARE,
-                    input={
-                        "prompt": prompt,
-                        "aspect_ratio": aspect_ratio,
-                        "number_of_images": 1,
-                        "quality": quality,
-                    }
+                    input=replicate_input,
                 )
             elif mode == "edit":
                 if not image_path:
@@ -587,18 +678,13 @@ Generate, edit, upscale, or remove background from images. Video generation supp
                 image_b64 = base64.b64encode(image_bytes).decode('utf-8')
                 image_data_url = f"data:image/png;base64,{image_b64}"
 
-                logger.info(f"Calling Replicate {GPT_IMAGE_FLARE} for editing (quality={quality}, aspect_ratio={aspect_ratio}) with image_path='{image_path}' (image size: {len(image_bytes)} bytes)")
+                logger.info(f"Calling Replicate {GPT_IMAGE_FLARE} for editing (quality={quality}, aspect_ratio={aspect_ratio}, format={output_format}) with image_path='{image_path}' (image size: {len(image_bytes)} bytes)")
+                replicate_input["input_images"] = [image_data_url]
                 # Wrap replicate.run() in thread pool to avoid blocking event loop
                 output = await asyncio.to_thread(
                     replicate.run,
                     GPT_IMAGE_FLARE,
-                    input={
-                        "prompt": prompt,
-                        "input_images": [image_data_url],  # Note: input_images is an ARRAY
-                        "aspect_ratio": aspect_ratio,
-                        "number_of_images": 1,
-                        "quality": quality,
-                    }
+                    input=replicate_input,
                 )
             else:
                 return self.fail_response("Invalid mode. Use 'generate' or 'edit'.")
@@ -624,7 +710,7 @@ Generate, edit, upscale, or remove background from images. Video generation supp
             smart_filename = await generate_smart_filename(
                 prompt=prompt,
                 file_type="image",
-                extension="png"
+                extension="gif" if output_format == "gif" else "png",
             )
             sandbox_path = f"{self.workspace_path}/{smart_filename}"
             await self.sandbox.fs.upload_file(result_bytes, sandbox_path)

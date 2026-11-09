@@ -108,8 +108,56 @@ function nextWithLocaleHeaders(request: NextRequest) {
   });
 }
 
+async function rewritePublishedSiteHost(request: NextRequest): Promise<NextResponse | null> {
+  const host = (request.headers.get('host') || '').split(':')[0].toLowerCase();
+  if (!host) return null;
+
+  const vanitySuffix = '.sites.dobby.now';
+  if (host.endsWith(vanitySuffix)) {
+    const slug = host.slice(0, -vanitySuffix.length);
+    if (slug && !slug.includes('.')) {
+      const url = request.nextUrl.clone();
+      url.pathname = `/works/${encodeURIComponent(slug)}`;
+      return NextResponse.rewrite(url);
+    }
+    return null;
+  }
+
+  // Custom domains point at the frontend; skip known Dobby hosts.
+  if (
+    host === 'localhost' ||
+    host.endsWith('.localhost') ||
+    host.endsWith('dobby.now') ||
+    host.endsWith('vercel.app') ||
+    host.endsWith('render.com')
+  ) {
+    return null;
+  }
+
+  const api = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.BACKEND_URL;
+  if (!api) return null;
+  try {
+    const response = await fetch(
+      `${api.replace(/\/$/, '')}/publish/resolve-host?host=${encodeURIComponent(host)}`,
+      { next: { revalidate: 60 } },
+    );
+    if (!response.ok) return null;
+    const data = (await response.json()) as { path?: string; slug?: string; id?: string };
+    const target = data.path || (data.slug || data.id ? `/works/${data.slug || data.id}` : null);
+    if (!target) return null;
+    const url = request.nextUrl.clone();
+    url.pathname = target;
+    return NextResponse.rewrite(url);
+  } catch {
+    return null;
+  }
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  const publishedRewrite = await rewritePublishedSiteHost(request);
+  if (publishedRewrite) return publishedRewrite;
   
   // 🚀 HYPER-FAST: Mobile app store redirect for /milano, /berlin, and /app
   // This runs at the edge before ANY page rendering

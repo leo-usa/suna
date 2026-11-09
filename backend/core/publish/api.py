@@ -23,7 +23,9 @@ from core.publish.artifacts import (
     should_skip_rel_path,
     site_root_for_entry,
 )
+from core.publish.branding import inject_dobby_badge, strip_dobby_badge
 from core.publish.language import detect_language_from_fields
+from core.publish.quotas import count_active_sites, resolve_publish_entitlements
 from core.publish.slug import slugify_title
 from core.sandbox.resolver import resolve_sandbox
 from core.services.supabase import DBConnection
@@ -39,6 +41,12 @@ SHARE_BUCKET = "share"
 MAX_FILES = 150
 MAX_FILE_BYTES = 15 * 1024 * 1024
 DAYTONA_HOST_RE = re.compile(r"(preview\.|daytona|trycloudflare|ngrok)", re.I)
+SITES_HOST_SUFFIX = ".sites.dobby.now"
+SECRET_FILE_NAMES = {".env", ".env.local", ".env.production", "credentials.json", "service-account.json"}
+SECRET_PATTERNS = (
+    re.compile(r"(?i)(api[_-]?key|secret|password|token)\s*[:=]\s*['\"]?[A-Za-z0-9_\-]{16,}"),
+    re.compile(r"(?i)-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----"),
+)
 
 
 class PublishRequest(BaseModel):
@@ -46,10 +54,21 @@ class PublishRequest(BaseModel):
     thread_id: Optional[str] = None
     title: Optional[str] = None
     description: Optional[str] = None
+    slug: Optional[str] = None
+    post_id: Optional[str] = None
+    replace_existing: bool = False
 
 
 class CommunityLikeRequest(BaseModel):
     post_id: str
+
+
+class CustomDomainRequest(BaseModel):
+    domain: str
+
+
+class LookupHostRequest(BaseModel):
+    host: str
 
 
 def _storage_base() -> str:
@@ -64,11 +83,22 @@ def _work_path(row: dict) -> str:
     return f"/works/{row.get('slug') or row.get('id')}"
 
 
+def _vanity_url(row: dict) -> str:
+    slug = row.get("slug")
+    if not slug:
+        return ""
+    if row.get("vanity_enabled") or not row.get("branded", True):
+        return f"https://{slug}{SITES_HOST_SUFFIX}"
+    return ""
+
+
 def _serialize_post(row: dict) -> dict:
     html_path = row.get("html_path") or ""
     thumbnail = row.get("thumbnail_path") or ""
     if thumbnail and not thumbnail.startswith("http"):
         thumbnail = _html_url(thumbnail)
+    custom_domain = row.get("custom_domain") or ""
+    custom_verified = bool(row.get("custom_domain_verified"))
     return {
         "id": row["id"],
         "title": row.get("title") or "",
@@ -77,15 +107,52 @@ def _serialize_post(row: dict) -> dict:
         "description": row.get("description") or "",
         "thumbnail_path": thumbnail,
         "created_at": row.get("created_at"),
+        "updated_at": row.get("updated_at") or row.get("created_at"),
         "html_url": _html_url(html_path) if html_path else "",
         "html_path": html_path,
         "artifact_type": row.get("artifact_type") or "site",
         "language": row.get("language") or "en",
         "slug": row.get("slug"),
         "url": _work_path(row),
+        "vanity_url": _vanity_url(row),
+        "custom_domain": custom_domain,
+        "custom_domain_verified": custom_verified,
+        "custom_domain_url": f"https://{custom_domain}" if custom_domain and custom_verified else "",
+        "branded": bool(row.get("branded", True)),
+        "status": row.get("status") or ("published" if row.get("approved", True) else "unpublished"),
+        "owner_account_id": row.get("owner_account_id") or row.get("user_id"),
+        "project_id": row.get("project_id"),
         "thread_id": row.get("thread_id"),
         "files": row.get("files") or [],
     }
+
+
+def _looks_secret(rel_path: str, file_bytes: bytes) -> bool:
+    name = os.path.basename(rel_path).lower()
+    if name in SECRET_FILE_NAMES or name.startswith(".env."):
+        return True
+    if len(file_bytes) > 200_000:
+        return False
+    try:
+        text = file_bytes.decode("utf-8", errors="ignore")
+    except Exception:
+        return False
+    return any(p.search(text) for p in SECRET_PATTERNS)
+
+
+async def _unique_slug(client, title: str, preferred: Optional[str] = None, exclude_id: Optional[str] = None) -> str:
+    base = slugify_title(preferred or title)
+    slug = base
+    suffix = 2
+    while True:
+        existing = await client.table("community_posts").select("id").eq("slug", slug).limit(1).execute()
+        rows = existing.data or []
+        if not rows or (exclude_id and str(rows[0].get("id")) == str(exclude_id)):
+            return slug
+        slug = f"{base}-{suffix}"
+        suffix += 1
+        if suffix > 50:
+            return f"{base}-{uuid.uuid4().hex[:6]}"
 
 
 async def _fetch_post(client, key: str) -> dict | None:
@@ -98,20 +165,6 @@ async def _fetch_post(client, key: str) -> dict | None:
     if by_id.data:
         return by_id.data[0]
     return None
-
-
-async def _unique_slug(client, title: str) -> str:
-    base = slugify_title(title)
-    slug = base
-    suffix = 2
-    while True:
-        existing = await client.table("community_posts").select("id").eq("slug", slug).limit(1).execute()
-        if not existing.data:
-            return slug
-        slug = f"{base}-{suffix}"
-        suffix += 1
-        if suffix > 50:
-            return f"{base}-{uuid.uuid4().hex[:6]}"
 
 
 def _extract_text(content: Any) -> str:
@@ -306,8 +359,18 @@ async def list_community_posts(
     sort_field = sort_by if sort_by in ("created_at", "like_count") else "created_at"
     descending = order != "asc"
     client = await db.client
-    query = client.table("community_posts").select("*").eq("approved", True)
-    count_query = client.table("community_posts").select("id", count="exact").eq("approved", True)
+    query = (
+        client.table("community_posts")
+        .select("*")
+        .eq("approved", True)
+        .or_("status.eq.published,status.is.null")
+    )
+    count_query = (
+        client.table("community_posts")
+        .select("id", count="exact")
+        .eq("approved", True)
+        .or_("status.eq.published,status.is.null")
+    )
     if language == "zh":
         query = query.eq("language", "zh")
         count_query = count_query.eq("language", "zh")
@@ -325,6 +388,11 @@ async def get_community_post(post_id: str):
     client = await db.client
     row = await _fetch_post(client, post_id)
     if not row:
+        raise HTTPException(status_code=404, detail="Post not found")
+    status = row.get("status") or ("published" if row.get("approved", True) else "unpublished")
+    if status == "unpublished" and not row.get("approved", True):
+        raise HTTPException(status_code=404, detail="Post not found")
+    if status == "unpublished":
         raise HTTPException(status_code=404, detail="Post not found")
     return _serialize_post(row)
 
@@ -356,6 +424,9 @@ async def serve_public_html(post_id: str):
     post_data = await _fetch_post(client, post_id)
     if not post_data:
         raise HTTPException(status_code=404, detail="Post not found")
+    status = post_data.get("status") or ("published" if post_data.get("approved", True) else "unpublished")
+    if status == "unpublished":
+        raise HTTPException(status_code=404, detail="Post not found")
     html_path = post_data.get("html_path")
     if not html_path:
         raise HTTPException(status_code=404, detail="HTML file not found")
@@ -370,6 +441,20 @@ async def serve_public_html(post_id: str):
     folder = _asset_folder(str(post_data.get("id") or post_id), post_data.get("files"), html_path)
     base_href = public_storage_url(_storage_base(), SHARE_BUCKET, folder) + "/"
     html_content = _inject_base_href(html_content, base_href)
+
+    # Always apply badge from current entitlements when branded, so upgrades can clear via republish
+    # and free publishes cannot strip the badge from stored HTML alone.
+    show_badge = bool(post_data.get("branded", True))
+    owner_id = post_data.get("owner_account_id") or post_data.get("user_id")
+    if owner_id:
+        try:
+            entitlements = await resolve_publish_entitlements(str(owner_id))
+            show_badge = bool(entitlements.get("branded"))
+        except Exception:
+            pass
+    html_content = strip_dobby_badge(html_content)
+    if show_badge:
+        html_content = inject_dobby_badge(html_content)
 
     og_title = html.escape(post_data.get("title") or "Work")
     og_description = html.escape((post_data.get("description") or og_title)[:240])
@@ -399,16 +484,11 @@ async def serve_public_html(post_id: str):
     return Response(content=html_content.encode("utf-8"), media_type="text/html")
 
 
-@router.post("/publish")
-async def publish_work(
-    body: PublishRequest,
-    user_id: str = Depends(verify_and_get_user_id_from_jwt),
-):
-    client = await db.client
+async def _assert_project_access(client, project_id: str, user_id: str) -> tuple[dict, str]:
     project = (
         await client.table("projects")
         .select("project_id, account_id, name")
-        .eq("project_id", body.project_id)
+        .eq("project_id", project_id)
         .maybe_single()
         .execute()
     )
@@ -428,6 +508,59 @@ async def publish_work(
         )
         if not member.data:
             raise HTTPException(status_code=403, detail="Not authorized to publish this project")
+    return project.data, account_id
+
+
+async def _assert_post_owner(client, post_id: str, user_id: str, account_id: Optional[str] = None) -> dict:
+    row = await _fetch_post(client, post_id)
+    if not row:
+        raise HTTPException(status_code=404, detail="Published site not found")
+    owner = str(row.get("owner_account_id") or row.get("user_id") or "")
+    if owner not in {user_id, str(account_id or "")}:
+        raise HTTPException(status_code=403, detail="Not authorized to manage this site")
+    return row
+
+
+@router.post("/publish")
+async def publish_work(
+    body: PublishRequest,
+    user_id: str = Depends(verify_and_get_user_id_from_jwt),
+):
+    client = await db.client
+    project_data, account_id = await _assert_project_access(client, body.project_id, user_id)
+    entitlements = await resolve_publish_entitlements(account_id)
+    branded = bool(entitlements.get("branded"))
+    sites_limit = int(entitlements.get("sites_limit") or 0)
+    vanity_enabled = not branded
+
+    existing_row = None
+    if body.post_id or body.replace_existing:
+        if body.post_id:
+            existing_row = await _assert_post_owner(client, body.post_id, user_id, account_id)
+        else:
+            found = (
+                await client.table("community_posts")
+                .select("*")
+                .eq("project_id", body.project_id)
+                .eq("owner_account_id", account_id)
+                .eq("status", "published")
+                .order("updated_at", desc=True)
+                .limit(1)
+                .execute()
+            )
+            if found.data:
+                existing_row = found.data[0]
+
+    is_update = existing_row is not None
+    if not is_update:
+        active = await count_active_sites(client, account_id)
+        if sites_limit <= 0:
+            raise HTTPException(status_code=403, detail="Publishing is not available on this plan.")
+        if active >= sites_limit:
+            raise HTTPException(
+                status_code=403,
+                detail=f"Site limit reached ({active}/{sites_limit}). Unpublish a site or upgrade your plan.",
+            )
 
     sandbox_info = await resolve_sandbox(
         project_id=body.project_id,
@@ -445,19 +578,20 @@ async def publish_work(
     if not workspace_files:
         raise HTTPException(status_code=400, detail="No files found in the project workspace to publish.")
 
-    title = (body.title or project.data.get("name") or "Untitled").strip()
+    title = (body.title or (existing_row or {}).get("title") or project_data.get("name") or "Untitled").strip()
     description = (body.description or "").strip()
     if not description and body.thread_id:
         first_msg = await get_first_user_message_content(body.thread_id)
         description = _extract_text(first_msg).strip() or "Published from Dobby"
     if not description:
-        description = "Published from Dobby"
+        description = (existing_row or {}).get("description") or "Published from Dobby"
 
-    post_id = str(uuid.uuid4())
+    post_id = str(existing_row["id"]) if existing_row else str(uuid.uuid4())
     rel_to_url: dict[str, str] = {}
     uploaded: list[dict] = []
     image_urls: list[str] = []
     text_sample_parts: list[str] = [title, description]
+    blocked_secrets: list[str] = []
 
     for full_path, rel_path in workspace_files:
         try:
@@ -466,6 +600,9 @@ async def publish_work(
             logger.warning(f"[PUBLISH] skip {rel_path}: {e}")
             continue
         if not file_bytes or len(file_bytes) > MAX_FILE_BYTES:
+            continue
+        if _looks_secret(rel_path, file_bytes):
+            blocked_secrets.append(rel_path)
             continue
         content_type, _ = mimetypes.guess_type(rel_path)
         storage_path = f"community/{post_id}/{rel_path}"
@@ -490,6 +627,11 @@ async def publish_work(
             except Exception:
                 pass
 
+    if blocked_secrets and not uploaded:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Publish blocked: possible secrets in {', '.join(blocked_secrets[:5])}",
+        )
     if not uploaded:
         raise HTTPException(status_code=400, detail="Could not upload any workspace files.")
 
@@ -514,50 +656,264 @@ async def publish_work(
     else:
         html_content = _generated_index(title, uploaded, artifact_type)
 
+    html_content = strip_dobby_badge(html_content)
+    if branded:
+        html_content = inject_dobby_badge(html_content)
+
     await client.storage.from_(SHARE_BUCKET).upload(
         html_path,
         html_content.encode("utf-8"),
         {"content-type": "text/html", "upsert": "true"},
     )
 
-    thumbnail_path = image_urls[0] if image_urls else ""
+    thumbnail_path = image_urls[0] if image_urls else ((existing_row or {}).get("thumbnail_path") or "")
     user_name = await _user_display_name(user_id)
-    slug = await _unique_slug(client, title)
+    slug = await _unique_slug(
+        client,
+        title,
+        preferred=body.slug or ((existing_row or {}).get("slug")),
+        exclude_id=post_id if is_update else None,
+    )
     thread_id = None
     if body.thread_id:
         try:
             thread_id = str(uuid.UUID(body.thread_id))
         except Exception:
             thread_id = None
+    elif existing_row and existing_row.get("thread_id"):
+        thread_id = str(existing_row["thread_id"])
+
+    now = datetime.now(timezone.utc).isoformat()
+    payload = {
+        "user_id": user_id,
+        "user_name": user_name,
+        "title": title,
+        "html_path": html_path,
+        "description": description,
+        "thumbnail_path": thumbnail_path,
+        "like_count": (existing_row or {}).get("like_count") or 0,
+        "approved": True,
+        "artifact_type": artifact_type,
+        "slug": slug,
+        "thread_id": thread_id,
+        "language": language,
+        "files": uploaded,
+        "status": "published",
+        "branded": branded,
+        "owner_account_id": account_id,
+        "project_id": body.project_id,
+        "updated_at": now,
+        "vanity_enabled": vanity_enabled,
+    }
 
     try:
-        await client.table("community_posts").insert({
-            "id": post_id,
-            "user_id": user_id,
-            "user_name": user_name,
-            "title": title,
-            "html_path": html_path,
-            "description": description,
-            "thumbnail_path": thumbnail_path,
-            "created_at": datetime.now(timezone.utc).isoformat(),
-            "like_count": 0,
-            "approved": True,
-            "artifact_type": artifact_type,
-            "slug": slug,
-            "thread_id": thread_id,
-            "language": language,
-            "files": uploaded,
-        }).execute()
+        if is_update:
+            await client.table("community_posts").update(payload).eq("id", post_id).execute()
+        else:
+            payload["id"] = post_id
+            payload["created_at"] = now
+            await client.table("community_posts").insert(payload).execute()
     except Exception as e:
-        logger.error(f"[PUBLISH] insert failed: {e}")
+        logger.error(f"[PUBLISH] save failed: {e}")
         raise HTTPException(status_code=500, detail="Failed to save the published work.")
 
+    row = {**payload, "id": post_id, "custom_domain": (existing_row or {}).get("custom_domain"), "custom_domain_verified": (existing_row or {}).get("custom_domain_verified")}
+    serialized = _serialize_post(row)
     return {
         "success": True,
         "id": post_id,
         "post_id": post_id,
-        "url": _work_path({"slug": slug, "id": post_id}),
+        "url": serialized["url"],
+        "vanity_url": serialized.get("vanity_url") or "",
         "artifact_type": artifact_type,
         "language": language,
         "html_url": _html_url(html_path),
+        "branded": branded,
+        "updated": is_update,
+        "slug": slug,
+        "skipped_secrets": blocked_secrets[:10],
+    }
+
+
+@router.get("/publish/mine")
+async def list_my_published_sites(
+    user_id: str = Depends(verify_and_get_user_id_from_jwt),
+    include_unpublished: bool = Query(False),
+):
+    client = await db.client
+    entitlements = await resolve_publish_entitlements(user_id)
+    # Sites = project-linked publishes only (exclude legacy Works without project_id)
+    query = (
+        client.table("community_posts")
+        .select("*")
+        .eq("owner_account_id", user_id)
+        .not_.is_("project_id", "null")
+    )
+    if not include_unpublished:
+        query = query.eq("status", "published")
+    rows = await query.order("updated_at", desc=True).limit(100).execute()
+    posts = [_serialize_post(p) for p in (rows.data or [])]
+    if not include_unpublished:
+        posts = [p for p in posts if p.get("status") != "unpublished"]
+    active = await count_active_sites(client, user_id)
+    return {
+        "posts": posts,
+        "total": len(posts),
+        "active_count": active,
+        "sites_limit": entitlements.get("sites_limit"),
+        "branded": entitlements.get("branded"),
+        "custom_domain": entitlements.get("custom_domain"),
+        "tier_name": entitlements.get("tier_name"),
+    }
+
+
+@router.post("/publish/{post_id}/unpublish")
+async def unpublish_site(
+    post_id: str,
+    user_id: str = Depends(verify_and_get_user_id_from_jwt),
+):
+    client = await db.client
+    row = await _assert_post_owner(client, post_id, user_id)
+    await client.table("community_posts").update({
+        "status": "unpublished",
+        "approved": False,
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+        "custom_domain_verified": False,
+    }).eq("id", row["id"]).execute()
+    return {"success": True, "id": row["id"], "status": "unpublished"}
+
+
+@router.post("/publish/{post_id}/domain")
+async def set_custom_domain(
+    post_id: str,
+    body: CustomDomainRequest,
+    user_id: str = Depends(verify_and_get_user_id_from_jwt),
+):
+    client = await db.client
+    row = await _assert_post_owner(client, post_id, user_id)
+    entitlements = await resolve_publish_entitlements(str(row.get("owner_account_id") or user_id))
+    if not entitlements.get("custom_domain"):
+        raise HTTPException(status_code=403, detail="Custom domains require a paid plan.")
+
+    domain = (body.domain or "").strip().lower().rstrip(".")
+    domain = domain.removeprefix("https://").removeprefix("http://").split("/")[0]
+    if not re.fullmatch(r"[a-z0-9]([a-z0-9\-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9\-]*[a-z0-9])?)+", domain):
+        raise HTTPException(status_code=400, detail="Invalid domain")
+    if domain.endswith("dobby.now") or domain.endswith("localhost"):
+        raise HTTPException(status_code=400, detail="Choose a domain you own")
+
+    token = f"dobby-site-verify={row['id']}"
+    await client.table("community_posts").update({
+        "custom_domain": domain,
+        "custom_domain_verified": False,
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }).eq("id", row["id"]).execute()
+
+    return {
+        "success": True,
+        "domain": domain,
+        "verified": False,
+        "instructions": {
+            "cname": "sites.dobby.now",
+            "txt_name": f"_dobby-site.{domain}",
+            "txt_value": token,
+        },
+    }
+
+
+@router.post("/publish/{post_id}/domain/verify")
+async def verify_custom_domain(
+    post_id: str,
+    user_id: str = Depends(verify_and_get_user_id_from_jwt),
+):
+    client = await db.client
+    row = await _assert_post_owner(client, post_id, user_id)
+    entitlements = await resolve_publish_entitlements(str(row.get("owner_account_id") or user_id))
+    if not entitlements.get("custom_domain"):
+        raise HTTPException(status_code=403, detail="Custom domains require a paid plan.")
+    domain = (row.get("custom_domain") or "").strip().lower()
+    if not domain:
+        raise HTTPException(status_code=400, detail="Set a custom domain first")
+
+    expected_txt = f"dobby-site-verify={row['id']}"
+    verified = False
+    errors: list[str] = []
+
+    # Prefer HTTP challenge so we do not require dnspython in production.
+    for scheme in ("https", "http"):
+        try:
+            async with httpx.AsyncClient(timeout=10, follow_redirects=True) as http:
+                resp = await http.get(f"{scheme}://{domain}/.well-known/dobby-site.txt")
+                if resp.status_code == 200 and expected_txt in resp.text:
+                    verified = True
+                    break
+                errors.append(f"{scheme} challenge returned {resp.status_code}")
+        except Exception as http_err:
+            errors.append(f"{scheme} challenge failed: {http_err}")
+
+    if not verified:
+        try:
+            import asyncio
+
+            def _dns_txt() -> bool:
+                try:
+                    import dns.resolver  # type: ignore
+                except Exception:
+                    return False
+                answers = dns.resolver.resolve(f"_dobby-site.{domain}", "TXT")
+                for rdata in answers:
+                    for txt in getattr(rdata, "strings", []) or []:
+                        value = txt.decode() if isinstance(txt, bytes) else str(txt)
+                        if value.strip() == expected_txt:
+                            return True
+                return False
+
+            verified = await asyncio.to_thread(_dns_txt)
+        except Exception as e:
+            errors.append(f"TXT lookup failed: {e}")
+
+    if verified:
+        await client.table("community_posts").update({
+            "custom_domain_verified": True,
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }).eq("id", row["id"]).execute()
+
+    return {"success": verified, "verified": verified, "domain": domain, "errors": errors}
+
+
+@router.get("/publish/resolve-host")
+async def resolve_publish_host(host: str = Query(...)):
+    """Public lookup used by edge/middleware for vanity and custom domains."""
+    client = await db.client
+    host = (host or "").strip().lower().split(":")[0]
+    if not host:
+        raise HTTPException(status_code=400, detail="host required")
+
+    row = None
+    if host.endswith(SITES_HOST_SUFFIX):
+        slug = host[: -len(SITES_HOST_SUFFIX)]
+        if slug and "." not in slug:
+            found = await client.table("community_posts").select("*").eq("slug", slug).eq("status", "published").limit(1).execute()
+            if found.data:
+                row = found.data[0]
+    if not row:
+        found = (
+            await client.table("community_posts")
+            .select("*")
+            .eq("custom_domain", host)
+            .eq("custom_domain_verified", True)
+            .eq("status", "published")
+            .limit(1)
+            .execute()
+        )
+        if found.data:
+            row = found.data[0]
+    if not row:
+        raise HTTPException(status_code=404, detail="No published site for this host")
+    return {
+        "slug": row.get("slug"),
+        "id": row.get("id"),
+        "path": _work_path(row),
+        "html_path": row.get("html_path"),
+        "public_html": f"/public-html/{row.get('slug') or row.get('id')}",
     }

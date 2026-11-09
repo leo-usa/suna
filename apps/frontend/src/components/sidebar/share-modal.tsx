@@ -3,13 +3,14 @@
 import { useState, useEffect } from "react"
 import { Popover, PopoverContent, PopoverAnchor } from "@/components/ui/popover"
 import { Switch } from "@/components/ui/switch"
-import { Copy, Check, Globe, ExternalLink, Lock, Upload } from "lucide-react"
+import { Copy, Check, Globe, ExternalLink, Lock, Upload, RefreshCw } from "lucide-react"
 import { toast } from "@/lib/toast"
 import { useThreadQuery, useUpdateThreadMutation } from "@/hooks/threads/use-threads"
 import { Skeleton } from "../ui/skeleton"
 import { cn } from "@/lib/utils"
 import { useTranslations } from "next-intl"
-import { publishWork } from "@/lib/api/works"
+import { listMySites, publishWork, unpublishSite, type WorkPost } from "@/lib/api/works"
+import Link from "next/link"
 
 interface SharePopoverProps {
   threadId?: string
@@ -34,7 +35,6 @@ const LoadingSkeleton = () => (
   </div>
 )
 
-// Social icons
 const XIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-3 w-3" fill="currentColor">
     <path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z" />
@@ -47,34 +47,73 @@ const LinkedInIcon = () => (
   </svg>
 )
 
-// Shared content component
-function SharePopoverContent({ 
+function SharePopoverContent({
   threadId,
   projectId,
-  isOpen 
-}: { 
+  isOpen,
+}: {
   threadId?: string
   projectId?: string
-  isOpen: boolean 
+  isOpen: boolean
 }) {
   const [copied, setCopied] = useState(false)
   const [publishing, setPublishing] = useState(false)
+  const [unpublishing, setUnpublishing] = useState(false)
   const [publishedUrl, setPublishedUrl] = useState("")
+  const [title, setTitle] = useState("")
+  const [slug, setSlug] = useState("")
+  const [existing, setExisting] = useState<WorkPost | null>(null)
+  const [branded, setBranded] = useState(true)
+  const [sitesLimit, setSitesLimit] = useState<number | null>(null)
+  const [activeCount, setActiveCount] = useState<number | null>(null)
   const t = useTranslations("threads.sharePopover")
 
   const updateThreadMutation = useUpdateThreadMutation()
   const { data: threadData, isLoading, refetch } = useThreadQuery(threadId || "")
 
   const isPublic = Boolean(threadData?.is_public)
-  
-  const shareLink = threadId 
-    ? `${process.env.NEXT_PUBLIC_URL || (typeof window !== 'undefined' ? window.location.origin : '')}/share/${threadId}`
+
+  const shareLink = threadId
+    ? `${process.env.NEXT_PUBLIC_URL || (typeof window !== "undefined" ? window.location.origin : "")}/share/${threadId}`
     : ""
 
-  // Reset copied when popover closes
+  const resolvedProjectId = projectId || threadData?.project_id || undefined
+
   useEffect(() => {
     if (!isOpen) setCopied(false)
   }, [isOpen])
+
+  useEffect(() => {
+    if (!isOpen || !resolvedProjectId) return
+    let cancelled = false
+    ;(async () => {
+      try {
+        const mine = await listMySites(true)
+        if (cancelled) return
+        setBranded(Boolean(mine.branded))
+        setSitesLimit(mine.sites_limit)
+        setActiveCount(mine.active_count)
+        const match =
+          mine.posts.find((p) => p.project_id === resolvedProjectId && p.status === "published") ||
+          mine.posts.find((p) => p.project_id === resolvedProjectId) ||
+          null
+        setExisting(match)
+        if (match) {
+          setTitle(match.title || "")
+          setSlug(match.slug || "")
+          const origin = typeof window !== "undefined" ? window.location.origin : ""
+          setPublishedUrl(`${origin}/works/${match.slug || match.id}`)
+        } else if (threadData?.project?.name) {
+          setTitle(threadData.project.name)
+        }
+      } catch {
+        // ignore — publish still works without prior list
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [isOpen, resolvedProjectId, threadData?.project?.name])
 
   const handleToggle = async (checked: boolean) => {
     if (!threadId) return
@@ -104,7 +143,7 @@ function SharePopoverContent({
   }
 
   const handleOpen = () => window.open(shareLink, "_blank", "noopener,noreferrer")
-  
+
   const handleShareX = () => {
     const text = encodeURIComponent(t("shareXText"))
     const url = encodeURIComponent(shareLink)
@@ -116,25 +155,70 @@ function SharePopoverContent({
     window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${url}`, "_blank")
   }
 
-  const resolvedProjectId = projectId || threadData?.project_id || undefined
-
-  const handlePublish = async () => {
-    if (!resolvedProjectId || publishing) return
+  const handlePublish = async (replaceExisting: boolean) => {
+    if (!resolvedProjectId) {
+      // toast.error is globally no-op; use warning so the user sees it
+      toast.warning(t("publishNeedProject"))
+      return
+    }
+    if (publishing) return
     setPublishing(true)
     try {
       const result = await publishWork({
         projectId: resolvedProjectId,
         threadId,
+        title: title.trim() || undefined,
+        slug: slug.trim() || undefined,
+        postId: replaceExisting ? existing?.id : undefined,
+        replaceExisting,
       })
       const origin = typeof window !== "undefined" ? window.location.origin : ""
       const url = `${origin}${result.url}`
       setPublishedUrl(url)
-      toast.success(t("publishSuccess"))
+      setExisting({
+        id: result.id,
+        title: title || result.slug || "Site",
+        user_name: "",
+        like_count: 0,
+        description: "",
+        thumbnail_path: "",
+        created_at: new Date().toISOString(),
+        html_url: result.html_url,
+        html_path: "",
+        artifact_type: result.artifact_type,
+        language: result.language,
+        slug: result.slug,
+        branded: result.branded,
+        status: "published",
+        vanity_url: result.vanity_url,
+        files: [],
+        project_id: resolvedProjectId,
+      })
+      if (result.slug) setSlug(result.slug)
+      setBranded(Boolean(result.branded))
+      toast.message(result.updated ? t("publishUpdated") : t("publishSuccess"))
       window.open(result.url, "_blank", "noopener,noreferrer")
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : t("publishFailed"))
+      const message = error instanceof Error ? error.message : t("publishFailed")
+      console.error("[SharePopover] publish failed:", error)
+      toast.warning(message || t("publishFailed"), { duration: 6000 })
     } finally {
       setPublishing(false)
+    }
+  }
+
+  const handleUnpublish = async () => {
+    if (!existing?.id || unpublishing) return
+    setUnpublishing(true)
+    try {
+      await unpublishSite(existing.id)
+      setExisting(null)
+      setPublishedUrl("")
+      toast.message(t("unpublishSuccess"))
+    } catch (error) {
+      toast.warning(error instanceof Error ? error.message : t("unpublishFailed"))
+    } finally {
+      setUnpublishing(false)
     }
   }
 
@@ -147,16 +231,17 @@ function SharePopoverContent({
   }
 
   return (
-    <div className="p-3 space-y-2.5">
-      {/* Toggle Row */}
+    <div className="p-3 space-y-2.5 w-[320px]">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2.5 min-w-0">
-          <div className={cn(
-            "flex items-center justify-center h-7 w-7 rounded-lg shrink-0 transition-all duration-200",
-            isPublic 
-              ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" 
-              : "bg-muted text-muted-foreground"
-          )}>
+          <div
+            className={cn(
+              "flex items-center justify-center h-7 w-7 rounded-lg shrink-0 transition-all duration-200",
+              isPublic
+                ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                : "bg-muted text-muted-foreground",
+            )}
+          >
             {isPublic ? <Globe className="h-3.5 w-3.5" /> : <Lock className="h-3.5 w-3.5" />}
           </div>
           <div className="text-left min-w-0">
@@ -172,37 +257,33 @@ function SharePopoverContent({
           checked={isPublic}
           onCheckedChange={handleToggle}
           disabled={updateThreadMutation.isPending}
-          className={cn(
-            "shrink-0",
-            updateThreadMutation.isPending && "opacity-50"
-          )}
+          className={cn("shrink-0", updateThreadMutation.isPending && "opacity-50")}
         />
       </div>
 
-      {/* Link Actions - Visible when public */}
       {isPublic && (
         <div className="space-y-2 animate-in fade-in-0 slide-in-from-top-1 duration-150 pt-0.5">
-          {/* Copy URL */}
           <button
             onClick={handleCopy}
             className={cn(
               "w-full flex items-center gap-2 px-2.5 h-8 rounded-lg transition-all",
               "bg-muted/50 hover:bg-muted active:scale-[0.99]",
-              copied && "bg-emerald-500/10"
+              copied && "bg-emerald-500/10",
             )}
           >
             <span className="flex-1 text-[11px] text-muted-foreground font-mono truncate text-left">
-              {shareLink.replace(/^https?:\/\//, '')}
+              {shareLink.replace(/^https?:\/\//, "")}
             </span>
-            <div className={cn(
-              "transition-colors shrink-0",
-              copied ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"
-            )}>
+            <div
+              className={cn(
+                "transition-colors shrink-0",
+                copied ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground",
+              )}
+            >
               {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
             </div>
           </button>
 
-          {/* Actions Row */}
           <div className="flex items-center gap-1.5">
             <button
               onClick={handleOpen}
@@ -230,21 +311,64 @@ function SharePopoverContent({
       )}
 
       <div className="border-t border-border/60 pt-2.5 space-y-2">
-        <button
-          onClick={handlePublish}
-          disabled={!resolvedProjectId || publishing}
-          className={cn(
-            "w-full flex items-center justify-center gap-1.5 h-8 rounded-lg text-[12px] font-medium",
-            "bg-foreground text-background hover:bg-foreground/90 active:scale-[0.98] transition-all",
-            (!resolvedProjectId || publishing) && "opacity-50"
-          )}
-        >
-          <Upload className="h-3 w-3" />
-          {publishing ? t("publishing") : t("publish")}
-        </button>
+        <p className="text-[12px] font-medium">{t("publishSectionTitle")}</p>
+        <input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder={t("publishTitlePlaceholder")}
+          className="w-full h-8 px-2.5 rounded-lg border border-border/60 bg-background text-[12px]"
+        />
+        <input
+          value={slug}
+          onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9\-\u4e00-\u9fff]/g, "-"))}
+          placeholder={t("publishSlugPlaceholder")}
+          className="w-full h-8 px-2.5 rounded-lg border border-border/60 bg-background text-[12px] font-mono"
+        />
         <p className="text-[11px] text-muted-foreground leading-snug">
           {resolvedProjectId ? t("publishHint") : t("publishNeedProject")}
+          {sitesLimit != null && activeCount != null
+            ? ` ${t("publishQuota", { active: activeCount, limit: sitesLimit })}`
+            : ""}
         </p>
+        {branded && (
+          <p className="text-[11px] text-amber-700 dark:text-amber-400 leading-snug">
+            {t("publishBrandedHint")}{" "}
+            <Link href="/dashboard?settings=plan" className="underline">
+              {t("upgradeToRemoveBadge")}
+            </Link>
+          </p>
+        )}
+        <div className="flex gap-1.5">
+          <button
+            onClick={() => handlePublish(Boolean(existing?.id && existing.status === "published"))}
+            disabled={!resolvedProjectId || publishing}
+            className={cn(
+              "flex-1 flex items-center justify-center gap-1.5 h-8 rounded-lg text-[12px] font-medium",
+              "bg-foreground text-background hover:bg-foreground/90 active:scale-[0.98] transition-all",
+              (!resolvedProjectId || publishing) && "opacity-50",
+            )}
+          >
+            {existing?.id && existing.status === "published" ? (
+              <RefreshCw className={cn("h-3 w-3", publishing && "animate-spin")} />
+            ) : (
+              <Upload className="h-3 w-3" />
+            )}
+            {publishing
+              ? t("publishing")
+              : existing?.id && existing.status === "published"
+                ? t("updatePublish")
+                : t("publish")}
+          </button>
+          {existing?.id && existing.status === "published" && (
+            <button
+              onClick={handleUnpublish}
+              disabled={unpublishing}
+              className="h-8 px-2.5 rounded-lg text-[11px] border border-border/60 hover:bg-muted"
+            >
+              {unpublishing ? "…" : t("unpublish")}
+            </button>
+          )}
+        </div>
         {publishedUrl && (
           <button
             onClick={() => window.open(publishedUrl, "_blank", "noopener,noreferrer")}
@@ -254,36 +378,41 @@ function SharePopoverContent({
             {t("openWork")}
           </button>
         )}
+        <Link
+          href="/dashboard?settings=sites"
+          className="block text-center text-[11px] text-muted-foreground hover:text-foreground"
+        >
+          {t("manageSites")}
+        </Link>
       </div>
     </div>
   )
 }
 
-export function SharePopover({ 
-  threadId, 
-  projectId, 
+export function SharePopover({
+  threadId,
+  projectId,
   children,
   side = "bottom",
   align = "end",
   open: controlledOpen,
-  onOpenChange: controlledOnOpenChange
+  onOpenChange: controlledOnOpenChange,
 }: SharePopoverProps) {
   const [internalOpen, setInternalOpen] = useState(false)
-  
-  // Support both controlled and uncontrolled modes
+
   const isControlled = controlledOpen !== undefined
   const isOpen = isControlled ? controlledOpen : internalOpen
-  const setOpen = isControlled ? (controlledOnOpenChange || (() => {})) : setInternalOpen
+  const setOpen = isControlled ? controlledOnOpenChange || (() => {}) : setInternalOpen
 
   return (
     <Popover open={isOpen} onOpenChange={setOpen}>
       {children ?? (
         <PopoverAnchor className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
       )}
-      <PopoverContent 
-        side={children ? side : "bottom"} 
-        align={children ? align : "center"} 
-        className="w-[280px] p-0 overflow-hidden"
+      <PopoverContent
+        side={children ? side : "bottom"}
+        align={children ? align : "center"}
+        className="w-[320px] p-0 overflow-hidden"
         sideOffset={8}
       >
         <SharePopoverContent threadId={threadId} projectId={projectId} isOpen={isOpen} />

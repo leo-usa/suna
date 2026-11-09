@@ -18,8 +18,19 @@ def test_flare_and_sunburst_share_token_rates():
     assert get_variant_cost(GPT_IMAGE_FLARE, "max") == GPT_IMAGE_VARIANTS["max"]
 
 
-def test_legacy_gpt_image_2_alias_uses_2_5_prices():
+def test_legacy_gpt_image_aliases_use_current_prices():
     assert get_variant_cost("openai/gpt-image-2", "medium") == GPT_IMAGE_VARIANTS["medium"]
+    assert get_variant_cost("openai/gpt-image-2.5-flare", "medium") == GPT_IMAGE_VARIANTS["medium"]
+    assert GPT_IMAGE_FLARE == "openai/gpt-image-2.6-flare"
+    assert GPT_IMAGE_SUNBURST == "openai/gpt-image-2.6-sunburst"
+
+
+def test_gif_frames_increase_image_cost():
+    still = calculate_replicate_image_cost(GPT_IMAGE_FLARE, count=1, variant="medium")
+    gif = calculate_replicate_image_cost(GPT_IMAGE_FLARE, count=1, variant="medium", gif_frames=8)
+    assert gif == still * 2
+    short = calculate_replicate_image_cost(GPT_IMAGE_FLARE, count=1, variant="medium", gif_frames=2)
+    assert short == still
 
 
 def test_replicate_image_cost_applies_markup():

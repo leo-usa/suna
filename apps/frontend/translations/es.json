@@ -82,7 +82,8 @@
       "knowledgeBase": "Base de Conocimientos",
       "integrations": "Integraciones",
       "apiKeys": "Claves API",
-      "envManager": "Administrador de Entorno"
+      "envManager": "Administrador de Entorno",
+      "sites": "Sites"
     },
     "general": {
       "title": "Configuración del Perfil",
@@ -790,7 +791,19 @@
       "publishSuccess": "Published to Works",
       "publishFailed": "Publish failed",
       "publishNeedProject": "Open a project to publish",
-      "openWork": "Open work"
+      "openWork": "Open work",
+      "publishUpdated": "Updated published site",
+      "publishSectionTitle": "Publish site",
+      "publishTitlePlaceholder": "Site title",
+      "publishSlugPlaceholder": "url-slug (optional)",
+      "publishQuota": "({active}/{limit} sites)",
+      "publishBrandedHint": "Free publishes include a Made with Dobby badge.",
+      "upgradeToRemoveBadge": "Upgrade to remove it",
+      "updatePublish": "Update",
+      "unpublish": "Unpublish",
+      "unpublishSuccess": "Site unpublished",
+      "unpublishFailed": "Failed to unpublish",
+      "manageSites": "Manage my sites"
     }
   },
   "billing": {
@@ -1930,6 +1943,8 @@
     "fileBrowser": {
       "filesTitle": "Archivos",
       "home": "Inicio",
+      "navigateUp": "Subir",
+      "folderTree": "Carpetas",
       "item": "item",
       "items": "items"
     },

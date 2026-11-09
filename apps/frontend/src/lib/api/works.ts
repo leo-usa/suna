@@ -22,12 +22,20 @@ export interface WorkPost {
   description: string;
   thumbnail_path: string;
   created_at: string;
+  updated_at?: string;
   html_url: string;
   html_path: string;
   artifact_type: WorkArtifactType;
   language: 'zh' | 'en' | string;
   slug?: string | null;
   thread_id?: string | null;
+  project_id?: string | null;
+  branded?: boolean;
+  status?: string;
+  vanity_url?: string;
+  custom_domain?: string;
+  custom_domain_verified?: boolean;
+  custom_domain_url?: string;
   files: WorkFile[];
 }
 
@@ -41,9 +49,24 @@ export interface PublishWorkResponse {
   id: string;
   post_id: string;
   url: string;
+  vanity_url?: string;
   artifact_type: WorkArtifactType;
   language: string;
   html_url: string;
+  branded?: boolean;
+  updated?: boolean;
+  slug?: string;
+  skipped_secrets?: string[];
+}
+
+export interface MySitesResponse {
+  posts: WorkPost[];
+  total: number;
+  active_count: number;
+  sites_limit: number;
+  branded: boolean;
+  custom_domain: boolean;
+  tier_name: string;
 }
 
 export function worksLangFromLocale(locale: string | undefined): 'zh' | 'en' {
@@ -119,6 +142,9 @@ export async function publishWork(input: {
   threadId?: string;
   title?: string;
   description?: string;
+  slug?: string;
+  postId?: string;
+  replaceExisting?: boolean;
 }): Promise<PublishWorkResponse> {
   const response = await backendApi.post<PublishWorkResponse>(
     '/publish',
@@ -127,11 +153,60 @@ export async function publishWork(input: {
       thread_id: input.threadId,
       title: input.title,
       description: input.description,
+      slug: input.slug,
+      post_id: input.postId,
+      replace_existing: Boolean(input.replaceExisting),
     },
     { timeout: 120000, showErrors: false },
   );
   if (!response.success || !response.data) {
     throw new Error(response.error?.message || 'Failed to publish');
+  }
+  return response.data;
+}
+
+export async function listMySites(includeUnpublished = false): Promise<MySitesResponse> {
+  const search = new URLSearchParams({
+    include_unpublished: includeUnpublished ? 'true' : 'false',
+  });
+  const response = await backendApi.get<MySitesResponse>(`/publish/mine?${search.toString()}`, {
+    showErrors: false,
+  });
+  if (!response.success || !response.data) {
+    throw new Error(response.error?.message || 'Failed to load your sites');
+  }
+  return response.data;
+}
+
+export async function unpublishSite(postId: string): Promise<void> {
+  const response = await backendApi.post(`/publish/${encodeURIComponent(postId)}/unpublish`, {});
+  if (!response.success) {
+    throw new Error(response.error?.message || 'Failed to unpublish');
+  }
+}
+
+export async function setSiteCustomDomain(postId: string, domain: string) {
+  const response = await backendApi.post<{
+    success: boolean;
+    domain: string;
+    verified: boolean;
+    instructions: { cname: string; txt_name: string; txt_value: string };
+  }>(`/publish/${encodeURIComponent(postId)}/domain`, { domain });
+  if (!response.success || !response.data) {
+    throw new Error(response.error?.message || 'Failed to set domain');
+  }
+  return response.data;
+}
+
+export async function verifySiteCustomDomain(postId: string) {
+  const response = await backendApi.post<{
+    success: boolean;
+    verified: boolean;
+    domain: string;
+    errors?: string[];
+  }>(`/publish/${encodeURIComponent(postId)}/domain/verify`, {});
+  if (!response.success || !response.data) {
+    throw new Error(response.error?.message || 'Failed to verify domain');
   }
   return response.data;
 }

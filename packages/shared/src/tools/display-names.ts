@@ -137,6 +137,8 @@ export const TOOL_DISPLAY_NAMES: ReadonlyMap<string, string> = new Map([
   // Port operations
   ['expose-port', 'Exposing Port'],
   ['expose_port', 'Exposing Port'],
+  ['publish_site', 'Publish Site'],
+  ['publish-site', 'Publish Site'],
   
   // Image operations
   ['load-image', 'Loaded Image'],

@@ -165,6 +165,7 @@
       "usage": "Usage",
       "memory": "Memory",
       "referrals": "Referrals",
+      "sites": "Sites",
       "knowledgeBase": "Knowledge Base",
       "integrations": "Integrations",
       "apiKeys": "API Keys",
@@ -1586,11 +1587,23 @@
       "shareXText": "Check out this conversation",
       "publish": "Publish",
       "publishing": "Publishing...",
-      "publishHint": "Snapshot this project's files to Works",
+      "publishHint": "Snapshot this project's files to Works.",
       "publishSuccess": "Published to Works",
+      "publishUpdated": "Updated published site",
       "publishFailed": "Publish failed",
       "publishNeedProject": "Open a project to publish",
-      "openWork": "Open work"
+      "openWork": "Open work",
+      "publishSectionTitle": "Publish site",
+      "publishTitlePlaceholder": "Site title",
+      "publishSlugPlaceholder": "url-slug (optional)",
+      "publishQuota": "({active}/{limit} sites)",
+      "publishBrandedHint": "Free publishes include a Made with Dobby badge.",
+      "upgradeToRemoveBadge": "Upgrade to remove it",
+      "updatePublish": "Update",
+      "unpublish": "Unpublish",
+      "unpublishSuccess": "Site unpublished",
+      "unpublishFailed": "Failed to unpublish",
+      "manageSites": "Manage my sites"
     }
   },
   "dobbyComputer": {
@@ -1639,6 +1652,8 @@
     "fileBrowser": {
       "filesTitle": "Files",
       "home": "Home",
+      "navigateUp": "Go up",
+      "folderTree": "Folders",
       "item": "item",
       "items": "items",
       "videoThumbnailAlt": "Video thumbnail",

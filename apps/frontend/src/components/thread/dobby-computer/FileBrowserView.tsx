@@ -64,6 +64,7 @@ import { usePresentationViewerStore } from '@/stores/presentation-viewer-store';
 import { Badge } from '@/components/ui/badge';
 import { VersionBanner } from './VersionBanner';
 import { DobbyComputerHeader } from './DobbyComputerHeader';
+import { FolderTreePanel } from './FolderTreePanel';
 import { useFileData } from '@/hooks/use-file-data';
 import { PresentationSlidePreview } from '../tool-views/presentation-tools/PresentationSlidePreview';
 import { PresentationSlideSkeleton } from '../tool-views/presentation-tools/PresentationSlideSkeleton';
@@ -772,6 +773,16 @@ export function FileBrowserView({
   const navigateHome = useCallback(() => {
     navigateToPath('/workspace');
   }, [navigateToPath]);
+
+  // Navigate one level up (File Explorer style)
+  const navigateUp = useCallback(() => {
+    const normalized = normalizePath(currentPath);
+    if (normalized === '/workspace') return;
+    const parent = normalized.replace(/\/+$/, '').split('/').slice(0, -1).join('/') || '/workspace';
+    navigateToPath(parent.startsWith('/workspace') ? parent : '/workspace');
+  }, [currentPath, navigateToPath, normalizePath]);
+
+  const canNavigateUp = normalizePath(currentPath) !== '/workspace';
 
   // Navigate to a specific path in the breadcrumb
   const navigateToBreadcrumb = useCallback(
@@ -1747,21 +1758,20 @@ export function FileBrowserView({
               )}
             </Button>
             
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-semibold">
+            <div className="flex items-center gap-2 min-w-0">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={navigateUp}
+                disabled={!canNavigateUp}
+                className="h-8 w-8 flex-shrink-0"
+                title={t('fileBrowser.navigateUp')}
+              >
+                <ChevronRight className="h-4 w-4 rotate-180" />
+              </Button>
+              <h1 className="text-2xl font-semibold truncate">
                 {currentPath === '/workspace' ? t('fileBrowser.filesTitle') : currentPath.split('/').pop()}
               </h1>
-              {currentPath !== '/workspace' && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={navigateHome}
-                  className="text-xs text-muted-foreground"
-                >
-                  <Home className="h-3 w-3 mr-1" />
-                  {t('fileBrowser.home')}
-                </Button>
-              )}
             </div>
 
             <div className="flex-1" />
@@ -1991,8 +2001,12 @@ export function FileBrowserView({
         icon={Home}
         onIconClick={navigateHome}
         iconTitle={t('fileBrowser.home')}
-        title={currentPath === '/workspace' ? t('fileBrowser.filesTitle') : undefined}
-        breadcrumbs={currentPath !== '/workspace' ? getBreadcrumbSegments(currentPath) : undefined}
+        onNavigateUp={navigateUp}
+        canNavigateUp={canNavigateUp}
+        navigateUpTitle={t('fileBrowser.navigateUp')}
+        rootLabel={t('fileBrowser.filesTitle')}
+        rootPath="/workspace"
+        breadcrumbs={currentPath !== '/workspace' ? getBreadcrumbSegments(currentPath) : []}
         onBreadcrumbClick={navigateToBreadcrumb}
         actions={defaultHeaderActions}
       />
@@ -2005,8 +2019,17 @@ export function FileBrowserView({
         />
       )}
 
-      {/* File Explorer */}
-      <div className="flex-1 overflow-hidden max-w-full min-w-0">
+      {/* File Explorer: folder tree + contents */}
+      <div className="flex-1 overflow-hidden max-w-full min-w-0 flex">
+        {hasSandbox && isSandboxReady && !sandboxGone && (
+          <FolderTreePanel
+            sandboxId={sandboxId}
+            currentPath={currentPath}
+            enabled={!selectedVersion}
+            onNavigate={navigateToPath}
+          />
+        )}
+        <div className="flex-1 overflow-hidden min-w-0">
         {/* Show sandbox status when not ready */}
         {sandboxGone ? (
           <SandboxStatusView projectId={projectId} className="h-full" />
@@ -2227,6 +2250,7 @@ export function FileBrowserView({
             </div>
           </ScrollArea>
         )}
+        </div>
       </div>
 
       {/* Footer */}

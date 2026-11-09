@@ -309,6 +309,14 @@ export default function WorkDetailPage() {
             {actions}
           </div>
           <WorkViewer post={post} />
+          {post.branded !== false && (
+            <a
+              href="https://dobby.now/?utm_source=published_site&utm_medium=works_chrome&utm_campaign=sites_v1"
+              className="mt-2 inline-flex self-end items-center gap-2 rounded-full bg-foreground px-3 py-1.5 text-[11px] font-medium text-background"
+            >
+              Made with Dobby
+            </a>
+          )}
         </div>
       </main>
     );
@@ -356,6 +364,14 @@ export default function WorkDetailPage() {
               <p className="text-sm text-muted-foreground">{t('enjoyedThis')}</p>
               {actions}
             </div>
+            {post.branded !== false && (
+              <a
+                href="https://dobby.now/?utm_source=published_site&utm_medium=works_chrome&utm_campaign=sites_v1"
+                className="inline-flex items-center gap-2 rounded-full bg-foreground px-3 py-1.5 text-[11px] font-medium text-background"
+              >
+                Made with Dobby
+              </a>
+            )}
           </div>
         )}
       </div>

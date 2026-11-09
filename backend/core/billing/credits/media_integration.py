@@ -87,6 +87,7 @@ class MediaBillingIntegration:
         char_count: Optional[int] = None,
         resolution: Optional[str] = None,
         video_input: bool = False,
+        gif_frames: Optional[int] = None,
     ) -> Dict:
         """
         Deduct credits for media generation.
@@ -133,6 +134,7 @@ class MediaBillingIntegration:
                 char_count=char_count,
                 resolution=resolution,
                 video_input=video_input,
+                gif_frames=gif_frames,
             )
 
             if cost <= 0:
@@ -193,6 +195,7 @@ class MediaBillingIntegration:
         description: Optional[str] = None,
         thread_id: Optional[str] = None,
         variant: Optional[str] = None,
+        gif_frames: Optional[int] = None,
     ) -> Dict:
         """Convenience method for Replicate image billing."""
         return await MediaBillingIntegration.deduct_media_credits(
@@ -204,6 +207,7 @@ class MediaBillingIntegration:
             description=description,
             thread_id=thread_id,
             variant=variant,
+            gif_frames=gif_frames,
         )
     
     @staticmethod

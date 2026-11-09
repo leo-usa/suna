@@ -33,6 +33,7 @@ import {
     Camera,
     Upload,
     Brain,
+    Globe,
 } from 'lucide-react';
 import { DobbyLoader } from '@/components/ui/dobby-loader';
 import { cn } from '@/lib/utils';
@@ -103,8 +104,9 @@ import { ReferralsTab } from '@/components/referrals/referrals-tab';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { MemorySettings } from '@/components/memory/MemorySettings';
 import { KnowledgeBaseSettings } from './knowledge-base-settings';
+import { MySitesSettings } from './my-sites-settings';
 
-type TabId = 'general' | 'plan' | 'billing' | 'usage' | 'memory' | 'env-manager' | 'knowledge-base' | 'integrations' | 'api-keys' | 'referrals';
+type TabId = 'general' | 'plan' | 'billing' | 'usage' | 'memory' | 'env-manager' | 'knowledge-base' | 'integrations' | 'api-keys' | 'referrals' | 'sites';
 
 interface Tab {
     id: TabId;
@@ -143,6 +145,7 @@ export function UserSettingsModal({
             ...(!isProduction
                 ? [{ id: 'referrals' as TabId, label: tSettings('tabs.referrals'), icon: Users }]
                 : []),
+            { id: 'sites', label: tSettings('tabs.sites'), icon: Globe },
             { id: 'knowledge-base', label: tSettings('tabs.knowledgeBase'), icon: FileText },
             { id: 'integrations', label: tSettings('tabs.integrations'), icon: Plug },
             { id: 'api-keys', label: tSettings('tabs.apiKeys'), icon: Key },
@@ -239,6 +242,7 @@ export function UserSettingsModal({
                                 {activeTab === 'billing' && <BillingTab returnUrl={returnUrl} onOpenPlanModal={() => setShowPlanModal(true)} isActive={activeTab === 'billing'} />}
                                 {activeTab === 'usage' && <UsageTab />}
                                 {activeTab === 'memory' && <MemorySettings />}
+                                {activeTab === 'sites' && <MySitesSettings />}
                                 {activeTab === 'knowledge-base' && <KnowledgeBaseSettings />}
                                 {activeTab === 'referrals' && <ReferralsTab isActive={open && activeTab === 'referrals'} />}
                                 {activeTab === 'env-manager' && isLocal && <EnvManagerTab />}
@@ -293,6 +297,7 @@ export function UserSettingsModal({
                             {activeTab === 'billing' && <BillingTab returnUrl={returnUrl} onOpenPlanModal={() => setShowPlanModal(true)} isActive={activeTab === 'billing'} />}
                             {activeTab === 'usage' && <UsageTab />}
                             {activeTab === 'memory' && <MemorySettings />}
+                            {activeTab === 'sites' && <MySitesSettings />}
                             {activeTab === 'knowledge-base' && <KnowledgeBaseSettings />}
                             {activeTab === 'referrals' && <ReferralsTab isActive={open && activeTab === 'referrals'} />}
                             {activeTab === 'env-manager' && isLocal && <EnvManagerTab />}

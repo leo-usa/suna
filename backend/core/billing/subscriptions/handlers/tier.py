@@ -19,6 +19,8 @@ def _tier_to_info(tier_obj, trial_status: Optional[str]) -> Dict:
         'scheduled_triggers_limit': tier_obj.scheduled_triggers_limit,
         'app_triggers_limit': tier_obj.app_triggers_limit,
         'dedicated_computer_limit': tier_obj.dedicated_computer_limit,
+        'publish_sites_limit': tier_obj.publish_sites_limit,
+        'publish_custom_domain': tier_obj.publish_custom_domain,
         'agent_limit': tier_obj.custom_workers_limit,
         'is_trial': trial_status == 'active',
     }

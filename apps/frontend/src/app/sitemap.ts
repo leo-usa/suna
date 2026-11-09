@@ -32,7 +32,41 @@ function languageMap(path: string): Record<string, string> {
   return languages;
 }
 
-export default function sitemap(): MetadataRoute.Sitemap {
+async function fetchRecentWorkPaths(): Promise<Array<{ path: string; lastModified?: Date }>> {
+  const api = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.BACKEND_URL || '';
+  if (!api) return [];
+  const out: Array<{ path: string; lastModified?: Date }> = [];
+  for (const lang of ['en', 'zh'] as const) {
+    try {
+      const response = await fetch(
+        `${api.replace(/\/$/, '')}/community?lang=${lang}&limit=100&offset=0&sort_by=created_at&order=desc`,
+        { next: { revalidate: 3600 } },
+      );
+      if (!response.ok) continue;
+      const data = (await response.json()) as {
+        posts?: Array<{ id: string; slug?: string | null; created_at?: string; updated_at?: string }>;
+      };
+      for (const post of data.posts || []) {
+        const key = post.slug || post.id;
+        if (!key) continue;
+        out.push({
+          path: `/works/${key}`,
+          lastModified: post.updated_at || post.created_at ? new Date(post.updated_at || post.created_at!) : undefined,
+        });
+      }
+    } catch {
+      // Sitemap should not fail the build if the API is unreachable.
+    }
+  }
+  const seen = new Set<string>();
+  return out.filter((item) => {
+    if (seen.has(item.path)) return false;
+    seen.add(item.path);
+    return true;
+  });
+}
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const entries: MetadataRoute.Sitemap = [];
 
   LOCALIZED_ROUTES.forEach((route) => {
@@ -58,6 +92,16 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: route.priority,
     });
   });
+
+  const works = await fetchRecentWorkPaths();
+  for (const work of works) {
+    entries.push({
+      url: `${CANONICAL_ORIGIN}${work.path}`,
+      changeFrequency: 'weekly',
+      priority: 0.7,
+      lastModified: work.lastModified,
+    });
+  }
 
   return entries;
 }

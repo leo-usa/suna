@@ -63,6 +63,7 @@ _TOOL_DISPLAY: Dict[str, str] = {
     'execute_command': 'Executing Command',
     'execute_data_provider_call': 'Calling Data Provider',
     'expose_port': 'Exposing Port',
+    'publish_site': 'Publish Site',
     'format_sheet': 'Formatting Sheet',
     'full_file_rewrite': 'Rewriting File',
     'get_author_details': 'Getting Author Details',

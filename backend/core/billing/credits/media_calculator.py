@@ -5,9 +5,10 @@ Handles pricing for image and video generation via Replicate and OpenRouter.
 Pricing is based on actual API costs with our standard markup.
 
 Replicate Pricing (approximate):
-- openai/gpt-image-2.5-flare and openai/gpt-image-2.5-sunburst: token-billed,
+- openai/gpt-image-2.6-flare and openai/gpt-image-2.6-sunburst: token-billed,
   same OpenAI rates ($5/1M text in, $8/1M image in, $30/1M image out).
   Per-image estimates below cover generate + a typical single-reference edit.
+  GIFs cost more as frame count rises; see gif_frames on calculate_replicate_image_cost.
 - bytedance/seedance-2.0: per second of output; rate depends on reference video vs not × resolution (480p/720p/1080p); see REPLICATE_PRICING
 - 851-labs/background-remover: ~$0.01 per image
 - recraft-ai/recraft-crisp-upscale: ~$0.01 per 4x upscale
@@ -25,14 +26,16 @@ from core.utils.logger import logger
 from ..shared.config import TOKEN_PRICE_MULTIPLIER
 
 # Everyday generate/edit. Precision edits and multi-image merges use Sunburst.
-GPT_IMAGE_FLARE = "openai/gpt-image-2.5-flare"
-GPT_IMAGE_SUNBURST = "openai/gpt-image-2.5-sunburst"
-GPT_IMAGE_OPENAI_SUNBURST = "gpt-image-2.5-sunburst"
+GPT_IMAGE_FLARE = "openai/gpt-image-2.6-flare"
+GPT_IMAGE_SUNBURST = "openai/gpt-image-2.6-sunburst"
+GPT_IMAGE_OPENAI_SUNBURST = "gpt-image-2.6-sunburst"
+# Replicate bills GIFs by output tokens. 4 frames ≈ one still estimate.
+GIF_FRAMES_PER_STILL = 4
 
 GPT_IMAGE_ASPECT_RATIOS = ("1:1", "3:2", "2:3", "4:3", "3:4", "16:9", "9:16")
 GPT_IMAGE_QUALITIES = ("low", "medium", "high", "xhigh", "max", "auto")
 
-# GPT Image 2.5 variant pricing (USD per output image via Replicate).
+# GPT Image 2.6 variant pricing (USD per still image via Replicate).
 # Official token rates (Sep 2026): text in $5 / image in $8 / image out $30 per 1M.
 # Estimates are slightly above measured 1024² generate+edit costs so we do not undercharge.
 # Sources: https://developers.openai.com/api/docs/pricing and fal measured 2.5 token use.
@@ -54,22 +57,36 @@ FREE_TIERS = {"none", "free"}
 # Replicate model pricing (USD per unit)
 # Source: https://replicate.com/pricing (as of Dec 2024)
 REPLICATE_PRICING: Dict[str, Dict] = {
-    # GPT Image 2.5 — Flare (everyday) and Sunburst (precision). Same token rates.
+    # GPT Image 2.6 — Flare (everyday) and Sunburst (precision). Same token rates.
     GPT_IMAGE_FLARE: {
         "type": "per_image",
         "cost_usd": Decimal("0.030"),
         "has_variants": True,
         "variants": GPT_IMAGE_VARIANTS,
-        "description": "GPT Image 2.5 Flare"
+        "description": "GPT Image 2.6 Flare"
     },
     GPT_IMAGE_SUNBURST: {
         "type": "per_image",
         "cost_usd": Decimal("0.030"),
         "has_variants": True,
         "variants": GPT_IMAGE_VARIANTS,
+        "description": "GPT Image 2.6 Sunburst"
+    },
+    # Legacy aliases so leftover 2.5 / gpt-image-2 charges still resolve
+    "openai/gpt-image-2.5-flare": {
+        "type": "per_image",
+        "cost_usd": Decimal("0.030"),
+        "has_variants": True,
+        "variants": GPT_IMAGE_VARIANTS,
+        "description": "GPT Image 2.5 Flare"
+    },
+    "openai/gpt-image-2.5-sunburst": {
+        "type": "per_image",
+        "cost_usd": Decimal("0.030"),
+        "has_variants": True,
+        "variants": GPT_IMAGE_VARIANTS,
         "description": "GPT Image 2.5 Sunburst"
     },
-    # Legacy alias so leftover gpt-image-2 charges still resolve
     "openai/gpt-image-2": {
         "type": "per_image",
         "cost_usd": Decimal("0.030"),
@@ -239,7 +256,12 @@ def get_variant_cost(model: str, variant: str) -> Decimal:
     return DEFAULT_IMAGE_COST_USD
 
 
-def calculate_replicate_image_cost(model: str, count: int = 1, variant: Optional[str] = None) -> Decimal:
+def calculate_replicate_image_cost(
+    model: str,
+    count: int = 1,
+    variant: Optional[str] = None,
+    gif_frames: Optional[int] = None,
+) -> Decimal:
     """
     Calculate cost for Replicate image operations.
     
@@ -262,6 +284,11 @@ def calculate_replicate_image_cost(model: str, count: int = 1, variant: Optional
                 cost_per_image = pricing["cost_usd"]
             
             base_cost = cost_per_image * Decimal(count)
+            if gif_frames and gif_frames > 1:
+                frame_multiplier = Decimal(gif_frames) / Decimal(GIF_FRAMES_PER_STILL)
+                if frame_multiplier < 1:
+                    frame_multiplier = Decimal(1)
+                base_cost *= frame_multiplier
         else:
             logger.warning(f"[MEDIA_BILLING] No pricing found for Replicate model '{model}', using default")
             base_cost = DEFAULT_IMAGE_COST_USD * Decimal(count)
@@ -445,6 +472,7 @@ def calculate_media_cost(
     char_count: Optional[int] = None,
     resolution: Optional[str] = None,
     video_input: bool = False,
+    gif_frames: Optional[int] = None,
 ) -> Decimal:
     """
     Unified function to calculate media generation cost.
@@ -476,7 +504,7 @@ def calculate_media_cost(
         elif media_type == "voice":
             return calculate_replicate_voice_cost(model, char_count or 0)
         else:
-            return calculate_replicate_image_cost(model, count, variant=variant)
+            return calculate_replicate_image_cost(model, count, variant=variant, gif_frames=gif_frames)
     elif provider == "openrouter":
         return calculate_openrouter_image_cost(model, count)
     else:

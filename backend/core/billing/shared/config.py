@@ -35,6 +35,8 @@ class Tier:
     scheduled_triggers_limit: int
     app_triggers_limit: int
     dedicated_computer_limit: int = 0
+    publish_sites_limit: int = 3
+    publish_custom_domain: bool = False
     memory_config: Optional[Dict] = None
     daily_credit_config: Optional[Dict] = None
     monthly_refill_enabled: Optional[bool] = True
@@ -68,6 +70,8 @@ TIERS: Dict[str, Tier] = {
         custom_workers_limit=0,
         scheduled_triggers_limit=0,
         app_triggers_limit=0,
+        publish_sites_limit=0,
+        publish_custom_domain=False,
         memory_config={
             'enabled': False,
             'max_memories': 0,
@@ -87,6 +91,8 @@ TIERS: Dict[str, Tier] = {
         custom_workers_limit=0,
         scheduled_triggers_limit=0,
         app_triggers_limit=0,
+        publish_sites_limit=3,
+        publish_custom_domain=False,
         memory_config={
             'enabled': True,
             'max_memories': 10,
@@ -119,6 +125,8 @@ TIERS: Dict[str, Tier] = {
         scheduled_triggers_limit=5,
         # Matches frontend pricing copy: "25 app triggers"
         app_triggers_limit=25,
+        publish_sites_limit=25,
+        publish_custom_domain=True,
         memory_config={
             'enabled': True,
             'max_memories': 100,
@@ -149,6 +157,8 @@ TIERS: Dict[str, Tier] = {
         # Matches frontend pricing copy: "50 app triggers"
         app_triggers_limit=50,
         dedicated_computer_limit=1,
+        publish_sites_limit=50,
+        publish_custom_domain=True,
         memory_config={
             'enabled': True,
             'max_memories': 500,
@@ -178,6 +188,8 @@ TIERS: Dict[str, Tier] = {
         scheduled_triggers_limit=50,
         # Matches frontend pricing copy: "200 app triggers"
         app_triggers_limit=200,
+        publish_sites_limit=100,
+        publish_custom_domain=True,
         dedicated_computer_limit=1,
         memory_config={
             'enabled': True,
@@ -206,6 +218,8 @@ TIERS: Dict[str, Tier] = {
         custom_workers_limit=20,
         scheduled_triggers_limit=20,
         app_triggers_limit=50,
+        publish_sites_limit=50,
+        publish_custom_domain=True,
         memory_config={
             'enabled': True,
             'max_memories': 1000,
@@ -231,6 +245,8 @@ TIERS: Dict[str, Tier] = {
         custom_workers_limit=100,
         scheduled_triggers_limit=100,
         app_triggers_limit=200,
+        publish_sites_limit=100,
+        publish_custom_domain=True,
         memory_config={
             'enabled': True,
             'max_memories': 5000,
@@ -256,6 +272,8 @@ TIERS: Dict[str, Tier] = {
         custom_workers_limit=200,
         scheduled_triggers_limit=200,
         app_triggers_limit=500,
+        publish_sites_limit=200,
+        publish_custom_domain=True,
         memory_config={
             'enabled': True,
             'max_memories': 10000,
@@ -281,6 +299,8 @@ TIERS: Dict[str, Tier] = {
         custom_workers_limit=500,
         scheduled_triggers_limit=500,
         app_triggers_limit=1000,
+        publish_sites_limit=500,
+        publish_custom_domain=True,
         memory_config={
             'enabled': True,
             'max_memories': 25000,
@@ -306,6 +326,8 @@ TIERS: Dict[str, Tier] = {
         custom_workers_limit=500,
         scheduled_triggers_limit=500,
         app_triggers_limit=1000,
+        publish_sites_limit=500,
+        publish_custom_domain=True,
         memory_config={
             'enabled': True,
             'max_memories': 30000,
@@ -515,6 +537,18 @@ def get_dedicated_computer_limit(tier_name: str) -> int:
     tier = TIERS.get(tier_name)
     return tier.dedicated_computer_limit if tier else TIERS['free'].dedicated_computer_limit
 
+def get_publish_sites_limit(tier_name: str) -> int:
+    tier = TIERS.get(tier_name)
+    return tier.publish_sites_limit if tier else TIERS['free'].publish_sites_limit
+
+def can_publish_custom_domain(tier_name: str) -> bool:
+    tier = TIERS.get(tier_name)
+    return bool(tier.publish_custom_domain) if tier else False
+
+def is_paid_publish_tier(tier_name: str) -> bool:
+    """Paid publish = no Dobby badge and custom-domain entitlement."""
+    return can_publish_custom_domain(tier_name)
+
 def get_tier_limits(tier_name: str) -> Dict:
     tier = TIERS.get(tier_name, TIERS['free'])
     return {
@@ -525,6 +559,8 @@ def get_tier_limits(tier_name: str) -> Dict:
         'scheduled_triggers_limit': tier.scheduled_triggers_limit,
         'app_triggers_limit': tier.app_triggers_limit,
         'dedicated_computer_limit': tier.dedicated_computer_limit,
+        'publish_sites_limit': tier.publish_sites_limit,
+        'publish_custom_domain': tier.publish_custom_domain,
         'agent_limit': tier.custom_workers_limit,
         'can_purchase_credits': tier.can_purchase_credits,
         'models': tier.models,

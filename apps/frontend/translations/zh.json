@@ -165,6 +165,7 @@
       "usage": "使用情况",
       "memory": "记忆",
       "referrals": "推荐",
+      "sites": "站点",
       "knowledgeBase": "知识库",
       "integrations": "集成",
       "apiKeys": "API 密钥",
@@ -1586,11 +1587,23 @@
       "shareXText": "看看这段对话",
       "publish": "发布",
       "publishing": "发布中...",
-      "publishHint": "将当前项目文件发布到作品",
+      "publishHint": "将当前项目文件发布到作品。",
       "publishSuccess": "已发布到作品",
+      "publishUpdated": "已更新已发布站点",
       "publishFailed": "发布失败",
       "publishNeedProject": "打开项目后才能发布",
-      "openWork": "打开作品"
+      "openWork": "打开作品",
+      "publishSectionTitle": "发布站点",
+      "publishTitlePlaceholder": "站点标题",
+      "publishSlugPlaceholder": "url-slug（可选）",
+      "publishQuota": "（{active}/{limit} 个站点）",
+      "publishBrandedHint": "免费版会显示 Made with Dobby 角标。",
+      "upgradeToRemoveBadge": "升级可去除",
+      "updatePublish": "更新",
+      "unpublish": "下架",
+      "unpublishSuccess": "已下架站点",
+      "unpublishFailed": "下架失败",
+      "manageSites": "管理我的站点"
     }
   },
   "billing": {
@@ -2845,6 +2858,8 @@
     "fileBrowser": {
       "filesTitle": "文件",
       "home": "主页",
+      "navigateUp": "返回上层",
+      "folderTree": "文件夹",
       "item": "项",
       "items": "项",
       "videoThumbnailAlt": "视频缩略图",

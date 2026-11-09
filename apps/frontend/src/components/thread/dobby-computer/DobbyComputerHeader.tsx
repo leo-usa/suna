@@ -1,5 +1,5 @@
 import React, { Fragment } from 'react';
-import { LucideIcon, ChevronRight } from 'lucide-react';
+import { LucideIcon, ChevronRight, ChevronLeft, Home } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export interface BreadcrumbSegment {
@@ -16,6 +16,13 @@ interface DobbyComputerHeaderProps {
   /** Tooltip/title for the icon button */
   iconTitle?: string;
   
+  /** Navigate to parent folder (File Explorer Up) */
+  onNavigateUp?: () => void;
+  /** Whether Up is available */
+  canNavigateUp?: boolean;
+  /** Tooltip for Up */
+  navigateUpTitle?: string;
+
   /** Simple title to display (mutually exclusive with breadcrumbs and fileName) */
   title?: string;
   
@@ -26,6 +33,10 @@ interface DobbyComputerHeaderProps {
   breadcrumbs?: BreadcrumbSegment[];
   /** Click handler for breadcrumb navigation */
   onBreadcrumbClick?: (path: string) => void;
+  /** Root breadcrumb label (e.g. Files) — always shown when breadcrumbs are used */
+  rootLabel?: string;
+  /** Root path for breadcrumb home (default /workspace) */
+  rootPath?: string;
   
   /** Actions to display on the right side */
   actions?: React.ReactNode;
@@ -41,16 +52,23 @@ export function DobbyComputerHeader({
   icon: Icon,
   onIconClick,
   iconTitle,
+  onNavigateUp,
+  canNavigateUp = false,
+  navigateUpTitle,
   title,
   fileName,
   breadcrumbs,
   onBreadcrumbClick,
+  rootLabel,
+  rootPath = '/workspace',
   actions,
 }: DobbyComputerHeaderProps) {
+  const showExplorerNav = Boolean(onNavigateUp || (breadcrumbs && breadcrumbs.length >= 0 && rootLabel));
+
   return (
     <div className="density-panel-header h-12 sm:h-14 bg-zinc-50/80 dark:bg-zinc-900/80 backdrop-blur-sm border-b p-1.5 sm:p-2 px-3 sm:px-4 flex items-center justify-between flex-shrink-0 max-w-full min-w-0">
-      {/* Left section: Icon + Title/Breadcrumbs/FileName */}
-      <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto min-w-0 scrollbar-hide max-w-full">
+      {/* Left section: Icon + Up + Title/Breadcrumbs/FileName */}
+      <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto min-w-0 scrollbar-hide max-w-full">
         {/* Icon Button - compact on mobile */}
         {onIconClick ? (
           <button
@@ -66,15 +84,33 @@ export function DobbyComputerHeader({
           </div>
         )}
 
+        {onNavigateUp && (
+          <button
+            type="button"
+            onClick={onNavigateUp}
+            disabled={!canNavigateUp}
+            className={cn(
+              'p-1.5 sm:p-2 rounded-lg border flex-shrink-0 transition-colors touch-manipulation',
+              canNavigateUp
+                ? 'bg-zinc-200/60 dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700 hover:bg-zinc-300/60 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300'
+                : 'bg-zinc-100/40 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-300 dark:text-zinc-700 cursor-not-allowed',
+            )}
+            title={navigateUpTitle}
+            aria-label={navigateUpTitle}
+          >
+            <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />
+          </button>
+        )}
+
         {/* Simple Title */}
-        {title && (
+        {title && !showExplorerNav && (
           <span className="text-sm sm:text-base font-medium text-zinc-900 dark:text-zinc-100">
             {title}
           </span>
         )}
 
-        {/* File Name with Chevron (for file viewer) */}
-        {fileName && (
+        {/* File Name with Chevron (for file viewer without folder crumbs) */}
+        {fileName && !breadcrumbs && (
           <>
             <ChevronRight className="h-3 w-3 text-muted-foreground/50 flex-shrink-0" />
             <span className="text-sm sm:text-base font-medium text-zinc-900 dark:text-zinc-100 truncate max-w-[140px] sm:max-w-[200px]">
@@ -83,28 +119,60 @@ export function DobbyComputerHeader({
           </>
         )}
 
-        {/* Breadcrumbs */}
-        {breadcrumbs && breadcrumbs.length > 0 && (
+        {/* Explorer-style breadcrumbs: Files / a / b [/ file] */}
+        {(rootLabel || (breadcrumbs && breadcrumbs.length > 0) || fileName) && (rootLabel || breadcrumbs) && (
           <div className="flex items-center gap-1 sm:gap-1.5 min-w-0">
-            {breadcrumbs.map((segment, index) => (
-              <Fragment key={segment.path}>
-                {index > 0 && (
-                  <span className="text-zinc-400 dark:text-zinc-600">/</span>
+            {rootLabel && (
+              <button
+                type="button"
+                onClick={() => onBreadcrumbClick?.(rootPath)}
+                className={cn(
+                  'text-sm sm:text-base transition-colors truncate max-w-[90px] sm:max-w-[140px] touch-manipulation inline-flex items-center gap-1',
+                  !breadcrumbs?.length && !fileName
+                    ? 'text-zinc-900 dark:text-zinc-100 font-medium'
+                    : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100',
                 )}
+                title={rootPath}
+              >
+                <Home className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0 opacity-70" />
+                <span className="truncate">{rootLabel}</span>
+              </button>
+            )}
+            {breadcrumbs?.map((segment) => (
+              <Fragment key={segment.path}>
+                <ChevronRight className="h-3 w-3 text-zinc-400 dark:text-zinc-600 flex-shrink-0" />
                 <button
+                  type="button"
                   onClick={() => onBreadcrumbClick?.(segment.path)}
+                  disabled={segment.isLast && !fileName}
                   className={cn(
-                    "text-sm sm:text-base transition-colors truncate max-w-[100px] sm:max-w-[150px] touch-manipulation",
-                    segment.isLast 
-                      ? "text-zinc-900 dark:text-zinc-100 font-medium" 
-                      : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
+                    'text-sm sm:text-base transition-colors truncate max-w-[100px] sm:max-w-[150px] touch-manipulation',
+                    segment.isLast && !fileName
+                      ? 'text-zinc-900 dark:text-zinc-100 font-medium cursor-default'
+                      : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100',
                   )}
+                  title={segment.path}
                 >
                   {segment.name}
                 </button>
               </Fragment>
             ))}
+            {fileName && (
+              <>
+                <ChevronRight className="h-3 w-3 text-zinc-400 dark:text-zinc-600 flex-shrink-0" />
+                <span className="text-sm sm:text-base font-medium text-zinc-900 dark:text-zinc-100 truncate max-w-[120px] sm:max-w-[180px]">
+                  {fileName}
+                </span>
+              </>
+            )}
           </div>
+        )}
+
+        {/* Fallback title when at root with explorer nav */}
+        {title && showExplorerNav && !rootLabel && !(breadcrumbs && breadcrumbs.length > 0) && (
+          <span className="text-sm sm:text-base font-medium text-zinc-900 dark:text-zinc-100">
+            {title}
+          </span>
         )}
       </div>
 

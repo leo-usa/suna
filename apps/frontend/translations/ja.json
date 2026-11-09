@@ -82,7 +82,8 @@
       "knowledgeBase": "ナレッジベース",
       "integrations": "統合",
       "apiKeys": "APIキー",
-      "envManager": "環境マネージャー"
+      "envManager": "環境マネージャー",
+      "sites": "サイト"
     },
     "general": {
       "title": "プロフィール設定",
@@ -790,7 +791,19 @@
       "publishSuccess": "作品に公開しました",
       "publishFailed": "公開に失敗しました",
       "publishNeedProject": "公開するにはプロジェクトを開いてください",
-      "openWork": "作品を開く"
+      "openWork": "作品を開く",
+      "publishUpdated": "Updated published site",
+      "publishSectionTitle": "Publish site",
+      "publishTitlePlaceholder": "Site title",
+      "publishSlugPlaceholder": "url-slug (optional)",
+      "publishQuota": "({active}/{limit} sites)",
+      "publishBrandedHint": "Free publishes include a Made with Dobby badge.",
+      "upgradeToRemoveBadge": "Upgrade to remove it",
+      "updatePublish": "Update",
+      "unpublish": "Unpublish",
+      "unpublishSuccess": "Site unpublished",
+      "unpublishFailed": "Failed to unpublish",
+      "manageSites": "Manage my sites"
     }
   },
   "billing": {
@@ -1930,6 +1943,8 @@
     "fileBrowser": {
       "filesTitle": "ファイル",
       "home": "ホーム",
+      "navigateUp": "上へ",
+      "folderTree": "フォルダ",
       "item": "item",
       "items": "items"
     },

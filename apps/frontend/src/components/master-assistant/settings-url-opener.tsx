@@ -6,13 +6,14 @@ import { UserSettingsModal } from '@/components/settings/user-settings-modal';
 import { ReferralDialog } from '@/components/referrals/referral-dialog';
 import { usePricingModalStore } from '@/stores/pricing-modal-store';
 
-type SettingsTab = 'general' | 'billing' | 'usage' | 'memory';
+type SettingsTab = 'general' | 'billing' | 'usage' | 'memory' | 'sites';
 
 const MODAL_TABS: Record<string, SettingsTab> = {
   general: 'general',
   billing: 'billing',
   usage: 'usage',
   memory: 'memory',
+  sites: 'sites',
 };
 
 /** Opens settings tabs from links like `/dashboard?settings=usage` (used by the master assistant). */

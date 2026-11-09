@@ -9,6 +9,7 @@ TOOL_DEPENDENCIES: Dict[str, List[str]] = {
     'sb_vision_tool': ['sb_files_tool'],
     'sb_upload_file_tool': ['sb_files_tool'],
     'sb_expose_tool': ['sb_shell_tool'],
+    'sb_publish_tool': ['sb_files_tool'],
     'browser_tool': ['sb_files_tool'],
     'agent_creation_tool': ['sb_files_tool', 'agent_config_tool'],
     'trigger_tool': ['agent_config_tool'],

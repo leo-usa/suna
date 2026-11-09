@@ -26,6 +26,7 @@ DEFAULT_CORE_TOOLS = [
     'sb_image_edit_tool',   # Image generation
     'sb_upload_file_tool',  # File uploads
     'sb_expose_tool',       # Port exposure
+    'sb_publish_tool',      # Publish workspace to Works / Sites
     'sb_kb_tool',           # Knowledge base operations
     'composio_upload_tool', # Composio S3 uploads for email attachments
     'agent_config_tool',
@@ -156,10 +157,11 @@ class ToolManager:
             'sb_image_edit_tool',
             'sb_upload_file_tool',
             'sb_expose_tool',
+            'sb_publish_tool',
             'sb_kb_tool',  # Knowledge base operations
             'composio_upload_tool',  # Composio S3 uploads for email attachments
         ]
-        tools_needing_thread_id = {'sb_vision_tool', 'sb_image_edit_tool', 'sb_design_tool'}
+        tools_needing_thread_id = {'sb_vision_tool', 'sb_image_edit_tool', 'sb_design_tool', 'sb_publish_tool'}
         
         for tool_name in core_sandbox_tools:
             if not self._is_tool_enabled(tool_name):
