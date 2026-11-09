@@ -6,8 +6,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { ChevronLeft, ChevronRight, Heart, Loader2 } from 'lucide-react';
 import { SimpleFooter } from '@/components/home/simple-footer';
-import { DobbyLogo } from '@/components/sidebar/dobby-logo';
-import { listWorks, workPath, worksLangFromLocale, type WorkPost } from '@/lib/api/works';
+import { listWorks, workOgImagePath, workPath, worksLangFromLocale, type WorkPost } from '@/lib/api/works';
 import { cn } from '@/lib/utils';
 
 const PAGE_SIZE = 20;
@@ -28,25 +27,20 @@ function typeLabel(t: ReturnType<typeof useTranslations>, artifactType: string) 
 }
 
 function WorkCard({ post, t }: { post: WorkPost; t: ReturnType<typeof useTranslations> }) {
-  const thumb = post.thumbnail_path;
+  // Prefer stored cover; otherwise use the dynamic OG card (title + type), not a flat logo.
+  const thumb = post.thumbnail_path || workOgImagePath(post.slug || post.id);
   return (
     <Link
       href={workPath(post)}
       className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-card hover:border-foreground/20 transition-colors"
     >
       <div className="relative aspect-[16/10] bg-muted/40 overflow-hidden">
-        {thumb ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={thumb}
-            alt={post.title}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-          />
-        ) : (
-          <div className="h-full w-full flex items-center justify-center">
-            <DobbyLogo size={40} variant="symbol" className="opacity-40" />
-          </div>
-        )}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={thumb}
+          alt={post.title}
+          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+        />
         <span className="absolute left-3 top-3 rounded-full bg-background/90 px-2 py-0.5 text-[11px] font-medium">
           {typeLabel(t, post.artifact_type)}
         </span>

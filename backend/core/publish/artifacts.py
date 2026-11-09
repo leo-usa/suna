@@ -81,6 +81,18 @@ def classify_rel_paths(rel_paths: Iterable[str]) -> str:
     return "mixed"
 
 
+# Top-level dirs that usually hold shared tooling / raw scrapes — not publishable sites.
+NON_SITE_TOP_DIRS = {
+    "downloads",
+    "uploads",
+    "scrape",
+    "node_modules",
+    "video",
+    ".dobby",
+    "__pycache__",
+}
+
+
 def _mtime_sort_key(value: str | None) -> float:
     """Best-effort parse of sandbox mod_time strings; unknown sorts as oldest."""
     if not value:
@@ -93,9 +105,22 @@ def _mtime_sort_key(value: str | None) -> float:
     except ValueError:
         pass
     from datetime import datetime
+    import re
 
-    cleaned = text.replace("Z", "+00:00")
-    for candidate in (cleaned, text[:19]):
+    # Daytona often returns: "2026-11-09 05:44:41.990502936 +0000 UTC"
+    stripped = text.replace(" UTC", "").replace("Z", "+00:00")
+    m = re.match(
+        r"(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2}:\d{2})(?:\.\d+)?(?:\s*([+-]\d{2}):?(\d{2}))?",
+        stripped,
+    )
+    if m:
+        date, time, tz_h, tz_m = m.group(1), m.group(2), m.group(3), m.group(4)
+        iso = f"{date}T{time}{tz_h}:{tz_m}" if tz_h and tz_m else f"{date}T{time}+00:00"
+        try:
+            return datetime.fromisoformat(iso).timestamp()
+        except ValueError:
+            pass
+    for candidate in (stripped.replace(" +0000", "+00:00"), text[:19]):
         try:
             return datetime.fromisoformat(candidate).timestamp()
         except ValueError:
@@ -103,14 +128,46 @@ def _mtime_sort_key(value: str | None) -> float:
     return 0.0
 
 
+def _top_dir(path: str) -> str:
+    return path.replace("\\", "/").lstrip("/").split("/", 1)[0]
+
+
+def _is_non_site_path(path: str) -> bool:
+    return _top_dir(path).lower() in NON_SITE_TOP_DIRS
+
+
+def _project_match_score(path: str, project_name: str | None) -> int:
+    """Lower is better. 0 = strong match against project title/slug tokens."""
+    if not project_name:
+        return 1
+    from core.publish.slug import slugify_title
+
+    slug = slugify_title(project_name)
+    tokens = {t for t in slug.lower().split("-") if len(t) >= 3}
+    name_l = project_name.lower()
+    parts = [p for p in path.replace("\\", "/").lower().split("/") if p]
+    for part in parts[:3]:
+        if len(part) < 3:
+            continue
+        if part in name_l or part in slug:
+            return 0
+        if any(tok in part or part in tok for tok in tokens):
+            return 0
+    return 1
+
+
 def pick_entry_html(
     rel_paths: list[str],
     mtimes: dict[str, str] | None = None,
+    project_name: str | None = None,
 ) -> str | None:
     """Pick the HTML entry for a published site.
 
-    Prefers the newest index.html/htm at any depth (dedicated computers often keep
-    each project in a subdirectory), then presentation slides, then other HTML.
+    On dedicated computers many projects share one /workspace. Prefer:
+    1. Paths matching the current project name/slug
+    2. Newest HTML by mtime (report.html beats stale sibling index.html)
+    3. index.html / presentations as soft tie-breakers
+    Skip downloads/uploads/scrape/video unless nothing else exists.
     """
     normalized = [p.replace("\\", "/").lstrip("/") for p in rel_paths]
     html_files = [p for p in normalized if os.path.splitext(p.lower())[1] in HTML_EXTS]
@@ -118,34 +175,37 @@ def pick_entry_html(
         return None
 
     mtimes = mtimes or {}
+    preferred = [p for p in html_files if not _is_non_site_path(p)]
+    pool = preferred or html_files
 
     def rank(path: str) -> tuple:
         name = os.path.basename(path).lower()
         is_index = name in ("index.html", "index.htm")
-        is_presentation = "presentations/" in path.lower() or "/slide_" in path.lower() or name.startswith("slide_")
-        # Lower tuple wins: indexes first, then newest, then shallower, then name.
+        is_presentation = (
+            "presentations/" in path.lower()
+            or "/slide_" in path.lower()
+            or name.startswith("slide_")
+        )
+        # Newest content wins. Stale athenaion/index.html must not beat today's report.html.
         return (
-            0 if is_index else (1 if is_presentation else 2),
+            _project_match_score(path, project_name),
             -_mtime_sort_key(mtimes.get(path)),
+            0 if is_index else (1 if is_presentation else 2),
             path.count("/"),
             path.lower(),
         )
 
-    indexes = [p for p in html_files if os.path.basename(p).lower() in ("index.html", "index.htm")]
-    if indexes:
-        indexes.sort(key=rank)
-        return indexes[0]
-
-    presentations = [p for p in html_files if "presentations/" in p.lower() or "/slide_" in p.lower() or os.path.basename(p).lower().startswith("slide_")]
-    if presentations:
-        presentations.sort(key=rank)
-        return presentations[0]
-
-    html_files.sort(key=rank)
-    return html_files[0]
+    pool.sort(key=rank)
+    return pool[0]
 
 
 def site_root_for_entry(entry_html: str | None) -> str:
+    """Folder to publish with the entry.
+
+    Nested site `reports/huang/report.html` → `reports/huang` (not just `reports`),
+    so sibling projects under the same parent are not uploaded.
+    Root-level `athenaion.html` → empty (handled by filter_files_for_entry).
+    """
     if not entry_html:
         return ""
     return os.path.dirname(entry_html.replace("\\", "/").lstrip("/")).strip("/")

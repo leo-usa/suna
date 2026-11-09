@@ -6,7 +6,7 @@ import re
 import uuid
 from datetime import datetime, timezone
 from typing import Any, Optional
-from urllib.parse import urlparse
+from urllib.parse import quote, urlparse
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -27,6 +27,7 @@ from core.publish.branding import inject_dobby_badge, strip_dobby_badge
 from core.publish.language import detect_language_from_fields
 from core.publish.quotas import count_active_sites, resolve_publish_entitlements
 from core.publish.slug import slugify_title
+from core.publish.thumbnails import pick_thumbnail_url
 from core.sandbox.resolver import resolve_sandbox
 from core.services.supabase import DBConnection
 from core.threads.repo import get_first_user_message_content
@@ -221,12 +222,16 @@ async def _walk_workspace(
     return files
 
 
-async def _list_workspace_files(sandbox) -> list[tuple[str, str]]:
+async def _list_workspace_files(
+    sandbox,
+    project_name: str | None = None,
+) -> list[tuple[str, str]]:
     """Discover the active site on a (possibly shared dedicated) workspace.
 
     Dedicated computers keep many projects under /workspace. A naive walk hits
-    MAX_FILES on old folders (e.g. video/) and never reaches the new index.html.
-    We first find HTML entries, pick the best one, then upload only that site.
+    MAX_FILES on old folders (e.g. video/) and never reaches the new report.
+    We first find HTML entries, pick the best one for this project, then upload
+    only that site folder (not sibling projects like athenaion/).
     """
     html_files = await _walk_workspace(sandbox, html_only=True, max_files=500)
     if not html_files:
@@ -234,7 +239,11 @@ async def _list_workspace_files(sandbox) -> list[tuple[str, str]]:
         return [(full, rel) for full, rel, _ in await _walk_workspace(sandbox, max_files=MAX_FILES)]
 
     mtimes = {rel: mod for _, rel, mod in html_files}
-    entry = pick_entry_html([rel for _, rel, _ in html_files], mtimes=mtimes)
+    entry = pick_entry_html(
+        [rel for _, rel, _ in html_files],
+        mtimes=mtimes,
+        project_name=project_name,
+    )
     if not entry:
         return [(full, rel) for full, rel, _ in await _walk_workspace(sandbox, max_files=MAX_FILES)]
 
@@ -461,7 +470,11 @@ async def serve_public_html(post_id: str):
     thumbnail = post_data.get("thumbnail_path") or ""
     if thumbnail and not thumbnail.startswith("http"):
         thumbnail = _html_url(thumbnail) if "/" in thumbnail else thumbnail
-    og_image = html.escape(thumbnail or "https://dobby.now/dobby-logo.svg", quote=True)
+    # Prefer stored cover; otherwise point crawlers at the dynamic Works OG card
+    # (title + type card) instead of a flat Dobby logo.
+    work_key = post_data.get("slug") or post_data.get("id") or post_id
+    og_fallback = f"https://dobby.now/api/works/og-image/{quote(str(work_key), safe='')}"
+    og_image = html.escape(thumbnail or og_fallback, quote=True)
     post_url = f"https://dobby.now{_work_path(post_data)}"
     meta_tags = f"""
         <meta property="og:title" content="{og_title}" />
@@ -574,11 +587,15 @@ async def publish_work(
             detail="Sandbox is not available. Start the project computer and try Publish again.",
         )
 
-    workspace_files = await _list_workspace_files(sandbox_info.sandbox)
+    project_name = (project_data.get("name") or "").strip() or None
+    workspace_files = await _list_workspace_files(
+        sandbox_info.sandbox,
+        project_name=project_name,
+    )
     if not workspace_files:
         raise HTTPException(status_code=400, detail="No files found in the project workspace to publish.")
 
-    title = (body.title or (existing_row or {}).get("title") or project_data.get("name") or "Untitled").strip()
+    title = (body.title or (existing_row or {}).get("title") or project_name or "Untitled").strip()
     description = (body.description or "").strip()
     if not description and body.thread_id:
         first_msg = await get_first_user_message_content(body.thread_id)
@@ -666,7 +683,12 @@ async def publish_work(
         {"content-type": "text/html", "upsert": "true"},
     )
 
-    thumbnail_path = image_urls[0] if image_urls else ((existing_row or {}).get("thumbnail_path") or "")
+    thumbnail_path = pick_thumbnail_url(
+        html_content=html_content,
+        rel_to_url=rel_to_url,
+        workspace_image_urls=image_urls,
+        existing_thumbnail=(existing_row or {}).get("thumbnail_path") or "",
+    )
     user_name = await _user_display_name(user_id)
     slug = await _unique_slug(
         client,
