@@ -30,10 +30,10 @@ def test_sonnet_5_5_and_fable_5_stay_openrouter_when_bedrock_off():
     assert fable.provider == ModelProvider.OPENROUTER
     assert sonnet.litellm_model_id == "openrouter/anthropic/claude-sonnet-5.5"
     assert sonnet.name == "Claude Sonnet 5.5"
-    assert fable.litellm_model_id == "openrouter/anthropic/claude-fable-5.1"
+    assert fable.litellm_model_id == "openrouter/anthropic/claude-fable-5.2"
     assert sonnet.fallback_litellm_model_id is None
     assert fable.fallback_litellm_model_id is None
-    assert fable.name == "Claude Fable 5.1"
+    assert fable.name == "Fable 5.2"
 
 
 def test_claude_and_gpt_use_bedrock_geo_ids_when_enabled():
@@ -69,7 +69,8 @@ def test_claude_and_gpt_use_bedrock_geo_ids_when_enabled():
     assert opus_55.provider == ModelProvider.BEDROCK
     assert opus_55.litellm_model_id == BedrockConfig.get_opus_5_5_id()
     assert opus_55.fallback_litellm_model_id == "openrouter/anthropic/claude-opus-5.5"
-    assert fable.litellm_model_id == BedrockConfig.get_fable_5_1_id()
+    assert fable.litellm_model_id == BedrockConfig.get_fable_5_2_id()
+    assert fable.fallback_litellm_model_id == "openrouter/anthropic/claude-fable-5.2"
     assert gpt.litellm_model_id == BedrockConfig.build_geo_id("gpt_5_5")
     assert luna.litellm_model_id == BedrockConfig.build_geo_id("gpt_5_6_luna")
     assert terra.litellm_model_id == BedrockConfig.build_geo_id("gpt_5_6_terra")
@@ -110,9 +111,11 @@ def test_bedrock_count_tokens_model_id_extracts_geo_ids():
 
 
 def test_fable_legacy_alias_still_resolves():
-    fable = registry.get("dobby/claude-fable-5.1")
+    fable = registry.get("dobby/claude-fable-5.2")
+    fable_51 = registry.get("dobby/claude-fable-5.1")
     fable_legacy = registry.get("dobby/claude-fable-5")
     assert fable is not None
+    assert fable_51 is fable
     assert fable_legacy is fable
 
 
@@ -149,6 +152,12 @@ def test_bedrock_geo_pricing_maps():
     assert registry.get_pricing_for_litellm_id("openrouter/anthropic/claude-sonnet-5.5") is not None
     assert registry.get_pricing_for_litellm_id(BedrockConfig.get_sonnet_5_id()) is not None
     assert registry.get_pricing_for_litellm_id(BedrockConfig.get_fable_5_1_id()) is not None
+    fable_52 = registry.get_pricing_for_litellm_id(BedrockConfig.get_fable_5_2_id())
+    assert fable_52 is not None
+    assert fable_52.input_cost_per_million_tokens == 8.00
+    assert fable_52.output_cost_per_million_tokens == 40.00
+    assert registry.get_pricing_for_litellm_id("openrouter/anthropic/claude-fable-5.2") is not None
+    assert registry.get("dobby/claude-fable-5.2") is not None
     opus_55 = registry.get_pricing_for_litellm_id(BedrockConfig.get_opus_5_5_id())
     openrouter_opus_55 = registry.get_pricing_for_litellm_id("openrouter/anthropic/claude-opus-5.5")
     assert opus_55 is not None
@@ -263,12 +272,14 @@ def test_default_thinking_claude_models_get_output_room():
     assert default_output_token_limit("dobby/claude-sonnet-5.5") == 128_000
     assert default_output_token_limit("dobby/claude-opus-5.5") == 128_000
     assert default_output_token_limit("dobby/claude-opus-5") == 128_000
+    assert default_output_token_limit("dobby/claude-fable-5.2") == 128_000
     assert default_output_token_limit("dobby/claude-fable-5.1") == 128_000
     assert default_output_token_limit("dobby/claude-fable-5") == 128_000
     assert default_output_token_limit("dobby/claude-sonnet-5") == 128_000
     assert default_output_token_limit("global.anthropic.claude-sonnet-5-5") == 128_000
     assert default_output_token_limit("us.anthropic.claude-opus-5-5") == 128_000
     assert default_output_token_limit("us.anthropic.claude-opus-5") == 128_000
+    assert default_output_token_limit("us.anthropic.claude-fable-5-2") == 128_000
     assert default_output_token_limit("us.anthropic.claude-fable-5-1") == 128_000
     assert default_output_token_limit("dobby/basic") == 128_000
     assert default_output_token_limit("dobby/power") == 128_000

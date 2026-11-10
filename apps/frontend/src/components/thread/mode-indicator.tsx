@@ -164,6 +164,7 @@ export const ModeIndicator = memo(function ModeIndicator({ compact = false }: { 
       'dobby/claude-haiku-5.5': 'Haiku 5.5',
       'dobby/claude-sonnet-5.5': 'Sonnet 5.5',
       'dobby/claude-opus-5.5': 'Opus 5.5',
+      'dobby/claude-fable-5.2': 'Fable 5.2',
     };
     return shortNames[lastAutoModelId]
       || modelOptions.find((m) => m.id === lastAutoModelId)?.label

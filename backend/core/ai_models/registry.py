@@ -29,6 +29,7 @@ class BedrockConfig:
         "opus_5_5": "us.anthropic.claude-opus-5-5",
         "fable_5": "us.anthropic.claude-fable-5",
         "fable_5_1": "us.anthropic.claude-fable-5-1",
+        "fable_5_2": "us.anthropic.claude-fable-5-2",
         "gpt_5_5": "us.openai.gpt-5.5",
         "gpt_5_6_luna": "us.openai.gpt-5.6-luna",
         "gpt_5_6_terra": "us.openai.gpt-5.6-terra",
@@ -86,6 +87,10 @@ class BedrockConfig:
     @classmethod
     def get_fable_5_1_id(cls) -> str:
         return cls.build_geo_id("fable_5_1")
+
+    @classmethod
+    def get_fable_5_2_id(cls) -> str:
+        return cls.build_geo_id("fable_5_2")
 
 
 def _bedrock_region() -> str:
@@ -225,6 +230,15 @@ class PricingPresets:
         output_cost_per_million_tokens=50.00,
         cached_read_cost_per_million_tokens=0.25,
         cache_write_5m_cost_per_million_tokens=12.50,
+    )
+
+    # Fable 5.2 (OpenRouter + Bedrock list price).
+    CLAUDE_FABLE_5_2 = ModelPricing(
+        input_cost_per_million_tokens=8.00,
+        output_cost_per_million_tokens=40.00,
+        cached_read_cost_per_million_tokens=0.20,
+        cache_write_5m_cost_per_million_tokens=10.00,
+        cache_write_1h_cost_per_million_tokens=16.00,
     )
 
     GEMINI_2_5_PRO = ModelPricing(
@@ -1221,14 +1235,19 @@ class ModelFactory:
     @staticmethod
     def create_claude_fable_5() -> Model:
         litellm_id, provider, fallback = _claude_gpt_route(
-            "openrouter/anthropic/claude-fable-5.1", "fable_5_1"
+            "openrouter/anthropic/claude-fable-5.2", "fable_5_2"
         )
         return Model(
-            id="dobby/claude-fable-5.1",
-            name="Claude Fable 5.1",
+            id="dobby/claude-fable-5.2",
+            name="Fable 5.2",
             litellm_model_id=litellm_id,
             provider=provider,
             aliases=[
+                "claude-fable-5.2",
+                "claude-fable-5-2",
+                "anthropic/claude-fable-5.2",
+                "anthropic/claude-fable-5-2",
+                "dobby/claude-fable-5.1",
                 "claude-fable-5.1",
                 "anthropic/claude-fable-5.1",
                 "dobby/claude-fable-5",
@@ -1243,10 +1262,11 @@ class ModelFactory:
                 ModelCapability.THINKING,
                 ModelCapability.PROMPT_CACHING,
             ],
-            pricing=PricingPresets.CLAUDE_FABLE_5,
+            pricing=PricingPresets.CLAUDE_FABLE_5_2,
             tier_availability=["paid"],
-            priority=105,
-            recommended=False,
+            # Above GPT list so Fable shows near the top of All Models.
+            priority=130,
+            recommended=True,
             enabled=True,
             fallback_litellm_model_id=fallback,
         )
@@ -1984,10 +2004,12 @@ class ModelRegistry:
         self._litellm_id_to_pricing[BedrockConfig.get_opus_5_id()] = PricingPresets.CLAUDE_OPUS_5
         self._litellm_id_to_pricing["openrouter/anthropic/claude-opus-5.5"] = PricingPresets.CLAUDE_OPUS_5_5
         self._litellm_id_to_pricing[BedrockConfig.get_opus_5_5_id()] = PricingPresets.CLAUDE_OPUS_5_5
+        self._litellm_id_to_pricing["openrouter/anthropic/claude-fable-5.2"] = PricingPresets.CLAUDE_FABLE_5_2
         self._litellm_id_to_pricing["openrouter/anthropic/claude-fable-5.1"] = PricingPresets.CLAUDE_FABLE_5
         self._litellm_id_to_pricing["openrouter/anthropic/claude-fable-5"] = PricingPresets.CLAUDE_FABLE_5
         self._litellm_id_to_pricing[BedrockConfig.get_fable_5_id()] = PricingPresets.CLAUDE_FABLE_5
         self._litellm_id_to_pricing[BedrockConfig.get_fable_5_1_id()] = PricingPresets.CLAUDE_FABLE_5
+        self._litellm_id_to_pricing[BedrockConfig.get_fable_5_2_id()] = PricingPresets.CLAUDE_FABLE_5_2
         self._litellm_id_to_pricing["openrouter/google/gemini-2.5-pro"] = PricingPresets.GEMINI_2_5_PRO
         self._litellm_id_to_pricing["openrouter/google/gemini-4-argon"] = PricingPresets.GEMINI_4_ARGON
         self._litellm_id_to_pricing["openrouter/google/gemini-3.1-pro-preview"] = PricingPresets.GEMINI_3_1_PRO
