@@ -301,6 +301,13 @@ export function parseTierRestrictionError(error: any): Error {
     
     case 'MODEL_ACCESS_DENIED':
       return new ModelAccessDeniedError(status, detail);
+
+    case 'DEDICATED_COMPUTER_NOT_AVAILABLE':
+      return new BillingError(status, {
+        ...detail,
+        error_code: 'DEDICATED_COMPUTER_NOT_AVAILABLE',
+        message: detail.message || 'Dedicated computer is available on Pro and Ultra plans.',
+      });
     
     case 'CUSTOM_WORKER_LIMIT_EXCEEDED':
       return new CustomWorkerLimitError(status, detail);
@@ -347,6 +354,7 @@ export type TierErrorType =
   | 'AGENT_LIMIT_EXCEEDED'
   | 'TRIGGER_LIMIT_EXCEEDED'
   | 'MODEL_ACCESS_DENIED'
+  | 'DEDICATED_COMPUTER_NOT_AVAILABLE'
   | 'CUSTOM_WORKER_LIMIT_EXCEEDED'
   | 'INSUFFICIENT_CREDITS'
   | 'BILLING_ERROR';
@@ -436,6 +444,12 @@ export function extractTierLimitErrorState(error: any): TierLimitErrorState | nu
 
   if (error instanceof BillingError) {
     const message = error.detail?.message || '';
+    if (error.detail?.error_code === 'DEDICATED_COMPUTER_NOT_AVAILABLE') {
+      return {
+        type: 'DEDICATED_COMPUTER_NOT_AVAILABLE',
+        message: message || 'Dedicated computer is available on Pro and Ultra plans.',
+      };
+    }
     const isCreditsExhausted =
       error.detail?.error_code === 'INSUFFICIENT_CREDITS' ||
       isInsufficientCreditsMessage(message);

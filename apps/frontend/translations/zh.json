@@ -1676,6 +1676,10 @@
         "title": "需要高级模型权限",
         "subtitle": "该 AI 模型仅限更高档位订阅使用。请升级以使用高级模型。"
       },
+      "dedicatedComputer": {
+        "title": "专属电脑需要 Pro",
+        "subtitle": "当前运行目标被设为专属电脑。请改回云端运行，或升级到 Pro/Ultra。"
+      },
       "customWorkers": {
         "title": "已达到自定义 AI员工上限",
         "subtitle": "你已达到自定义 AI员工数量上限。升级订阅计划以创建更多 AI员工。",

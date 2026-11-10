@@ -2038,6 +2038,10 @@
         "title": "Premium Model Access Required",
         "subtitle": "This AI model is only available on higher tier plans. Upgrade to access premium models."
       },
+      "dedicatedComputer": {
+        "title": "Dedicated computer requires Pro",
+        "subtitle": "Your run target was set to a dedicated computer. Switch back to cloud, or upgrade to Pro/Ultra."
+      },
       "customWorkers": {
         "title": "Custom Worker Limit Reached",
         "subtitle": "You've reached your custom worker limit. Upgrade your plan to create more custom workers.",

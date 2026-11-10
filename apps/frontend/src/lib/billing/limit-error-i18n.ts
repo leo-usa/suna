@@ -72,6 +72,11 @@ function localizeFromState(
         alertTitle: t('limitAlerts.modelAccess.title'),
         alertSubtitle: t('limitAlerts.modelAccess.subtitle'),
       };
+    case 'DEDICATED_COMPUTER_NOT_AVAILABLE':
+      return {
+        alertTitle: t('limitAlerts.dedicatedComputer.title'),
+        alertSubtitle: t('limitAlerts.dedicatedComputer.subtitle'),
+      };
     case 'CUSTOM_WORKER_LIMIT_EXCEEDED':
       return {
         alertTitle: t('limitAlerts.customWorkers.title'),

@@ -36,6 +36,25 @@ export function getPreferredExecutionTarget(): ExecutionTarget {
   return 'cloud';
 }
 
+/**
+ * Resolve the run target for a new agent start.
+ * Sticky localStorage can keep "dedicated" from a previous paid session; free
+ * accounts must not send that or /agent/start returns 402 → pricing modal.
+ */
+export function resolveExecutionTargetForStart(options?: {
+  canUseDedicated?: boolean;
+}): ExecutionTarget {
+  const preferred = getPreferredExecutionTarget();
+  if (preferred === 'dedicated' && !options?.canUseDedicated) {
+    setPreferredExecutionTarget('cloud');
+    return 'cloud';
+  }
+  if (preferred === 'local' && !isLocalRunnerAvailable()) {
+    return 'cloud';
+  }
+  return preferred;
+}
+
 export function setPreferredExecutionTarget(target: ExecutionTarget) {
   if (typeof window === 'undefined') return;
   window.localStorage.setItem(PREFERRED_TARGET_KEY, target);

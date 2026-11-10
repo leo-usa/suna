@@ -63,6 +63,13 @@ export function LocalExecutionToggle({
   const canUseDedicated = accountState?.limits?.dedicated_computer?.can_use ?? false;
 
   useEffect(() => {
+    if (preferred === 'dedicated' && !canUseDedicated) {
+      setPreferredExecutionTarget('cloud');
+      setPreferred('cloud');
+    }
+  }, [preferred, canUseDedicated]);
+
+  useEffect(() => {
     if (!electron || !projectId || projectTarget(project) !== 'local') return;
     setProjectComputerScreenshots(projectId, getSaveComputerScreenshots()).catch(() => {});
   }, [electron, projectId, project]);

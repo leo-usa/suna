@@ -462,6 +462,21 @@ async def start_agent_run(
     want_dedicated = (execution_target or "").lower() == "dedicated"
 
     if is_new_thread:
+        # Reject dedicated before creating orphan projects when the tier
+        # doesn't include a dedicated computer (common after free signup on a
+        # browser that still has a sticky "dedicated" run-target preference).
+        if want_dedicated:
+            from core.billing.shared.config import get_dedicated_computer_limit
+            from core.billing.subscriptions.handlers.tier import TierHandler
+            tier_info = await TierHandler.get_user_subscription_tier(account_id)
+            if get_dedicated_computer_limit(tier_info.get("name", "none")) <= 0:
+                raise HTTPException(
+                    status_code=402,
+                    detail={
+                        "message": "Dedicated computer is available on Pro and Ultra plans.",
+                        "error_code": "DEDICATED_COMPUTER_NOT_AVAILABLE",
+                    },
+                )
         placeholder_name = f"{prompt[:30]}..." if len(prompt) > 30 else prompt if prompt else "Untitled"
         try:
             await threads_repo.create_project(project_id, account_id, placeholder_name)
