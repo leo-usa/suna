@@ -3,6 +3,7 @@
 import { useEffect, useState, Suspense, lazy, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { CheckCircle2, AlertCircle } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useAuth } from '@/components/AuthProvider';
 import { useInitializeAccount } from '@/hooks/account';
 import { backendApi } from '@/lib/api-client';
@@ -17,6 +18,7 @@ const DobbyLoader = lazy(() => import('@/components/ui/dobby-loader').then(mod =
 
 export default function SettingUpPage() {
   const router = useRouter();
+  const t = useTranslations('auth.settingUpPage');
   const { user } = useAuth();
   const [status, setStatus] = useState<'checking' | 'initializing' | 'success' | 'error'>('checking');
   const initializeMutation = useInitializeAccount();
@@ -139,11 +141,11 @@ export default function SettingUpPage() {
           {(status === 'checking' || status === 'initializing') && (
             <>
               <h1 className="text-[43px] font-normal tracking-tight text-foreground leading-none text-center">
-                Setting Up Your Account
+                {t('title')}
               </h1>
 
               <p className="text-[16px] text-foreground/60 text-center leading-relaxed">
-                We're creating your workspace and preparing everything you need to get started.
+                {t('description')}
               </p>
 
               <Card className="w-full h-24 bg-card border border-border">
@@ -153,9 +155,9 @@ export default function SettingUpPage() {
                       <div className="flex flex-col gap-1">
                         <div className='flex items-center gap-2'>
                           <div className="h-2.5 w-2.5 border border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                          <span className="text-base font-medium text-blue-400">Initializing</span>
+                          <span className="text-base font-medium text-blue-400">{t('initializing')}</span>
                         </div>
-                        <p className="text-base text-gray-400">Setting up your account...</p>
+                        <p className="text-base text-gray-400">{t('initializingDetail')}</p>
                       </div>
                     </div>
                     <div className="h-12 w-12 flex items-center justify-center">
@@ -172,11 +174,11 @@ export default function SettingUpPage() {
           {status === 'success' && (
             <>
               <h1 className="text-[43px] font-normal tracking-tight text-foreground leading-none text-center">
-                You're All Set!
+                {t('allSetTitle')}
               </h1>
 
               <p className="text-[16px] text-foreground/60 text-center leading-relaxed">
-                Your account is ready. Redirecting you to the dashboard...
+                {t('allSetDescription')}
               </p>
 
               <Card className="w-full h-24 bg-card border border-border">
@@ -186,9 +188,9 @@ export default function SettingUpPage() {
                       <div className="flex flex-col gap-1">
                         <div className='flex items-center gap-2'>
                           <div className="h-2.5 w-2.5 bg-green-500 rounded-full"></div>
-                          <span className="text-base font-medium text-green-400">Ready</span>
+                          <span className="text-base font-medium text-green-400">{t('ready')}</span>
                         </div>
-                        <p className="text-base text-gray-400">Welcome to your workspace!</p>
+                        <p className="text-base text-gray-400">{t('welcomeWorkspace')}</p>
                       </div>
                     </div>
                     <div className="h-12 w-12 flex items-center justify-center">
@@ -203,13 +205,13 @@ export default function SettingUpPage() {
           {status === 'error' && (
             <>
               <h1 className="text-[43px] font-normal tracking-tight text-foreground leading-none text-center">
-                Setup Issue
+                {t('errorTitle')}
               </h1>
 
               <p className="text-[16px] text-foreground/60 text-center leading-relaxed">
-                {initializeMutation.error instanceof Error 
-                  ? initializeMutation.error.message 
-                  : 'An error occurred during setup. You can still continue to your dashboard.'}
+                {initializeMutation.error instanceof Error
+                  ? initializeMutation.error.message
+                  : t('errorFallback')}
               </p>
 
               <Card className="w-full min-h-24 bg-card border border-border">
@@ -219,9 +221,9 @@ export default function SettingUpPage() {
                       <div className="flex flex-col gap-1">
                         <div className='flex items-center gap-2'>
                           <div className="h-2.5 w-2.5 bg-red-500 rounded-full"></div>
-                          <span className="text-base font-medium text-red-400">Setup Error</span>
+                          <span className="text-base font-medium text-red-400">{t('errorLabel')}</span>
                         </div>
-                        <p className="text-base text-gray-400">Don't worry, you can try again later.</p>
+                        <p className="text-base text-gray-400">{t('errorDetail')}</p>
                       </div>
                     </div>
                     <div className="h-12 w-12 flex items-center justify-center">
@@ -233,7 +235,7 @@ export default function SettingUpPage() {
                     className="w-full mt-4"
                     variant="default"
                   >
-                    Continue to Dashboard
+                    {t('continueToDashboard')}
                   </Button>
                 </CardContent>
               </Card>

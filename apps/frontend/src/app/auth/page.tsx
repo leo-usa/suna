@@ -42,6 +42,8 @@ function LoginContent() {
   const referralCodeParam = searchParams.get('ref') || '';
   const t = useTranslations('auth');
 
+  // Password is the primary path. Magic link stays as a small fallback for
+  // people who already use email links (or open ?method=magic).
   const [useMagicLink, setUseMagicLink] = useState(authMethodParam === 'magic');
   const [isSignUp, setIsSignUp] = useState(mode === 'signup');
   const [passwordError, setPasswordError] = useState<string | null>(null);
@@ -133,6 +135,7 @@ function LoginContent() {
 
   const handlePasswordAuth = async (prevState: any, formData: FormData) => {
     setPasswordError(null);
+    markEmailAsUsed();
 
     const finalReturnUrl = returnUrl || '/dashboard';
     formData.set('returnUrl', finalReturnUrl);
@@ -751,21 +754,14 @@ function LoginContent() {
                 </label>
               </div>
 
-              <div className="relative">
-                <SubmitButton
-                  formAction={handleAuth}
-                  className="w-full h-10 sm:h-11 text-sm sm:text-base"
-                  pendingText={t('sending')}
-                  disabled={!acceptedTerms}
-                >
-                  {t('sendMagicLink')}
-                </SubmitButton>
-                {wasEmailLastMethod && (
-                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-background shadow-sm">
-                    <div className="w-full h-full bg-green-500 rounded-full animate-pulse" />
-                  </div>
-                )}
-              </div>
+              <SubmitButton
+                formAction={handleAuth}
+                className="w-full h-10 sm:h-11 text-sm sm:text-base"
+                pendingText={t('sending')}
+                disabled={!acceptedTerms}
+              >
+                {t('sendMagicLink')}
+              </SubmitButton>
 
               <p className="text-[11px] sm:text-xs text-muted-foreground text-center leading-relaxed">
                 {t('magicLinkExplanation')}
@@ -774,8 +770,11 @@ function LoginContent() {
               <p className="text-[11px] sm:text-xs text-center">
                 <button
                   type="button"
-                  onClick={() => setUseMagicLink(false)}
-                  className="text-primary font-medium hover:underline underline-offset-2"
+                  onClick={() => {
+                    setUseMagicLink(false);
+                    setPasswordError(null);
+                  }}
+                  className="text-foreground font-medium hover:underline underline-offset-2"
                 >
                   {t('signInWithPassword')}
                 </button>
@@ -915,35 +914,52 @@ function LoginContent() {
                 </div>
               )}
 
-              <SubmitButton
-                formAction={handlePasswordAuth}
-                className="w-full h-10 sm:h-11 text-sm sm:text-base"
-                pendingText={isSignUp ? t('creatingAccount') : t('signingIn')}
-                disabled={isSignUp && !acceptedTerms}
-              >
-                {isSignUp ? t('createAccount') : t('signIn')}
-              </SubmitButton>
+              <div className="relative">
+                <SubmitButton
+                  formAction={handlePasswordAuth}
+                  className="w-full h-10 sm:h-11 text-sm sm:text-base"
+                  pendingText={isSignUp ? t('creatingAccount') : t('signingIn')}
+                  disabled={isSignUp && !acceptedTerms}
+                >
+                  {isSignUp ? t('createAccount') : t('signIn')}
+                </SubmitButton>
+                {wasEmailLastMethod && !isSignUp && (
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-background shadow-sm">
+                    <div className="w-full h-full bg-green-500 rounded-full animate-pulse" />
+                  </div>
+                )}
+              </div>
 
               {!isSignUp && (
-                <p className="text-[11px] sm:text-xs text-center">
+                <p className="text-[11px] sm:text-xs text-center text-muted-foreground">
                   <Link
                     href="/auth/reset-password"
-                    className="text-muted-foreground hover:text-foreground hover:underline underline-offset-2"
+                    className="hover:text-foreground hover:underline underline-offset-2"
                   >
                     {t('forgotPassword')}
                   </Link>
+                  <span className="mx-1.5 text-border">·</span>
+                  <button
+                    type="button"
+                    onClick={() => setUseMagicLink(true)}
+                    className="hover:text-foreground hover:underline underline-offset-2"
+                  >
+                    {t('signInWithMagicLink')}
+                  </button>
                 </p>
               )}
 
-              <p className="text-[11px] sm:text-xs text-center">
-                <button
-                  type="button"
-                  onClick={() => setUseMagicLink(true)}
-                  className="text-primary font-medium hover:underline underline-offset-2"
-                >
-                  {t('signInWithMagicLink')}
-                </button>
-              </p>
+              {isSignUp && (
+                <p className="text-[11px] sm:text-xs text-center text-muted-foreground">
+                  <button
+                    type="button"
+                    onClick={() => setUseMagicLink(true)}
+                    className="hover:text-foreground hover:underline underline-offset-2"
+                  >
+                    {t('signInWithMagicLink')}
+                  </button>
+                </p>
+              )}
 
               {!referralCodeParam && (
                 <button

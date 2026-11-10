@@ -313,7 +313,9 @@ export async function signUpWithPassword(prevState: any, formData: FormData) {
   const baseUrl = origin || process.env.NEXT_PUBLIC_URL || 'http://localhost:3000';
   const emailRedirectTo = `${baseUrl}/auth/callback?returnUrl=${encodeURIComponent(returnUrl || '/dashboard')}`;
 
-  const { error } = await supabase.auth.signUp({
+  // Email confirmation is disabled (mailer_autoconfirm) so signup returns a
+  // session immediately — same client redirect path as sign-in.
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
@@ -328,9 +330,58 @@ export async function signUpWithPassword(prevState: any, formData: FormData) {
     return { message: error.message || 'Could not create account' };
   }
 
-  // Return success - client will handle redirect
+  // Existing email/password: Supabase may return a user with empty identities
+  // and no session. Sign them in so they can work immediately.
+  if (!data.session) {
+    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    if (signInError || !signInData.session) {
+      return {
+        message:
+          signInError?.message ||
+          'Account created, but we could not start a session. Please sign in with your password.',
+      };
+    }
+  }
+
+  try {
+    const user = data.user ?? (await supabase.auth.getUser()).data.user;
+    if (user) {
+      const { data: accountData } = await supabase
+        .schema('basejump')
+        .from('accounts')
+        .select('id')
+        .eq('primary_owner_user_id', user.id)
+        .eq('personal_account', true)
+        .single();
+
+      if (accountData?.id) {
+        const { data: creditAccount } = await supabase
+          .from('credit_accounts')
+          .select('tier')
+          .eq('account_id', accountData.id)
+          .single();
+
+        const needsInitialization = !creditAccount || creditAccount.tier === 'none';
+        if (needsInitialization) {
+          return { success: true, redirectTo: '/setting-up' };
+        }
+      } else {
+        // Brand-new account — webhook may not have created basejump row yet.
+        return { success: true, redirectTo: '/setting-up' };
+      }
+    }
+  } catch {
+    // Proceed to dashboard; UI / setting-up can recover.
+  }
+
   const finalReturnUrl = returnUrl || '/dashboard';
-  redirect(finalReturnUrl);
+  const redirectUrl = new URL(finalReturnUrl, 'http://localhost');
+  redirectUrl.searchParams.set('auth_event', 'signup');
+  redirectUrl.searchParams.set('auth_method', 'email');
+  return { success: true, redirectTo: `${redirectUrl.pathname}${redirectUrl.search}` };
 }
 
 export async function signOut() {

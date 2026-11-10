@@ -1198,6 +1198,21 @@
     "unexpectedAuthError": "Une erreur inattendue s'est produite",
     "createNewAccount": "Créer un nouveau compte",
     "byContinuingYouAgreeSimple": "En continuant, tu acceptes notre",
+    "settingUpPage": {
+      "title": "Setting Up Your Account",
+      "description": "We're creating your workspace and preparing everything you need to get started.",
+      "initializing": "Initializing",
+      "initializingDetail": "Setting up your account...",
+      "allSetTitle": "You're All Set!",
+      "allSetDescription": "Your account is ready. Redirecting you to the dashboard...",
+      "ready": "Ready",
+      "welcomeWorkspace": "Welcome to your workspace!",
+      "errorTitle": "Setup Issue",
+      "errorFallback": "An error occurred during setup. You can still continue to your dashboard.",
+      "errorLabel": "Setup Error",
+      "errorDetail": "Don't worry, you can try again later.",
+      "continueToDashboard": "Continue to Dashboard"
+    },
     "phoneVerification": {
       "title": "Vérifiez votre numéro de téléphone",
       "titleOtp": "Entrez le code de vérification",
