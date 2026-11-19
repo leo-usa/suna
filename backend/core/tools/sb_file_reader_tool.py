@@ -2,16 +2,93 @@ import os
 import shlex
 import json
 import asyncio
-from typing import Optional, List
+from typing import Optional, List, Tuple
 from core.agentpress.tool import ToolResult, openapi_schema, tool_metadata
 from core.sandbox.tool_base import SandboxToolsBase
 from core.agentpress.thread_manager import ThreadManager
 from core.utils.config import config
 from core.utils.logger import logger
 
-MAX_OUTPUT_CHARS = 50000
+# Fallback when model context is unknown. Prefer one-shot reads for typical docs;
+# oversized files should use search_file or explicit line offset/limit.
+MAX_OUTPUT_CHARS = 200_000
+MAX_LINE_CHARS = 2000
 MAX_BATCH_SIZE = 20
+# Leave headroom for system prompt + prior turns; ~25% of context as chars≈tokens*2.
+_CONTEXT_FRACTION_FOR_FILE = 0.25
+_CHARS_PER_TOKEN_EST = 2
+_MIN_OUTPUT_CHARS = 80_000
+_MAX_OUTPUT_CHARS_CAP = 500_000
 KB_VERSION = "0.1.2"
+
+
+def _resolve_model_id(thread_manager: Optional[ThreadManager]) -> Optional[str]:
+    if not thread_manager:
+        return None
+    agent_config = getattr(thread_manager, "agent_config", None) or {}
+    if isinstance(agent_config, dict):
+        for key in ("model", "model_name", "model_id"):
+            value = agent_config.get(key)
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+    for attr in ("model_name", "model"):
+        value = getattr(thread_manager, attr, None)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return None
+
+
+def max_output_chars_for_model(model_id: Optional[str] = None) -> int:
+    """How many characters one read_file call may return for the active model."""
+    context_window = 200_000
+    if model_id:
+        try:
+            from core.ai_models.registry import registry as model_registry
+            context_window = model_registry.get_context_window(model_id, default=context_window)
+        except Exception:
+            pass
+    budget = int(context_window * _CHARS_PER_TOKEN_EST * _CONTEXT_FRACTION_FOR_FILE)
+    return max(_MIN_OUTPUT_CHARS, min(_MAX_OUTPUT_CHARS_CAP, budget))
+
+
+def apply_line_window(
+    content: str,
+    offset: Optional[int] = None,
+    limit: Optional[int] = None,
+    max_line_chars: int = MAX_LINE_CHARS,
+) -> Tuple[str, dict]:
+    """Slice by 1-indexed line offset/limit and optionally shorten very long lines."""
+    lines = content.splitlines(keepends=True)
+    total_lines = len(lines)
+    start_idx = 0
+    if offset is not None:
+        start_idx = max(int(offset) - 1, 0)
+    end_idx = total_lines
+    if limit is not None:
+        end_idx = min(start_idx + max(int(limit), 0), total_lines)
+    window = lines[start_idx:end_idx]
+
+    shortened = 0
+    out_parts: List[str] = []
+    for line in window:
+        if len(line) > max_line_chars:
+            newline = "\n" if line.endswith("\n") else ""
+            core = line[:-1] if newline else line
+            out_parts.append(core[:max_line_chars] + f"...[line truncated at {max_line_chars} chars]" + newline)
+            shortened += 1
+        else:
+            out_parts.append(line)
+
+    meta = {
+        "total_lines": total_lines,
+        "start_line": start_idx + 1 if total_lines else 0,
+        "end_line": start_idx + len(window) if window else 0,
+        "lines_returned": len(window),
+        "lines_shortened": shortened,
+        "used_offset": offset,
+        "used_limit": limit,
+    }
+    return "".join(out_parts), meta
 
 @tool_metadata(
     display_name="Read",
@@ -27,11 +104,10 @@ KB_VERSION = "0.1.2"
 Reads files from the workspace. You can access any file directly by using this tool.
 
 ### Key Capabilities
-- Reads any file using absolute or relative paths to /workspace
-- By default reads up to 2000 lines starting from the beginning
-- Supports optional line offset and limit for long files
-- Lines longer than 2000 characters will be truncated
-- Results are returned with line numbers starting at 1
+- Prefer reading a whole file in one call when it fits the model budget
+- Optional 1-indexed line offset + limit for long files (these are applied)
+- Very long individual lines are shortened (~2000 chars)
+- Oversized documents should use search_file instead of shell/python dumps
 
 ### File Type Support
 - **Images** (PNG, JPG, etc): Contents are presented visually
@@ -43,15 +119,13 @@ Reads files from the workspace. You can access any file directly by using this t
 - **Text**: txt, md, log, yaml, toml, ini
 
 ### When to Use read_file
-- Reading specific files when you know the path
-- Small to medium files where you need full content
-- Code files where you need complete context
-- Config files, scripts, source code
+- Known path, especially code/config/scripts and moderate text files
+- Prefer one full read; only use offset/limit when the tool says the file is too large
 
 ### When to Use search_file
-- Large documents where you need specific information
-- PDFs, Word docs, Excel files with lots of content
-- When searching for specific terms or concepts
+- Large documents (long papers, PDFs, Word/Excel with lots of content)
+- Looking up specific sections, terms, or claims without loading the whole file
+- ALWAYS prefer search_file over Bash/python print for large uploads
 
 ### Usage Notes
 - On cloud: file_path is relative to /workspace
@@ -69,7 +143,7 @@ search_file(file_paths=["docs/report.pdf", "docs/summary.pdf"], query="findings"
 ```
 
 ### Important Notes
-- NEVER use cat/head/tail via Bash to read files - use this tool instead
+- NEVER use cat/head/tail/python print via Bash to dump file contents — that floods context and burns credits
 - Multiple files can be read in parallel for efficiency
 - For images (jpg, png, gif, webp, svg) → use load_image for visual analysis
 """
@@ -148,7 +222,15 @@ class SandboxFileReaderTool(SandboxToolsBase):
         ext = os.path.splitext(file_path)[1].lower()
         return ext in ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp', '.ico']
 
-    async def _read_single_file(self, file_path: str) -> dict:
+    def _max_output_chars(self) -> int:
+        return max_output_chars_for_model(_resolve_model_id(self.thread_manager))
+
+    async def _read_single_file(
+        self,
+        file_path: str,
+        offset: Optional[int] = None,
+        limit: Optional[int] = None,
+    ) -> dict:
         try:
             full_path = self.resolve_fs_path(file_path)
             # Keep historical variable name used throughout this method's returns.
@@ -351,13 +433,46 @@ class SandboxFileReaderTool(SandboxToolsBase):
                     content = result.result
                     extraction_method = "cat"
 
-            truncated = False
-            if len(content) > MAX_OUTPUT_CHARS:
-                content = content[:MAX_OUTPUT_CHARS]
-                truncated = True
-                content += f"\n\n[Content truncated at {MAX_OUTPUT_CHARS} characters]"
+            max_chars = self._max_output_chars()
+            windowed, window_meta = apply_line_window(content, offset=offset, limit=limit)
+            used_window = offset is not None or limit is not None
 
-            logger.info(f"[ReadFile] Read '{cleaned_path}' ({file_type}) via {extraction_method}, {len(content)} chars")
+            # Whole-file request that exceeds model budget: do not return a silent
+            # head truncate (that caused expensive re-reads / shell dumps).
+            if not used_window and len(windowed) > max_chars:
+                total_lines = window_meta.get("total_lines") or len(content.splitlines())
+                return {
+                    "file_path": cleaned_path,
+                    "success": False,
+                    "error": (
+                        f"File '{cleaned_path}' is too large to load in one read "
+                        f"({len(content)} chars, ~{total_lines} lines; limit {max_chars} chars). "
+                        f"Use search_file with a focused query for large documents, "
+                        f"or call read_file again with 1-indexed line offset and limit. "
+                        f"Do NOT dump the file via Bash/python print."
+                    ),
+                    "file_type": file_type,
+                    "extraction_method": extraction_method,
+                    "size_bytes": file_info.size,
+                    "content_length": len(content),
+                    "total_lines": total_lines,
+                    "max_output_chars": max_chars,
+                    "suggest_tool": "search_file",
+                }
+
+            truncated = False
+            if len(windowed) > max_chars:
+                windowed = windowed[:max_chars]
+                truncated = True
+                windowed += (
+                    f"\n\n[Content truncated at {max_chars} characters. "
+                    f"Use a smaller limit or search_file for the rest.]"
+                )
+
+            logger.info(
+                f"[ReadFile] Read '{cleaned_path}' ({file_type}) via {extraction_method}, "
+                f"{len(windowed)} chars, window={window_meta}"
+            )
 
             return {
                 "file_path": cleaned_path,
@@ -365,9 +480,11 @@ class SandboxFileReaderTool(SandboxToolsBase):
                 "file_type": file_type,
                 "extraction_method": extraction_method,
                 "size_bytes": file_info.size,
-                "content_length": len(content),
+                "content_length": len(windowed),
                 "truncated": truncated,
-                "content": content
+                "max_output_chars": max_chars,
+                **window_meta,
+                "content": windowed,
             }
 
         except Exception as e:
@@ -382,16 +499,14 @@ class SandboxFileReaderTool(SandboxToolsBase):
         "type": "function",
         "function": {
             "name": "read_file",
-            "description": """Reads a file from the workspace. You can access any file directly by using this tool.
+            "description": """Reads a file from the workspace.
 
 Usage:
 - Prefer paths relative to /workspace (e.g., 'src/main.py'). On this computer, home paths the user names (~/Documents/..., /Users/...) are also allowed.
-- By default, it reads up to 2000 lines starting from the beginning of the file
-- You can optionally specify a line offset and limit for long files
-- Any lines longer than 2000 characters will be truncated
-- Results are returned with line numbers starting at 1
-- This tool can read images (PNG, JPG), PDFs, Jupyter notebooks (.ipynb), and all text-based files
-- Can read multiple files in parallel for efficiency""",
+- Prefer loading the whole file in one call when possible.
+- Optional offset/limit are 1-indexed LINE numbers (not characters). They are applied.
+- For large papers/docs that exceed the size budget, use search_file — never Bash/python print dumps.
+- Very long lines may be shortened.""",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -406,11 +521,11 @@ Usage:
                     },
                     "offset": {
                         "type": "integer",
-                        "description": "**OPTIONAL** - The line number to start reading from (1-indexed). Only provide if the file is too large to read at once."
+                        "description": "**OPTIONAL** - 1-indexed line number to start reading from. Use with limit for long files."
                     },
                     "limit": {
                         "type": "integer",
-                        "description": "**OPTIONAL** - The number of lines to read. Only provide if the file is too large to read at once."
+                        "description": "**OPTIONAL** - Number of lines to read from offset. Use when the full file exceeds the size budget."
                     }
                 },
                 "additionalProperties": False
@@ -438,11 +553,22 @@ Usage:
                 return self.fail_response("Either 'file_path' or 'file_paths' must be provided.")
 
             if len(paths_to_read) == 1:
-                result = await self._read_single_file(paths_to_read[0])
+                result = await self._read_single_file(
+                    paths_to_read[0],
+                    offset=offset,
+                    limit=limit,
+                )
                 if result.get("success"):
                     return self.success_response(result)
-                else:
-                    return self.fail_response(result.get("error", "Unknown error"))
+                # Keep structured hints (e.g. suggest_tool=search_file) for the model.
+                if isinstance(result, dict) and result.get("suggest_tool"):
+                    return self.success_response(result)
+                return self.fail_response(result.get("error", "Unknown error"))
+
+            if offset is not None or limit is not None:
+                return self.fail_response(
+                    "offset/limit are only supported with a single file_path, not file_paths batch mode."
+                )
 
             tasks = [self._read_single_file(path) for path in paths_to_read]
             results = await asyncio.gather(*tasks)
@@ -468,19 +594,19 @@ Usage:
         "type": "function",
         "function": {
             "name": "search_file",
-            "description": """A powerful semantic search tool for finding content within files.
+            "description": """Semantic search inside files. Prefer this for large documents.
 
 Usage:
-- ALWAYS use search_file for large documents. NEVER use grep or rg as a Bash command.
-- This tool has been optimized for correct permissions and access.
-- Returns relevant chunks instead of full content - prevents context flooding.
+- ALWAYS use search_file for large papers/PDFs/docs instead of dumping them with Bash/python print.
+- NEVER use grep or rg as a Bash command for large documents.
+- Returns relevant chunks instead of full content — prevents context flooding and credit burn.
 - Supports semantic search with natural language queries.
 
 When to use:
 - Large PDFs and documents where you need specific information
-- Finding specific terms, concepts, or patterns in files
+- Finding specific terms, concepts, sections, or claims
 - Multiple files where you need to search for something
-- When read_file would return too much content
+- When read_file says the file is too large for one load
 
 Examples:
 - search_file(file_path="docs/contract.pdf", query="termination clause")
