@@ -708,7 +708,7 @@ IMPORTANT: You should ALWAYS collect multiple relevant URLs from web-search resu
                     try:
                         logging.info(f"Sending request to Firecrawl (attempt {retry_count + 1}/{max_retries})")
                         response = await client.post(
-                            f"{self.firecrawl_url}/v1/scrape",
+                            f"{self.firecrawl_url}/v2/scrape",
                             json=payload,
                             headers=headers,
                             timeout=timeout_seconds,
