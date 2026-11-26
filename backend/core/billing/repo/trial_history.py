@@ -85,7 +85,8 @@ async def mark_trial_converted(account_id: str) -> None:
 
 async def get_credit_account_for_free_tier(account_id: str) -> Optional[Dict[str, Any]]:
     sql = """
-    SELECT stripe_subscription_id, revenuecat_subscription_id, provider, tier
+    SELECT stripe_subscription_id, revenuecat_subscription_id, provider, tier,
+           prepaid_plan_expires_at, stripe_subscription_status
     FROM credit_accounts
     WHERE account_id = :account_id
     """

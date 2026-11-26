@@ -40,12 +40,36 @@ class FreeTierService:
                 has_stripe_sub = existing_sub.get('stripe_subscription_id')
                 has_revenuecat_sub = existing_sub.get('revenuecat_subscription_id')
                 provider = existing_sub.get('provider')
-                
-                if has_stripe_sub or has_revenuecat_sub or provider == 'revenuecat':
+                stripe_status = existing_sub.get('stripe_subscription_status')
+                prepaid_expires_at = existing_sub.get('prepaid_plan_expires_at')
+                has_active_prepaid = False
+                if stripe_status == 'prepaid_active' or prepaid_expires_at:
+                    try:
+                        from datetime import timezone
+                        if isinstance(prepaid_expires_at, str):
+                            prepaid_dt = datetime.fromisoformat(
+                                prepaid_expires_at.replace('Z', '+00:00')
+                            )
+                        else:
+                            prepaid_dt = prepaid_expires_at
+                        if prepaid_dt is not None:
+                            if getattr(prepaid_dt, 'tzinfo', None) is None:
+                                prepaid_dt = prepaid_dt.replace(tzinfo=timezone.utc)
+                            has_active_prepaid = prepaid_dt > datetime.now(timezone.utc)
+                        elif stripe_status == 'prepaid_active':
+                            has_active_prepaid = True
+                    except Exception as prepaid_err:
+                        logger.warning(
+                            f"[FREE TIER] Could not parse prepaid_plan_expires_at "
+                            f"for {account_id}: {prepaid_err}"
+                        )
+                        has_active_prepaid = stripe_status == 'prepaid_active'
+
+                if has_stripe_sub or has_revenuecat_sub or provider == 'revenuecat' or has_active_prepaid:
                     logger.info(
                         f"[FREE TIER] User {account_id} already has subscription "
                         f"(stripe={bool(has_stripe_sub)}, revenuecat={bool(has_revenuecat_sub)}, "
-                        f"provider={provider}), skipping"
+                        f"provider={provider}, prepaid={has_active_prepaid}), skipping"
                     )
                     return {'success': False, 'message': 'Already subscribed'}
             
