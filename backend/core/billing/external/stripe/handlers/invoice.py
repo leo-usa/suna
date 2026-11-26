@@ -157,6 +157,33 @@ class InvoiceHandler:
                 if account.get('last_processed_invoice_id') == invoice_id:
                     logger.info(f"[RENEWAL] Invoice {invoice_id} already processed, skipping")
                     return
+
+                # Annual prepaid Alipay/WeChat plans leave a leftover $0 free Stripe sub.
+                # Free renewals must not overwrite prepaid Pro/Plus/Ultra back to Basic.
+                prepaid_expires_at = account.get('prepaid_plan_expires_at')
+                if prepaid_expires_at:
+                    try:
+                        if isinstance(prepaid_expires_at, str):
+                            prepaid_expires_dt = datetime.fromisoformat(
+                                prepaid_expires_at.replace('Z', '+00:00')
+                            )
+                        else:
+                            prepaid_expires_dt = prepaid_expires_at
+                        if prepaid_expires_dt.tzinfo is None:
+                            prepaid_expires_dt = prepaid_expires_dt.replace(tzinfo=timezone.utc)
+                        if prepaid_expires_dt > datetime.now(timezone.utc):
+                            logger.info(
+                                f"[RENEWAL] Skipping invoice {invoice_id} for {account_id}: "
+                                f"active prepaid annual plan expires {prepaid_expires_dt.isoformat()}"
+                            )
+                            await billing_repo.update_credit_account(account_id, {
+                                'last_processed_invoice_id': invoice_id,
+                            })
+                            return
+                    except Exception as prepaid_err:
+                        logger.warning(
+                            f"[RENEWAL] Could not parse prepaid_plan_expires_at for {account_id}: {prepaid_err}"
+                        )
                 
                 subscription = await StripeAPIWrapper.retrieve_subscription(subscription_id)
                 subscription_status = subscription.get('status')

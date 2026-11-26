@@ -134,6 +134,24 @@ class BillingPeriodHandler:
             account_id, tier_info, 'yearly', anchor, next_credit_grant
         )
 
+        # Cancel any leftover $0 free Stripe subscription so monthly free
+        # renewals cannot overwrite this prepaid annual plan back to Basic.
+        existing = await billing_repo.get_credit_account(account_id)
+        old_sub_id = (existing or {}).get('stripe_subscription_id')
+        if old_sub_id:
+            try:
+                from core.billing.external.stripe.client import StripeAPIWrapper
+                await StripeAPIWrapper.cancel_subscription(old_sub_id, cancel_immediately=True)
+                logger.info(
+                    f"[PREPAID ANNUAL] Cancelled leftover Stripe sub {old_sub_id} "
+                    f"for {account_id[:8]}..."
+                )
+            except Exception as cancel_err:
+                logger.warning(
+                    f"[PREPAID ANNUAL] Could not cancel leftover Stripe sub "
+                    f"{old_sub_id} for {account_id[:8]}...: {cancel_err}"
+                )
+
         update_data = {
             'tier': tier_info.name,
             'plan_type': 'yearly',

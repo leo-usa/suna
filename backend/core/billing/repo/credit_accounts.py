@@ -25,7 +25,8 @@ async def get_credit_account_for_downgrade(account_id: str) -> Optional[Dict[str
 async def get_credit_account_for_renewal(account_id: str) -> Optional[Dict[str, Any]]:
     sql = """
     SELECT tier, last_grant_date, next_credit_grant, billing_cycle_anchor,
-           last_processed_invoice_id, trial_status, last_renewal_period_start
+           last_processed_invoice_id, trial_status, last_renewal_period_start,
+           prepaid_plan_expires_at, stripe_subscription_status, stripe_subscription_id
     FROM credit_accounts
     WHERE account_id = :account_id
     """
