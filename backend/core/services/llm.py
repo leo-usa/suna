@@ -141,6 +141,8 @@ def _register_bedrock_gpt_litellm_models() -> None:
         "gpt_6_sol",
         "gpt_6_1_sol",
         "gpt_6_astra",
+        "gpt_6_2_sol",
+        "gpt_6_2_astra",
     ):
         geo_id = BedrockConfig.GEO_MODEL_IDS[geo_key]
         base_id = geo_id.split(".", 1)[-1] if geo_id.startswith(("us.", "global.")) else geo_id

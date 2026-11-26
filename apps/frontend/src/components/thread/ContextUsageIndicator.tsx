@@ -21,6 +21,7 @@ function isPremiumCostModel(modelId?: string, label?: string): boolean {
     haystack.includes("terra") ||
     haystack.includes("sonnet") ||
     haystack.includes("gpt-6.1") ||
+    haystack.includes("gpt-6.2") ||
     haystack.includes("gpt-5.4")
   )
 }

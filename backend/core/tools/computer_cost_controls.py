@@ -68,7 +68,7 @@ def is_expensive_for_computer(model_id: Optional[str]) -> bool:
     if not pricing:
         # Unknown premium-looking ids (sol/astra/opus/power/terra).
         lowered = f"{resolved} {model_id}".lower()
-        return any(tag in lowered for tag in ("sol", "astra", "opus", "power", "terra", "sonnet", "gpt-5.4", "gpt-6.1"))
+        return any(tag in lowered for tag in ("sol", "astra", "opus", "power", "terra", "sonnet", "gpt-5.4", "gpt-6.1", "gpt-6.2"))
 
     return float(pricing.input_cost_per_million_tokens) >= COMPUTER_EXPENSIVE_INPUT_USD_PER_M
 
